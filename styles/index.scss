@@ -1,0 +1,30 @@
+@import "slick-carousel/slick/slick.css";
+@import "slick-carousel/slick/slick-theme.css";
+@import "~bootstrap/scss/bootstrap";
+@import "public/scss/main.scss";
+
+/*--------------------------------------------------------------------------
+	[Table of contents]
+--------------------------------------------------------------------------*/
+
+.job-description-quill {
+  .ql-toolbar {
+    border-top-left-radius: 8px;
+    border-top-right-radius: 8px;
+    border: 1px solid #e0e0e0; /* Match border of other inputs */
+    background-color: #f7f7f7; /* Match background of other inputs */
+  }
+
+  .ql-container {
+    border-bottom-left-radius: 8px;
+    border-bottom-right-radius: 8px;
+    border: 1px solid #e0e0e0; /* Match border of other inputs */
+    border-top: none; /* Remove duplicate border */
+    background-color: #ffffff; /* Typically white for the editable area */
+    min-height: 200px; /* Adjust as needed */
+  }
+
+  .ql-editor {
+    min-height: 200px; /* Ensure editor content area has enough height */
+  }
+}

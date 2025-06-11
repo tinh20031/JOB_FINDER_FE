@@ -1,0 +1,119 @@
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background: white;
+  padding: 20px;
+  border-radius: 8px;
+  width: 90%;
+  max-width: 600px;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.modal-header h3 {
+  margin: 0;
+  color: #333;
+}
+
+.close-button {
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  color: #666;
+}
+
+.form-group {
+  margin-bottom: 15px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 5px;
+  color: #333;
+  font-weight: 500;
+}
+
+.form-group input,
+.form-group textarea,
+.form-group select {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+.form-group textarea {
+  min-height: 100px;
+  resize: vertical;
+}
+
+.modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.modal-footer button {
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.modal-footer button[type="button"] {
+  background: #f5f5f5;
+  border: 1px solid #ddd;
+  color: #333;
+}
+
+.modal-footer button[type="submit"] {
+  background: #1967d2;
+  border: none;
+  color: white;
+}
+
+.modal-footer button:hover {
+  opacity: 0.9;
+}
+
+/* CSS cho trạng thái Active (xanh lá cây) */
+.status-active {
+  color: #28a745; /* Màu xanh lá cây phổ biến */
+  font-weight: 500; /* Để chữ đậm hơn một chút */
+}
+
+/* CSS cho trạng thái Inactive (đỏ) */
+.status-inactive {
+  color: #dc3545; /* Màu đỏ phổ biến */
+  font-weight: 500;
+}
+
+/* CSS cho trạng thái Pending (xanh nước biển) */
+.status-pending {
+  color: #007bff; /* Màu xanh nước biển phổ biến */
+  font-weight: 500;
+}
+
+/* Bạn có thể cần thêm các class CSS khác tùy thuộc vào cấu trúc HTML và thiết kế tổng thể */
+/* Ví dụ, nếu text không nằm trong span, bạn có thể áp dụng màu cho thẻ td hoặc div chứa */ 

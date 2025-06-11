@@ -1,0 +1,79 @@
+.bookmark-btn {
+  position: absolute;
+  right: 20px;
+  top: 20px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 5px;
+  transition: all 0.3s ease;
+  color: #666;
+}
+
+.bookmark-btn:hover {
+  transform: scale(1.1);
+}
+
+.bookmark-btn.active {
+  color: #ff5a5f;
+}
+
+.bookmark-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.flaticon-bookmark {
+  font-size: 20px;
+}
+
+.filter-jobs-box {
+  background: #ffffff;
+  border-radius: 8px;
+  padding: 20px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+.filter-jobs-box .form-group {
+  margin-bottom: 15px;
+}
+
+.filter-jobs-box label {
+  display: block;
+  margin-bottom: 5px;
+  font-weight: 500;
+  color: #333;
+}
+
+.filter-jobs-box .form-control {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+.filter-jobs-box .btn {
+  width: 100%;
+  padding: 10px;
+  background: #1967d2;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.filter-jobs-box .btn:hover {
+  background: #1557b0;
+}
+
+.filter-jobs-box .reset-btn {
+  background: #f5f5f5;
+  color: #333;
+  margin-top: 10px;
+}
+
+.filter-jobs-box .reset-btn:hover {
+  background: #e0e0e0;
+} 
