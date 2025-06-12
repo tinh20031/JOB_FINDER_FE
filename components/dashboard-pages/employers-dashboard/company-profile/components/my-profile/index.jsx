@@ -299,26 +299,10 @@ const Index = () => {
         }
 
         try {
-            const payload = {
-                CompanyName: formData.companyName,
-                Contact: formData.phone,
-                Website: formData.website,
-                Location: formData.location,
-                TeamSize: formData.teamSize,
-                IndustryId: parseInt(formData.industryId),
-                CompanyProfileDescription: formData.aboutCompany,
-            };
-
-            const userId = localStorage.getItem('userId');
-            if (!userId) {
-                toast.error("User ID not found.");
-                return;
-            }
-
             setIsSaving(true);
             setConfirmLoading(true);
 
-            const response = await companyProfileService.updateCompanyProfile(userId, payload);
+            const response = await companyProfileService.updateCompanyProfile(userId, apiFormData);
 
             console.log('Profile update response:', response);
             toast.success("Profile updated successfully!");
