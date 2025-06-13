@@ -2,6 +2,12 @@
 const nextConfig = {
   images: {
     domains: ['randomuser.me', 'jbagy.me', 'res.cloudinary.com', 'example.com', 'img.freepik.com'],
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: '**',
+      },
+    ],
   },
   async rewrites() {
     return [

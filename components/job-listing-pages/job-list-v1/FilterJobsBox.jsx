@@ -176,9 +176,10 @@ const FilterJobsBox = () => {
 
   // Helper function để tìm tên từ ID trong dữ liệu lookup
   const getCompanyName = (companyId) => {
-      const company = companies.find(c => c.id === companyId);
-      console.log(`getCompanyName for companyId ${companyId}:`, company);
-      return company ? company.name : 'N/A';
+    if (!companyId) return 'N/A';
+    const company = companies.find(c => Number(c.id) === Number(companyId));
+    console.log(`getCompanyName for companyId ${companyId}:`, company);
+    return company ? company.name : 'N/A';
   };
 
   const getJobTypeName = (jobTypeId) => {
@@ -286,8 +287,8 @@ const FilterJobsBox = () => {
 
   let content = jobs
     ?.filter(item => item.status === 1)
-    ?.map((item) => (
-      <div className="job-block" key={item.jobId}>
+    ?.map((item, index) => (
+      <div key={item.id || index} className="job-block">
         <div className="inner-box">
           <div className="content">
             {/* Restored Company Logo */}
