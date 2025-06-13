@@ -13,7 +13,7 @@ const BecomeRecruiterModal = ({ open, onCancel, userId }) => {
   const [requestSent, setRequestSent] = useState(false);
   const [error, setError] = useState(null);
 
-  useEffect(() => {
+  useEffect(() => { 
     if (open) {
       locationService.getProvinces().then(data => {
         setProvinces(data);

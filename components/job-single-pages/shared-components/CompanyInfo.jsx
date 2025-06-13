@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import Social from "../social/Social";
-import { companyService } from "@/services/companyService";
+import ApiService from "@/services/api.service";
 import { jobService } from "@/services/jobService";
 import Image from "next/image";
 
@@ -16,7 +16,7 @@ const CompanyInfo = ({ companyId }) => {
       try {
         setLoading(true);
         // Fetch company info
-        const companyData = await companyService.getCompanyById(companyId);
+        const companyData = await ApiService.getCompanyProfileById(companyId);
         setCompany(companyData);
 
         // Fetch industries
