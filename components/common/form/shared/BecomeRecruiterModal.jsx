@@ -3,6 +3,7 @@ import { Modal, Form, Input, Button, message, Select } from "antd";
 import axios from "axios";
 import { industryService } from "@/services/industryService";
 import { userService } from "@/services/userService";
+import locationService from "@/services/locationService";
 
 const BecomeRecruiterModal = ({ open, onCancel, userId }) => {
   const [form] = Form.useForm();
@@ -14,7 +15,7 @@ const BecomeRecruiterModal = ({ open, onCancel, userId }) => {
 
   useEffect(() => {
     if (open) {
-      fetch('https://provinces.open-api.vn/api/').then(res => res.json()).then(data => {
+      locationService.getProvinces().then(data => {
         setProvinces(data);
       });
       fetchIndustries();

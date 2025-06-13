@@ -7,7 +7,7 @@ const nextConfig = {
     return [
       {
         source: '/api/:path*',
-        destination: 'https://job-finder-tm9i.onrender.com/api/:path*', // Chuyển tiếp request đến backend
+        destination: 'http://localhost:5194/api/:path*', // Chuyển tiếp request đến backend
       },
     ];
   },
