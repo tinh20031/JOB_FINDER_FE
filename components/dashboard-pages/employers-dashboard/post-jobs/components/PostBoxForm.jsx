@@ -244,8 +244,9 @@ const PostBoxForm = () => {
 
   const handleLeave = () => {
     setShowLeaveConfirmation(false);
+    setHasUnsavedChanges(false);
     if (intendedPath) {
-      window.location.href = intendedPath;
+      router.push(intendedPath);
     }
   };
 
