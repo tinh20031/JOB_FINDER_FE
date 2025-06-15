@@ -417,23 +417,6 @@ const FilterJobsBox = () => {
     setDisplayCount(10);
   };
 
-  if (loading) {
-    return <div className="text-center py-5">Loading...</div>;
-  }
-
-  if (error) {
-    return <div className="text-center py-5 text-danger">{error}</div>;
-  }
-
-  if (!loading && jobs.length === 0) {
-    return (
-      <div className="text-center py-5">
-        <h3>Không tìm thấy công việc phù hợp</h3>
-        <p>Vui lòng thử lại với bộ lọc khác</p>
-      </div>
-    );
-  }
-
   return (
     <>
       <div className="ls-switcher">
@@ -500,24 +483,45 @@ const FilterJobsBox = () => {
             className="chosen-single form-select ms-3"
             value={itemsPerPage}
           >
-            <option value={10}>10 per page</option>
-            <option value={20}>20 per page</option>
-            <option value={30}>30 per page</option>
-            <option value={totalJobs}>All</option>
+            <option value="10">10 Per Page</option>
+            <option value="20">20 Per Page</option>
+            <option value="30">30 Per Page</option>
+            <option value="50">50 Per Page</option>
           </select>
           {/* End select */}
         </div>
       </div>
-      {/* End top filter bar box */}
-      {content}
-      {/* <!-- List Show More --> */}
-      {jobs.length < totalJobs && !loading && (
-        <div className="btn-box mt-4 text-center">
-           <button className="theme-btn btn-style-one" onClick={handleShowMore}>
-              Show More
-           </button>
+      {/* End ls-switcher */}
+
+      {loading ? (
+        <div className="text-center py-5">Loading...</div>
+      ) : error ? (
+        <div className="text-center py-5 text-danger">{error}</div>
+      ) : jobs.length === 0 ? (
+        <div className="text-center py-5">
+          <h3>No suitable job found</h3>
+          <p>Please try again with different filters</p>
+        </div>
+      ) : (
+        <div className="row">
+          {content}
         </div>
       )}
+
+
+
+      <div className="ls-show-more">
+        <p>
+          Total {jobs.length} jobs. <span className="text-theme-color">{totalJobs - jobs.length}</span> more to show
+        </p>
+        <a
+          className="theme-btn btn-style-one"
+          href="#"
+          onClick={handleShowMore}
+        >
+          Load More
+        </a>
+      </div>
     </>
   );
 };
