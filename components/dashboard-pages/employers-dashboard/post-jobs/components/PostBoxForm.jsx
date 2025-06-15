@@ -63,6 +63,7 @@ const PostBoxForm = () => {
 
   // Lấy thông tin user từ localStorage hoặc cookies
   const [user, setUser] = useState(null);
+  const [isFormBeingReset, setIsFormBeingReset] = useState(false);
 
   const [isClient, setIsClient] = useState(false);
 
@@ -441,6 +442,8 @@ const PostBoxForm = () => {
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString()
       });
+      // Clear errors after successful submission
+      setErrors({});
     } catch (error) {
       console.error("API Error:", error.response?.data || error.message);
       setError(error.response?.data?.message || "Failed to create job. Please try again.");
@@ -689,7 +692,7 @@ const PostBoxForm = () => {
             name="expiryDate" 
             value={formData.expiryDate}
             onChange={handleInputChange}
-            className={`form-control ${errors.expiryDate ? 'is-invalid' : ''}`}
+            className={`custom-date-input form-select ${errors.expiryDate ? 'is-invalid' : ''}`}
             disabled={isLoading}
           />
           {errors.expiryDate && <div className="invalid-feedback">{errors.expiryDate}</div>}
@@ -703,7 +706,7 @@ const PostBoxForm = () => {
             name="timeStart" 
             value={formData.timeStart}
             onChange={handleInputChange}
-            className={`form-control ${errors.timeStart ? 'is-invalid' : ''}`}
+            className={`custom-date-input form-select ${errors.timeStart ? 'is-invalid' : ''}`}
             disabled={isLoading}
           />
           {errors.timeStart && <div className="invalid-feedback">{errors.timeStart}</div>}
@@ -717,7 +720,7 @@ const PostBoxForm = () => {
             name="timeEnd" 
             value={formData.timeEnd}
             onChange={handleInputChange}
-            className={`form-control ${errors.timeEnd ? 'is-invalid' : ''}`}
+            className={`custom-date-input form-select ${errors.timeEnd ? 'is-invalid' : ''}`}
             disabled={isLoading}
           />
           {errors.timeEnd && <div className="invalid-feedback">{errors.timeEnd}</div>}
@@ -942,17 +945,36 @@ const PostBoxForm = () => {
               }}
             >
               <h3>Success!</h3>
-              <p>Your job has been posted successfully.</p>
-              <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '20px' }}>
-                <motion.button
-                  className="theme-btn btn-style-one"
-                  onClick={() => setShowSuccessModal(false)}
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                >
-                  OK
-                </motion.button>
-              </div>
+              <p>Post job successfully!</p>
+              <button
+                className="theme-btn btn-style-one"
+                onClick={(e) => {
+                  e.preventDefault();
+                  setShowSuccessModal(false);
+                  setFormData({
+                    jobId: 0,
+                    title: '',
+                    description: '',
+                    companyId: 0,
+                    salary: "",
+                    industryId: 0,
+                    expiryDate: '',
+                    levelId: 0,
+                    jobTypeId: 0,
+                    experienceLevelId: 0,
+                    timeStart: '',
+                    timeEnd: '',
+                    status: 0,
+                    provinceName: '',
+                    addressDetail: '',
+                    createdAt: new Date().toISOString(),
+                    updatedAt: new Date().toISOString()
+                  });
+                  setErrors({});
+                }}
+              >
+                Close
+              </button>
             </motion.div>
           </motion.div>
         )}
