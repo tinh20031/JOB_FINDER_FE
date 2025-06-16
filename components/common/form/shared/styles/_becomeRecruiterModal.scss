@@ -1,0 +1,52 @@
+.become-recruiter-modal {
+  .ant-modal-title {
+    font-weight: bold;
+    font-size: 20px;
+    text-align: center;
+    display: block;
+    padding-bottom: 15px;
+    border-bottom: 1px solid #f0f0f0;
+  }
+
+  .success-message {
+    text-align: center;
+    padding: 10px 0;
+    font-size: 20px;
+    color: #1890ff;
+    font-weight: 600;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+
+    .anticon-check-circle {
+      font-size: 48px;
+      margin-bottom: 20px;
+      color: #52c41a;
+    }
+  }
+
+  .become-recruiter-form {
+    margin-top: 20px;
+    padding: 0 20px;
+
+    .ant-form-item {
+      margin-bottom: 20px;
+
+      .ant-input,
+      .ant-input-password,
+      .ant-input-textarea,
+      .ant-select-selector {
+        border-radius: 8px;
+        &:focus,
+        &:hover {
+          border-color: #1890ff;
+          box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.2);
+        }
+      }
+
+      .ant-input-textarea {
+        resize: vertical;
+      }
+    }
+  }
+} 
