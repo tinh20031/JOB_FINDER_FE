@@ -26,10 +26,12 @@ import DashboardAdminSidebar from "../../../header/DashboardAdminSidebar";
 import BreadCrumb from "../../BreadCrumb";
 import MenuToggler from "../../MenuToggler";
 import DashboardHeader from "../../../header/DashboardHeaderAdmin";
+import MobileMenu from "../../../header/MobileMenu";
 import "../user-manager/user-manager-animations.css";
 import ApiService from "../../../../services/api.service";
 import API_CONFIG from '../../../../config/api.config';
 import { authService } from "../../../../services/authService";
+import moment from "moment";
 
 const JobPostManagement = () => {
   const [jobs, setJobs] = useState([]);
@@ -749,6 +751,7 @@ const JobPostManagement = () => {
       <div className="page-wrapper dashboard" style={{background:'#f7f8fa', minHeight:'100vh'}}>
         <span className="header-span"></span>
         <DashboardHeader />
+        <MobileMenu />
         <DashboardAdminSidebar />
         <section className="user-dashboard">
           <div className="dashboard-outer">
@@ -766,6 +769,7 @@ const JobPostManagement = () => {
       <div className="page-wrapper dashboard" style={{background:'#f7f8fa', minHeight:'100vh'}}>
         <span className="header-span"></span>
         <DashboardHeader />
+        <MobileMenu />
         <DashboardAdminSidebar />
         <section className="user-dashboard">
           <div className="dashboard-outer">
@@ -939,9 +943,51 @@ const JobPostManagement = () => {
             min-width: 80px;
           }
         }
+        @media (max-width: 767px) {
+          .upper-title-box {
+            text-align: center;
+          }
+          .upper-title-box h3 {
+            text-align: center;
+            font-size: 24px;
+          }
+          .widget-title {
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+          }
+          .widget-title h4 {
+            margin-bottom: 15px;
+          }
+          .widget-title .d-flex.flex-wrap.gap-2.align-items-center {
+            flex-direction: column;
+            width: 100%;
+            align-items: stretch !important;
+          }
+          .widget-title .d-flex.flex-wrap.gap-2.align-items-center .form-control,
+          .widget-title .d-flex.flex-wrap.gap-2.align-items-center .form-select,
+          .widget-title .d-flex.flex-wrap.gap-2.align-items-center .btn {
+            width: 100% !important;
+            margin-right: 0 !important;
+            margin-bottom: 10px;
+          }
+          .widget-title .d-flex.flex-wrap.gap-2.align-items-center .btn {
+            margin-top: 10px;
+          }
+          .job-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+          }
+          .job-tag {
+            white-space: nowrap;
+            margin-bottom: 5px; /* Add some vertical spacing between wrapped tags */
+          }
+        }
       `}</style>
       <span className="header-span"></span>
       <DashboardHeader />
+      <MobileMenu />
       <DashboardAdminSidebar />
       <section className="user-dashboard">
         <div className="dashboard-outer">

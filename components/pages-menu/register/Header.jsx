@@ -35,18 +35,32 @@ const Header = () => {
                   <Image
                     width={154}
                     height={50}
-                    src="/images/logo-2.svg"
+<<<<<<< HEAD
+                    src="/images/jobfinder-logo.png"
+                    alt="JobFinder logo"
+                    title="JobFinder"
+=======
+                    src={require("@/public/images/jobfinder-logo.png").default || "/images/jobfinder-logo.png"}
                     alt="logo"
                     title="brand"
+                    onError={(e) => { e.target.onerror = null; e.target.src = "/images/logo.svg"; }}
+>>>>>>> 6c5d8f51b2facabed7849f40085402258b905e89
                   />
                 </Link>
                 <Link href="/" className="isSticky">
                   <Image
                     width={154}
                     height={50}
-                    src="/images/logo.svg"
+<<<<<<< HEAD
+                    src="/images/jobfinder-logo.png"
+                    alt="JobFinder logo"
+                    title="JobFinder"
+=======
+                    src={require("@/public/images/jobfinder-logo.png").default || "/images/jobfinder-logo.png"}
                     alt="logo"
                     title="brand"
+                    onError={(e) => { e.target.onerror = null; e.target.src = "/images/logo.svg"; }}
+>>>>>>> 6c5d8f51b2facabed7849f40085402258b905e89
                   />
                 </Link>
               </div>
@@ -57,12 +71,7 @@ const Header = () => {
           <div className="outer-box">
             {/* <!-- Login/Register --> */}
             <div className="btn-box">
-              <Link
-                href="/employers-dashboard/post-jobs"
-                className="theme-btn btn-style-one"
-              >
-                <span className="btn-title">Job Post</span>
-              </Link>
+             
             </div>
           </div>
           {/* End outer-box */}

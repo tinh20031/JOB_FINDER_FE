@@ -39,14 +39,21 @@ const DashboardHeader = () => {
                 else if (user.name) setFullName(user.name);
                 if (user.avatar) {
                     console.log('Found user avatar URL:', user.avatar);
-                    setAvatar(user.avatar);
+                    // Kiểm tra xem avatar có phải là URL hợp lệ không
+                    if (user.avatar.startsWith('http')) {
+                        setAvatar(user.avatar);
+                    } else if (user.avatar.startsWith('/')) {
+                        setAvatar(user.avatar);
+                    } else {
+                        setAvatar("/images/resource/company-6.png");
+                    }
                 } else {
                     console.log('No user avatar URL found in user object.');
-                    setAvatar("/images/resource/company-6.png"); // Keep default if no avatar
+                    setAvatar("/images/resource/company-6.png");
                 }
             } else {
                 console.log('No user data found in localStorage.');
-                setAvatar("/images/resource/company-6.png"); // Keep default if no user data
+                setAvatar("/images/resource/company-6.png");
             }
         }
     }, []);
@@ -119,7 +126,7 @@ const DashboardHeader = () => {
                                 <Image
                                     alt="avatar"
                                     className="thumb"
-                                    src={avatar}
+                                    src={avatar.startsWith('http') ? avatar : avatar.startsWith('/') ? avatar : "/images/resource/company-6.png"}
                                     width={50}
                                     height={50}
                                 />

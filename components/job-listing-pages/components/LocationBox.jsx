@@ -30,10 +30,12 @@ const LocationBox = ({ provinces }) => {
                 value={selectedProvince} // Controlled component
                 onChange={locationHandler}
             >
-                <option value="">City or postcode</option> {/* Tùy chọn mặc định */}
-                {/* Render options từ danh sách provinces */}
+                <option key="default" value="">City or postcode</option>
                 {provinces?.map((province) => (
-                    <option key={province.id} value={province.name}> {/* Giả sử API trả về id và name */}
+                    <option 
+                        key={province.id || province.name} 
+                        value={province.name}
+                    >
                         {province.name}
                     </option>
                 ))}

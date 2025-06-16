@@ -64,7 +64,7 @@ const FormContent = ({ onRegistrationSuccess }) => {
   };
 
   return (
-    <form onSubmit={handleSubmit}>
+    <form onSubmit={handleSubmit} className="login-from">
       {error && <div className="alert alert-danger">{error}</div>}
       
       <div className="form-group">
@@ -76,6 +76,7 @@ const FormContent = ({ onRegistrationSuccess }) => {
           required 
           value={formData.fullName}
           onChange={handleChange}
+          className="form-control" 
         />
       </div>
       {/* fullName */}
@@ -89,12 +90,13 @@ const FormContent = ({ onRegistrationSuccess }) => {
           required 
           value={formData.email}
           onChange={handleChange}
+          className="form-control" 
         />
       </div>
       {/* email */}
 
       <div className="form-group">
-        <label>Phone Number</label>
+        <label style={{ display: 'block', width: '100%' }}>Phone Number</label>
         <input 
           type="tel" 
           name="phone" 
@@ -102,7 +104,7 @@ const FormContent = ({ onRegistrationSuccess }) => {
           required 
           value={formData.phone}
           onChange={handleChange}
-          className="form-control" 
+          style={{ display: 'block', width: '100%' }} 
         />
       </div>
       {/* phone */}
@@ -117,6 +119,7 @@ const FormContent = ({ onRegistrationSuccess }) => {
           required
           value={formData.password}
           onChange={handleChange}
+          className="form-control" 
         />
       </div>
       {/* password */}
