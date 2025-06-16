@@ -7,7 +7,7 @@ import locationService from "@/services/locationService";
 
 const BecomeRecruiterModal = ({ open, onCancel, userId }) => {
   const [form] = Form.useForm();
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [provinces, setProvinces] = useState([]);
   const [industries, setIndustries] = useState([]);
   const [requestSent, setRequestSent] = useState(false);
@@ -38,8 +38,6 @@ const BecomeRecruiterModal = ({ open, onCancel, userId }) => {
     } catch (err) {
       console.error("Error fetching industries:", err);
       setError("Failed to load industries");
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -72,7 +70,6 @@ const BecomeRecruiterModal = ({ open, onCancel, userId }) => {
     }
   };
 
-  if (loading) return <div>Loading...</div>;
   if (error) return <div>{error}</div>;
 
   return (

@@ -178,11 +178,13 @@ const DefaulHeader2 = () => {
                   >
                     Become Recruiter
                   </button>
-                  <BecomeRecruiterModal
-                    open={openRecruiterModal}
-                    onCancel={() => setOpenRecruiterModal(false)}
-                    userId={user?.id || user?.userId || user?._id || user.uid || user}
-                  />
+                  {openRecruiterModal && (
+                    <BecomeRecruiterModal
+                      open={openRecruiterModal}
+                      onCancel={() => setOpenRecruiterModal(false)}
+                      userId={user?.id || user?.userId || user?._id || user.uid || user}
+                    />
+                  )}
                 </>
               )}
               {role === 'Company' && (
