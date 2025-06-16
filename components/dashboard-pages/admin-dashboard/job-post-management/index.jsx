@@ -171,24 +171,7 @@ const JobPostManagement = () => {
       filters.limit = itemsPerPage;
 
       console.log('Fetching jobs with filters:', filters);
-
-      // Convert filters to query string
-      const queryParams = new URLSearchParams();
-      Object.entries(filters).forEach(([key, value]) => {
-        if (value !== undefined && value !== null && value !== '') {
-          if (Array.isArray(value)) {
-            value.forEach(v => queryParams.append(key, v));
-          } else {
-            queryParams.append(key, value);
-          }
-        }
-      });
-
-      const queryString = queryParams.toString();
-      const url = `Job/filter${queryString ? `?${queryString}` : ''}`;
-      
-      console.log('API Request URL:', url);
-      const response = await ApiService.request(url, 'GET');
+      const response = await jobService.getFilteredJobs(filters);
 
       if (Array.isArray(response)) {
         setJobs(response);
@@ -479,6 +462,7 @@ const JobPostManagement = () => {
     setShowEditModal(true);
   };
 
+
   const handleShowDelete = (job) => {
     setSelectedJobToDelete(job);
     setShowDeleteModal(true);
@@ -486,32 +470,9 @@ const JobPostManagement = () => {
 
   const handleApproveJob = async (jobId) => {
     try {
-      const token = authService.getToken();
-      if (!token) {
-        throw new Error('No authentication token found');
-      }
-
       console.log(`Attempting to approve job with ID: ${jobId}`);
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'https://localhost:7266/api'}/Job/${jobId}/status?newStatus=1`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        credentials: 'include'
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        console.error('Error response:', errorData);
-        throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
-      }
-
-      const result = await response.json();
-      console.log('Success response:', result);
+      await jobService.approveJob(jobId);
       setAlertMsg("Job post approved successfully!");
-      // Cập nhật lại danh sách jobs
       await fetchJobs();
     } catch (error) {
       console.error('Error approving job:', error);
@@ -521,32 +482,10 @@ const JobPostManagement = () => {
 
   const handleRejectJob = async (jobId) => {
     try {
-      const token = authService.getToken();
-      if (!token) {
-        throw new Error('No authentication token found');
-      }
-
       console.log(`Attempting to reject job with ID: ${jobId}`);
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'https://localhost:7266/api'}/Job/${jobId}/status?newStatus=2`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        credentials: 'include'
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        console.error('Error response:', errorData);
-        throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
-      }
-
-      const result = await response.json();
-      console.log('Success response:', result);
+      await jobService.rejectJob(jobId);
       setAlertMsg("Job post rejected!");
-      fetchJobs();
+      await fetchJobs();
     } catch (error) {
       console.error('Error rejecting job:', error);
       setAlertMsg(`Failed to reject job post: ${error.message || error}`);
@@ -557,14 +496,9 @@ const JobPostManagement = () => {
     if (!selectedJobToDelete) return;
     try {
       console.log(`Attempting to delete job with ID: ${selectedJobToDelete.jobId}`);
-      const response = await ApiService.request(`Job/${selectedJobToDelete.jobId}`, 'DELETE');
-      if (response.ok) {
-        setAlertMsg(`Job post ${selectedJobToDelete.title} removed!`);
-        fetchJobs();
-      } else {
-        const errorData = await response.json();
-        setAlertMsg(errorData.message || `Failed to remove job post ${selectedJobToDelete.title}: ${response.status}`);
-      }
+      await jobService.deleteJob(selectedJobToDelete.jobId);
+      setAlertMsg(`Job post ${selectedJobToDelete.title} removed!`);
+      await fetchJobs();
     } catch (error) {
       console.error('Error deleting job:', error);
       setAlertMsg(`Failed to remove job post ${selectedJobToDelete.title}: ${error.message || error}`);
@@ -588,16 +522,10 @@ const JobPostManagement = () => {
     if (!editJob?.jobId) return;
     try {
       console.log(`Attempting to edit job with ID: ${editJob.jobId}`, editJob);
-      const response = await ApiService.request(`Job/${editJob.jobId}`, 'PUT', editJob);
-
-      if (response.ok) {
-        setAlertMsg("Job post updated successfully!");
-        setShowEditModal(false);
-        fetchJobs();
-      } else {
-        const errorData = await response.json();
-        setEditError(errorData.message || `Failed to update job post: ${response.status}`);
-      }
+      await jobService.updateJob(editJob.jobId, editJob);
+      setAlertMsg("Job post updated successfully!");
+      setShowEditModal(false);
+      await fetchJobs();
     } catch (error) {
       console.error('Error updating job post:', error);
       setEditError(error.message || "Failed to update job post.");
@@ -608,16 +536,10 @@ const JobPostManagement = () => {
     e.preventDefault();
     try {
       console.log('Attempting to add new job post:', formJob);
-      const response = await ApiService.request('Job/create', 'POST', formJob);
-
-      if (response.ok) {
-        setAlertMsg("Job post added successfully!");
-        setShowAddModal(false);
-        fetchJobs();
-      } else {
-        const errorData = await response.json();
-        setAlertMsg(errorData.message || `Failed to add job post: ${response.status}`);
-      }
+      await jobService.createJob(formJob);
+      setAlertMsg("Job post added successfully!");
+      setShowAddModal(false);
+      await fetchJobs();
     } catch (error) {
       console.error('Error adding job post:', error);
       setAlertMsg(error.message || "Failed to add job post.");
