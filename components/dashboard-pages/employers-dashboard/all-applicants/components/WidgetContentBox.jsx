@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { applicationService } from "@/services/applicationService";
 import ApiService from "@/services/api.service";
+import { jobService } from "@/services/jobService";
 import { Tab, Tabs, TabList, TabPanel } from "react-tabs";
 import Link from "next/link";
 import Image from "next/image";
@@ -36,7 +37,7 @@ const WidgetContentBox = ({ jobId }) => {
       try {
         setLoading(true);
         console.log("WidgetContentBox: Attempting to fetch job details for jobId:", jobId);
-        const jobDetails = await ApiService.getJobById(jobId);
+        const jobDetails = await jobService.getJobById(jobId);
         if (jobDetails && jobDetails.title) {
           setJobTitle(jobDetails.title);
         } else {

@@ -37,31 +37,39 @@ const Index = () => {
         <Sidebar>
           <Menu>
             {mobileMenuData.map((item) => (
-              <SubMenu
-                className={
-                  isActiveParentChaild(item.items, usePathname())
-                    ? "menu-active"
-                    : ""
-                }
-                label={item.label}
-                key={item.id}
-              >
-                {item.items.map((menuItem, i) => (
-                  <MenuItem
-
-                  onClick={()=>router.push(menuItem.routePath)}
-                    className={
-                      isActiveLink(menuItem.routePath, usePathname())
-                        ? "menu-active-link"
-                        : ""
-                    }
-                    key={i}
-                    // routerLink={<Link href={menuItem.routePath} />}
-                  >
-                    {menuItem.name}
-                  </MenuItem>
-                ))}
-              </SubMenu>
+              item.items && item.items.length > 0 ? (
+                <SubMenu
+                  className={
+                    isActiveParentChaild(item.items, usePathname())
+                      ? "menu-active"
+                      : ""
+                  }
+                  label={item.label}
+                  key={item.id}
+                >
+                  {item.items.map((menuItem, i) => (
+                    <MenuItem
+                      onClick={() => router.push(menuItem.routePath)}
+                      className={
+                        isActiveLink(menuItem.routePath, usePathname())
+                          ? "menu-active-link"
+                          : ""
+                      }
+                      key={i}
+                    >
+                      {menuItem.name}
+                    </MenuItem>
+                  ))}
+                </SubMenu>
+              ) : (
+                <MenuItem
+                  onClick={() => router.push(item.routePath)}
+                  className={isActiveLink(item.routePath, usePathname()) ? "menu-active-link" : ""}
+                  key={item.id}
+                >
+                  {item.label}
+                </MenuItem>
+              )
             ))}
           </Menu>
         </Sidebar>

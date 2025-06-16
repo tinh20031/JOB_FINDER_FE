@@ -408,7 +408,9 @@ const FilterTopBox = () => {
          <div className="text-center py-5 text-danger">{error}</div>
        ) : ( // If not loading and no error, check if companies exist
          sortedAndPaginatedCompanies?.length > 0 ? ( // Show content if companies found after filtering/pagination
-           content
+           <div className="row">
+             {content}
+           </div>
          ) : ( // Show no results message
            <div className="text-center py-5">No companies found matching your criteria.</div>
          )

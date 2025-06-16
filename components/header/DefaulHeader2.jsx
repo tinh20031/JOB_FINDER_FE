@@ -131,7 +131,7 @@ const DefaulHeader2 = () => {
                 <Image
                   width={154}
                   height={50}
-                  src={require("@/public/images/jobfinder-logo.png").default || "/images/jobfinder-logo.png"}
+                  src="/images/jobfinder-logo.png"
                   alt="JobFinder logo"
                   title="JobFinder"
                   onError={(e) => { e.target.onerror = null; e.target.src = "/images/logo.svg"; }}
@@ -192,7 +192,7 @@ const DefaulHeader2 = () => {
                       alt="avatar"
                       width={50}
                       height={50}
-                      src={user?.image || user?.avatar || "/images/resource/candidate-1.png"}
+                      src={user?.image?.startsWith('http') ? user.image : user?.avatar?.startsWith('http') ? user.avatar : "/images/resource/candidate-1.png"}
                       className="thumb"
                     />
                     <span className="name">{user?.fullName || user?.name || 'My Account'}</span>
@@ -230,7 +230,7 @@ const DefaulHeader2 = () => {
                       alt="avatar"
                       width={50}
                       height={50}
-                      src={user?.image || user?.avatar || "/images/resource/candidate-1.png"}
+                      src={user?.image?.startsWith('http') ? user.image : user?.avatar?.startsWith('http') ? user.avatar : "/images/resource/candidate-1.png"}
                       className="thumb"
                     />
                     <span className="name">{user?.fullName || user?.name || 'My Account'}</span>
@@ -268,7 +268,7 @@ const DefaulHeader2 = () => {
                       alt="avatar"
                       width={50}
                       height={50}
-                      src={user?.image || user?.avatar || "/images/resource/candidate-1.png"}
+                      src={user?.image?.startsWith('http') ? user.image : user?.avatar?.startsWith('http') ? user.avatar : "/images/resource/candidate-1.png"}
                       className="thumb"
                     />
                     <span className="name">{user?.fullName || user?.name || 'My Account'}</span>

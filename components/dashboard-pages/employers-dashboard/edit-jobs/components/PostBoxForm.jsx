@@ -12,6 +12,7 @@ import Cookies from "js-cookie";
 import axios from "axios";
 import dynamic from 'next/dynamic';
 import 'react-quill/dist/quill.snow.css';
+import { motion, AnimatePresence } from 'framer-motion';
 
 const ReactQuill = dynamic(() => import('react-quill'), { ssr: false });
 
@@ -64,6 +65,48 @@ const PostBoxForm = ({ initialData, isEditing }) => {
   const [user, setUser] = useState(null);
 
   const [isClient, setIsClient] = useState(false);
+
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [showLeaveConfirmation, setShowLeaveConfirmation] = useState(false);
+  const [intendedPath, setIntendedPath] = useState(null);
+  const [showClearConfirm, setShowClearConfirm] = useState(false);
+  const [clearSuccess, setClearSuccess] = useState(false);
+
+  // Animation variants
+  const formVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: { 
+      opacity: 1, 
+      y: 0,
+      transition: { duration: 0.5 }
+    }
+  };
+
+  const itemVariants = {
+    hidden: { opacity: 0, x: -20 },
+    visible: { 
+      opacity: 1, 
+      x: 0,
+      transition: { duration: 0.3 }
+    }
+  };
+
+  const modalVariants = {
+    hidden: { opacity: 0, scale: 0.8 },
+    visible: { 
+      opacity: 1, 
+      scale: 1,
+      transition: { duration: 0.3 }
+    },
+    exit: { 
+      opacity: 0, 
+      scale: 0.8,
+      transition: { duration: 0.2 }
+    }
+  };
+
+  // Draft key for localStorage
+  const DRAFT_KEY = `job_edit_draft_${initialData?.jobId || 'new'}`;
 
   useEffect(() => {
     setIsClient(true);
@@ -366,11 +409,230 @@ const PostBoxForm = ({ initialData, isEditing }) => {
   // Determine if status select should be disabled
   const isStatusSelectDisabled = isEditing && formData.status === 0; // Disable if editing and status is Pending (0)
 
+  // Load draft data on mount
+  useEffect(() => {
+    const savedDraft = localStorage.getItem(DRAFT_KEY);
+    if (savedDraft) {
+      try {
+        const parsedDraft = JSON.parse(savedDraft);
+        setFormData(parsedDraft);
+        setHasUnsavedChanges(true);
+      } catch (error) {
+        console.error('Error loading draft:', error);
+      }
+    }
+  }, []);
+
+  // Auto-save draft when form data changes
+  useEffect(() => {
+    if (hasActualChanges()) {
+      localStorage.setItem(DRAFT_KEY, JSON.stringify(formData));
+      setHasUnsavedChanges(true);
+    }
+  }, [formData]);
+
+  // Check if there are actual changes in the form
+  const hasActualChanges = () => {
+    return formData.title.trim() !== '' || 
+           formData.description.trim() !== '' ||
+           formData.salary !== '' ||
+           formData.industryId !== 0 ||
+           formData.levelId !== 0 ||
+           formData.jobTypeId !== 0 ||
+           formData.experienceLevelId !== 0 ||
+           formData.expiryDate !== '' ||
+           formData.timeStart !== '' ||
+           formData.timeEnd !== '' ||
+           formData.provinceName !== '' ||
+           formData.addressDetail !== '';
+  };
+
+  // Handle navigation protection
+  useEffect(() => {
+    const handleBeforeUnload = (e) => {
+      if (hasUnsavedChanges && hasActualChanges()) {
+        e.preventDefault();
+        e.returnValue = '';
+      }
+    };
+
+    const handleClick = (e) => {
+      const anchor = e.target.closest('a');
+      if (anchor && hasUnsavedChanges && hasActualChanges()) {
+        e.preventDefault();
+        e.stopPropagation();
+        const href = anchor.getAttribute('href');
+        if (href) {
+          setIntendedPath(href);
+          setShowLeaveConfirmation(true);
+        }
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    document.addEventListener('click', handleClick, true);
+
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+      document.removeEventListener('click', handleClick, true);
+    };
+  }, [hasUnsavedChanges]);
+
+  const handleLeave = async (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setShowLeaveConfirmation(false);
+    if (intendedPath) {
+      try {
+        await router.push(intendedPath);
+      } catch (error) {
+        console.error('Navigation error:', error);
+      }
+    }
+  };
+
+  const handleStay = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setShowLeaveConfirmation(false);
+    setIntendedPath(null);
+    setErrors({});
+  };
+
+  const handleClearDraft = () => {
+    setShowClearConfirm(true);
+  };
+
+  const handleConfirmClear = () => {
+    localStorage.removeItem(DRAFT_KEY);
+    setFormData({
+      jobId: initialData?.jobId || 0,
+      title: '',
+      description: '',
+      companyId: initialData?.companyId || 0,
+      salary: "",
+      industryId: 0,
+      expiryDate: '',
+      levelId: 0,
+      jobTypeId: 0,
+      experienceLevelId: 0,
+      timeStart: '',
+      timeEnd: '',
+      status: initialData?.status || 0,
+      provinceName: '',
+      addressDetail: '',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    });
+    setHasUnsavedChanges(false);
+    setErrors({});
+    setError("");
+    setSuccess(false);
+    setShowClearConfirm(false);
+    
+    setClearSuccess(true);
+    setTimeout(() => {
+      setClearSuccess(false);
+    }, 2000);
+  };
+
+  const handleCancelClear = () => {
+    setShowClearConfirm(false);
+  };
+
   return (
-    <form className="default-form" onSubmit={handleSubmit}>
+    <motion.form 
+      className="default-form" 
+      onSubmit={handleSubmit}
+      initial="hidden"
+      animate="visible"
+      variants={formVariants}
+    >
       <div className="row">
-        {error && <div className="message-box error">{error}</div>}
-        {success && <div className="message-box success">Job {isEditing ? 'updated' : 'posted'} successfully!</div>}
+        {/* Error and Success Messages */}
+        <AnimatePresence>
+          {error && (
+            <motion.div 
+              className="message-box error"
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.3 }}
+            >
+              {error}
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        <AnimatePresence>
+          {success && (
+            <motion.div 
+              className="message-box success"
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.3 }}
+            >
+              Job updated successfully!
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        <AnimatePresence>
+          {clearSuccess && (
+            <motion.div 
+              className="message-box success"
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.3 }}
+            >
+              Draft cleared successfully!
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Draft Controls */}
+        <AnimatePresence>
+          {hasUnsavedChanges && (
+            <motion.div 
+              className="form-group col-lg-12 col-md-12"
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: "auto" }}
+              exit={{ opacity: 0, height: 0 }}
+              transition={{ duration: 0.3 }}
+            >
+              <div className="draft-controls" style={{ 
+                display: 'flex', 
+                justifyContent: 'space-between', 
+                alignItems: 'center',
+                marginBottom: '20px',
+                padding: '10px',
+                backgroundColor: '#f8f9fa',
+                borderRadius: '4px'
+              }}>
+                <motion.span 
+                  style={{ color: '#666' }}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.2 }}
+                >
+                  <i className="fas fa-save" style={{ marginRight: '8px' }}></i>
+                  You have unsaved changes
+                </motion.span>
+                <motion.button
+                  type="button"
+                  className="theme-btn btn-style-two"
+                  onClick={handleClearDraft}
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  Clear Draft
+                </motion.button>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* <!-- Input Fields --> */}
         <div className="form-group col-lg-12 col-md-12">
@@ -593,6 +855,151 @@ const PostBoxForm = ({ initialData, isEditing }) => {
           </button>
         </div>
       </div>
+
+      {/* Clear Confirmation Modal */}
+      <AnimatePresence>
+        {showClearConfirm && (
+          <motion.div 
+            className="modal-overlay"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            style={{
+              position: 'fixed',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              backgroundColor: 'rgba(0,0,0,0.5)',
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center',
+              zIndex: 9999
+            }}
+          >
+            <motion.div 
+              className="modal-content"
+              variants={modalVariants}
+              initial="hidden"
+              animate="visible"
+              exit="exit"
+              style={{
+                backgroundColor: 'white',
+                padding: '20px',
+                borderRadius: '8px',
+                maxWidth: '400px',
+                width: '100%'
+              }}
+            >
+              <motion.div
+                initial={{ scale: 0.5, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                transition={{ delay: 0.2 }}
+              >
+                <h3>Clear Draft</h3>
+                <p>Are you sure you want to clear all information? This action cannot be undone.</p>
+                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '20px' }}>
+                  <motion.button
+                    type="button"
+                    className="theme-btn btn-style-two"
+                    onClick={handleCancelClear}
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    Cancel
+                  </motion.button>
+                  <motion.button
+                    type="button"
+                    className="theme-btn btn-style-one"
+                    onClick={handleConfirmClear}
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    Clear
+                  </motion.button>
+                </div>
+              </motion.div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Leave Confirmation Modal */}
+      <AnimatePresence>
+        {showLeaveConfirmation && (
+          <motion.div 
+            className="modal-overlay"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+            }}
+            style={{
+              position: 'fixed',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              backgroundColor: 'rgba(0,0,0,0.5)',
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center',
+              zIndex: 9999
+            }}
+          >
+            <motion.div 
+              className="modal-content"
+              variants={modalVariants}
+              initial="hidden"
+              animate="visible"
+              exit="exit"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+              }}
+              style={{
+                backgroundColor: 'white',
+                padding: '20px',
+                borderRadius: '8px',
+                maxWidth: '400px',
+                width: '100%'
+              }}
+            >
+              <motion.div
+                initial={{ scale: 0.5, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                transition={{ delay: 0.2 }}
+              >
+                <h3>Unsaved Changes</h3>
+                <p>You have unsaved changes. Are you sure you want to leave?</p>
+                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '20px' }}>
+                  <motion.button
+                    type="button"
+                    className="theme-btn btn-style-two"
+                    onClick={handleStay}
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    Stay
+                  </motion.button>
+                  <motion.button
+                    type="button"
+                    className="theme-btn btn-style-one"
+                    onClick={handleLeave}
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    Leave
+                  </motion.button>
+                </div>
+              </motion.div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Success Modal */}
       {showSuccessModal && (
         <div className="modal-overlay">
@@ -617,7 +1024,7 @@ const PostBoxForm = ({ initialData, isEditing }) => {
           </div>
         </div>
       )}
-    </form>
+    </motion.form>
   );
 };
 

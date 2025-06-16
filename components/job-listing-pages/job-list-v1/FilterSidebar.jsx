@@ -84,17 +84,10 @@ const FilterSidebar = () => {
     fetchLookupData();
   }, []); // Mảng rỗng đảm bảo chỉ chạy một lần khi mount
 
-  // Hiển thị loading hoặc lỗi nếu cần
-  if (loadingLookupData) {
-    return <div className="inner-column">Loading filters...</div>;
-  }
-
-  if (lookupDataError) {
-    return <div className="inner-column text-danger">Error loading filters: {lookupDataError}</div>;
-  }
-
   return (
     <div className="inner-column">
+      {loadingLookupData && <div className="text-center py-3">Loading filters...</div>}
+      {lookupDataError && <div className="text-center py-3 text-danger">Error loading filters: {lookupDataError}</div>}
       <div className="filters-outer">
         <button
           type="button"
