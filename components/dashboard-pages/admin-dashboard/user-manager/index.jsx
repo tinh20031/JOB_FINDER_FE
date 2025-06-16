@@ -8,6 +8,7 @@ import Link from "next/link";
 import "./user-manager-animations.css";
 import ApiService from "../../../../services/api.service";
 import API_CONFIG from '../../../../config/api.config';
+import MobileMenu from "../../../header/MobileMenu";
 
 const defaultUser = { fullName: "", email: "", phone: "", roleId: "", password: "", status: "Active", skills: [], cvUrl: "", image: "" };
 
@@ -197,102 +198,208 @@ const UserManager = () => {
 
   // Form handlers
   const handleFormChange = (e) => {
-    const { name, value, files } = e.target;
-    if (name === "image" && files && files[0]) {
-      setSelectedImageFile(files[0]);
-      setFormUser({
-        ...formUser,
-        image: URL.createObjectURL(files[0])
-      });
-    } else {
-      setFormUser({
-        ...formUser,
-        [name]: name === "roleId" ? (value ? parseInt(value) : "") : value
-      });
+    const { name, value } = e.target;
+    setFormUser(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const handleImageChange = (e) => {
+    if (e.target.files && e.target.files[0]) {
+      setSelectedImageFile(e.target.files[0]);
+      // Optionally, set a preview for the image if needed in the form
+      setFormUser(prev => ({ ...prev, image: URL.createObjectURL(e.target.files[0]) }));
     }
   };
+
   const validateForm = () => {
-    if (!formUser.fullName || !formUser.email) {
-      setFormError("Full name and Email are required.");
+    if (!formUser.fullName || !formUser.email || !formUser.phone || !formUser.roleId) {
+      setFormError("All fields except password and CV are required.");
       return false;
     }
     if (showAddModal && !formUser.password) {
-      setFormError("Password is required.");
+      setFormError("Password is required for new user.");
       return false;
     }
+    if (formUser.password && formUser.password.length < 6) {
+      setFormError("Password must be at least 6 characters.");
+      return false;
+    }
+    setFormError("");
     return true;
   };
-  const handleFormSubmit = (e) => {
+
+  const handleFormSubmit = async (e) => {
     e.preventDefault();
     if (!validateForm()) return;
-    // Add or Edit
-    if (showAddModal) {
-      const formData = new FormData();
-      formData.append('fullName', formUser.fullName);
-      formData.append('email', formUser.email);
-      formData.append('phone', formUser.phone);
-      formData.append('roleId', formUser.roleId);
-      formData.append('password', formUser.password);
 
-      // Include Candidate-specific fields if needed by backend on add
-      if (formUser.roleId === 1) { // Assuming 1 is the ID for Candidate
-        formData.append('skills', JSON.stringify(formUser.skills || [])); // Assuming skills is an array
-        formData.append('cvUrl', formUser.cvUrl || '');
+    setLoading(true);
+    setFormError("");
+
+    const formDataToSend = new FormData();
+    for (const key in formUser) {
+      if (key !== 'image' && key !== 'avatar') { // Exclude image as it's handled separately
+        formDataToSend.append(key, formUser[key]);
       }
+    }
 
-      if (selectedImageFile) {
-        formData.append('imageFile', selectedImageFile);
-      } else if (formUser.image && showEditModal) {
-        formData.append('image', formUser.image);
+    if (selectedImageFile) {
+      formDataToSend.append('image', selectedImageFile);
+    } else if (formUser.image && !formUser.image.startsWith('blob:')) {
+      // If there's an existing image URL and no new file selected, send the existing URL as a string
+      formDataToSend.append('image', formUser.image);
+    }
+
+    try {
+      if (showAddModal) {
+        await ApiService.post(API_CONFIG.ENDPOINTS.USER.CREATE, formDataToSend, true); // true for multipart/form-data
+        setAlertMsg("User added successfully!");
+      } else if (editUser) {
+        await ApiService.put(API_CONFIG.ENDPOINTS.USER.UPDATE_BY_ID(editUser.id), formDataToSend, true); // true for multipart/form-data
+        setAlertMsg("User updated successfully!");
       }
-
-      ApiService.addUser(formData)
-        .then(() => {
-          setAlertMsg("User added successfully!");
-          fetchUsers();
-          setShowAddModal(false);
-        })
-        .catch((err) => setFormError(err.message || "Failed to add user."));
-    } else if (showEditModal) {
-      const formData = new FormData();
-      formData.append('fullName', formUser.fullName);
-      formData.append('email', formUser.email);
-      formData.append('phone', formUser.phone);
-
-      if (selectedImageFile) {
-        formData.append('imageFile', selectedImageFile);
-      }
-
-      formData.append('roleId', formUser.roleId); // Send the selected roleId
-      console.log('Submitting Edit Form:', { // Log data before appending to FormData
-        fullName: formUser.fullName,
-        email: formUser.email,
-        phone: formUser.phone,
-        roleId: formUser.roleId,
-        roleIdType: typeof formUser.roleId // Log type of roleId
-      });
-      console.log('FormData roleId value (should match above): ', formData.get('roleId'), typeof formData.get('roleId')); // Log value and type from FormData
-
-
-
-      ApiService.updateUser(editUser.id, formData)
-        .then(() => {
-          setAlertMsg("User updated successfully!");
-          fetchUsers();
-          setShowEditModal(false);
-        })
-        .catch((err) => setEditError(err.message || "Failed to update user."));
+      setShowAddModal(false);
+      setShowEditModal(false);
+      fetchUsers();
+    } catch (error) {
+      const errorMessage = error.response?.data?.message || error.message || "An error occurred.";
+      setFormError(errorMessage);
+      setAlertMsg("Failed to save user.");
+    } finally {
+      setLoading(false);
     }
   };
 
+
+  const getRoleName = (roleId) => {
+    const role = roles.find(r => r.id === roleId);
+    return role ? role.name : 'Unknown';
+  };
+
+  // CSS for responsive table (already applied in previous step)
+  const tableContainerStyle = {
+    overflowX: 'auto',
+  };
+
+  const customTableStyle = {
+    width: '100%',
+    borderCollapse: 'collapse',
+    marginTop: '20px',
+  };
+
+  const thTdStyle = {
+    border: '1px solid #ddd',
+    padding: '8px',
+    textAlign: 'left',
+  };
+
+  const thStyle = {
+    backgroundColor: '#f2f2f2',
+    fontWeight: 'bold',
+  };
+
+  const modalOverlayStyle = {
+    position: 'fixed',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 1000
+  };
+
+  const modalContentStyle = {
+    backgroundColor: '#fff',
+    padding: '20px',
+    borderRadius: '8px',
+    width: '90%',
+    maxWidth: '600px',
+    maxHeight: '90vh',
+    overflowY: 'auto',
+    position: 'relative'
+  };
+
+  const closeButtonStyle = {
+    position: 'absolute',
+    top: '10px',
+    right: '10px',
+    background: 'none',
+    border: 'none',
+    fontSize: '24px',
+    cursor: 'pointer',
+  };
+
+  // Responsive styles for filter and search
+  const filterContainerStyle = {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '10px',
+    marginBottom: '20px',
+  };
+
+  const filterInputStyle = {
+    padding: '8px',
+    borderRadius: '4px',
+    border: '1px solid #ddd',
+    width: '100%',
+    boxSizing: 'border-box',
+  };
+
+  const filterSelectStyle = {
+    padding: '8px',
+    borderRadius: '4px',
+    border: '1px solid #ddd',
+    width: '100%',
+    boxSizing: 'border-box',
+  };
+
+
   return (
-    <div className="page-wrapper dashboard">
+    <div className="page-wrapper dashboard" style={{background:'#f7f8fa', minHeight:'100vh'}}>
+      <style>{`
+        @media (max-width: 767px) {
+          .upper-title-box {
+            text-align: center;
+          }
+          .upper-title-box h3 {
+            text-align: center;
+            font-size: 24px;
+          }
+          .widget-title {
+            flex-direction: column;
+            align-items: center;
+          }
+          .widget-title h4 {
+            margin-bottom: 15px;
+          }
+          .widget-title .d-flex.align-items-center.gap-2 {
+            flex-direction: column;
+            width: 100%;
+            align-items: stretch !important;
+          }
+          .widget-title .d-flex.align-items-center.gap-2 .form-control,
+          .widget-title .d-flex.align-items-center.gap-2 .form-select,
+          .widget-title .d-flex.align-items-center.gap-2 .btn {
+            width: 100% !important;
+            margin-right: 0 !important;
+            margin-bottom: 10px;
+          }
+          .widget-title .d-flex.align-items-center.gap-2 .btn {
+            margin-top: 10px;
+          }
+        }
+      `}</style>
       <span className="header-span"></span>
       <DashboardHeader />
+      <MobileMenu />
       <DashboardAdminSidebar />
       <section className="user-dashboard">
         <div className="dashboard-outer">
-          <BreadCrumb title="User Manager" />
+          <BreadCrumb title="User Management" />
           <MenuToggler />
           {alertMsg && (
             <div className="alert alert-info" style={{marginBottom: 12}}>
@@ -303,36 +410,28 @@ const UserManager = () => {
             <div className="col-lg-12">
               <div className="ls-widget">
                 <div className="widget-title d-flex justify-content-between align-items-center">
-                  <h4>User Manager</h4>
+                  <h4>User List</h4>
                   <div className="d-flex align-items-center gap-2">
                     <input
                       type="text"
-                      className="form-control form-control-sm me-2"
-                      style={{width:220}}
+                      className="form-control form-control-sm"
+                      style={{width:200}}
                       placeholder="Search by name, email, phone..."
                       value={search}
-                      onChange={handleSearch}
+                      onChange={(e) => setSearch(e.target.value)}
                     />
-                    <select className="form-select form-select-sm me-2" style={{width:120}} value={filterRole} onChange={e=>setFilterRole(e.target.value)}>
-                      <option key="all" value="all">All Roles</option>
-                      {Array.isArray(roles) && roles.length > 0 ? (
-                        roles.map(role => (
-                          <option key={`filter-role-${role.id}`} value={role.id}>
-                            {role.name || `Role ${role.id}`}
-                          </option>
-                        ))
-                      ) : (
-                        <option value="" disabled>No roles available</option>
-                      )}
+                    <select className="form-select form-select-sm" style={{width:120}} value={filterRole} onChange={(e) => setFilterRole(e.target.value)}>
+                      <option value="all">All Roles</option>
+                      {roles.map(role => (
+                        <option key={role.id} value={role.id}>{role.name}</option>
+                      ))}
                     </select>
-                    <select className="form-select form-select-sm me-2" style={{width:120}} value={filterLock} onChange={e=>setFilterLock(e.target.value)}>
-                      <option key="all-status" value="all">All Status</option>
-                      <option key="locked" value="locked">Locked</option>
-                      <option key="unlocked" value="unlocked">Unlocked</option>
+                    <select className="form-select form-select-sm" style={{width:120}} value={filterLock} onChange={(e) => setFilterLock(e.target.value)}>
+                      <option value="all">All Lock Status</option>
+                      <option value="locked">Locked</option>
+                      <option value="unlocked">Unlocked</option>
                     </select>
-                    <button className="btn btn-primary" onClick={handleShowAdd}>
-                      Add User
-                    </button>
+                    <button className="btn btn-primary btn-sm" onClick={handleShowAdd}>Add New User</button>
                   </div>
                 </div>
                 <div className={`widget-content ${!loading ? 'fade-in' : ''}`}> 
@@ -340,71 +439,73 @@ const UserManager = () => {
                     <div className="spinner"></div>
                   ) : (
                     <>
-                    <table className="default-table manage-job-table">
-                      <thead>
-                        <tr>
-                          <th>ID</th>
-                          <th>Image</th>
-                          <th>Full Name</th>
-                          <th>Email</th>
-                          <th>Phone</th>
-                          <th>Role</th>
-                          <th>Actions</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {paginatedUsers.length === 0 ? (
-                          <tr><td colSpan={7}>No users found</td></tr>
-                        ) : (
-                          paginatedUsers.map((user) => {
-                            const isLocked = user.isActive === false;
-                            return (
-                              <tr key={user.id}>
-                                <td>{user.id}</td>
-                                <td>
-                                  <img 
-                                    src={user.image || '/images/default-avatar.png'} 
-                                    alt={user.fullName}
-                                    style={{width: '50px', height: '50px', borderRadius: '50%', objectFit: 'cover'}}
-                                  />
-                                </td>
-                                <td>{user.fullName}</td>
-                                <td>{user.email}</td>
-                                <td>{user.phone}</td>
-                                {/* Display the actual role name from user data */}
-                                <td>{user.role || 'Unknown Role'}</td>
-                                <td>
-                                  <button className="btn btn-sm me-1" onClick={() => handleShowDetail(user)} style={{display:'none'}}>View</button>
-                                  <Link href={`/admin-dashboard/user-manager/${user.id}`} className="btn btn-sm me-1">View</Link>
-                                  <button className="btn btn-sm me-1" onClick={() => handleShowEdit(user)}>Edit</button>
-                                  <button className="btn btn-sm me-1" onClick={() => handleShowDelete(user)}>Delete</button>
-                                  <button
-                                    className={`btn btn-sm me-1 ${isLocked ? 'btn-outline-danger' : 'btn-outline-secondary'}`}
-                                    onClick={() => handleToggleLock(user)}
-                                  >
-                                    {isLocked ? 'Unlock' : 'Lock'}
-                                  </button>
-                                </td>
-                              </tr>
-                            );
-                          })
-                        )}
-                      </tbody>
-                    </table>
+                    <div className="table-outer">
+                      <table className="default-table manage-job-table">
+                        <thead>
+                          <tr>
+                            <th>ID</th>
+                            <th>Image</th>
+                            <th>Full Name</th>
+                            <th>Email</th>
+                            <th>Phone</th>
+                            <th>Role</th>
+                            <th>Actions</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {paginatedUsers.length === 0 ? (
+                            <tr><td colSpan={7}>No users found</td></tr>
+                          ) : (
+                            paginatedUsers.map((user) => {
+                              const isLocked = user.isActive === false;
+                              return (
+                                <tr key={user.id}>
+                                  <td>{user.id}</td>
+                                  <td>
+                                    <img 
+                                      src={user.image || '/images/default-avatar.png'} 
+                                      alt={user.fullName}
+                                      style={{width: '50px', height: '50px', borderRadius: '50%', objectFit: 'cover'}}
+                                    />
+                                  </td>
+                                  <td>{user.fullName}</td>
+                                  <td>{user.email}</td>
+                                  <td>{user.phone}</td>
+                                  {/* Display the actual role name from user data */}
+                                  <td>{user.role || 'Unknown Role'}</td>
+                                  <td>
+                                    <button className="btn btn-sm me-1" onClick={() => handleShowDetail(user)} style={{display:'none'}}>View</button>
+                                    <Link href={`/admin-dashboard/user-manager/${user.id}`} className="btn btn-sm me-1">View</Link>
+                                    <button className="btn btn-sm me-1" onClick={() => handleShowEdit(user)}>Edit</button>
+                                    <button className="btn btn-sm me-1" onClick={() => handleShowDelete(user)}>Delete</button>
+                                    <button
+                                      className={`btn btn-sm me-1 ${isLocked ? 'btn-outline-danger' : 'btn-outline-secondary'}`}
+                                      onClick={() => handleToggleLock(user)}
+                                    >
+                                      {isLocked ? 'Unlock' : 'Lock'}
+                                    </button>
+                                  </td>
+                                </tr>
+                              );
+                            })
+                          )}
+                        </tbody>
+                      </table>
+                    </div>
                     {/* Pagination */}
                     {totalPages > 1 && (
                       <nav className="mt-3">
                         <ul className="pagination justify-content-end">
                           <li className={`page-item${currentPage===1?' disabled':''}`}>
-                            <button className="page-link" onClick={()=>handlePageChange(currentPage-1)} disabled={currentPage===1}>&laquo;</button>
+                            <button className="page-link" onClick={()=>setCurrentPage(currentPage-1)} disabled={currentPage===1}>&laquo;</button>
                           </li>
                           {Array.from({length: totalPages}, (_,i)=>(
                             <li key={i+1} className={`page-item${currentPage===i+1?' active':''}`}>
-                              <button className="page-link" onClick={()=>handlePageChange(i+1)}>{i+1}</button>
+                              <button className="page-link" onClick={()=>setCurrentPage(i+1)}>{i+1}</button>
                             </li>
                           ))}
                           <li className={`page-item${currentPage===totalPages?' disabled':''}`}>
-                            <button className="page-link" onClick={()=>handlePageChange(currentPage+1)} disabled={currentPage===totalPages}>&raquo;</button>
+                            <button className="page-link" onClick={()=>setCurrentPage(currentPage+1)} disabled={currentPage===totalPages}>&raquo;</button>
                           </li>
                         </ul>
                       </nav>
@@ -417,160 +518,207 @@ const UserManager = () => {
           </div>
         </div>
       </section>
-      {/* Edit Modal */}
-      {showEditModal && (
-        <div className="modal show" style={{display:'block'}}>
-          <div className="modal-dialog">
-            <div className="modal-content">
-              <form onSubmit={handleFormSubmit}>
-                <div className="modal-header">
-                  <h5 className="modal-title">Edit User</h5>
-                  <button className="btn-close" onClick={()=>setShowEditModal(false)} type="button"></button>
-                </div>
-                <div className="modal-body">
-                  {editError && <div className="alert alert-danger">{editError}</div>}
-                  <div className="mb-2">
-                    <label>Profile Image</label>
-                    <input 
-                      className="form-control" 
-                      type="file"
-                      name="image"
-                      onChange={handleFormChange}
-                      accept="image/*"
-                    />
-                    {(selectedImageFile || formUser.image) && (
-                      <img 
-                        src={selectedImageFile ? URL.createObjectURL(selectedImageFile) : formUser.image} 
-                        alt="Preview" 
-                        style={{width: '100px', height: '100px', objectFit: 'cover', marginTop: '10px', borderRadius: '50%'}}
-                      />
-                    )}
-                  </div>
-                  <div className="mb-2">
-                    <label>Full Name</label>
-                    <input className="form-control" name="fullName" value={formUser.fullName} onChange={handleFormChange} required />
-                  </div>
-                  <div className="mb-2">
-                    <label>Email</label>
-                    <input className="form-control" name="email" value={formUser.email} onChange={handleFormChange} required />
-                  </div>
-                  <div className="mb-2">
-                    <label>Phone</label>
-                    <input className="form-control" name="phone" value={formUser.phone} onChange={handleFormChange} />
-                  </div>
-                  <div className="mb-2">
-                    <label>Role</label>
-                    <select className="form-control" name="roleId" value={formUser.roleId || ""} onChange={handleFormChange}>
-                      {Array.isArray(roles) && roles.length > 0 ? (
-                        roles.map(role => (
-                          <option key={`edit-role-${role.id}`} value={role.id}>
-                            {role.name || `Role ${role.id}`}
-                          </option>
-                        ))
-                      ) : (
-                        <option value="" disabled>No roles available</option>
-                      )}
-                    </select>
-                  </div>
-                </div>
-                <div className="modal-footer">
-                  <button className="btn btn-secondary" type="button" onClick={()=>setShowEditModal(false)}>Cancel</button>
-                  <button className="btn btn-primary" type="submit">Save</button>
-                </div>
-              </form>
-            </div>
-          </div>
-        </div>
-      )}
-      {/* Add Modal */}
-      {showAddModal && (
-        <div className="modal show" style={{display:'block'}}>
-          <div className="modal-dialog">
-            <div className="modal-content">
-              <form onSubmit={handleFormSubmit}>
-                <div className="modal-header">
-                  <h5 className="modal-title">Add User</h5>
-                  <button className="btn-close" onClick={()=>setShowAddModal(false)} type="button"></button>
-                </div>
-                <div className="modal-body">
-                  {formError && <div className="alert alert-danger">{formError}</div>}
-                  <div className="mb-2">
-                    <label>Profile Image</label>
-                    <input 
-                      className="form-control" 
-                      type="file"
-                      name="image"
-                      onChange={handleFormChange}
-                      accept="image/*"
-                    />
-                    {selectedImageFile && (
-                      <img 
-                        src={URL.createObjectURL(selectedImageFile)} 
-                        alt="Preview" 
-                        style={{width: '100px', height: '100px', objectFit: 'cover', marginTop: '10px', borderRadius: '50%'}}
-                      />
-                    )}
-                  </div>
-                  <div className="mb-2">
-                    <label>Full Name</label>
-                    <input className="form-control" name="fullName" value={formUser.fullName} onChange={handleFormChange} required />
-                  </div>
-                  <div className="mb-2">
-                    <label>Email</label>
-                    <input className="form-control" name="email" value={formUser.email} onChange={handleFormChange} required />
-                  </div>
-                  <div className="mb-2">
-                    <label>Phone</label>
-                    <input className="form-control" name="phone" value={formUser.phone} onChange={handleFormChange} />
-                  </div>
-                  <div className="mb-2">
-                    <label>Role</label>
-                    <select className="form-control" name="roleId" value={formUser.roleId || ""} onChange={handleFormChange}>
-                      {Array.isArray(roles) && roles.length > 0 ? (
-                        roles.map(role => (
-                          <option key={`add-role-${role.id}`} value={role.id}>
-                            {role.name || `Role ${role.id}`}
-                          </option>
-                        ))
-                      ) : (
-                        <option value="" disabled>No roles available</option>
-                      )}
-                    </select>
-                  </div>
-                  <div className="mb-2">
-                    <label>Password</label>
-                    <input className="form-control" name="password" type="password" value={formUser.password} onChange={handleFormChange} required autoComplete="new-password" />
-                  </div>
-                </div>
-                <div className="modal-footer">
-                  <button className="btn btn-secondary" type="button" onClick={()=>setShowAddModal(false)}>Cancel</button>
-                  <button className="btn btn-primary" type="submit">Add</button>
-                </div>
-              </form>
-            </div>
-          </div>
-        </div>
-      )}
-      {/* Delete Modal */}
-      {showDeleteModal && (
-        <div className="modal show" style={{display:'block'}}>
-          <div className="modal-dialog">
+      {/* User Detail Modal */}
+      {showDetailModal && selectedUser && (
+        <div className="modal fade show" style={{display: 'block'}} tabIndex="-1" role="dialog">
+          <div className="modal-dialog modal-dialog-centered" role="document">
             <div className="modal-content">
               <div className="modal-header">
-                <h5 className="modal-title">Delete User</h5>
-                <button className="btn-close" onClick={()=>setShowDeleteModal(false)}></button>
+                <h5 className="modal-title">User Details</h5>
+                <button type="button" className="close" onClick={() => setShowDetailModal(false)} aria-label="Close">
+                  <span aria-hidden="true">&times;</span>
+                </button>
               </div>
               <div className="modal-body">
-                Are you sure you want to delete user <b>{selectedUser.fullName}</b>?
+                <div style={{textAlign:'center', marginBottom:'20px'}}>
+                  <img 
+                    src={selectedUser.image || '/images/default-avatar.png'}
+                    alt={selectedUser.fullName}
+                    style={{width:'100px', height:'100px', borderRadius:'50%', objectFit:'cover', border:'2px solid #eee'}}
+                  />
+                </div>
+                <p><strong>ID:</strong> {selectedUser.id}</p>
+                <p><strong>Full Name:</strong> {selectedUser.fullName}</p>
+                <p><strong>Email:</strong> {selectedUser.email}</p>
+                <p><strong>Phone:</strong> {selectedUser.phone}</p>
+                <p><strong>Role:</strong> {selectedUser.role}</p>
+                <p><strong>Status:</strong> {selectedUser.isActive ? "Active" : "Locked"}</p>
+                {selectedUser.roleId === 1 && (
+                  <>
+                    <p><strong>Skills:</strong> {selectedUser.skills ? selectedUser.skills.join(", ") : 'N/A'}</p>
+                    <p><strong>CV:</strong> {selectedUser.cvUrl ? <a href={selectedUser.cvUrl} target="_blank" rel="noopener noreferrer">View CV</a> : 'N/A'}</p>
+                  </>
+                )}
               </div>
               <div className="modal-footer">
-                <button className="btn btn-secondary" onClick={()=>setShowDeleteModal(false)}>Cancel</button>
-                <button className="btn btn-danger" onClick={handleDelete}>Delete</button>
+                <button type="button" className="btn btn-secondary" onClick={() => setShowDetailModal(false)}>Close</button>
               </div>
             </div>
           </div>
         </div>
       )}
+
+      {/* Edit User Modal */}
+      {showEditModal && (
+        <div className="modal fade show" style={{display: 'block'}} tabIndex="-1" role="dialog">
+          <div className="modal-dialog modal-dialog-centered" role="document">
+            <div className="modal-content">
+              <div className="modal-header">
+                <h5 className="modal-title">Edit User</h5>
+                <button type="button" className="close" onClick={() => setShowEditModal(false)} aria-label="Close">
+                  <span aria-hidden="true">&times;</span>
+                </button>
+              </div>
+              <form onSubmit={handleFormSubmit}>
+                <div className="modal-body">
+                  {editError && <div className="alert alert-danger">{editError}</div>}
+                  <div className="form-group mb-3">
+                    <label>Full Name</label>
+                    <input type="text" className="form-control" name="fullName" value={formUser.fullName} onChange={handleFormChange} />
+                  </div>
+                  <div className="form-group mb-3">
+                    <label>Email</label>
+                    <input type="email" className="form-control" name="email" value={formUser.email} onChange={handleFormChange} disabled={true} />
+                  </div>
+                  <div className="form-group mb-3">
+                    <label>Phone</label>
+                    <input type="text" className="form-control" name="phone" value={formUser.phone} onChange={handleFormChange} />
+                  </div>
+                  <div className="form-group mb-3">
+                    <label>Role</label>
+                    <select className="form-control" name="roleId" value={formUser.roleId} onChange={handleFormChange}>
+                      {roles.map(role => (
+                        <option key={role.id} value={role.id}>{role.name}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="form-group mb-3">
+                    <label>Status</label>
+                    <select className="form-control" name="isActive" value={formUser.isActive ? "true" : "false"} onChange={e => setFormUser({ ...formUser, isActive: e.target.value === "true" })}>
+                      <option value="true">Active</option>
+                      <option value="false">Locked</option>
+                    </select>
+                  </div>
+                  {formUser.roleId === 1 && (
+                    <>
+                      <div className="form-group mb-3">
+                        <label>Skills (comma separated)</label>
+                        <input type="text" className="form-control" name="skills" value={formUser.skills?.join(', ')} onChange={e => setFormUser({ ...formUser, skills: e.target.value.split(', ') })} />
+                      </div>
+                      <div className="form-group mb-3">
+                        <label>CV URL</label>
+                        <input type="text" className="form-control" name="cvUrl" value={formUser.cvUrl} onChange={handleFormChange} />
+                      </div>
+                    </>
+                  )}
+                  <div className="form-group mb-3">
+                    <label>Image</label>
+                    <input type="file" className="form-control" name="image" onChange={handleImageChange} />
+                    {formUser.image && (
+                      <img src={formUser.image} alt="Current" style={{width:'100px', height:'100px', objectFit:'cover', marginTop:'10px'}}/>
+                    )}
+                  </div>
+                </div>
+                <div className="modal-footer">
+                  <button type="button" className="btn btn-secondary" onClick={() => setShowEditModal(false)}>Close</button>
+                  <button type="submit" className="btn btn-primary">Save Changes</button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Add New User Modal */}
+      {showAddModal && (
+        <div className="modal fade show" style={{display: 'block'}} tabIndex="-1" role="dialog">
+          <div className="modal-dialog modal-dialog-centered" role="document">
+            <div className="modal-content">
+              <div className="modal-header">
+                <h5 className="modal-title">Add New User</h5>
+                <button type="button" className="close" onClick={() => setShowAddModal(false)} aria-label="Close">
+                  <span aria-hidden="true">&times;</span>
+                </button>
+              </div>
+              <form onSubmit={handleFormSubmit}>
+                <div className="modal-body">
+                  {formError && <div className="alert alert-danger">{formError}</div>}
+                  <div className="form-group mb-3">
+                    <label>Full Name</label>
+                    <input type="text" className="form-control" name="fullName" value={formUser.fullName} onChange={handleFormChange} />
+                  </div>
+                  <div className="form-group mb-3">
+                    <label>Email</label>
+                    <input type="email" className="form-control" name="email" value={formUser.email} onChange={handleFormChange} />
+                  </div>
+                  <div className="form-group mb-3">
+                    <label>Phone</label>
+                    <input type="text" className="form-control" name="phone" value={formUser.phone} onChange={handleFormChange} />
+                  </div>
+                  <div className="form-group mb-3">
+                    <label>Password</label>
+                    <input type="password" className="form-control" name="password" value={formUser.password} onChange={handleFormChange} />
+                  </div>
+                  <div className="form-group mb-3">
+                    <label>Role</label>
+                    <select className="form-control" name="roleId" value={formUser.roleId} onChange={handleFormChange}>
+                      <option value="">Select Role</option>
+                      {roles.map(role => (
+                        <option key={role.id} value={role.id}>{role.name}</option>
+                      ))}
+                    </select>
+                  </div>
+                  {formUser.roleId === 1 && (
+                    <>
+                      <div className="form-group mb-3">
+                        <label>Skills (comma separated)</label>
+                        <input type="text" className="form-control" name="skills" value={formUser.skills?.join(', ')} onChange={e => setFormUser({ ...formUser, skills: e.target.value.split(', ') })} />
+                      </div>
+                      <div className="form-group mb-3">
+                        <label>CV URL</label>
+                        <input type="text" className="form-control" name="cvUrl" value={formUser.cvUrl} onChange={handleFormChange} />
+                      </div>
+                    </>
+                  )}
+                  <div className="form-group mb-3">
+                    <label>Image</label>
+                    <input type="file" className="form-control" name="image" onChange={handleImageChange} />
+                  </div>
+                </div>
+                <div className="modal-footer">
+                  <button type="button" className="btn btn-secondary" onClick={() => setShowAddModal(false)}>Close</button>
+                  <button type="submit" className="btn btn-primary">Add User</button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete User Confirmation Modal */}
+      {showDeleteModal && selectedUser && (
+        <div className="modal fade show" style={{display: 'block'}} tabIndex="-1" role="dialog">
+          <div className="modal-dialog modal-dialog-centered" role="document">
+            <div className="modal-content">
+              <div className="modal-header">
+                <h5 className="modal-title">Confirm Delete</h5>
+                <button type="button" className="close" onClick={() => setShowDeleteModal(false)} aria-label="Close">
+                  <span aria-hidden="true">&times;</span>
+                </button>
+              </div>
+              <div className="modal-body">
+                Are you sure you want to delete user <strong>{selectedUser.fullName}</strong>?
+              </div>
+              <div className="modal-footer">
+                <button type="button" className="btn btn-secondary" onClick={() => setShowDeleteModal(false)}>Cancel</button>
+                <button type="button" className="btn btn-danger" onClick={handleDelete}>Delete</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+
     </div>
   );
 };

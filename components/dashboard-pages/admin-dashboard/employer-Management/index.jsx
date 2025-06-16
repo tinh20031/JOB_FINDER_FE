@@ -4,6 +4,7 @@ import DashboardAdminSidebar from "../../../header/DashboardAdminSidebar";
 import BreadCrumb from "../../BreadCrumb";
 import MenuToggler from "../../MenuToggler";
 import DashboardHeader from "../../../header/DashboardHeaderAdmin";
+import MobileMenu from "../../../header/MobileMenu";
 import "../user-manager/user-manager-animations.css";
 import ApiService from "../../../../services/api.service";
 
@@ -196,9 +197,38 @@ const EmployerManagement = () => {
           padding: 4px 12px;
           border-radius: 8px;
         }
-        @media (max-width: 700px) {
+        @media (max-width: 767px) {
           .employer-card { flex-direction: column; align-items: flex-start; }
           .employer-actions { flex-direction: row; align-items: center; margin-top: 12px; }
+          .employer-meta { flex-wrap: wrap; }
+          
+          /* Styles for header and filters */
+          .upper-title-box {
+            text-align: center;
+          }
+          .upper-title-box h3 {
+            text-align: center;
+            font-size: 24px;
+          }
+          .widget-title {
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+          }
+          .widget-title h4 {
+            margin-bottom: 15px;
+          }
+          .widget-title .d-flex.flex-wrap.gap-2.align-items-center {
+            flex-direction: column;
+            align-items: stretch !important;
+          }
+          .widget-title .d-flex.flex-wrap.gap-2.align-items-center .form-control,
+          .widget-title .d-flex.flex-wrap.gap-2.align-items-center .form-select,
+          .widget-title .d-flex.flex-wrap.gap-2.align-items-center .btn {
+            width: 100% !important;
+            margin-right: 0 !important;
+            margin-bottom: 10px;
+          }
         }
         .btn.btn-sm:hover, .btn.btn-sm:focus {
           background: #f5f7fa;
@@ -234,9 +264,15 @@ const EmployerManagement = () => {
           color: #1967d2; /* Blue color on hover */
         }
       `}</style>
+
       <span className="header-span"></span>
       <DashboardHeader />
+
+      <MobileMenu />
+      {/* <!-- End MobileMenu --> */}
+
       <DashboardAdminSidebar />
+
       <section className="user-dashboard">
         <div className="dashboard-outer">
           <BreadCrumb title="Company Management" />
@@ -283,36 +319,35 @@ const EmployerManagement = () => {
                         paginatedEmployers.map((emp) => (
                           <div className="employer-card" key={emp.Id}>
                             <div className="employer-info">
-                              <img className="employer-logo" src={emp.UrlCompanyLogo || emp.ImageLogoLgr} alt="logo" />
-                              <div>
-                                <div style={{fontWeight:600, fontSize:20, marginBottom:4}}>
-                                  <a href={`/employers-single-v1/${emp.Id}`} style={{textDecoration: 'none', cursor: 'pointer'}}>
-                                    {emp.CompanyName}
-                                  </a>
-                                </div>
-                                <div className="employer-meta">
-                                  <span><i className="fa fa-map-marker-alt" style={{marginRight:4}}></i> {emp.Location}</span>
-                                  <span><i className="fa fa-users" style={{marginRight:4}}></i> {emp.TeamSize}</span>
-                                  <span><i className="fa fa-briefcase" style={{marginRight:4}}></i> {emp.IndustryName}</span>
-                                  {emp.IsVerified ? (
-                                    <span className="badge bg-success">Verified</span>
-                                  ) : (
-                                    <span className="badge bg-warning">Pending Approval</span>
-                                  )}
+                                <img className="employer-logo" src={emp.UrlCompanyLogo || emp.ImageLogoLgr} alt="logo" />
+                                <div>
+                                  <div style={{fontWeight:600, fontSize:20, marginBottom:4}}>
+                                    <a href={`/employers-single-v1/${emp.Id}`} style={{textDecoration: 'none', cursor: 'pointer'}}>
+                                      {emp.CompanyName}
+                                    </a>
+                                  </div>
+                                  <div className="employer-meta">
+                                    <span><i className="fa fa-map-marker-alt" style={{marginRight:4}}></i> {emp.Location}</span>
+                                    <span><i className="fa fa-users" style={{marginRight:4}}></i> {emp.TeamSize}</span>
+                                    <span><i className="fa fa-briefcase" style={{marginRight:4}}></i> {emp.IndustryName}</span>
+                                    {emp.IsVerified ? (
+                                      <span className="badge bg-success">Verified</span>
+                                    ) : (
+                                      <span className="badge bg-warning">Pending Approval</span>
+                                    )}
+                                  </div>
                                 </div>
                               </div>
+                              <div className="employer-actions">
+                                {/* Removed View Profile and Edit buttons */}
+                                {!emp.IsVerified && (
+                                  <button className="btn btn-sm me-1" onClick={() => handleVerify(emp.Id)}>Approve</button>
+                                )}
+                                <button className="btn btn-sm lock-toggle-btn" onClick={() => handleToggleLock(emp.Id, emp.IsLocked)}>{emp.IsLocked ? "Unlock" : "Lock"}</button>
+                              </div>
                             </div>
-                            <div className="employer-actions">
-                              {/* Removed View Profile and Edit buttons */}
-                              {!emp.IsVerified && (
-                                <button className="btn btn-sm me-1" onClick={() => handleVerify(emp.Id)}>Approve</button>
-                              )}
-                              <button className="btn btn-sm lock-toggle-btn" onClick={() => handleToggleLock(emp.Id, emp.IsLocked)}>{emp.IsLocked ? "Unlock" : "Lock"}</button>
-                            </div>
-                          </div>
-                        ))
-                      )}
-                      {/* Pagination */}
+                          ))
+                        )}
                       {totalPages > 1 && (
                         <nav className="mt-3">
                           <ul className="pagination justify-content-end">

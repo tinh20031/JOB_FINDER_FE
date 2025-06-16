@@ -76,6 +76,7 @@ const FormContent = ({ onRegistrationSuccess }) => {
           required 
           value={formData.fullName}
           onChange={handleChange}
+          className="form-control" 
         />
       </div>
       {/* fullName */}
@@ -89,6 +90,7 @@ const FormContent = ({ onRegistrationSuccess }) => {
           required 
           value={formData.email}
           onChange={handleChange}
+          className="form-control" 
         />
       </div>
       {/* email */}
@@ -103,6 +105,8 @@ const FormContent = ({ onRegistrationSuccess }) => {
           value={formData.phone}
           onChange={handleChange}
           className="form-control" 
+          
+  
         />
       </div>
       {/* phone */}
@@ -117,6 +121,7 @@ const FormContent = ({ onRegistrationSuccess }) => {
           required
           value={formData.password}
           onChange={handleChange}
+          className="form-control" 
         />
       </div>
       {/* password */}
