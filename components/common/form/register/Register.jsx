@@ -4,14 +4,20 @@ import Form from "./FormContent";
 import Link from "next/link";
 
 const Register = ({ isPopup = false, onRegistrationSuccess }) => {
-  
+
   return (
     <div className="form-inner">
       <h3>Create a JobFinder Account</h3>
 
-      
+
+      <div className="form-group register-dual">
+          </div>
+        {/* End .form-group */}
+
           <Form onRegistrationSuccess={onRegistrationSuccess} />
-        
+        {/* End cadidates Form */}
+
+        {/* End Employer Form */}
       {/* End form-group */}
 
       <div className="bottom-box">
