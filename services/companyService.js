@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const API_URL = "/api";
-
+// const API_URL = "http://localhost:5194/api/";
 // Hàm lấy token từ localStorage hoặc cookie
 function getToken() {
   let token = localStorage.getItem('token');

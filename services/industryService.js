@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const API_URL = "/api";
-
+// const API_URL = "http://localhost:5194/api/";
 export const industryService = {
     // Get all industries
     getAll: async () => {

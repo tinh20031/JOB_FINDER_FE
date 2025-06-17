@@ -2,6 +2,8 @@ import axios from 'axios';
 import Cookies from 'js-cookie';
 
 const API_URL = "/api";
+// const API_URL = "http://localhost:5194/api/";
+
 
 // Helper function to get token
 const getToken = () => {
