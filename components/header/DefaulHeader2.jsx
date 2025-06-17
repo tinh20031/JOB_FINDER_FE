@@ -190,12 +190,13 @@ const DefaulHeader2 = () => {
               {role === 'Company' && (
                 <div className="dropdown dashboard-option">
                   <a className="dropdown-toggle" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                    <Image
+                    <img
                       alt="avatar"
                       width={50}
                       height={50}
                       src={user?.image?.startsWith('http') ? user.image : user?.avatar?.startsWith('http') ? user.avatar : "/images/resource/candidate-1.png"}
                       className="thumb"
+                      style={{ objectFit: 'cover', objectPosition: 'center', borderRadius: '50%' }}
                     />
                     <span className="name">{user?.fullName || user?.name || 'My Account'}</span>
                   </a>
@@ -228,12 +229,13 @@ const DefaulHeader2 = () => {
               {role === 'Candidate' && (
                 <div className="dropdown dashboard-option">
                   <a className="dropdown-toggle" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                    <Image
+                    <img
                       alt="avatar"
                       width={50}
                       height={50}
                       src={user?.image?.startsWith('http') ? user.image : user?.avatar?.startsWith('http') ? user.avatar : "/images/resource/candidate-1.png"}
                       className="thumb"
+                      style={{ objectFit: 'cover', objectPosition: 'center', borderRadius: '50%' }}
                     />
                     <span className="name">{user?.fullName || user?.name || 'My Account'}</span>
                   </a>
@@ -266,12 +268,13 @@ const DefaulHeader2 = () => {
               {role === 'Admin' && (
                 <div className="dropdown dashboard-option">
                   <a className="dropdown-toggle" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                    <Image
+                    <img
                       alt="avatar"
                       width={50}
                       height={50}
                       src={user?.image?.startsWith('http') ? user.image : user?.avatar?.startsWith('http') ? user.avatar : "/images/resource/candidate-1.png"}
                       className="thumb"
+                      style={{ objectFit: 'cover', objectPosition: 'center', borderRadius: '50%' }}
                     />
                     <span className="name">{user?.fullName || user?.name || 'My Account'}</span>
                   </a>

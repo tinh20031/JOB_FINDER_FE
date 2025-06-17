@@ -131,12 +131,13 @@ const DashboardHeader = () => {
                                 data-bs-toggle="dropdown"
                                 aria-expanded="false"
                             >
-                                <Image
+                                <img
                                     alt="avatar"
                                     className="thumb"
                                     src={displayAvatar}
                                     width={50}
                                     height={50}
+                                    style={{ objectFit: 'cover', objectPosition: 'center', borderRadius: '50%' }}
                                 />
                                 <span className="name">{displayUserName}</span>
                             </a>
