@@ -38,6 +38,9 @@ const JobDetailsDescriptions = ({ jobId }) => {
     <div className="job-detail">
       <h4>Job Description</h4>
       <div dangerouslySetInnerHTML={{ __html: job.description }} />
+      
+      <h4>Education Requirements</h4>
+      <div dangerouslySetInnerHTML={{ __html: job.education }} />
     </div>
   );
 };

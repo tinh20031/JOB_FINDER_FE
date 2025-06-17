@@ -33,6 +33,7 @@ const PostBoxForm = ({ initialData, isEditing }) => {
     jobId: 0,
     title: '',
     description: '',
+    education: '',
     companyId: 0,
     salary: "",
     industryId: 0,
@@ -169,6 +170,9 @@ const PostBoxForm = ({ initialData, isEditing }) => {
     if (!formData.description.trim()) {
       newErrors.description = 'Job description is required';
     }
+    if (!formData.education.trim()) {
+      newErrors.education = 'Education requirements are required';
+    }
     if (!formData.salary) {
       newErrors.salary = 'Salary is required';
     }
@@ -275,6 +279,20 @@ const PostBoxForm = ({ initialData, isEditing }) => {
     }
   };
 
+  const handleEducationChange = (value) => {
+    setFormData(prev => ({
+      ...prev,
+      education: value,
+    }));
+    // Clear error when user starts typing
+    if (errors.education) {
+      setErrors(prev => ({
+        ...prev,
+        education: ''
+      }));
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     console.log("Submit clicked", formData, user);
@@ -308,6 +326,7 @@ const PostBoxForm = ({ initialData, isEditing }) => {
       const commonData = {
         title: formData.title,
         description: formData.description,
+        education: formData.education,
         salary: parseFloat(formData.salary),
         industryId: formData.industryId,
         levelId: formData.levelId,
@@ -382,6 +401,7 @@ const PostBoxForm = ({ initialData, isEditing }) => {
           jobId: 0,
           title: '',
           description: '',
+          education: '',
           companyId: 0,
           salary: "",
           industryId: 0,
@@ -435,6 +455,7 @@ const PostBoxForm = ({ initialData, isEditing }) => {
   const hasActualChanges = () => {
     return formData.title.trim() !== '' || 
            formData.description.trim() !== '' ||
+           formData.education.trim() !== '' ||
            formData.salary !== '' ||
            formData.industryId !== 0 ||
            formData.levelId !== 0 ||
@@ -509,6 +530,7 @@ const PostBoxForm = ({ initialData, isEditing }) => {
       jobId: initialData?.jobId || 0,
       title: '',
       description: '',
+      education: '',
       companyId: initialData?.companyId || 0,
       salary: "",
       industryId: 0,
@@ -681,6 +703,42 @@ const PostBoxForm = ({ initialData, isEditing }) => {
             ></textarea>
           )}
           {errors.description && <span className="error-message">{errors.description}</span>}
+        </div>
+
+        <div className="form-group col-lg-12 col-md-12">
+          <label>Education Requirements</label>
+          {isClient ? (
+            <ReactQuill
+              theme="snow"
+              value={formData.education}
+              onChange={handleEducationChange}
+              modules={{
+                toolbar: [
+                  [{ 'header': [1, 2, false] }],
+                  ['bold', 'italic', 'underline', 'strike', 'blockquote'],
+                  [{ 'list': 'ordered' }, { 'list': 'bullet' }, { 'indent': '-1' }, { 'indent': '+1' }],
+                  ['link', 'image'],
+                  ['clean']
+                ]
+              }}
+              formats={[
+                'header',
+                'bold', 'italic', 'underline', 'strike', 'blockquote',
+                'list', 'bullet', 'indent',
+                'link', 'image'
+              ]}
+              className="job-description-quill"
+            />
+          ) : (
+            <textarea
+              name="education"
+              placeholder="Education Requirements"
+              value={formData.education}
+              onChange={handleInputChange}
+              rows="8"
+            ></textarea>
+          )}
+          {errors.education && <span className="error-message">{errors.education}</span>}
         </div>
 
         <div className="form-group col-lg-6 col-md-12">
