@@ -60,7 +60,7 @@ const ChatBoxContentField = ({ messages, sendMessage, currentChatPartner, curren
 
       <div className="card-body msg_card_body">
         {messages.map((msg, index) => {
-          const parsedTimestamp = msg.timestamp ? new Date(msg.timestamp) : null;
+          const parsedTimestamp = msg.sentAt ? new Date(msg.sentAt) : null;
           const timeToDisplay = parsedTimestamp && isValid(parsedTimestamp) ? format(parsedTimestamp, 'HH:mm') : '';
 
           const isMyMessage = msg.senderId === currentUserId;

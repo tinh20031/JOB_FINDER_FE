@@ -5,7 +5,7 @@ import { formatDistanceToNowStrict, parseISO } from 'date-fns';
 import { enUS } from 'date-fns/locale';
 import { authService } from "../../../../../services/authService";
 
-const ChatboxContactList = ({ onContactSelect, currentChatPartnerId, contacts, loading, error }) => {
+const ChatboxContactList = ({ onContactSelect, currentChatPartnerId, contacts = [], loading = false, error = null, unreadContactIds = [] }) => {
     const [searchQuery, setSearchQuery] = useState('');
     const [currentUserId, setCurrentUserId] = useState(null);
 
@@ -53,7 +53,7 @@ const ChatboxContactList = ({ onContactSelect, currentChatPartnerId, contacts, l
                     filteredContacts.map((contact) => (
                         <li
                             key={contact.id}
-                            className={`contact-item ${contact.id === currentChatPartnerId ? "active" : ""}`}
+                            className={`contact-item ${contact.id === currentChatPartnerId ? "active" : ""} ${unreadContactIds.includes(contact.id) ? "unread" : ""}`}
                             onClick={() => onContactSelect(contact.id)}
                         >
                             <div className="contact-info">
@@ -62,11 +62,14 @@ const ChatboxContactList = ({ onContactSelect, currentChatPartnerId, contacts, l
                                         src={contact.avatar}
                                         className="rounded-circle user_img"
                                         alt={contact.name}
-                                        width={48}
-                                        height={48}
+                                        width={60}
+                                        height={60}
                                     />
                                     {contact.unreadCount > 0 && (
                                         <span className="unread-badge-on-avatar">{contact.unreadCount}</span>
+                                    )}
+                                    {unreadContactIds.includes(contact.id) && (
+                                        <span className="unread-badge"></span>
                                     )}
                                 </div>
                                 <div className="message-overview">
@@ -235,6 +238,19 @@ const ChatboxContactList = ({ onContactSelect, currentChatPartnerId, contacts, l
           padding: 20px;
           text-align: center;
           color: #999;
+        }
+
+        .contact-item.unread {
+          background: #e6f7ff;
+          font-weight: bold;
+        }
+        .unread-badge {
+          display: inline-block;
+          width: 10px;
+          height: 10px;
+          background: #1890ff;
+          border-radius: 50%;
+          margin-left: 8px;
         }
       `}</style>
     </div>

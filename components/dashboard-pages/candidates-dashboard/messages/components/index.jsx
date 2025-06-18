@@ -22,6 +22,7 @@ const ChatBox = () => {
   const [currentUserId, setCurrentUserId] = useState(null);
   const [currentUserFullName, setCurrentUserFullName] = useState('');
   const [currentUserProfileImage, setCurrentUserProfileImage] = useState('');
+  const [unreadContactIds, setUnreadContactIds] = useState([]);
 
   // Initialize user data
   useEffect(() => {
@@ -130,6 +131,11 @@ const ChatBox = () => {
             timestamp: messageData.sentAt || new Date().toISOString()
           }]);
         }
+        // Hiệu ứng nổi bật khi có tin nhắn mới
+        const contactId = messageData.senderId === currentUserId ? messageData.receiverId : messageData.senderId;
+        if (contactId !== currentChatPartnerId) {
+          setUnreadContactIds(prev => prev.includes(contactId) ? prev : [...prev, contactId]);
+        }
         // Tối ưu cập nhật chatContacts local, không fetch lại toàn bộ
         setChatContacts(prevContacts => {
           const contactId = messageData.senderId === currentUserId ? messageData.receiverId : messageData.senderId;
@@ -237,9 +243,7 @@ const ChatBox = () => {
   const handleContactSelect = (partnerId) => {
     if (partnerId !== currentChatPartnerId) {
       setCurrentChatPartnerId(partnerId);
-      console.log("Selected partner ID:", partnerId);
-      const selectedPartner = chatContacts.find(contact => contact.id === partnerId);
-      console.log("Selected partner object:", selectedPartner);
+      setUnreadContactIds(prev => prev.filter(id => id !== partnerId));
     }
   };
 
@@ -267,6 +271,7 @@ const ChatBox = () => {
               contacts={chatContacts}
               loading={loadingContacts}
               error={errorLoadingContacts}
+              unreadContactIds={unreadContactIds}
             />
           </div>
         </div>
