@@ -80,3 +80,13 @@
     background-color: #e0e0e0;
   }
 }
+
+/* Fix radio button size and shape (always small, round, like Bootstrap) */
+input[type="radio"].form-check-input {
+  width: 16px !important;
+  height: 16px !important;
+  padding: 0 !important;
+  border-radius: 50% !important;
+  appearance: auto !important;
+  -webkit-appearance: radio !important;
+}
