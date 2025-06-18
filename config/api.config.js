@@ -133,6 +133,8 @@ const API_CONFIG = {
     JOB_TYPE: '/JobType',
     EXPERIENCE_LEVEL: '/ExperienceLevels',
     INDUSTRY: '/Industry',
+    JOB_SKILLS: '/JobSkill',
+    SKILLS: '/Skill',
   },
 
   // Helper functions để tạo URL đầy đủ

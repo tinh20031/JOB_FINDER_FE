@@ -13,6 +13,13 @@ import { clearLoginState } from "../../features/auth/authSlice";
 import { useRouter } from "next/navigation";
 import { useDispatch } from "react-redux";
 
+const getValidAvatarPath = (user) => {
+    const avatar = user?.avatar || user?.image;
+    if (avatar && typeof avatar === 'string' && (avatar.startsWith('/') || avatar.startsWith('http://') || avatar.startsWith('https://'))) {
+        return avatar;
+    }
+    return "/images/resource/company-6.png";
+};
 
 const DashboardHeader = () => {
     const [navbar, setNavbar] = useState(false);
@@ -32,7 +39,7 @@ const DashboardHeader = () => {
         if (user) {
             console.log('DashboardHeader: Using user from Redux', user);
             setDisplayUserName(user.fullName || user.name || "My Account");
-            setDisplayAvatar(user.avatar || user.image || "/images/resource/company-6.png");
+            setDisplayAvatar(getValidAvatarPath(user));
         } else if (typeof window !== 'undefined') { // If not in Redux, try localStorage
             const userString = localStorage.getItem('user');
             if (userString) {
@@ -40,7 +47,7 @@ const DashboardHeader = () => {
                     const userObj = JSON.parse(userString);
                     console.log('DashboardHeader: Using user from localStorage', userObj);
                     setDisplayUserName(userObj.fullName || userObj.name || "My Account");
-                    setDisplayAvatar(userObj.avatar || userObj.image || "/images/resource/company-6.png");
+                    setDisplayAvatar(getValidAvatarPath(userObj));
                 } catch (e) {
                     console.error('DashboardHeader: Failed to parse user from localStorage', e);
                     setDisplayUserName("My Account");
@@ -124,12 +131,13 @@ const DashboardHeader = () => {
                                 data-bs-toggle="dropdown"
                                 aria-expanded="false"
                             >
-                                <Image
+                                <img
                                     alt="avatar"
                                     className="thumb"
                                     src={displayAvatar}
                                     width={50}
                                     height={50}
+                                    style={{ objectFit: 'cover', objectPosition: 'center', borderRadius: '50%' }}
                                 />
                                 <span className="name">{displayUserName}</span>
                             </a>

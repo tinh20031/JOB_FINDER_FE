@@ -45,11 +45,10 @@ const LogoCoverUploader = ({ onLogoChange, onCoverChange, logoPreviewUrl, coverP
                     >
                         {logoPreviewUrl ? (
                             <div style={{ position: 'relative', width: '100%', height: '100%' }}>
-                                <Image
+                                <img
                                     src={logoPreviewUrl}
                                     alt="Logo Preview"
-                                    fill
-                                    style={{ objectFit: 'contain' }}
+                                    style={{ objectFit: 'contain', width: '100%', height: '100%' }}
                                 />
                             </div>
                         ) : initialLogoUrl ? (
@@ -91,11 +90,10 @@ const LogoCoverUploader = ({ onLogoChange, onCoverChange, logoPreviewUrl, coverP
                     >
                         {coverPreviewUrl ? (
                             <div style={{ position: 'relative', width: '100%', height: '100%' }}>
-                                <Image
+                                <img
                                     src={coverPreviewUrl}
                                     alt="Cover Preview"
-                                    fill
-                                    style={{ objectFit: 'contain' }}
+                                    style={{ objectFit: 'contain', width: '100%', height: '100%' }}
                                 />
                             </div>
                         ) : initialCoverUrl ? (
