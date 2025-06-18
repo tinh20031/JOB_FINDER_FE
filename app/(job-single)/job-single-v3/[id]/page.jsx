@@ -19,6 +19,7 @@ import { companyProfileService } from "@/services/companyProfileService";
 import DefaulHeader2 from "@/components/header/DefaulHeader2";
 import ApiService from "@/services/api.service";
 import API_CONFIG from "@/config/api.config";
+import { notFound } from 'next/navigation';
 
 const JobSingleDynamicV3 = ({ params }) => {
   const [job, setJob] = useState(null);
@@ -27,6 +28,7 @@ const JobSingleDynamicV3 = ({ params }) => {
   const [jobTypes, setJobTypes] = useState([]);
   const [experienceLevels, setExperienceLevels] = useState([]);
   const [company, setCompany] = useState(null);
+  const [fetchError, setFetchError] = useState(null);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -39,11 +41,17 @@ const JobSingleDynamicV3 = ({ params }) => {
           ApiService.get(API_CONFIG.ENDPOINTS.EXPERIENCE_LEVEL),
         ]);
 
+        if (!jobResponse) {
+          notFound();
+          return;
+        }
+
         setJob(jobResponse);
         setIndustries(industriesResponse);
         setLevels(levelsResponse);
         setJobTypes(jobTypesResponse);
         setExperienceLevels(experienceLevelsResponse);
+        setFetchError(null);
 
         if (jobResponse?.companyId) {
           companyProfileService.getCompanyProfile(jobResponse.companyId)
@@ -55,7 +63,11 @@ const JobSingleDynamicV3 = ({ params }) => {
         }
 
       } catch (error) {
-        console.error("Error fetching job details or related data:", error);
+        if (error?.response?.status === 403 || error?.response?.status === 404) {
+          notFound();
+          return;
+        }
+        setFetchError(error);
         setJob(null);
         setIndustries([]);
         setLevels([]);
@@ -109,8 +121,12 @@ const JobSingleDynamicV3 = ({ params }) => {
     ? levels.find(l => l.id === job.levelId)?.levelName || "N/A"
     : "N/A";
 
-  if (!job || industries.length === 0 || levels.length === 0 || jobTypes.length === 0 || experienceLevels.length === 0) {
+  if (!job && !fetchError) {
     return <div>Loading job details...</div>;
+  }
+
+  if (fetchError) {
+    return <div>Lỗi hệ thống, vui lòng thử lại sau!</div>;
   }
 
   return (
