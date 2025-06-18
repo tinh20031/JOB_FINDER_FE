@@ -35,7 +35,7 @@ const ChatBoxContentField = ({ messages, sendMessage, currentChatPartner, curren
   return (
     <div className="card message-card">
       <div className="card-header msg_head">
-        <div className="d-flex bd-highlight">
+        <div className="d-flex bd-highlight align-items-center">
           <div className="img_cont">
             <Image
               width={48}
@@ -43,11 +43,12 @@ const ChatBoxContentField = ({ messages, sendMessage, currentChatPartner, curren
               src={currentChatPartner.avatar || "/images/resource/default-avatar.png"}
               alt="user avatar"
               className="rounded-circle user_img"
+              style={{ width: 48, height: 48, minWidth: 48, minHeight: 48, maxWidth: 48, maxHeight: 48 }}
             />
           </div>
-          <div className="user_info">
-            <span>{currentChatPartner.name}</span>
-            <p>Active</p>
+          <div className="user_info" style={{ marginLeft: 12 }}>
+            <span style={{ fontWeight: 600, fontSize: 18 }}>{currentChatPartner.name}</span>
+            <p style={{ fontSize: 13, color: '#1890ff', margin: 0 }}>Active</p>
           </div>
         </div>
 
@@ -62,23 +63,27 @@ const ChatBoxContentField = ({ messages, sendMessage, currentChatPartner, curren
           const parsedTimestamp = msg.timestamp ? new Date(msg.timestamp) : null;
           const timeToDisplay = parsedTimestamp && isValid(parsedTimestamp) ? format(parsedTimestamp, 'HH:mm') : '';
 
+          const isMyMessage = msg.senderId === currentUserId;
           return (
-            <div key={index} className={`d-flex ${msg.senderId === currentUserId ? 'justify-content-end reply' : 'justify-content-start'} mb-2`}>
+            <div key={index} className={`d-flex ${isMyMessage ? 'justify-content-end reply' : 'justify-content-start'} mb-2`}>
               <div className="img_cont_msg">
                 <Image
                   width={32}
                   height={32}
                   style={{ width: 32, height: 32, minWidth: 32, minHeight: 32, maxWidth: 32, maxHeight: 32 }}
                   src={
-                    msg.senderId === currentUserId
+                    isMyMessage
                       ? (currentUserProfileImage || '/images/resource/candidate-6.png')
-                      : (msg.senderImage || currentChatPartner.avatar || "/images/resource/default-avatar.png")
+                      : (currentChatPartner.avatar || '/images/resource/default-avatar.png')
                   }
                   alt="avatar"
                   className="rounded-circle user_img_msg small-avatar"
                 />
                 <div className="name small-name">
-                  {msg.senderId === currentUserId ? (currentUserFullName || 'You') : (msg.senderFullName || currentChatPartner.name)} <span className="msg_time small-time">{timeToDisplay}</span>
+                  {isMyMessage
+                    ? (currentUserFullName || 'You')
+                    : (currentChatPartner.name)}
+                  <span className="msg_time small-time">{timeToDisplay}</span>
                 </div>
               </div>
               <div className="msg_cotainer">

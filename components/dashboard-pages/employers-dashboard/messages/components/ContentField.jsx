@@ -2,6 +2,7 @@ import Image from "next/image";
 import ChatHamburger from "./ChatHamburger";
 import React, { useState, useEffect, useRef } from 'react';
 import { format, parseISO, isValid } from 'date-fns';
+import { authService } from "../../../../../services/authService";
 
 const ChatBoxContentField = ({ messages, sendMessage, currentChatPartner, currentUserId, currentUserFullName, currentUserProfileImage }) => {
   const [messageInput, setMessageInput] = useState('');
@@ -12,6 +13,8 @@ const ChatBoxContentField = ({ messages, sendMessage, currentChatPartner, curren
   };
 
   useEffect(() => {
+    // Log toàn bộ localStorage khi vào trang home/chat
+    console.log('localStorage snapshot:', { ...localStorage });
     scrollToBottom();
   }, [messages]);
 
@@ -58,6 +61,8 @@ const ChatBoxContentField = ({ messages, sendMessage, currentChatPartner, curren
           const parsedTimestamp = msg.timestamp ? new Date(msg.timestamp) : null;
           const timeToDisplay = parsedTimestamp && isValid(parsedTimestamp) ? format(parsedTimestamp, 'HH:mm') : '';
           const isMyMessage = Number(msg.senderId) === Number(currentUserId);
+          const companyAvatar = authService.getProfileImageCompany() || '/images/resource/company-6.png';
+          const companyName = authService.getFullNameCompany() || 'Company';
           return (
             <div key={index} className={`d-flex ${isMyMessage ? 'justify-content-end reply' : 'justify-content-start'} mb-1`} style={{marginBottom: '4px'}}>
               <div className="img_cont_msg">
@@ -67,16 +72,16 @@ const ChatBoxContentField = ({ messages, sendMessage, currentChatPartner, curren
                   style={{ width: 32, height: 32, minWidth: 32, minHeight: 32, maxWidth: 32, maxHeight: 32 }}
                   src={
                     isMyMessage
-                      ? currentUserProfileImage || '/images/resource/company-6.png'
-                      : msg.senderImage || '/images/resource/default-avatar.png'
+                      ? companyAvatar
+                      : (currentChatPartner.avatar || '/images/resource/default-avatar.png')
                   }
                   alt="avatar"
                   className="rounded-circle user_img_msg small-avatar"
                 />
                 <div className="name small-name">
                   {isMyMessage
-                    ? currentUserFullName || 'Company'
-                    : msg.senderFullName || 'User'}
+                    ? companyName
+                    : (currentChatPartner.name)}
                   <span className="msg_time small-time">{timeToDisplay}</span>
                 </div>
               </div>

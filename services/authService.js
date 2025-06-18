@@ -8,6 +8,14 @@ export const authService = {
       const data = await ApiService.login(email, password);
       console.log('authService.login: Raw data from ApiService.login:', data);
       
+      // Đặt cookieOptions ở đầu hàm login
+      const cookieOptions = {
+        expires: 7, // 7 days
+        path: '/',
+        secure: process.env.NODE_ENV === 'production', // Sử dụng secure chỉ trong môi trường production (HTTPS)
+        sameSite: 'Lax' // Bảo vệ CSRF ở mức độ cơ bản
+      };
+
       let decodedToken = null;
       if (data.token) {
         decodedToken = jwtDecode(data.token);
@@ -29,15 +37,16 @@ export const authService = {
       if (data.companyId) {
         localStorage.setItem('companyId', data.companyId);
       }
+      if (data.user && data.user.companyName) {
+        localStorage.setItem('fullNameCompany', data.user.companyName);
+        Cookies.set('fullNameCompany', data.user.companyName, cookieOptions);
+      }
+      if (data.user && data.user.urlCompanyLogo) {
+        localStorage.setItem('profileImageCompany', data.user.urlCompanyLogo);
+        Cookies.set('profileImageCompany', data.user.urlCompanyLogo, cookieOptions);
+      }
 
       // Lưu token và role (và tên nếu có) vào cookies
-      const cookieOptions = {
-        expires: 7, // 7 days
-        path: '/',
-        secure: process.env.NODE_ENV === 'production', // Sử dụng secure chỉ trong môi trường production (HTTPS)
-        sameSite: 'Lax' // Bảo vệ CSRF ở mức độ cơ bản
-      };
-
       Cookies.set('token', data.token, cookieOptions);
       Cookies.set('role', data.role, cookieOptions);
       if (data.name) {
@@ -188,5 +197,17 @@ export const authService = {
       }
     }
     return null;
+  },
+
+  getFullNameCompany() {
+    const cookieFullName = Cookies.get('fullName');
+    if (cookieFullName) return cookieFullName;
+    return localStorage.getItem('fullNameCompany');
+  },
+
+  getProfileImageCompany() {
+    const cookieProfileImage = Cookies.get('profileImage');
+    if (cookieProfileImage) return cookieProfileImage;
+    return localStorage.getItem('profileImageCompany');
   }
 };
