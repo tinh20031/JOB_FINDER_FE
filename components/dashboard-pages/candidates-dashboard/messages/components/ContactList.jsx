@@ -1,190 +1,229 @@
 import Image from "next/image";
+import React, { useState } from 'react';
 
-const ChatboxContactList = () => {
+const ChatboxContactList = ({ onContactSelect, currentChatPartnerId, contacts = [], loading = false, error = null }) => {
+  const [searchQuery, setSearchQuery] = useState('');
+
+  const filteredContacts = contacts.filter(contact =>
+    contact.name.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  const getTimeAgo = (timestamp) => {
+    if (!timestamp) return '';
+    try {
+      const { formatDistanceToNowStrict, parseISO } = require('date-fns');
+      const { enUS } = require('date-fns/locale');
+      const date = parseISO(timestamp);
+      return formatDistanceToNowStrict(date, { addSuffix: true, locale: enUS });
+    } catch {
+      return '';
+    }
+  };
+
+  if (loading) return (
+    <div className="chat-contacts-container">
+      <div className="search-box">
+        <div className="form-group position-relative">
+          <input
+            type="text"
+            placeholder="Search"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+          <i className="flaticon-search"></i>
+        </div>
+      </div>
+      <ul className="contacts-list" style={{ flexGrow: 1, overflowY: "auto" }}></ul>
+    </div>
+  );
+
+  if (error) return <div className="error-message text-danger">{error}</div>;
+
   return (
-    <ul className="contacts">
-      <li>
-        <a href="#">
-          <div className="d-flex bd-highlight">
-            <div className="img_cont">
-              <Image
-                src="/images/resource/candidate-1.png"
-                className="rounded-circle user_img"
-                alt="chatbox avatar"
-                width={90}
-                height={90}
-              />
-            </div>
-            <div className="user_info">
-              <span>Darlene Robertson</span>
-              <p> Head of Development</p>
-            </div>
-            <span className="info">35 mins</span>
-          </div>
-        </a>
-      </li>
-      {/* End single Contact List */}
+    <div className="chat-contacts-container">
+      <div className="search-box">
+        <div className="form-group position-relative">
+          <input
+            type="text"
+            placeholder="Search"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+          <i className="flaticon-search"></i>
+        </div>
+      </div>
 
-      <li>
-        <a href="#">
-          <div className="d-flex bd-highlight">
-            <div className="img_cont">
-              <Image
-                src="/images/resource/candidate-2.png"
-                className="rounded-circle user_img"
-                alt="chatbox avatar"
-                width={90}
-                height={90}
-              />
-            </div>
-            <div className="user_info">
-              <span>Jane Cooper</span>
-              <p>Head of Development</p>
-            </div>
-            <span className="info">
-              35 mins <span className="count">2</span>
-            </span>
-          </div>
-        </a>
-      </li>
-      {/* End single Contact List */}
+      <ul className="contacts-list" style={{ flexGrow: 1, overflowY: "auto" }}>
+        {filteredContacts.length > 0 ? (
+          filteredContacts.map((contact) => (
+            <li
+              key={contact.id}
+              className={`contact-item ${contact.id === currentChatPartnerId ? "active" : ""}`}
+              onClick={() => onContactSelect(contact.id)}
+            >
+              <div className="contact-info">
+                <div className="avatar-container">
+                  <Image
+                    src={contact.avatar}
+                    className="rounded-circle user_img"
+                    alt={contact.name}
+                    width={60}
+                    height={60}
+                  />
+                  {contact.unreadCount > 0 && (
+                    <span className="unread-badge-on-avatar">{contact.unreadCount}</span>
+                  )}
+                </div>
+                <div className="message-overview">
+                  <div className="name-time">
+                    <h4 className="name">{contact.name}</h4>
+                    <span className="time">{getTimeAgo(contact.timestamp)}</span>
+                  </div>
+                  <p className="last-message-preview">
+                    {contact.lastMessageText.length > 30 
+                      ? `${contact.lastMessageText.substring(0, 30)}...` 
+                      : contact.lastMessageText}
+                  </p>
+                  <p className="contact-position">{contact.position}</p>
+                </div>
+                {contact.productImage && (
+                  <div className="product-image-container">
+                    <Image
+                      src={contact.productImage}
+                      alt={contact.productName || "Product"}
+                      width={50}
+                      height={50}
+                      objectFit="cover"
+                    />
+                  </div>
+                )}
+              </div>
+            </li>
+          ))
+        ) : (
+          <li className="no-contacts">
+            <p>No conversations found.</p>
+          </li>
+        )}
+      </ul>
 
-      <li>
-        <a href="#">
-          <div className="d-flex bd-highlight">
-            <div className="img_cont">
-              <Image
-                src="/images/resource/candidate-3.png"
-                className="rounded-circle user_img"
-                alt="chatbox avatar"
-                width={90}
-                height={90}
-              />
-            </div>
-            <div className="user_info">
-              <span>Arlene McCoy</span>
-              <p>Head of Development</p>
-            </div>
-            <span className="info">
-              35 mins <span className="count bg-success">2</span>
-            </span>
-          </div>
-        </a>
-      </li>
-      {/* End single Contact List */}
-
-      <li>
-        <a href="#">
-          <div className="d-flex bd-highlight">
-            <div className="img_cont">
-              <Image
-                src="/images/resource/candidate-4.png"
-                className="rounded-circle user_img"
-                alt="chatbox avatar"
-                width={90}
-                height={90}
-              />
-            </div>
-            <div className="user_info">
-              <span>Albert Flores</span>
-              <p>Head of Development</p>
-            </div>
-            <span className="info">35 mins</span>
-          </div>
-        </a>
-      </li>
-      {/* End single Contact List */}
-
-      <li className="active">
-        <a href="#">
-          <div className="d-flex bd-highlight">
-            <div className="img_cont">
-              <Image
-                src="/images/resource/candidate-5.png"
-                className="rounded-circle user_img"
-                alt="chatbox avatar"
-                width={90}
-                height={90}
-              />
-            </div>
-            <div className="user_info">
-              <span>Williamson</span>
-              <p>Head of Development</p>
-            </div>
-            <span className="info">
-              35 mins <span className="count bg-warning">2</span>
-            </span>
-          </div>
-        </a>
-      </li>
-      {/* End single Contact List */}
-
-      <li>
-        <a href="#">
-          <div className="d-flex bd-highlight">
-            <div className="img_cont">
-              <Image
-                src="/images/resource/candidate-6.png"
-                className="rounded-circle user_img"
-                alt="chatbox avatar"
-                width={90}
-                height={90}
-              />
-            </div>
-            <div className="user_info">
-              <span>Kristin Watson</span>
-              <p>Head of Development</p>
-            </div>
-            <span className="info">35 mins</span>
-          </div>
-        </a>
-      </li>
-      {/* End single Contact List */}
-
-      <li>
-        <a href="#">
-          <div className="d-flex bd-highlight">
-            <div className="img_cont">
-              <Image
-                src="/images/resource/candidate-7.png"
-                className="rounded-circle user_img"
-                alt="chatbox avatar"
-                width={90}
-                height={90}
-              />
-            </div>
-            <div className="user_info">
-              <span>Annette Black</span>
-              <p>Head of Development</p>
-            </div>
-            <span className="info">35 mins</span>
-          </div>
-        </a>
-      </li>
-      {/* End single Contact List */}
-
-      <li>
-        <a href="#">
-          <div className="d-flex bd-highlight">
-            <div className="img_cont">
-              <Image
-                src="/images/resource/candidate-8.png"
-                className="rounded-circle user_img"
-                alt="chatbox avatar"
-                width={90}
-                height={90}
-              />
-            </div>
-            <div className="user_info">
-              <span>Jacob Jones</span>
-              <p>Head of Development</p>
-            </div>
-            <span className="info">35 mins</span>
-          </div>
-        </a>
-      </li>
-      {/* End single Contact List */}
-    </ul>
+      <style jsx>{`
+        .chat-contacts-container {
+          display: flex;
+          flex-direction: column;
+          height: 100%;
+          background-color: #fff;
+          border-right: 1px solid #e0e0e0;
+          overflow: hidden;
+        }
+        .search-box {
+          padding: 15px;
+          border-bottom: 1px solid #eee;
+        }
+        .search-box .form-group {
+          position: relative;
+        }
+        .search-box input {
+          width: 100%;
+          padding: 10px 15px 10px 40px;
+          border: 1px solid #ddd;
+          border-radius: 20px;
+          font-size: 14px;
+        }
+        .search-box i {
+          position: absolute;
+          left: 15px;
+          top: 50%;
+          transform: translateY(-50%);
+          color: #999;
+        }
+        .contacts-list {
+          list-style: none;
+          padding: 0;
+          margin: 0;
+        }
+        .contacts-list li {
+          cursor: pointer;
+          padding: 10px 15px;
+          border-bottom: 1px solid #eee;
+          display: flex;
+          align-items: center;
+        }
+        .contacts-list li.active {
+          background-color: #e6f0ff;
+        }
+        .contacts-list li:hover {
+          background-color: #f5f5f5;
+        }
+        .contact-info {
+          display: flex;
+          align-items: center;
+          width: 100%;
+        }
+        .avatar-container {
+          position: relative;
+          margin-right: 15px;
+        }
+        .user_img {
+          object-fit: cover;
+        }
+        .unread-badge-on-avatar {
+          position: absolute;
+          top: -5px;
+          right: -5px;
+          background-color: #f00;
+          color: #fff;
+          font-size: 10px;
+          padding: 2px 6px;
+          border-radius: 10px;
+          min-width: 20px;
+          text-align: center;
+        }
+        .message-overview {
+          flex-grow: 1;
+          overflow: hidden;
+        }
+        .name-time {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+        }
+        .name {
+          font-weight: 600;
+          font-size: 16px;
+          margin-bottom: 5px;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
+        .time {
+          font-size: 12px;
+          color: #999;
+          white-space: nowrap;
+        }
+        .last-message-preview {
+          font-size: 14px;
+          color: #666;
+          margin-bottom: 5px;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
+        .contact-position {
+          font-size: 12px;
+          color: #999;
+        }
+        .product-image-container {
+          margin-left: 10px;
+          flex-shrink: 0;
+        }
+        .no-contacts {
+          padding: 20px;
+          text-align: center;
+          color: #999;
+        }
+      `}</style>
+    </div>
   );
 };
 
