@@ -693,7 +693,22 @@ export const jobService = {
       'inactive': 'secondary'
     };
     return colorMap[status] || 'default';
-  }
+  },
+
+  async getAppliedCount(jobId) {
+    try {
+      const response = await axios.get(`${API_URL}/Application/job/${jobId}`);
+      return Array.isArray(response.data) ? response.data.length : 0;
+    } catch (error) {
+      if (error && error.response && error.response.status === 404) {
+        // Không log nếu là 404
+        return 0;
+      }
+      // Các lỗi khác mới log
+      console.error('Error fetching applied count:', error);
+      return 0;
+    }
+  },
 };
 
 export default jobService;
