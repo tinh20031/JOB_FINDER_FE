@@ -4,6 +4,7 @@ import Map from "../../../Map";
 import { useState, useEffect } from "react";
 // import Map from "../../../Map";
 import Select from "react-select";
+import CreatableSelect from 'react-select/creatable';
 import { useRouter } from 'next/navigation';
 import ApiService from "../../../../../services/api.service";
 import { authService } from "../../../../../services/authService";
@@ -35,7 +36,9 @@ const PostBoxForm = ({ initialData, isEditing }) => {
     description: '',
     education: '',
     companyId: 0,
-    salary: "",
+    isSalaryNegotiable: false,
+    minSalary: '',
+    maxSalary: '',
     industryId: 0,
     expiryDate: '',
     levelId: 0,
@@ -43,11 +46,13 @@ const PostBoxForm = ({ initialData, isEditing }) => {
     experienceLevelId: 0,
     timeStart: '',
     timeEnd: '',
-    status: 0,
     provinceName: '',
     addressDetail: '',
     createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString()
+    updatedAt: new Date().toISOString(),
+    YourSkill: '',
+    YourExperience: '',
+    status: 0 // 0: Pending, 1: Active, 2: Inactive
   });
 
   const [levels, setLevels] = useState([]);
@@ -109,6 +114,9 @@ const PostBoxForm = ({ initialData, isEditing }) => {
   // Draft key for localStorage
   const DRAFT_KEY = `job_edit_draft_${initialData?.jobId || 'new'}`;
 
+  const [selectedSkills, setSelectedSkills] = useState([]);
+  const [availableSkills, setAvailableSkills] = useState([]);
+
   useEffect(() => {
     setIsClient(true);
   }, []);
@@ -118,6 +126,7 @@ const PostBoxForm = ({ initialData, isEditing }) => {
     ApiService.get(API_CONFIG.ENDPOINTS.JOB_TYPE).then(setJobTypes);
     ApiService.get(API_CONFIG.ENDPOINTS.EXPERIENCE_LEVEL).then(setExperienceLevels);
     ApiService.get(API_CONFIG.ENDPOINTS.INDUSTRY).then(setIndustries);
+    ApiService.get(API_CONFIG.ENDPOINTS.SKILLS).then(setAvailableSkills);
     axios.get("https://provinces.open-api.vn/api/p/")
       .then(res => setProvinces(res.data))
       .catch(() => setProvinces([]));
@@ -127,15 +136,14 @@ const PostBoxForm = ({ initialData, isEditing }) => {
     setUser({ userId, role: userRole });
 
     if (isEditing && initialData) {
-      const initialStatusForForm = initialData.status === 0 ? "Pending" : initialData.status === 1 ? "Active" : initialData.status === 2 ? "Inactive" : "Pending";
-      
-      console.log("initialData.salary BEFORE cleanup:", initialData.salary);
-      const cleanedSalary = initialData.salary != null ? String(initialData.salary).replace(/[^0-9.]/g, '') : "";
-      console.log("initialData.salary AFTER cleanup:", cleanedSalary);
-
       setFormData({
         ...initialData,
-        salary: cleanedSalary,
+        jobId: initialData.jobId || initialData.id,
+        YourSkill: initialData.YourSkill || '',
+        YourExperience: initialData.YourExperience || '',
+        isSalaryNegotiable: initialData.isSalaryNegotiable || false,
+        minSalary: initialData.minSalary || '',
+        maxSalary: initialData.maxSalary || '',
         industryId: initialData.industryId || 0,
         levelId: initialData.levelId || 0,
         jobTypeId: initialData.jobTypeId || 0,
@@ -143,9 +151,15 @@ const PostBoxForm = ({ initialData, isEditing }) => {
         expiryDate: initialData.expiryDate ? initialData.expiryDate.split('T')[0] : '',
         timeStart: initialData.timeStart ? initialData.timeStart.split('T')[0] : '',
         timeEnd: initialData.timeEnd ? initialData.timeEnd.split('T')[0] : '',
-        status: initialStatusForForm,
-     
+        status: typeof initialData.status === 'number' ? initialData.status : 0
       });
+
+      if (initialData.Skills && Array.isArray(initialData.Skills)) {
+        setSelectedSkills(initialData.Skills.map(skill => ({
+          skillId: skill.skillId,
+          skillName: skill.skillName
+        })));
+      }
     }
 
   }, [initialData, isEditing]);
@@ -173,8 +187,26 @@ const PostBoxForm = ({ initialData, isEditing }) => {
     if (!formData.education.trim()) {
       newErrors.education = 'Education requirements are required';
     }
-    if (!formData.salary) {
-      newErrors.salary = 'Salary is required';
+    if (!formData.YourSkill.trim()) {
+      newErrors.YourSkill = 'Skills are required';
+    }
+    if (!formData.YourExperience.trim()) {
+      newErrors.YourExperience = 'Experience is required';
+    }
+    if (selectedSkills.length === 0) {
+      newErrors.skills = 'At least one skill is required';
+    }
+    // Validate salary based on negotiation status
+    if (!formData.isSalaryNegotiable) {
+      if (!formData.minSalary || formData.minSalary.trim() === '' || isNaN(formData.minSalary)) {
+        newErrors.minSalary = 'Min Salary is required';
+      }
+      if (!formData.maxSalary || formData.maxSalary.trim() === '' || isNaN(formData.maxSalary)) {
+        newErrors.maxSalary = 'Max Salary is required';
+      }
+      if (formData.minSalary && formData.maxSalary && parseFloat(formData.minSalary) > parseFloat(formData.maxSalary)) {
+        newErrors.maxSalary = 'Max Salary must be greater than Min Salary';
+      }
     }
     if (!formData.industryId) {
       newErrors.industryId = 'Industry is required';
@@ -298,36 +330,42 @@ const PostBoxForm = ({ initialData, isEditing }) => {
     console.log("Submit clicked", formData, user);
     setError("");
     setSuccess(false);
+    setIsLoading(true);
 
     if (!validateForm()) {
       setError("Please fill in all information!");
+      setIsLoading(false);
       return;
     }
 
     if (!user?.userId || user.role !== 'Company') {
       setError("Bạn phải đăng nhập bằng tài khoản công ty để đăng tin tuyển dụng.");
+      setIsLoading(false);
       return;
     }
 
-    let statusToSendToBackend;
-    if (formData.status === "Pending") {
-      statusToSendToBackend = 0;
-    } else if (formData.status === "Active") {
-      statusToSendToBackend = 1;
-    } else if (formData.status === "Inactive") {
-      statusToSendToBackend = 2;
-    } else {
-      console.error("Trạng thái không hợp lệ:", formData.status);
-      setError("Trạng thái công việc không hợp lệ.");
-      return;
+    // Check if job is expired (for editing mode)
+    if (isEditing && initialData) {
+      const timeEnd = new Date(initialData.timeEnd);
+      const now = new Date();
+      if (timeEnd < now) {
+        setError("Cannot edit job that has already expired.");
+        setIsLoading(false);
+        return;
+      }
     }
 
     try {
-      const commonData = {
+      // Chuẩn bị dữ liệu theo format backend mong đợi
+      const jobData = {
         title: formData.title,
         description: formData.description,
         education: formData.education,
-        salary: parseFloat(formData.salary),
+        yourSkill: formData.YourSkill,
+        yourExperience: formData.YourExperience,
+        isSalaryNegotiable: formData.isSalaryNegotiable,
+        minSalary: formData.isSalaryNegotiable ? null : (formData.minSalary && formData.minSalary.trim() !== '' ? parseFloat(formData.minSalary) : null),
+        maxSalary: formData.isSalaryNegotiable ? null : (formData.maxSalary && formData.maxSalary.trim() !== '' ? parseFloat(formData.maxSalary) : null),
         industryId: formData.industryId,
         levelId: formData.levelId,
         jobTypeId: formData.jobTypeId,
@@ -337,64 +375,41 @@ const PostBoxForm = ({ initialData, isEditing }) => {
         timeEnd: new Date(formData.timeEnd).toISOString(),
         provinceName: formData.provinceName,
         addressDetail: formData.addressDetail,
-        status: statusToSendToBackend,
+        skillInputs: selectedSkills.map(skill => ({
+          skillId: skill.skillId,
+          skillName: skill.skillName
+        }))
       };
 
       if (isEditing) {
-        // Cập nhật job
-        const updatedFormData = new FormData();
-        for (const key in commonData) {
-          if (commonData[key] !== undefined) {
-            if (key === 'status') {
-              updatedFormData.append('Status', statusToSendToBackend);
-            } else if (['salary', 'industryId', 'levelId', 'jobTypeId', 'experienceLevelId'].includes(key)) {
-              updatedFormData.append(key.charAt(0).toUpperCase() + key.slice(1), Number(commonData[key]));
-            } else if (['timeStart', 'timeEnd', 'expiryDate'].includes(key)) {
-              // Ensure dates are in ISO string format if they are date objects
-              const dateValue = commonData[key] instanceof Date ? commonData[key].toISOString() : commonData[key];
-              updatedFormData.append(key.charAt(0).toUpperCase() + key.slice(1), dateValue);
-            } else {
-              updatedFormData.append(key.charAt(0).toUpperCase() + key.slice(1), commonData[key]);
-            }
-          }
+        // Nếu user chỉ đổi status (không chỉnh nội dung), gọi API đổi status
+        if ((formData.status !== initialData.status) && !hasActualChanges() && (initialData.status === 1 || initialData.status === 2)) {
+          const statusStr = formData.status === 1 ? 'active' : 'inactive';
+          await ApiService.request(
+            `Job/${formData.jobId || formData.id}/status?newStatus=${statusStr}`,
+            'PUT'
+          );
+          setSuccess(true);
+          setShowSuccessModal(true);
+        } else {
+          // Cập nhật job - sử dụng JSON thay vì FormData
+          await ApiService.request(`Job/${formData.jobId || formData.id}`, 'PUT', jobData);
+          // Không gọi API đổi status sau khi update nội dung, vì job sẽ về pending
+          setSuccess(true);
+          setShowSuccessModal(true);
         }
-        // Thêm các trường khác cần thiết cho PUT nếu có (ví dụ: jobId, CompanyId)
-        updatedFormData.append('Id', formData.jobId);
-        updatedFormData.append('CompanyId', formData.companyId); // Đảm bảo companyId được truyền cho cập nhật
-
-        // Nếu có ảnh mới được chọn để cập nhật
-        if (selectedImage) {
-          updatedFormData.append('ImageFile', selectedImage);
-        }
-
-        await ApiService.request(`Job/${formData.jobId}`, 'PUT', updatedFormData);
-        console.log("Job updated successfully");
       } else {
         // Tạo job mới
-        const postFormData = new FormData();
-        for (const key in commonData) {
-          if (commonData[key] !== undefined) {
-            if (key === 'status') {
-              postFormData.append('Status', statusToSendToBackend);
-            } else if (key === 'salary' || key === 'industryId' || key === 'levelId' || key === 'jobTypeId' || key === 'experienceLevelId') {
-              postFormData.append(key.charAt(0).toUpperCase() + key.slice(1), Number(commonData[key]));
-            } else if (key === 'timeStart' || key === 'timeEnd') {
-              postFormData.append(key.charAt(0).toUpperCase() + key.slice(1), commonData[key]);
-            } else {
-              postFormData.append(key.charAt(0).toUpperCase() + key.slice(1), commonData[key]);
-            }
-          }
-        }
-        postFormData.append('CompanyId', Number(user.userId));
-        if (selectedImage) {
-          postFormData.append('ImageFile', selectedImage);
-        }
-        await ApiService.createJob(postFormData);
-        console.log("Job created successfully");
+        jobData.companyId = Number(user.userId);
+        await ApiService.createJob(jobData);
+        setSuccess(true);
+        setShowSuccessModal(true);
       }
 
-      setSuccess(true);
-      setShowSuccessModal(true);
+      // Clear draft sau khi submit thành công
+      localStorage.removeItem(DRAFT_KEY);
+      setHasUnsavedChanges(false);
+      
       // Optionally reset form if creating a new job
       if (!isEditing) {
         setFormData({
@@ -403,7 +418,9 @@ const PostBoxForm = ({ initialData, isEditing }) => {
           description: '',
           education: '',
           companyId: 0,
-          salary: "",
+          isSalaryNegotiable: false,
+          minSalary: '',
+          maxSalary: '',
           industryId: 0,
           expiryDate: '',
           levelId: 0,
@@ -411,23 +428,25 @@ const PostBoxForm = ({ initialData, isEditing }) => {
           experienceLevelId: 0,
           timeStart: '',
           timeEnd: '',
-          status: 0,
           provinceName: '',
           addressDetail: '',
           createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString()
+          updatedAt: new Date().toISOString(),
+          YourSkill: '',
+          YourExperience: '',
+          status: 0
         });
+        setSelectedSkills([]);
         setSelectedImage(null);
         setImagePreviewUrl(null);
       }
     } catch (error) {
       console.error("API Error:", error.response?.data || error.message);
       setError(error.response?.data?.message || `Failed to ${isEditing ? 'update' : 'create'} job. Please try again.`);
+    } finally {
+      setIsLoading(false);
     }
   };
-
-  // Determine if status select should be disabled
-  const isStatusSelectDisabled = isEditing && formData.status === 0; // Disable if editing and status is Pending (0)
 
   // Load draft data on mount
   useEffect(() => {
@@ -453,10 +472,18 @@ const PostBoxForm = ({ initialData, isEditing }) => {
 
   // Check if there are actual changes in the form
   const hasActualChanges = () => {
+    // Original initialData is needed to compare
+    if (!initialData) {
+      // If no initialData (i.e., new job post), then any non-empty field counts as a change
     return formData.title.trim() !== '' || 
            formData.description.trim() !== '' ||
            formData.education.trim() !== '' ||
-           formData.salary !== '' ||
+             formData.YourSkill.trim() !== '' ||
+             formData.YourExperience.trim() !== '' ||
+             selectedSkills.length > 0 ||
+             formData.minSalary.trim() !== '' ||
+             formData.maxSalary.trim() !== '' ||
+             formData.isSalaryNegotiable !== false ||
            formData.industryId !== 0 ||
            formData.levelId !== 0 ||
            formData.jobTypeId !== 0 ||
@@ -466,6 +493,35 @@ const PostBoxForm = ({ initialData, isEditing }) => {
            formData.timeEnd !== '' ||
            formData.provinceName !== '' ||
            formData.addressDetail !== '';
+    }
+
+    // For editing existing job, compare with initialData
+    const initialMinSalary = initialData.isSalaryNegotiable ? '' : (initialData.minSalary || '');
+    const initialMaxSalary = initialData.isSalaryNegotiable ? '' : (initialData.maxSalary || '');
+    const currentMinSalary = formData.isSalaryNegotiable ? '' : (formData.minSalary || '');
+    const currentMaxSalary = formData.isSalaryNegotiable ? '' : (formData.maxSalary || '');
+
+    const initialSkills = initialData.Skills ? initialData.Skills.map(s => s.skillName).sort().join('|') : '';
+    const currentSkills = selectedSkills.map(s => s.skillName).sort().join('|');
+
+    return formData.title !== (initialData.title || '') ||
+           formData.description !== (initialData.description || '') ||
+           formData.education !== (initialData.education || '') ||
+           formData.YourSkill !== (initialData.YourSkill || '') ||
+           formData.YourExperience !== (initialData.YourExperience || '') ||
+           formData.isSalaryNegotiable !== (initialData.isSalaryNegotiable || false) ||
+           currentMinSalary !== initialMinSalary ||
+           currentMaxSalary !== initialMaxSalary ||
+           currentSkills !== initialSkills ||
+           formData.industryId !== (initialData.industryId || 0) ||
+           formData.levelId !== (initialData.levelId || 0) ||
+           formData.jobTypeId !== (initialData.jobTypeId || 0) ||
+           formData.experienceLevelId !== (initialData.experienceLevelId || 0) ||
+           (formData.expiryDate ? formData.expiryDate.split('T')[0] : '') !== (initialData.expiryDate ? initialData.expiryDate.split('T')[0] : '') ||
+           (formData.timeStart ? formData.timeStart.split('T')[0] : '') !== (initialData.timeStart ? initialData.timeStart.split('T')[0] : '') ||
+           (formData.timeEnd ? formData.timeEnd.split('T')[0] : '') !== (initialData.timeEnd ? initialData.timeEnd.split('T')[0] : '') ||
+           formData.provinceName !== (initialData.provinceName || '') ||
+           formData.addressDetail !== (initialData.addressDetail || '');
   };
 
   // Handle navigation protection
@@ -527,12 +583,14 @@ const PostBoxForm = ({ initialData, isEditing }) => {
   const handleConfirmClear = () => {
     localStorage.removeItem(DRAFT_KEY);
     setFormData({
-      jobId: initialData?.jobId || 0,
+      jobId: 0,
       title: '',
       description: '',
       education: '',
-      companyId: initialData?.companyId || 0,
-      salary: "",
+      companyId: 0,
+      isSalaryNegotiable: false,
+      minSalary: '',
+      maxSalary: '',
       industryId: 0,
       expiryDate: '',
       levelId: 0,
@@ -540,12 +598,15 @@ const PostBoxForm = ({ initialData, isEditing }) => {
       experienceLevelId: 0,
       timeStart: '',
       timeEnd: '',
-      status: initialData?.status || 0,
       provinceName: '',
       addressDetail: '',
       createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
+      updatedAt: new Date().toISOString(),
+      YourSkill: '',
+      YourExperience: '',
+      status: 0
     });
+    setSelectedSkills([]);
     setHasUnsavedChanges(false);
     setErrors({});
     setError("");
@@ -673,6 +734,7 @@ const PostBoxForm = ({ initialData, isEditing }) => {
           <label>Job Description</label>
           {isClient ? (
             <ReactQuill
+              key={formData.jobId + "-description"}
               theme="snow"
               value={formData.description}
               onChange={handleDescriptionChange}
@@ -709,6 +771,7 @@ const PostBoxForm = ({ initialData, isEditing }) => {
           <label>Education Requirements</label>
           {isClient ? (
             <ReactQuill
+              key={formData.jobId + "-education"}
               theme="snow"
               value={formData.education}
               onChange={handleEducationChange}
@@ -727,7 +790,7 @@ const PostBoxForm = ({ initialData, isEditing }) => {
                 'list', 'bullet', 'indent',
                 'link', 'image'
               ]}
-              className="job-description-quill"
+              className={`job-description-quill ${errors.education ? 'is-invalid' : ''}`}
             />
           ) : (
             <textarea
@@ -736,55 +799,284 @@ const PostBoxForm = ({ initialData, isEditing }) => {
               value={formData.education}
               onChange={handleInputChange}
               rows="8"
+              className={errors.education ? 'form-control is-invalid' : 'form-control'}
             ></textarea>
           )}
-          {errors.education && <span className="error-message">{errors.education}</span>}
+          {errors.education && <span className="error-message invalid-feedback d-block">{errors.education}</span>}
         </div>
 
-        <div className="form-group col-lg-6 col-md-12">
-          <label>Salary (USD)</label>
-          <input
-            type="number"
-            name="salary"
-            
-            value={formData.salary}
-            onChange={handleInputChange}
-          />
-          {errors.salary && <span className="error-message">{errors.salary}</span>}
-        </div>
+        {/* Your Skills */}
+        <motion.div className="form-group col-lg-12 col-md-12" variants={itemVariants}>
+          <label>Skills</label>
+          {isClient ? (
+            <ReactQuill
+              key={formData.jobId + "-your-skill"}
+              theme="snow"
+              value={formData.YourSkill}
+              onChange={(value) => {
+                setFormData(prev => ({
+                  ...prev,
+                  YourSkill: value,
+                }));
+                // Clear error when user starts typing
+                if (errors.YourSkill) {
+                  setErrors(prev => ({
+                    ...prev,
+                    YourSkill: ''
+                  }));
+                }
+              }}
+              modules={{
+                toolbar: [
+                  [{ 'header': [1, 2, false] }],
+                  ['bold', 'italic', 'underline', 'strike', 'blockquote'],
+                  [{ 'list': 'ordered' }, { 'list': 'bullet' }, { 'indent': '-1' }, { 'indent': '+1' }],
+                  ['link', 'image'],
+                  ['clean']
+                ],
+              }}
+              formats={[
+                'header', 'bold', 'italic', 'underline', 'strike', 'blockquote',
+                'list', 'bullet', 'indent',
+                'link', 'image'
+              ]}
+              className={`job-description-quill ${errors.YourSkill ? 'is-invalid' : ''}`}
+            />
+          ) : (
+            <textarea
+              name="YourSkill"
+              placeholder="Describe your skills for this position..."
+              value={formData.YourSkill}
+              onChange={handleInputChange}
+              rows="8"
+              className={errors.YourSkill ? 'form-control is-invalid' : 'form-control'}
+            ></textarea>
+          )}
+          {errors.YourSkill && <div className="invalid-feedback">{errors.YourSkill}</div>}
+        </motion.div>
 
-        <div className="form-group col-lg-6 col-md-12">
-          <label>Application Deadline</label>
-          <input
-            type="date"
-            name="expiryDate"
-            value={formData.expiryDate}
+        {/* Your Experience */}
+        <motion.div className="form-group col-lg-12 col-md-12" variants={itemVariants}>
+          <label>Experience</label>
+          {isClient ? (
+            <ReactQuill
+              key={formData.jobId + "-your-experience"}
+              theme="snow"
+              value={formData.YourExperience}
+              onChange={(value) => {
+                setFormData(prev => ({
+                  ...prev,
+                  YourExperience: value,
+                }));
+                // Clear error when user starts typing
+                if (errors.YourExperience) {
+                  setErrors(prev => ({
+                    ...prev,
+                    YourExperience: ''
+                  }));
+                }
+              }}
+              modules={{
+                toolbar: [
+                  [{ 'header': [1, 2, false] }],
+                  ['bold', 'italic', 'underline', 'strike', 'blockquote'],
+                  [{ 'list': 'ordered' }, { 'list': 'bullet' }, { 'indent': '-1' }, { 'indent': '+1' }],
+                  ['link', 'image'],
+                  ['clean']
+                ]
+              }}
+              formats={[
+                'header',
+                'bold', 'italic', 'underline', 'strike', 'blockquote',
+                'list', 'bullet', 'indent',
+                'link', 'image'
+              ]}
+              className={`job-description-quill ${errors.YourExperience ? 'is-invalid' : ''}`}
+            />
+          ) : (
+            <textarea
+              name="YourExperience"
+              placeholder="Describe your experience for this position..."
+              value={formData.YourExperience}
             onChange={handleInputChange}
-          />
-          {errors.expiryDate && <span className="error-message">{errors.expiryDate}</span>}
-        </div>
+              rows="8"
+              className={errors.YourExperience ? 'form-control is-invalid' : 'form-control'}
+            ></textarea>
+          )}
+          {errors.YourExperience && <span className="invalid-feedback d-block">{errors.YourExperience}</span>}
+        </motion.div>
 
-        <div className="form-group col-lg-6 col-md-12">
-          <label>Start Date</label>
-          <input
-            type="date"
-            name="timeStart"
-            value={formData.timeStart}
-            onChange={handleInputChange}
-          />
-          {errors.timeStart && <span className="error-message">{errors.timeStart}</span>}
-        </div>
+        {/* Skills */}
+        <motion.div className="form-group col-lg-12 col-md-12" variants={itemVariants}>
+          <label>Required Skills (Tag)</label>
+          {isClient ? (
+            <CreatableSelect
+              isMulti
+              options={availableSkills.map(skill => ({
+                value: skill.skillId,
+                label: skill.skillName
+              }))}
+              value={selectedSkills.map(skill => ({
+                value: skill.skillId,
+                label: skill.skillName
+              }))}
+              onChange={(newValue) => {
+                const skillsArray = newValue.map(option => ({
+                  skillId: option.value ? parseInt(option.value, 10) : null,
+                  skillName: option.label
+                }));
+                setSelectedSkills(skillsArray);
+              }}
+              onCreateOption={(inputValue) => {
+                const newSkill = {
+                  skillId: null,
+                  skillName: inputValue
+                };
+                setSelectedSkills(prev => [...prev, newSkill]);
+              }}
+              placeholder="Select or enter skills..."
+              className="basic-multi-select"
+              classNamePrefix="select"
+              isClearable
+              isSearchable
+              noOptionsMessage={() => "No skills found"}
+              formatCreateLabel={(inputValue) => `Create skill "${inputValue}"`}
+              menuPortalTarget={document.body}
+              menuShouldScrollIntoView={true}
+              maxMenuHeight={190}
+              styles={{
+                control: (base) => ({
+                  ...base,
+                  minHeight: '42px',
+                  borderColor: errors.skills ? '#dc3545' : '#ced4da',
+                  '&:hover': {
+                    borderColor: errors.skills ? '#dc3545' : '#ced4da'
+                  }
+                }),
+                menu: (base) => ({
+                  ...base,
+                  zIndex: 9999 
+                }),
+                multiValue: (base) => ({
+                  ...base,
+                  backgroundColor: '#e9ecef',
+                  borderRadius: '0.25rem'
+                }),
+                multiValueLabel: (base) => ({
+                  ...base,
+                  color: '#212529',
+                  padding: '0.25rem 0.5rem'
+                }),
+                multiValueRemove: (base) => ({
+                  ...base,
+                  color: '#212529',
+                  ':hover': {
+                    backgroundColor: '#dee2e6',
+                    color: '#212529'
+                  }
+                })
+              }}
+            />
+          ) : (
+            <input
+              type="text"
+              placeholder="Required Skills (Loading...)"
+              className="form-control"
+              disabled
+            />
+          )}
+          {errors.skills && <span className="error-message invalid-feedback d-block">{errors.skills}</span>}
+        </motion.div>
 
-        <div className="form-group col-lg-6 col-md-12">
-          <label>End Date</label>
+        {/* Salary Section */}
+        <motion.div className="form-group col-lg-12 col-md-12" variants={itemVariants}>
+          <label>Salary</label>
+          <div className="d-flex flex-wrap mb-3" style={{ gap: '20px' }}>
+            <div className="form-check">
           <input
-            type="date"
-            name="timeEnd"
-            value={formData.timeEnd}
-            onChange={handleInputChange}
-          />
-          {errors.timeEnd && <span className="error-message">{errors.timeEnd}</span>}
+                type="radio"
+                className="form-check-input"
+                id="salaryNegotiableRadio"
+                name="salaryOption"
+                value="negotiable"
+                checked={formData.isSalaryNegotiable}
+                onChange={(e) => {
+                  setFormData(prev => ({
+                    ...prev,
+                    isSalaryNegotiable: true,
+                    minSalary: '',
+                    maxSalary: ''
+                  }));
+                  setErrors(prev => ({ ...prev, minSalary: '', maxSalary: '' }));
+                }}
+                style={{ width: '16px', height: '16px', flexShrink: 0 }}
+              />
+              <label className="form-check-label" htmlFor="salaryNegotiableRadio">
+                Wage Agreement
+              </label>
         </div>
+            <div className="form-check">
+              <input
+                type="radio"
+                className="form-check-input"
+                id="salarySpecificRadio"
+                name="salaryOption"
+                value="specific"
+                checked={!formData.isSalaryNegotiable}
+                onChange={(e) => {
+                  setFormData(prev => ({
+                    ...prev,
+                    isSalaryNegotiable: false,
+                  }));
+                }}
+                style={{ width: '16px', height: '16px', flexShrink: 0 }}
+              />
+              <label className="form-check-label" htmlFor="salarySpecificRadio">
+                Specific Salary
+              </label>
+            </div>
+          </div>
+        </motion.div>
+
+        {formData.isSalaryNegotiable && (
+          <motion.div className="form-group col-lg-12 col-md-12" variants={itemVariants}>
+            <div className="alert alert-info" role="alert">
+              You have selected wage agreement, specific salary cannot be entered.
+            </div>
+          </motion.div>
+        )}
+
+        {!formData.isSalaryNegotiable && (
+          <>
+            <motion.div className="form-group col-lg-6 col-md-12" variants={itemVariants}>
+              <label>Min Salary</label>
+          <input
+                type="number"
+                name="minSalary" 
+                value={formData.minSalary || ''}
+            onChange={handleInputChange}
+                placeholder="Enter min salary"
+                className={errors.minSalary ? 'form-control is-invalid' : 'form-control'}
+                disabled={isLoading}
+          />
+              {errors.minSalary && <div className="invalid-feedback d-block">{errors.minSalary}</div>}
+            </motion.div>
+
+            <motion.div className="form-group col-lg-6 col-md-12" variants={itemVariants}>
+              <label>Max Salary</label>
+          <input
+                type="number" 
+                name="maxSalary" 
+                value={formData.maxSalary || ''}
+            onChange={handleInputChange}
+                placeholder="Enter Max salary"
+                className={errors.maxSalary ? 'form-control is-invalid' : 'form-control'}
+                disabled={isLoading}
+              />
+              {errors.maxSalary && <div className="invalid-feedback d-block">{errors.maxSalary}</div>}
+            </motion.div>
+          </>
+        )}
 
         <div className="form-group col-lg-6 col-md-12">
           <label>Industry</label>
@@ -858,6 +1150,47 @@ const PostBoxForm = ({ initialData, isEditing }) => {
           {errors.experienceLevelId && <span className="error-message">{errors.experienceLevelId}</span>}
         </div>
 
+        {/* Date Fields */}
+        <div className="form-group col-lg-12 col-md-12">
+          <div className="row">
+            <div className="form-group col-lg-4 col-md-6 col-sm-12">
+              <label>Start Date</label>
+              <input
+                type="date"
+                name="timeStart"
+                value={formData.timeStart}
+                onChange={handleInputChange}
+                className={`custom-date-input form-select ${errors.timeStart ? 'is-invalid' : ''}`}
+              />
+              {errors.timeStart && <span className="error-message invalid-feedback d-block">{errors.timeStart}</span>}
+            </div>
+
+            <div className="form-group col-lg-4 col-md-6 col-sm-12">
+              <label>End Date</label>
+              <input
+                type="date"
+                name="timeEnd"
+                value={formData.timeEnd}
+                onChange={handleInputChange}
+                className={`custom-date-input form-select ${errors.timeEnd ? 'is-invalid' : ''}`}
+              />
+              {errors.timeEnd && <span className="error-message invalid-feedback d-block">{errors.timeEnd}</span>}
+            </div>
+
+            <div className="form-group col-lg-4 col-md-6 col-sm-12">
+              <label>Application Deadline</label>
+              <input
+                type="date"
+                name="expiryDate"
+                value={formData.expiryDate}
+                onChange={handleInputChange}
+                className={`custom-date-input form-select ${errors.expiryDate ? 'is-invalid' : ''}`}
+              />
+              {errors.expiryDate && <span className="error-message invalid-feedback d-block">{errors.expiryDate}</span>}
+            </div>
+          </div>
+        </div>
+
         <div className="form-group col-lg-6 col-md-12">
           <label>Province</label>
           <select
@@ -887,29 +1220,64 @@ const PostBoxForm = ({ initialData, isEditing }) => {
           {errors.addressDetail && <span className="error-message">{errors.addressDetail}</span>}
         </div>
 
-        {isEditing && (
+        {/* Status select box for editing jobs (company only, not pending) */}
+        {isEditing && user && user.role === 'Company' && initialData && (initialData.status === 1 || initialData.status === 2) && (
           <div className="form-group col-lg-6 col-md-12">
             <label>Status</label>
             <select
-              name="status"
-              className="chosen-single form-select"
               value={formData.status}
-              onChange={handleInputChange}
-              disabled={isStatusSelectDisabled}
+              onChange={e => setFormData(prev => ({ ...prev, status: Number(e.target.value) }))}
+              disabled={isLoading}
+              className="chosen-single form-select"
             >
-              {formData.status === "Pending" && <option value="Pending">Pending</option>}
-              <option value="Active">Active</option>
-              <option value="Inactive">Inactive</option>
+              <option value={1}>Active</option>
+              <option value={2}>Inactive</option>
             </select>
-            {isStatusSelectDisabled && (
-              <small className="form-text text-danger">You do not have permission to change when the job is in Pending status.</small>
-            )}
+            <small className="form-text text-muted">
+              You can only switch between Active and Inactive. After editing content, job will be set to pending and you cannot change status until admin approves.
+            </small>
+          </div>
+        )}
+        {/* Cảnh báo nếu user vừa chỉnh nội dung vừa đổi status */}
+        {isEditing && user && user.role === 'Company' && initialData && (initialData.status === 1 || initialData.status === 2) && (formData.status !== initialData.status) && hasActualChanges() && (
+          <div className="form-group col-lg-12 col-md-12">
+            <div className="alert alert-warning" role="alert">
+              <i className="fas fa-exclamation-triangle me-2"></i>
+              After editing content, job will be set to <b>pending</b> and you cannot change status until admin approves. Please only update status if you are not editing content.
+            </div>
+          </div>
+        )}
+
+        {isEditing && (
+          <div className="form-group col-lg-12 col-md-12">
+            <div className="alert alert-info" role="alert">
+              <i className="fas fa-info-circle me-2"></i>
+              <strong>Status Management:</strong> Job status will be automatically managed by the system. 
+              If your job is currently active or inactive, it will be set to pending for admin review after editing.
+            </div>
+          </div>
+        )}
+
+        {isEditing && initialData && new Date(initialData.timeEnd) < new Date() && (
+          <div className="form-group col-lg-12 col-md-12">
+            <div className="alert alert-warning" role="alert">
+              <i className="fas fa-exclamation-triangle me-2"></i>
+              <strong>Job Expired:</strong> This job has already expired and cannot be edited. 
+              Please create a new job posting instead.
+            </div>
           </div>
         )}
 
         <div className="form-group col-lg-12 col-md-12 text-right">
-          <button type="submit" className="theme-btn btn-style-one">
-            {isEditing ? "Update Job" : "Post Job"}
+          <button type="submit" className="theme-btn btn-style-one" disabled={isLoading || (isEditing && initialData && new Date(initialData.timeEnd) < new Date())}>
+            {isLoading ? (
+              <>
+                <i className="fas fa-spinner fa-spin me-2"></i>
+                {isEditing ? "Updating..." : "Posting..."}
+              </>
+            ) : (
+              isEditing ? "Update Job" : "Post Job"
+            )}
           </button>
         </div>
       </div>
@@ -1064,6 +1432,19 @@ const PostBoxForm = ({ initialData, isEditing }) => {
           <div className="modal-content" style={{ textAlign: 'center', padding: 32, width: '100%', maxWidth: '350px', minWidth: '0' }}>
             <h2 style={{ color: 'green' }}>Success!</h2>
             <p>Job {isEditing ? 'updated' : 'posted'} successfully!</p>
+            {isEditing && (
+              <div style={{ 
+                backgroundColor: '#e7f3ff', 
+                padding: '12px', 
+                borderRadius: '4px', 
+                margin: '16px 0',
+                fontSize: '14px',
+                color: '#0066cc'
+              }}>
+                <i className="fas fa-info-circle me-2"></i>
+                Your job has been updated and will be reviewed by admin if needed.
+              </div>
+            )}
             <button
               style={{
                 background: '#0d47a1',

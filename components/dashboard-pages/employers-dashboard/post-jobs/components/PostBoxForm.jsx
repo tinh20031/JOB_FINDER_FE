@@ -29,7 +29,7 @@ const PostBoxForm = () => {
     { value: "Creative Art", label: "Creative Art" },
   ];
   const router = useRouter();
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -49,7 +49,8 @@ const PostBoxForm = () => {
     addressDetail: '',
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
-    YourSkillAndExperience: ''
+    YourSkill: '',
+    YourExperience: ''
   });
 
   const [levels, setLevels] = useState([]);
@@ -146,14 +147,22 @@ const PostBoxForm = () => {
   const [newSkill, setNewSkill] = useState('');
 
   useEffect(() => {
-    ApiService.get(API_CONFIG.ENDPOINTS.LEVEL).then(setLevels);
-    ApiService.get(API_CONFIG.ENDPOINTS.JOB_TYPE).then(setJobTypes);
-    ApiService.get(API_CONFIG.ENDPOINTS.EXPERIENCE_LEVEL).then(setExperienceLevels);
-    ApiService.get(API_CONFIG.ENDPOINTS.INDUSTRY).then(setIndustries);
-    ApiService.get(API_CONFIG.ENDPOINTS.SKILLS).then(setAvailableSkills);
-    axios.get("https://provinces.open-api.vn/api/p/")
-      .then(res => setProvinces(res.data))
-      .catch(() => setProvinces([]));
+    Promise.all([
+      ApiService.get(API_CONFIG.ENDPOINTS.LEVEL),
+      ApiService.get(API_CONFIG.ENDPOINTS.JOB_TYPE),
+      ApiService.get(API_CONFIG.ENDPOINTS.EXPERIENCE_LEVEL),
+      ApiService.get(API_CONFIG.ENDPOINTS.INDUSTRY),
+      axios.get("https://provinces.open-api.vn/api/p/")
+    ]).then(([levels, jobTypes, experienceLevels, industries, provinces]) => {
+      setLevels(levels);
+      setJobTypes(jobTypes);
+      setExperienceLevels(experienceLevels);
+      setIndustries(industries);
+      setProvinces(provinces.data);
+      setIsLoading(false);
+    }).catch(() => {
+      setIsLoading(false);
+    });
     // Get userId from localStorage or cookies
     const userId = localStorage.getItem('userId') || Cookies.get('userId');
     const userRole = localStorage.getItem('role') || Cookies.get('role');
@@ -200,7 +209,8 @@ const PostBoxForm = () => {
            formData.timeEnd || 
            formData.provinceName || 
            formData.addressDetail ||
-           formData.YourSkillAndExperience;
+           formData.YourSkill ||
+           formData.YourExperience;
   };
 
   // Handle navigation away
@@ -257,7 +267,8 @@ const PostBoxForm = () => {
       addressDetail: '',
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
-      YourSkillAndExperience: ''
+      YourSkill: '',
+      YourExperience: ''
     });
     setHasUnsavedChanges(false);
     setErrors({});
@@ -341,8 +352,11 @@ const PostBoxForm = () => {
     if (!formData.addressDetail) {
       newErrors.addressDetail = 'Address detail is required';
     }
-    if (!formData.YourSkillAndExperience.trim()) {
-      newErrors.YourSkillAndExperience = 'Skills and experience are required';
+    if (!formData.YourSkill.trim()) {
+      newErrors.YourSkill = 'Skills are required';
+    }
+    if (!formData.YourExperience.trim()) {
+      newErrors.YourExperience = 'Experience is required';
     }
 
     if (selectedSkills.length === 0) {
@@ -482,7 +496,8 @@ const PostBoxForm = () => {
         addressDetail: formData.addressDetail,
         createdAt: formData.createdAt,
         updatedAt: formData.updatedAt,
-        YourSkillAndExperience: formData.YourSkillAndExperience
+        YourSkill: formData.YourSkill,
+        YourExperience: formData.YourExperience
       };
 
       console.log("Sending job data:", jobData);
@@ -559,7 +574,8 @@ const PostBoxForm = () => {
         addressDetail: '',
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
-        YourSkillAndExperience: ''
+        YourSkill: '',
+        YourExperience: ''
       });
       setSelectedSkills([]);
       setErrors({});
@@ -576,6 +592,21 @@ const PostBoxForm = () => {
       setHasUnsavedChanges(true);
     }
   }, [formData]);
+
+  if (isLoading) {
+    return (
+      <div className="skeleton-loader">
+        <div className="skeleton-line long"></div>
+        <div className="skeleton-line short"></div>
+        <div className="skeleton-line large"></div>
+        <div className="skeleton-line medium"></div>
+        <div className="skeleton-line short"></div>
+        <div className="skeleton-line long"></div>
+        <div className="skeleton-line medium"></div>
+        <div className="skeleton-line short"></div>
+      </div>
+    );
+  }
 
   return (
     <motion.form 
@@ -753,23 +784,72 @@ const PostBoxForm = () => {
           {errors.education && <div className="invalid-feedback">{errors.education}</div>}
         </motion.div>
 
-        {/* Skills and Experience */}
+        {/* Your Skills */}
         <motion.div className="form-group col-lg-12 col-md-12" variants={itemVariants}>
-          <label>Skills and Experience</label>
+          <label>Skills</label>
           {isClient ? (
             <ReactQuill
               theme="snow"
-              value={formData.YourSkillAndExperience}
+              value={formData.YourSkill}
               onChange={(value) => {
                 setFormData(prev => ({
                   ...prev,
-                  YourSkillAndExperience: value,
+                  YourSkill: value,
                 }));
                 // Clear error when user starts typing
-                if (errors.YourSkillAndExperience) {
+                if (errors.YourSkill) {
                   setErrors(prev => ({
                     ...prev,
-                    YourSkillAndExperience: ''
+                    YourSkill: ''
+                  }));
+                }
+              }}
+              modules={{
+                toolbar: [
+                  [{ 'header': [1, 2, false] }],
+                  ['bold', 'italic', 'underline', 'strike', 'blockquote'],
+                  [{ 'list': 'ordered' }, { 'list': 'bullet' }, { 'indent': '-1' }, { 'indent': '+1' }],
+                  ['link', 'image'],
+                  ['clean']
+                ],
+              }}
+              formats={[
+                'header', 'bold', 'italic', 'underline', 'strike', 'blockquote',
+                'list', 'bullet', 'indent',
+                'link', 'image'
+              ]}
+              className={`job-description-quill ${errors.YourSkill ? 'is-invalid' : ''}`}
+            />
+          ) : (
+            <textarea
+              name="YourSkill"
+              placeholder="Describe the required skills for this position..."
+              value={formData.YourSkill}
+              onChange={handleInputChange}
+              rows="8"
+              className={errors.YourSkill ? 'form-control is-invalid' : 'form-control'}
+            ></textarea>
+          )}
+          {errors.YourSkill && <div className="invalid-feedback">{errors.YourSkill}</div>}
+        </motion.div>
+
+        {/* Your Experience */}
+        <motion.div className="form-group col-lg-12 col-md-12" variants={itemVariants}>
+          <label>Experience</label>
+          {isClient ? (
+            <ReactQuill
+              theme="snow"
+              value={formData.YourExperience}
+              onChange={(value) => {
+                setFormData(prev => ({
+                  ...prev,
+                  YourExperience: value,
+                }));
+                // Clear error when user starts typing
+                if (errors.YourExperience) {
+                  setErrors(prev => ({
+                    ...prev,
+                    YourExperience: ''
                   }));
                 }
               }}
@@ -783,29 +863,28 @@ const PostBoxForm = () => {
                 ]
               }}
               formats={[
-                'header',
-                'bold', 'italic', 'underline', 'strike', 'blockquote',
+                'header', 'bold', 'italic', 'underline', 'strike', 'blockquote',
                 'list', 'bullet', 'indent',
                 'link', 'image'
               ]}
-              className={`job-description-quill ${errors.YourSkillAndExperience ? 'is-invalid' : ''}`}
+              className={`job-description-quill ${errors.YourExperience ? 'is-invalid' : ''}`}
             />
           ) : (
             <textarea
-              name="YourSkillAndExperience"
+              name="YourExperience"
               placeholder="Describe the required skills and experience for this position..."
-              value={formData.YourSkillAndExperience}
+              value={formData.YourExperience}
               onChange={handleInputChange}
               rows="8"
-              className={errors.YourSkillAndExperience ? 'form-control is-invalid' : 'form-control'}
+              className={errors.YourExperience ? 'form-control is-invalid' : 'form-control'}
             ></textarea>
           )}
-          {errors.YourSkillAndExperience && <div className="invalid-feedback">{errors.YourSkillAndExperience}</div>}
+          {errors.YourExperience && <div className="invalid-feedback">{errors.YourExperience}</div>}
         </motion.div>
 
         {/* Skills Section */}
         <motion.div className="form-group col-lg-12 col-md-12" variants={itemVariants}>
-          <label>Required Skills</label>
+          <label>Required Skills (Tag)</label>
           <div className="skills-input-container">
             <CreatableSelect
               isMulti
@@ -1322,7 +1401,8 @@ const PostBoxForm = () => {
                     addressDetail: '',
                     createdAt: new Date().toISOString(),
                     updatedAt: new Date().toISOString(),
-                    YourSkillAndExperience: ''
+                    YourSkill: '',
+                    YourExperience: ''
                   });
                   setErrors({});
                 }}
