@@ -136,7 +136,7 @@ const FilterJobsBox = () => {
         setError('Failed to fetch jobs');
         setJobs([]);
         setTotalJobs(0);
-      } finally {
+      } finally { 
         setLoading(false);
       }
     };
@@ -427,44 +427,73 @@ const FilterJobsBox = () => {
             <div key={item.id || index} className="job-block">
               <div className="inner-box">
                 <div className="content">
-                  <span className="company-logo">
+                  <span className="company-logo" style={{
+                    display: 'inline-block',
+                    width: 54,
+                    height: 54,
+                    borderRadius: 12,
+                    border: '1px solid #e5e7eb',
+                    background: '#fff',
+                    overflow: 'hidden',
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
+                    marginRight: 18,
+                    verticalAlign: 'middle',
+                  }}>
                     {(() => {
                       const company = companies.find(c => c.id === item.companyId);
-                      const logoSrc = company?.logo || '/images/company-logo/default-logo.png';
-                      const companyName = company?.name || getCompanyName(item.companyId);
-                      return <Image width={50} height={49} src={logoSrc} alt={companyName} />;
+                      const logoSrc = company?.logo || item.company?.urlCompanyLogo || '/images/company-logo/default-logo.png';
+                      const companyName = company?.name || item.company?.companyName || 'Company';
+                      return <Image width={54} height={54} src={logoSrc} alt={companyName} style={{ objectFit: 'cover', width: 54, height: 54, display: 'block' }} />;
                     })()}
                   </span>
                   <h4>
                     <Link href={`/job-single-v3/${item.id}`}>{item.jobTitle}</Link>
                   </h4>
                   <ul className="job-info">
-                    {item.companyId ? (
-                      <li>
-                        <span className="icon flaticon-building"></span>
-                        {getCompanyName(item.companyId)}
-                      </li>
-                    ) : null}
+                    <li>
+                      <span className="icon flaticon-building"></span>
+                      {item.company?.companyName || getCompanyName(item.companyId)}
+                    </li>
                     <li>
                       <span className="icon flaticon-map-locator"></span>
                       {item.provinceName || 'Province N/A'}
                     </li>
                     <li>
+                      <span className="icon flaticon-clock-3"></span>
+                      {item.createdAt ? (() => {
+                        const diff = Math.floor((Date.now() - new Date(item.createdAt)) / (1000 * 60 * 60));
+                        return diff < 24 ? `${diff} hours ago` : `${Math.floor(diff / 24)} days ago`;
+                      })() : 'N/A'}
+                    </li>
+                    <li>
                       <span className="icon flaticon-money"></span>
-                      {item.salary || 'Salary N/A'}
+                      {item.isSalaryNegotiable
+                        ? 'Negotiable Salary'
+                        : (item.minSalary && item.maxSalary
+                            ? `$${item.minSalary.toLocaleString()} - $${item.maxSalary.toLocaleString()}`
+                            : 'Salary N/A')}
                     </li>
                   </ul>
-                  <ul className="job-other-info">
-                    {item.industryId ? (
-                      <li className="time">{getIndustryName(item.industryId)}</li>
-                    ) : null}
-                    {item.jobTypeId ? (
-                      <li className="time">{getJobTypeName(item.jobTypeId)}</li>
-                    ) : null}
-                    {item.experienceLevelId ? (
-                      <li className="urgent">{getExperienceLevelName(item.experienceLevelId)}</li>
-                    ) : null}
-                  </ul>
+                  <div style={{ display: 'flex', gap: 8, marginTop: 8, flexWrap: 'wrap' }}>
+                    {/* Job Type Tag */}
+                    {item.jobType?.jobTypeName && (
+                      <span style={{ background: '#e0edff', color: '#2563eb', borderRadius: 16, padding: '4px 16px', fontWeight: 500, fontSize: 14 }}>
+                        {item.jobType.jobTypeName}
+                      </span>
+                    )}
+                    {/* Industry Tag */}
+                    {item.industry?.industryName && (
+                      <span style={{ background: '#e6f4ea', color: '#1dbf73', borderRadius: 16, padding: '4px 16px', fontWeight: 500, fontSize: 14 }}>
+                        {item.industry.industryName}
+                      </span>
+                    )}
+                    {/* Level Tag */}
+                    {item.level?.levelName && (
+                      <span style={{ background: '#fff4e6', color: '#ffb200', borderRadius: 16, padding: '4px 16px', fontWeight: 500, fontSize: 14 }}>
+                        {item.level.levelName}
+                      </span>
+                    )}
+                  </div>
                   <button
                     className={`bookmark-btn ${bookmarkedCompanies.includes(Number(item.companyId)) ? 'active' : ''}`}
                     onClick={() => handleBookmark(item.companyId)}
