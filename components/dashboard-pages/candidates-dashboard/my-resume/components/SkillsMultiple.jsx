@@ -1,26 +1,18 @@
-
 'use client'
-
 import Select from "react-select";
 
-const SkillsMultiple = () => {
-  const catOptions = [
-    { value: "Banking", label: "Banking" },
-    { value: "Digital & Creative", label: "Digital & Creative" },
-    { value: "Retail", label: "Retail" },
-    { value: "Human Resources", label: "Human Resources" },
-    { value: "Managemnet", label: "Managemnet" },
-    { value: "Accounting & Finance", label: "Accounting & Finance" },
-    { value: "Digital", label: "Digital" },
-    { value: "Creative Art", label: "Creative Art" },
-  ];
+const SkillsMultiple = ({ skills = [] }) => {
+  const options = skills.map((s) => ({
+    value: s.skillName,
+    label: s.skillName,
+  }));
 
   return (
     <Select
-      defaultValue={[catOptions[1]]}
+      defaultValue={options}
       isMulti
-      name="colors"
-      options={catOptions}
+      name="skills"
+      options={options}
       className="basic-multi-select"
       classNamePrefix="select"
       required

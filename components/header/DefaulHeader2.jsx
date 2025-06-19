@@ -14,7 +14,21 @@ import candidatesMenuData from "../../data/candidatesMenuData";
 import adminMenuData from "../../data/adminMenuData";
 import BecomeRecruiterModal from '../common/form/shared/BecomeRecruiterModal';
 
-
+// Helper function to validate image URLs
+const getValidImageUrl = (url) => {
+  if (!url || typeof url !== 'string') {
+    return "/images/resource/candidate-1.png";
+  }
+  // Check if it's "string" literal or invalid
+  if (url === "string") {
+    return "/images/resource/candidate-1.png";
+  }
+  // Check if it's an absolute URL or a relative path starting with /
+  if (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('/')) {
+    return url;
+  }
+  return "/images/resource/candidate-1.png"; // Invalid URL
+};
 
 const DefaulHeader2 = () => {
   const router = useRouter();
@@ -194,7 +208,7 @@ const DefaulHeader2 = () => {
                       alt="avatar"
                       width={50}
                       height={50}
-                      src={user?.image?.startsWith('http') ? user.image : user?.avatar?.startsWith('http') ? user.avatar : "/images/resource/candidate-1.png"}
+                      src={getValidImageUrl(user?.image || user?.avatar)}
                       className="thumb"
                       style={{ objectFit: 'cover', objectPosition: 'center', borderRadius: '50%' }}
                     />
@@ -233,7 +247,7 @@ const DefaulHeader2 = () => {
                       alt="avatar"
                       width={50}
                       height={50}
-                      src={user?.image?.startsWith('http') ? user.image : user?.avatar?.startsWith('http') ? user.avatar : "/images/resource/candidate-1.png"}
+                      src={getValidImageUrl(user?.image || user?.avatar)}
                       className="thumb"
                       style={{ objectFit: 'cover', objectPosition: 'center', borderRadius: '50%' }}
                     />
@@ -272,7 +286,7 @@ const DefaulHeader2 = () => {
                       alt="avatar"
                       width={50}
                       height={50}
-                      src={user?.image?.startsWith('http') ? user.image : user?.avatar?.startsWith('http') ? user.avatar : "/images/resource/candidate-1.png"}
+                      src={getValidImageUrl(user?.image || user?.avatar)}
                       className="thumb"
                       style={{ objectFit: 'cover', objectPosition: 'center', borderRadius: '50%' }}
                     />

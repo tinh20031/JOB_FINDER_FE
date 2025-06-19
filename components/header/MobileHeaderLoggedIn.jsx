@@ -9,6 +9,22 @@ import { authService } from "@/services/authService";
 import Image from "next/image";
 import MobileSidebar from "./mobile-sidebar";
 
+// Helper function to validate image URLs
+const getValidImageUrl = (url) => {
+  if (!url || typeof url !== 'string') {
+    return "/images/resource/candidate-1.png";
+  }
+  // Check if it's "string" literal or invalid
+  if (url === "string") {
+    return "/images/resource/candidate-1.png";
+  }
+  // Check if it's an absolute URL or a relative path starting with /
+  if (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('/')) {
+    return url;
+  }
+  return "/images/resource/candidate-1.png"; // Invalid URL
+};
+
 const MobileHeaderLoggedIn = () => {
   const router = useRouter();
   const dispatch = useDispatch();
@@ -87,7 +103,7 @@ const MobileHeaderLoggedIn = () => {
                     alt="avatar"
                     width={40}
                     height={40}
-                    src={user?.image?.startsWith('http') ? user.image : user?.avatar?.startsWith('http') ? user.avatar : "/images/resource/candidate-1.png"}
+                    src={getValidImageUrl(user?.image || user?.avatar)}
                     className="rounded-circle"
                   />
                 </button>
