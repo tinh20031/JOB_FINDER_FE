@@ -20,6 +20,8 @@ import DefaulHeader2 from "@/components/header/DefaulHeader2";
 import ApiService from "@/services/api.service";
 import API_CONFIG from "@/config/api.config";
 import { notFound } from 'next/navigation';
+import JobHeader from "@/components/job-single-pages/shared-components/JobHeader";
+import JobDetailsBox from "@/components/job-single-pages/shared-components/JobDetailsBox";
 
 const JobSingleDynamicV3 = ({ params }) => {
   const [job, setJob] = useState(null);
@@ -122,7 +124,114 @@ const JobSingleDynamicV3 = ({ params }) => {
     : "N/A";
 
   if (!job && !fetchError) {
-    return <div>Loading job details...</div>;
+    return (
+      <>
+        <span className="header-span"></span>
+        <LoginPopup />
+        <DefaulHeader2 />
+        <MobileMenu />
+        <section className="job-detail-section">
+          <div className="job-detail-outer">
+            <div className="auto-container">
+              <div className="row">
+                <div className="content-column col-lg-8 col-md-12 col-sm-12">
+                  <div className="job-block-outer">
+                    <div className="job-block-seven style-two">
+                      <div className="inner-box">
+                        <div className="content">
+                          <div className="skeleton skeleton-title" />
+                          <ul className="job-info">
+                            <li><span className="skeleton skeleton-text" /></li>
+                            <li><span className="skeleton skeleton-text" /></li>
+                            <li><span className="skeleton skeleton-text" /></li>
+                            <li><span className="skeleton skeleton-text" /></li>
+                          </ul>
+                          <ul className="job-other-info">
+                            <li className="skeleton skeleton-tag" />
+                            <li className="skeleton skeleton-tag" />
+                          </ul>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="job-overview-two">
+                    <div className="skeleton skeleton-section-title" />
+                    <div className="skeleton skeleton-box" style={{height: 120}} />
+                  </div>
+                  <div className="skeleton skeleton-section-title" style={{width: '40%'}} />
+                  <div className="skeleton skeleton-box" style={{height: 180}} />
+                  <div className="other-options">
+                    <div className="skeleton skeleton-section-title" style={{width: '30%'}} />
+                    <div className="skeleton skeleton-box" style={{height: 32, width: 120}} />
+                  </div>
+                </div>
+                <div className="sidebar-column col-lg-4 col-md-12 col-sm-12">
+                  <aside className="sidebar">
+                    <div className="btn-box">
+                      <div className="skeleton skeleton-btn" />
+                      <div className="skeleton skeleton-btn" style={{width: 40, height: 40, borderRadius: '50%'}} />
+                    </div>
+                    <div className="sidebar-widget company-widget">
+                      <div className="widget-content">
+                        <div className="company-title" style={{display: 'flex', alignItems: 'center', gap: '16px', textAlign: 'left', paddingLeft: 0}}>
+                          <div className="skeleton skeleton-avatar" />
+                          <div>
+                            <div className="skeleton skeleton-text" style={{width: 100, height: 20, marginBottom: 8}} />
+                            <div className="skeleton skeleton-link" style={{width: 80, height: 16}} />
+                          </div>
+                        </div>
+                        <div className="skeleton skeleton-box" style={{height: 60}} />
+                        <div className="btn-box">
+                          <div className="skeleton skeleton-btn" style={{width: 160, height: 36}} />
+                        </div>
+                      </div>
+                    </div>
+                    <div className="sidebar-widget contact-widget">
+                      <h4 className="widget-title">Contact Us</h4>
+                      <div className="widget-content">
+                        <div className="default-form">
+                          <Contact />
+                        </div>
+                        {/* End .default-form */}
+                      </div>
+                    </div>
+                    <div className="related-jobs">
+                      <div className="title-box">
+                        <h3>Related Jobs</h3>
+                        <div className="text">2020 jobs live - 293 added today.</div>
+                      </div>
+                      <RelatedJobs2 job={job} />
+                    </div>
+                  </aside>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+        <FooterDefault footerStyle="alternate5" />
+        <style jsx global>{`
+          .skeleton {
+            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 37%, #f0f0f0 63%);
+            background-size: 400% 100%;
+            animation: skeleton-loading 1.4s ease infinite;
+            border-radius: 4px;
+            margin-bottom: 12px;
+          }
+          @keyframes skeleton-loading {
+            0% { background-position: 100% 50%; }
+            100% { background-position: 0 50%; }
+          }
+          .skeleton-title { width: 60%; height: 32px; margin-bottom: 20px; }
+          .skeleton-section-title { width: 30%; height: 24px; margin-bottom: 16px; }
+          .skeleton-text { width: 80%; height: 16px; margin-bottom: 10px; }
+          .skeleton-tag { width: 60px; height: 24px; display: inline-block; margin-right: 8px; }
+          .skeleton-btn { width: 120px; height: 36px; margin-bottom: 10px; }
+          .skeleton-avatar { width: 54px; height: 53px; border-radius: 8px; background: #e0e0e0; }
+          .skeleton-link { width: 80px; height: 16px; background: #e0e0e0; }
+          .skeleton-box { width: 100%; height: 40px; margin-bottom: 16px; }
+        `}</style>
+      </>
+    );
   }
 
   if (fetchError) {
@@ -147,52 +256,19 @@ const JobSingleDynamicV3 = ({ params }) => {
       <section className="job-detail-section">
         <div className="job-detail-outer">
           <div className="auto-container">
+            <JobHeader job={{
+              ...job,
+              jobTypeName: getJobTypeName(job?.jobTypeId),
+              addressDetail: job?.addressDetail,
+              provinceName: job?.provinceName,
+              minSalary: job?.minSalary,
+              maxSalary: job?.maxSalary,
+              isSalaryNegotiable: job?.isSalaryNegotiable,
+              createdAt: job?.createdAt,
+              title: job?.title
+            }} company={company} />
             <div className="row">
               <div className="content-column col-lg-8 col-md-12 col-sm-12">
-                <div className="job-block-outer">
-                  <div className="job-block-seven style-two">
-                    <div className="inner-box">
-                      <div className="content">
-                        <h4>{job?.title}</h4>
-
-                        <ul className="job-info">
-                          <li>
-                            <span className="icon flaticon-briefcase"></span>
-                            {company?.companyName  || "N/A"}
-                          </li>
-                          {/* company info */}
-                          <li>
-                            <span className="icon flaticon-map-locator"></span>
-                            {job?.location}
-                          </li>
-                          {/* location info */}
-                          <li>
-                            <span className="icon flaticon-clock-3"></span>{" "}
-                            {job?.createdAt ? new Date(job.createdAt).toLocaleDateString('vi-VN') : ''}
-                          </li>
-                          {/* time info */}
-                          <li>
-                            <span className="icon flaticon-money"></span>{" "}
-                            {job?.salary}
-                          </li>
-                          {/* salary info */}
-                        </ul>
-                        {/* End .job-info */}
-
-                        <ul className="job-other-info">
-                          {jobTypeList.map((val, i) => (
-                            <li key={i} className={val.styleClass}>{val.type}</li>
-                          ))}
-                        </ul>
-                        {/* End .job-other-info */}
-                      </div>
-                      {/* End .content */}
-                    </div>
-                  </div>
-                  {/* <!-- Job Block --> */}
-                </div>
-                {/* <!-- job block outer --> */}
-
                 <div className="job-overview-two">
                   <h4>Job Overview</h4>
                   <JobOverView2
@@ -205,7 +281,7 @@ const JobSingleDynamicV3 = ({ params }) => {
                 </div>
                 {/* <!-- job-overview-two --> */}
 
-                <JobDetailsDescriptions jobId={params.id} />
+                <JobDetailsBox job={job} />
                 {/* End job-details */}
 
                 <div className="other-options">
@@ -215,6 +291,15 @@ const JobSingleDynamicV3 = ({ params }) => {
                   </div>
                 </div>
                 {/* <!-- Other Options --> */}
+
+                <div className="related-jobs">
+                  <div className="title-box">
+                    <h3>Related Jobs</h3>
+                    <div className="text">2020 jobs live - 293 added today.</div>
+                  </div>
+                  <RelatedJobs2 job={job} />
+                </div>
+                {/* End related-jobs */}
               </div>
               {/* End .content-column */}
 
@@ -331,20 +416,6 @@ const JobSingleDynamicV3 = ({ params }) => {
               {/* End .sidebar-column */}
             </div>
             {/* End .row  */}
-
-            <div className="related-jobs">
-              <div className="title-box">
-                <h3>Related Jobs</h3>
-                <div className="text">2020 jobs live - 293 added today.</div>
-              </div>
-              {/* End title box */}
-
-              <div className="row">
-                <RelatedJobs2 />
-              </div>
-              {/* End .row */}
-            </div>
-            {/* <!-- Related Jobs --> */}
           </div>
           {/* End auto-container */}
         </div>
