@@ -23,8 +23,6 @@ const RelatedJobs2 = ({ job }) => {
           experience: job.experienceLevelId ? [job.experienceLevelId] : undefined,
         };
         const { data } = await jobService.getJobs(filters);
-        console.log('job hiện tại:', job);
-        console.log('Danh sách job lấy từ API:', data);
         // Lọc thêm các điều kiện phụ trợ
         const now = new Date();
         const filtered = data.filter(j =>
@@ -36,7 +34,6 @@ const RelatedJobs2 = ({ job }) => {
             ? j.skills?.some(jskill => job.skills.some(s => s.skillId === jskill.skillId))
             : true)
         );
-        console.log('Kết quả relatedJobs sau khi lọc:', filtered);
         setRelatedJobs(filtered);
       } catch (e) {
         setRelatedJobs([]);
@@ -115,7 +112,15 @@ const RelatedJobs2 = ({ job }) => {
       ))}
       {relatedJobs.length > 4 && (
         <div className="see-more" style={{ marginTop: 16 }}>
-          <a href={`/job-list-v1?relatedTo=${job.id}`} className="theme-btn btn-style-three">
+          <a
+            href={`/job-list-v1?industryId=${job.industryId}` +
+              (job.provinceName ? `&provinceName=${encodeURIComponent(job.provinceName)}` : '') +
+              (job.levelId ? `&levelId=${job.levelId}` : '') +
+              (job.jobTypeId ? `&jobTypeId=${job.jobTypeId}` : '') +
+              (job.experienceLevelId ? `&experienceLevelId=${job.experienceLevelId}` : '')
+            }
+            className="theme-btn btn-style-three"
+          >
             See all related jobs
           </a>
         </div>

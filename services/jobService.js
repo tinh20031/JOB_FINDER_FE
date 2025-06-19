@@ -724,6 +724,12 @@ export const jobService = {
       return 0;
     }
   },
+
+  // Hàm lấy tất cả job active (status === 1)
+  async getActiveJobs(filters = {}) {
+    const { data: jobs } = await this.getJobs(filters);
+    return jobs.filter(job => job.status === 1);
+  },
 };
 
 export default jobService;

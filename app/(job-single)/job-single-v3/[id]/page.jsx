@@ -82,14 +82,6 @@ const JobSingleDynamicV3 = ({ params }) => {
     fetchData();
   }, [params.id]);
 
-  useEffect(() => {
-    console.log("Job data in page.jsx:", job);
-    console.log("Industries in page.jsx:", industries);
-    console.log("Levels in page.jsx:", levels);
-    console.log("Job Types in page.jsx:", jobTypes);
-    console.log("Experience Levels in page.jsx:", experienceLevels);
-  }, [job, industries, levels, jobTypes, experienceLevels]);
-
   const getIndustryName = (id) => industries.find(i => i.industryId === id)?.industryName || "N/A";
   const getLevelName = (id) => levels.find(l => l.id === id)?.levelName || "N/A";
   const getJobTypeName = (id) => jobTypes.find(jt => jt.id === id)?.jobTypeName || "N/A";
@@ -195,13 +187,6 @@ const JobSingleDynamicV3 = ({ params }) => {
                         {/* End .default-form */}
                       </div>
                     </div>
-                    <div className="related-jobs">
-                      <div className="title-box">
-                        <h3>Related Jobs</h3>
-                        <div className="text">2020 jobs live - 293 added today.</div>
-                      </div>
-                      <RelatedJobs2 job={job} />
-                    </div>
                   </aside>
                 </div>
               </div>
@@ -293,10 +278,6 @@ const JobSingleDynamicV3 = ({ params }) => {
                 {/* <!-- Other Options --> */}
 
                 <div className="related-jobs">
-                  <div className="title-box">
-                    <h3>Related Jobs</h3>
-                    <div className="text">2020 jobs live - 293 added today.</div>
-                  </div>
                   <RelatedJobs2 job={job} />
                 </div>
                 {/* End related-jobs */}
