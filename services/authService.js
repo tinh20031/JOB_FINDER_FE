@@ -212,5 +212,15 @@ export const authService = {
     const cookieProfileImage = Cookies.get('profileImage');
     if (cookieProfileImage) return cookieProfileImage;
     return localStorage.getItem('profileImageCompany');
+  },
+
+  async changePassword(currentPassword, newPassword) {
+    try {
+      const payload = { currentPassword, newPassword };
+      const data = await ApiService.changePassword(payload);
+      return data;
+    } catch (error) {
+      throw error;
+    }
   }
 };
