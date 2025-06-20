@@ -132,3 +132,42 @@ export async function updateCandidateProfile({
   }
   return await response.json();
 }
+
+export async function updateAboutMe(aboutMe) {
+  const token = getToken();
+  if (!token) throw new Error("No token found");
+  const response = await fetch(`${API_URL}/AboutMe/me/${aboutMe.aboutMeId}`, {
+    method: "PUT",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(aboutMe),
+  });
+  if (!response.ok) {
+    throw new Error("Cập nhật About Me thất bại");
+  }
+  if (response.status === 204) {
+    return;
+  }
+  return await response.json();
+}
+
+export async function updateEducation(education) {
+  const token = getToken();
+  if (!token) throw new Error("No token found");
+  const response = await fetch(
+    `${API_URL}/Education/me/${education.educationId}`,
+    {
+      method: "PUT",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(education),
+    }
+  );
+  if (!response.ok) throw new Error("Cập nhật Education thất bại");
+  if (response.status === 204) return;
+  return await response.json();
+}

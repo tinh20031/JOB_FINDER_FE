@@ -39,6 +39,7 @@ const index = () => {
   };
 
   const handleEditProfile = () => setEditOpen(true);
+  const handleEditAboutMe = () => setEditOpen(true);
   const handleCloseEdit = () => setEditOpen(false);
   const handleSaveEdit = async (form) => {
     console.log("handleSaveEdit called:", form);
@@ -61,7 +62,7 @@ const index = () => {
           <ProfileCard profile={profile} onEdit={handleEditProfile} />
         </div>
         <div className="form-group col-lg-12 col-md-12">
-          <AboutMe aboutme={aboutme} />
+          <AboutMe aboutme={aboutme} onEdit={handleEditAboutMe} />
         </div>
         <div className="form-group col-lg-12 col-md-12">
           <Education education={education} />
