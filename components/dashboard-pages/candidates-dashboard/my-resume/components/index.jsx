@@ -67,10 +67,14 @@ const index = () => {
           <ProfileCard profile={profileState} onEdit={handleEditProfile} />
         </div>
         <div className="form-group col-lg-12 col-md-12">
-          <AboutMe aboutme={aboutme} onEdit={handleEditAboutMe} />
+          <AboutMe
+            aboutme={aboutme}
+            refetch={refetch}
+            onEdit={handleEditAboutMe}
+          />
         </div>
         <div className="form-group col-lg-12 col-md-12">
-          <Education education={education} />
+          <Education education={education} refetch={refetch} />
           <Experiences experiences={experiences} />
         </div>
         <div className="form-group col-lg-12 col-md-12">

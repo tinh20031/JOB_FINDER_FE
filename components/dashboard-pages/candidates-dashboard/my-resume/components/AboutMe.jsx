@@ -1,10 +1,10 @@
 import React, { useState } from "react";
 import AboutMeModal from "./AboutMeModal";
 import { updateAboutMe } from "@/services/useResumeData";
+import { toast } from "react-toastify";
 
-const AboutMe = ({ aboutme }) => {
+const AboutMe = ({ aboutme, refetch }) => {
   const [open, setOpen] = useState(false);
-  const [reload, setReload] = useState(0);
 
   const handleEdit = () => setOpen(true);
   const handleClose = () => setOpen(false);
@@ -19,10 +19,12 @@ const AboutMe = ({ aboutme }) => {
       };
       await updateAboutMe(aboutMeData);
       setOpen(false);
-      setReload((r) => r + 1);
-      window.location.reload();
+      if (typeof refetch === "function") {
+        await refetch();
+      }
+      toast.success("Updated successfully");
     } catch (e) {
-      alert("Cập nhật thất bại!");
+      toast.error("Cập nhật thất bại!");
     }
   };
 
@@ -64,10 +66,16 @@ const AboutMe = ({ aboutme }) => {
         </div>
       )}
       {aboutme?.aboutMeDescription && (
-        <div style={{ color: "#222", fontSize: 18, lineHeight: 1.7 }}>
-          {aboutme.aboutMeDescription}
-        </div>
+        <div
+          className="aboutme-richtext"
+          style={{ color: "#222", fontSize: 18, lineHeight: 1.4 }}
+          dangerouslySetInnerHTML={{ __html: aboutme.aboutMeDescription }}
+        />
       )}
+      <style>{`
+        .aboutme-richtext p { margin-bottom: 2px !important; }
+        .aboutme-richtext ul, .aboutme-richtext ol { margin-bottom: 2px !important; }
+      `}</style>
       <AboutMeModal
         open={open}
         onClose={handleClose}

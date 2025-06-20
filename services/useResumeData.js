@@ -153,6 +153,24 @@ export async function updateAboutMe(aboutMe) {
   return await response.json();
 }
 
+export async function createEducation(education) {
+  const token = getToken();
+  if (!token) throw new Error("No token found");
+  const response = await fetch(`${API_URL}/Education/me`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(education),
+  });
+  if (!response.ok) {
+    console.error("Create education failed:", await response.text());
+    throw new Error("Tạo education thất bại");
+  }
+  return await response.json();
+}
+
 export async function updateEducation(education) {
   const token = getToken();
   if (!token) throw new Error("No token found");
@@ -387,4 +405,21 @@ export async function updateAward(award) {
   if (!response.ok) throw new Error("Cập nhật Award thất bại");
   if (response.status === 204) return;
   return await response.json();
+}
+
+export async function deleteEducation(id) {
+  const token = getToken();
+  if (!token) throw new Error("No token found");
+  const response = await fetch(`${API_URL}/Education/${id}`, {
+    method: "DELETE",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      accept: "*/*",
+    },
+  });
+  if (!response.ok) {
+    throw new Error("Xóa education thất bại");
+  }
+  if (response.status === 204) return true;
+  return true;
 }

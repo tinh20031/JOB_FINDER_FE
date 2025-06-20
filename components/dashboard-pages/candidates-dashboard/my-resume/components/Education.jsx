@@ -1,11 +1,17 @@
 import React, { useState } from "react";
 import EducationModal from "./EducationModal";
-import { updateEducation } from "@/services/useResumeData";
+import {
+  updateEducation,
+  createEducation,
+  deleteEducation,
+} from "@/services/useResumeData";
+import { toast } from "react-toastify";
 
-const Education = ({ education = [] }) => {
+const Education = ({ education = [], refetch }) => {
   const [open, setOpen] = useState(false);
   const [selectedEdu, setSelectedEdu] = useState(null);
-  const [reload, setReload] = useState(0);
+  const [deletingId, setDeletingId] = useState(null);
+  const [lastDeletedEducation, setLastDeletedEducation] = useState(null);
 
   const handleEdit = (edu) => {
     setSelectedEdu(edu);
@@ -18,13 +24,80 @@ const Education = ({ education = [] }) => {
   const handleClose = () => setOpen(false);
   const handleSave = async (eduData) => {
     try {
-      await updateEducation(eduData);
+      if (!eduData.educationId || eduData.educationId === 0) {
+        await createEducation(eduData);
+      } else {
+        await updateEducation(eduData);
+      }
       setOpen(false);
-      setReload((r) => r + 1);
-      window.location.reload();
+      if (typeof refetch === "function") {
+        await refetch();
+      }
+      toast.success("Updated successfully");
     } catch (e) {
-      alert("Cập nhật thất bại!");
+      toast.error("Cập nhật thất bại!");
     }
+  };
+
+  const handleUndo = async (edu) => {
+    try {
+      // Loại bỏ các trường không hợp lệ khi tạo mới
+      const { educationId, createdAt, updatedAt, ...rest } = edu;
+      await createEducation(rest);
+      if (typeof refetch === "function") await refetch();
+      toast.success("Restored successfully");
+      setLastDeletedEducation(null);
+    } catch {
+      toast.error("Undo failed!");
+    }
+  };
+
+  const handleDelete = async (id) => {
+    const edu = education.find((e) => e.educationId === id);
+    // if (!window.confirm("Are you sure you want to delete this education?"))
+    // return;
+    setDeletingId(id);
+    try {
+      await deleteEducation(id);
+      setLastDeletedEducation(edu); // Lưu lại education vừa xóa
+      if (typeof refetch === "function") {
+        await refetch();
+      }
+      toast.info(
+        <span style={{ display: "flex", alignItems: "center" }}>
+          <span style={{ marginRight: 12, fontWeight: 500 }}>
+            You deleted an Education.
+          </span>
+          <button
+            style={{
+              color: "#fff",
+              background: "#28a745",
+              border: "none",
+              borderRadius: 6,
+              fontWeight: 700,
+              fontSize: 16,
+              padding: "6px 18px",
+              marginLeft: 8,
+              cursor: "pointer",
+              boxShadow: "0 2px 8px #0002",
+              display: "flex",
+              alignItems: "center",
+              gap: 6,
+            }}
+            onClick={async (e) => {
+              e.preventDefault();
+              await handleUndo(edu);
+            }}
+          >
+            <span style={{ fontSize: 18, marginRight: 4 }}>⟲</span> Undo
+          </button>
+        </span>,
+        { autoClose: 10000 }
+      );
+    } catch (e) {
+      toast.error("Xóa thất bại!");
+    }
+    setDeletingId(null);
   };
 
   // Helper to format date MM/YYYY
@@ -125,12 +198,16 @@ const Education = ({ education = [] }) => {
               <span className="la la-pencil"></span>
             </button>
             <button
+              onClick={() => handleDelete(edu.educationId)}
+              disabled={deletingId === edu.educationId}
               style={{
                 background: "none",
                 border: "none",
-                cursor: "pointer",
-                color: "#888",
+                cursor:
+                  deletingId === edu.educationId ? "not-allowed" : "pointer",
+                color: deletingId === edu.educationId ? "#ccc" : "#888",
                 fontSize: 20,
+                opacity: deletingId === edu.educationId ? 0.6 : 1,
               }}
               title="Delete"
             >

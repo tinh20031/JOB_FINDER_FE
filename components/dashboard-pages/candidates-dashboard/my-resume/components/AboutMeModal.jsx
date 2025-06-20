@@ -1,17 +1,39 @@
 import React, { useState, useEffect } from "react";
+import dynamic from "next/dynamic";
+const ReactQuill = dynamic(() => import("react-quill"), { ssr: false });
+import "react-quill/dist/quill.snow.css";
 
 const AboutMeModal = ({ open, onClose, onSubmit, aboutMe }) => {
   const [value, setValue] = useState(aboutMe || "");
+  const [show, setShow] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false);
 
   useEffect(() => {
     setValue(aboutMe || "");
+    if (open) {
+      setTimeout(() => setShow(true), 10);
+    } else {
+      setShow(false);
+    }
   }, [aboutMe, open]);
 
-  if (!open) return null;
+  if (!open && !show) return null;
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    onSubmit(value);
+    setShow(false);
+    setTimeout(() => {
+      onSubmit(value);
+      setShowSuccess(true);
+      setTimeout(() => setShowSuccess(false), 2000);
+    }, 300); // match animation
+  };
+
+  const handleClose = () => {
+    setShow(false);
+    setTimeout(() => {
+      onClose();
+    }, 300);
   };
 
   return (
@@ -25,6 +47,9 @@ const AboutMeModal = ({ open, onClose, onSubmit, aboutMe }) => {
           display: flex;
           align-items: center;
           justify-content: center;
+          transition: opacity 0.3s;
+          opacity: ${show ? 1 : 0};
+          pointer-events: ${show ? "auto" : "none"};
         }
         .aboutme-modal-content {
           background: #fff;
@@ -43,6 +68,8 @@ const AboutMeModal = ({ open, onClose, onSubmit, aboutMe }) => {
           overflow-y: auto;
           scrollbar-width: thin;
           scrollbar-color: ##888 #f5f5f5;
+          transform: scale(${show ? 1 : 0.95});
+          transition: all 0.3s cubic-bezier(.4,0,.2,1);
         }
         .aboutme-modal-content::-webkit-scrollbar {
           width: 8px;
@@ -50,7 +77,6 @@ const AboutMeModal = ({ open, onClose, onSubmit, aboutMe }) => {
         .aboutme-modal-content::-webkit-scrollbar-thumb {
           background: ##888;
           border-radius: 4px;
-          
         }
         .aboutme-modal-title {
           font-size: 2rem;
@@ -63,15 +89,10 @@ const AboutMeModal = ({ open, onClose, onSubmit, aboutMe }) => {
           flex-direction: column;
           min-height: 0;
         }
-        .aboutme-modal-textarea {
-          width: 100%;
+        .aboutme-modal-quill .ql-container {
           min-height: 120px;
-          resize: vertical;
           font-size: 1.1rem;
-          padding: 12px;
           border-radius: 6px;
-          border: 1px solid #ddd;
-          margin-bottom: 16px;
         }
         .aboutme-modal-actions {
           display: flex;
@@ -82,16 +103,40 @@ const AboutMeModal = ({ open, onClose, onSubmit, aboutMe }) => {
           padding: 16px 0 0 0;
           margin-top: 0;
         }
+        .aboutme-success {
+          position: fixed;
+          top: 40px;
+          left: 50%;
+          transform: translateX(-50%);
+          background: #28a745;
+          color: #fff;
+          padding: 12px 32px;
+          border-radius: 8px;
+          font-size: 18px;
+          font-weight: 600;
+          z-index: 2000;
+          box-shadow: 0 2px 12px #0002;
+          animation: fadeInOut 2s;
+        }
+        @keyframes fadeInOut {
+          0% { opacity: 0; transform: translateX(-50%) translateY(-20px); }
+          10% { opacity: 1; transform: translateX(-50%) translateY(0); }
+          90% { opacity: 1; transform: translateX(-50%) translateY(0); }
+          100% { opacity: 0; transform: translateX(-50%) translateY(-20px); }
+        }
         @media (max-width: 600px) {
           .aboutme-modal-content {
             padding: 20px 6px 0 6px;
           }
         }
       `}</style>
+      {showSuccess && (
+        <div className="aboutme-success">Updated successfully</div>
+      )}
       <div className="aboutme-modal-overlay">
         <div className="aboutme-modal-content">
           <button
-            onClick={onClose}
+            onClick={handleClose}
             style={{
               position: "absolute",
               top: 16,
@@ -107,29 +152,49 @@ const AboutMeModal = ({ open, onClose, onSubmit, aboutMe }) => {
           </button>
           <div className="aboutme-modal-title">About Me</div>
           <form className="aboutme-modal-form" onSubmit={handleSubmit}>
-            <div
-              style={{ marginBottom: 12, color: "#ff9800", fontWeight: 600 }}
-            >
+            <div style={{ marginBottom: 12, fontWeight: 600 }}>
               <span role="img" aria-label="tips">
                 📝
               </span>{" "}
-              Tips: Summarize your professional experience, highlight your
-              skills and your strengths.
+              <span style={{ color: "#ff9800" }}>Tips:</span>{" "}
+              <span style={{ color: "#000000" }}>
+                Summarize your professional experience, highlight your skills
+                and your strengths.
+              </span>
             </div>
-            <textarea
-              className="aboutme-modal-textarea"
-              value={value}
-              onChange={(e) => setValue(e.target.value)}
-              maxLength={2500}
-              placeholder="Write something about yourself..."
-            />
+            <div className="aboutme-modal-quill">
+              <ReactQuill
+                value={value}
+                onChange={setValue}
+                modules={{
+                  toolbar: [
+                    [{ header: [1, 2, false] }],
+                    ["bold", "italic", "underline", "strike"],
+                    [{ list: "ordered" }, { list: "bullet" }],
+                    ["link"],
+                    ["clean"],
+                  ],
+                }}
+                formats={[
+                  "header",
+                  "bold",
+                  "italic",
+                  "underline",
+                  "strike",
+                  "list",
+                  "bullet",
+                  "link",
+                ]}
+                placeholder="Write something about yourself..."
+              />
+            </div>
             <div style={{ color: "#888", fontSize: 14, marginBottom: 8 }}>
-              {value.length}/2500 characters
+              {value.replace(/<[^>]+>/g, "").length}/2500 characters
             </div>
             <div className="aboutme-modal-actions">
               <button
                 type="button"
-                onClick={onClose}
+                onClick={handleClose}
                 style={{
                   background: "#fff",
                   border: "1px solid #e60023",
