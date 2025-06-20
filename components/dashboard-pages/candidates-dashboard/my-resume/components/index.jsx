@@ -1,6 +1,5 @@
 "use client";
 
-import Awards from "./Awards";
 import Education from "./Education";
 import Experiences from "./Experiences";
 import Skills from "./Skills";
@@ -10,7 +9,7 @@ import AboutMe from "./AboutMe";
 import ForeignLanguague from "./ForeignLanguague";
 import HighlightProject from "./HighlightProject";
 import Certificate from "./Certificate";
-import Award from "./Award";
+import Awards from "./Awards";
 import EditProfileModal from "./EditProfileModal";
 import { updateCandidateProfile } from "@/services/useResumeData";
 import { useState } from "react";
@@ -26,7 +25,7 @@ const index = () => {
     foreignlanguage,
     project,
     certificate,
-    award,
+    awards,
     loading,
   } = useResumeData();
   const [editOpen, setEditOpen] = useState(false);
@@ -69,10 +68,6 @@ const index = () => {
           <Education education={education} />
           <Experiences experiences={experiences} />
         </div>
-
-        <div className="form-group col-lg-12 col-md-12">
-          <Awards awards={award} />
-        </div>
         <div className="form-group col-lg-12 col-md-12">
           <Skills skills={skills} />
         </div>
@@ -89,7 +84,7 @@ const index = () => {
           <Certificate certificate={certificate} />
         </div>
         <div className="form-group col-lg-12 col-md-12">
-          <Award award={award} />
+          <Awards awards={awards} />
         </div>
 
         <div className="form-group col-lg-12 col-md-12">

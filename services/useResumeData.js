@@ -357,3 +357,34 @@ export async function updateCertificate(certificate) {
   if (response.status === 204) return;
   return await response.json();
 }
+
+export async function creatAward(award) {
+  const token = getToken();
+  if (!token) throw new Error("No token found");
+  const response = await fetch(`${API_URL}/Award/me`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(award),
+  });
+  if (!response.ok) throw new Error("Tạo award thất bại");
+  return await response.json();
+}
+
+export async function updateAward(award) {
+  const token = getToken();
+  if (!token) throw new Error("No token found");
+  const response = await fetch(`${API_URL}/Award/me/${award.awardId}`, {
+    method: "PUT",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(award),
+  });
+  if (!response.ok) throw new Error("Cập nhật Award thất bại");
+  if (response.status === 204) return;
+  return await response.json();
+}
