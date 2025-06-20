@@ -323,3 +323,37 @@ export async function createHighlighProject(highlightProject) {
   if (!response.ok) throw new Error("Tạo Highlight Project thất bại");
   return await response.json();
 }
+
+export async function creatCertificate(certificate) {
+  const token = getToken();
+  if (!token) throw new Error("No token found");
+  const response = await fetch(`${API_URL}/Certificate/me`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(certificate),
+  });
+  if (!response.ok) throw new Error("Tạo Certificate thất bại");
+  return await response.json();
+}
+
+export async function updateCertificate(certificate) {
+  const token = getToken();
+  if (!token) throw new Error("No token found");
+  const response = await fetch(
+    `${API_URL}/Certificate/me/${certificate.certificateId}`,
+    {
+      method: "PUT",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(certificate),
+    }
+  );
+  if (!response.ok) throw new Error("Cập nhật Certificate thất bại");
+  if (response.status === 204) return;
+  return await response.json();
+}
