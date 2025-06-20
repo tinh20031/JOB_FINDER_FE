@@ -289,3 +289,37 @@ export async function deleteForeignLanguage(id) {
   if (response.status === 204) return;
   return;
 }
+
+export async function updateHighlighProject(highlightProject) {
+  const token = getToken();
+  if (!token) throw new Error("No token found");
+  const response = await fetch(
+    `${API_URL}/HighlightProject/me/${highlightProject.highlightProjectId}`,
+    {
+      method: "PUT",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(highlightProject),
+    }
+  );
+  if (!response.ok) throw new Error("Cập nhật Work Experience thất bại");
+  if (response.status === 204) return;
+  return await response.json();
+}
+
+export async function createHighlighProject(highlightProject) {
+  const token = getToken();
+  if (!token) throw new Error("No token found");
+  const response = await fetch(`${API_URL}/HighlightProject/me`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(highlightProject),
+  });
+  if (!response.ok) throw new Error("Tạo Highlight Project thất bại");
+  return await response.json();
+}
