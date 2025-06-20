@@ -158,20 +158,42 @@ const EducationModal = ({ open, onClose, onSubmit, education }) => {
         }
         .edu-modal-content {
           background: #fff; border-radius: 12px; min-width: 320px;
-          width: 95vw; max-width: 900px; min-height: 40vh; max-height: 90vh;
+          width: 95vw; max-width: 700px; min-height: 40vh; max-height: 90vh;
           display: flex; flex-direction: column; box-shadow: 0 8px 32px rgba(0,0,0,0.12);
-          padding: 32px 24px 0 24px; position: relative; overflow-y: auto;
-          padding-bottom: 20px;
+          padding: 32px 32px 0 32px; position: relative; overflow-y: auto;
+          padding-bottom: 30px;
           transform: scale(${show ? 1 : 0.95});
           transition: all 0.3s cubic-bezier(.4,0,.2,1);
         }
-        .edu-modal-title { font-size: 2rem; font-weight: 700; margin-bottom: 16px; }
+        .edu-modal-title { font-size: 2rem; font-weight: 700; margin-bottom: 24px; }
         .edu-modal-form { flex: 1 1 auto; display: flex; flex-direction: column; min-height: 0; }
-        .edu-modal-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-        @media (max-width: 700px) { .edu-modal-grid { grid-template-columns: 1fr; } }
+        .edu-modal-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px 32px; }
+        @media (max-width: 700px) { .edu-modal-grid { grid-template-columns: 1fr; gap: 18px; } }
+        .edu-label { font-size: 15px; font-weight: 600; color: #222; margin-bottom: 6px; display: flex; align-items: center; }
+        .edu-required { color: #e60023; margin-left: 2px; }
+        .edu-input, .edu-select {
+          width: 100%; border-radius: 8px; border: 1.5px solid #ddd; padding: 12px 14px; font-size: 16px;
+          margin-bottom: 0; background: #fff; transition: border 0.2s;
+        }
+        .edu-input:focus, .edu-select:focus { border: 1.5px solid #1967d2; outline: none; }
+        .edu-input.error, .edu-select.error { border: 2px solid #e60023 !important; }
+        .edu-input.valid, .edu-select.valid { border: 2px solid #28a745 !important; }
+        .edu-error { color: #e60023; font-size: 13px; margin-top: 2px; min-height: 18px; }
+        .edu-checkbox-row { display: flex; align-items: center; gap: 8px; margin: 0 0 8px 0; }
+        .edu-checkbox {
+          width: 18px; height: 18px; accent-color: #1967d2; margin: 0;
+        }
         .edu-modal-actions {
           display: flex; justify-content: flex-end; gap: 16px;
-          background: #fff; border-top: 1px solid #eee; padding: 16px 0 0 0; margin-top: 0;
+          background: #fff; border-top: 1px solid #eee; padding: 18px 0 0 0; margin-top: 24px;
+        }
+        .edu-btn-cancel {
+          background: #fff; border: 1.5px solid #e60023; color: #e60023;
+          padding: 12px 36px; border-radius: 8px; font-weight: 700; font-size: 16px; cursor: pointer;
+        }
+        .edu-btn-save {
+          background: #e60023; color: #fff; border: none;
+          padding: 12px 36px; border-radius: 8px; font-weight: 700; font-size: 16px; cursor: pointer;
         }
       `}</style>
       <div className="edu-modal-overlay">
@@ -188,95 +210,58 @@ const EducationModal = ({ open, onClose, onSubmit, education }) => {
               cursor: "pointer",
               color: "#888",
             }}
+            aria-label="Close"
           >
             ×
           </button>
           <div className="edu-modal-title">Education</div>
-          <form className="edu-modal-form" onSubmit={handleSubmit}>
+          <form
+            className="edu-modal-form"
+            onSubmit={handleSubmit}
+            autoComplete="off"
+          >
             <div className="edu-modal-grid">
               <div>
-                <label>
-                  School <span style={{ color: "#e60023" }}>*</span>
+                <label className="edu-label">
+                  School <span className="edu-required">*</span>
                 </label>
                 <input
                   name="school"
+                  className={`edu-input${
+                    errors.school || (touched.school && !form.school.trim())
+                      ? " error"
+                      : form.school.trim()
+                      ? " valid"
+                      : ""
+                  }`}
+                  placeholder="School"
                   value={form.school}
                   onChange={handleChange}
                   onBlur={handleBlur}
                   required
-                  style={{
-                    border:
-                      errors.school || (touched.school && !form.school.trim())
-                        ? "2px solid #e60023"
-                        : form.school.trim()
-                        ? "2px solid #28a745"
-                        : "1px solid #ddd",
-                    outline:
-                      errors.school || (touched.school && !form.school.trim())
-                        ? "1px solid #e60023"
-                        : undefined,
-                    background: "#fff",
-                  }}
                 />
-                {(errors.school || (touched.school && !form.school.trim())) && (
-                  <div style={{ color: "#e60023", fontSize: 13, marginTop: 2 }}>
-                    Please enter your school
-                  </div>
-                )}
+                <div className="edu-error">
+                  {(errors.school || (touched.school && !form.school.trim())) &&
+                    "Please enter your school"}
+                </div>
               </div>
               <div>
-                <label>
-                  Major <span style={{ color: "#e60023" }}>*</span>
-                </label>
-                <input
-                  name="major"
-                  value={form.major}
-                  onChange={handleChange}
-                  onBlur={handleBlur}
-                  required
-                  style={{
-                    border:
-                      errors.major || (touched.major && !form.major.trim())
-                        ? "2px solid #e60023"
-                        : form.major.trim()
-                        ? "2px solid #28a745"
-                        : "1px solid #ddd",
-                    outline:
-                      errors.major || (touched.major && !form.major.trim())
-                        ? "1px solid #e60023"
-                        : undefined,
-                    background: "#fff",
-                  }}
-                />
-                {(errors.major || (touched.major && !form.major.trim())) && (
-                  <div style={{ color: "#e60023", fontSize: 13, marginTop: 2 }}>
-                    Please enter your major
-                  </div>
-                )}
-              </div>
-              <div>
-                <label>
-                  Degree <span style={{ color: "#e60023" }}>*</span>
+                <label className="edu-label">
+                  Degree <span className="edu-required">*</span>
                 </label>
                 <select
                   name="degree"
+                  className={`edu-select${
+                    errors.degree || (touched.degree && !form.degree.trim())
+                      ? " error"
+                      : form.degree.trim()
+                      ? " valid"
+                      : ""
+                  }`}
                   value={form.degree}
                   onChange={handleChange}
                   onBlur={handleBlur}
                   required
-                  style={{
-                    border:
-                      errors.degree || (touched.degree && !form.degree.trim())
-                        ? "2px solid #e60023"
-                        : form.degree.trim()
-                        ? "2px solid #28a745"
-                        : "1px solid #ddd",
-                    outline:
-                      errors.degree || (touched.degree && !form.degree.trim())
-                        ? "1px solid #e60023"
-                        : undefined,
-                    background: "#fff",
-                  }}
                 >
                   <option value="">Select degree</option>
                   {degreeOptions.map((d) => (
@@ -285,230 +270,185 @@ const EducationModal = ({ open, onClose, onSubmit, education }) => {
                     </option>
                   ))}
                 </select>
-                {(errors.degree || (touched.degree && !form.degree.trim())) && (
-                  <div style={{ color: "#e60023", fontSize: 13, marginTop: 2 }}>
-                    Please select your degree
-                  </div>
-                )}
+                <div className="edu-error">
+                  {(errors.degree || (touched.degree && !form.degree.trim())) &&
+                    "Please select your degree"}
+                </div>
               </div>
-              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <div>
+                <label className="edu-label">
+                  Major <span className="edu-required">*</span>
+                </label>
+                <input
+                  name="major"
+                  className={`edu-input${
+                    errors.major || (touched.major && !form.major.trim())
+                      ? " error"
+                      : form.major.trim()
+                      ? " valid"
+                      : ""
+                  }`}
+                  placeholder="Major"
+                  value={form.major}
+                  onChange={handleChange}
+                  onBlur={handleBlur}
+                  required
+                />
+                <div className="edu-error">
+                  {(errors.major || (touched.major && !form.major.trim())) &&
+                    "Please enter your major"}
+                </div>
+              </div>
+              <div className="edu-checkbox-row">
                 <input
                   type="checkbox"
+                  className="edu-checkbox"
                   name="isStudying"
                   checked={form.isStudying}
                   onChange={handleChange}
                   id="isStudying"
                 />
-                <label htmlFor="isStudying" style={{ margin: 0 }}>
-                  Currently studying here
+                <label
+                  htmlFor="isStudying"
+                  style={{ margin: 0, fontWeight: 500, fontSize: 15 }}
+                >
+                  I am currently studying here
                 </label>
               </div>
               <div>
-                <label>
-                  From <span style={{ color: "#e60023" }}>*</span>
+                <label className="edu-label">
+                  From <span className="edu-required">*</span>
                 </label>
-                <div style={{ display: "flex", gap: 8 }}>
-                  <div style={{ flex: 1 }}>
-                    <select
-                      name="monthStart"
-                      value={form.monthStart}
-                      onChange={handleChange}
-                      onBlur={handleBlur}
-                      required
-                      style={{
-                        border:
-                          errors.monthStart ||
-                          errors.dateRange ||
-                          (touched.monthStart && !form.monthStart)
-                            ? "2px solid #e60023"
-                            : form.monthStart
-                            ? "2px solid #28a745"
-                            : "1px solid #ddd",
-                        outline:
-                          errors.monthStart ||
-                          errors.dateRange ||
-                          (touched.monthStart && !form.monthStart)
-                            ? "1px solid #e60023"
-                            : undefined,
-                        background: "#fff",
-                      }}
-                    >
-                      <option value="">Month</option>
-                      {months.map((m) => (
-                        <option key={m} value={m}>
-                          {m}
-                        </option>
-                      ))}
-                    </select>
-                    {(errors.monthStart ||
-                      (touched.monthStart && !form.monthStart)) && (
-                      <div
-                        style={{ color: "#e60023", fontSize: 13, marginTop: 2 }}
-                      >
-                        {errors.monthStart}
-                      </div>
-                    )}
-                  </div>
-                  <div style={{ flex: 1 }}>
-                    <select
-                      name="yearStart"
-                      value={form.yearStart}
-                      onChange={handleChange}
-                      onBlur={handleBlur}
-                      required
-                      style={{
-                        border:
-                          errors.yearStart ||
-                          errors.dateRange ||
-                          (touched.yearStart && !form.yearStart)
-                            ? "2px solid #e60023"
-                            : form.yearStart
-                            ? "2px solid #28a745"
-                            : "1px solid #ddd",
-                        outline:
-                          errors.yearStart ||
-                          errors.dateRange ||
-                          (touched.yearStart && !form.yearStart)
-                            ? "1px solid #e60023"
-                            : undefined,
-                        background: "#fff",
-                      }}
-                    >
-                      <option value="">Year</option>
-                      {years.map((y) => (
-                        <option key={y} value={y}>
-                          {y}
-                        </option>
-                      ))}
-                    </select>
-                    {(errors.yearStart ||
-                      (touched.yearStart && !form.yearStart)) && (
-                      <div
-                        style={{ color: "#e60023", fontSize: 13, marginTop: 2 }}
-                      >
-                        {errors.yearStart}
-                      </div>
-                    )}
-                  </div>
+                <div style={{ display: "flex", gap: 12 }}>
+                  <select
+                    name="monthStart"
+                    className={`edu-select${
+                      errors.monthStart ||
+                      errors.dateRange ||
+                      (touched.monthStart && !form.monthStart)
+                        ? " error"
+                        : form.monthStart
+                        ? " valid"
+                        : ""
+                    }`}
+                    value={form.monthStart}
+                    onChange={handleChange}
+                    onBlur={handleBlur}
+                    required
+                  >
+                    <option value="">Month</option>
+                    {months.map((m) => (
+                      <option key={m} value={m}>
+                        {m}
+                      </option>
+                    ))}
+                  </select>
+                  <select
+                    name="yearStart"
+                    className={`edu-select${
+                      errors.yearStart ||
+                      errors.dateRange ||
+                      (touched.yearStart && !form.yearStart)
+                        ? " error"
+                        : form.yearStart
+                        ? " valid"
+                        : ""
+                    }`}
+                    value={form.yearStart}
+                    onChange={handleChange}
+                    onBlur={handleBlur}
+                    required
+                  >
+                    <option value="">Year</option>
+                    {years.map((y) => (
+                      <option key={y} value={y}>
+                        {y}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className="edu-error">
+                  {(errors.monthStart ||
+                    (touched.monthStart && !form.monthStart)) &&
+                    errors.monthStart}
+                  {(errors.yearStart ||
+                    (touched.yearStart && !form.yearStart)) &&
+                    errors.yearStart}
                 </div>
               </div>
               <div>
-                <label>
+                <label className="edu-label">
                   To
-                  {!form.isStudying && (
-                    <span style={{ color: "#e60023" }}> *</span>
-                  )}
+                  {!form.isStudying && <span className="edu-required"> *</span>}
                 </label>
-                <div style={{ display: "flex", gap: 8 }}>
-                  <div style={{ flex: 1 }}>
-                    <select
-                      name="monthEnd"
-                      value={form.monthEnd}
-                      onChange={handleChange}
-                      onBlur={handleBlur}
-                      required={!form.isStudying}
-                      disabled={form.isStudying}
-                      style={{
-                        border:
-                          !form.isStudying &&
-                          (errors.monthEnd ||
-                            errors.dateRange ||
-                            (touched.monthEnd && !form.monthEnd))
-                            ? "2px solid #e60023"
-                            : form.monthEnd
-                            ? "2px solid #28a745"
-                            : "1px solid #ddd",
-                        outline:
-                          !form.isStudying &&
-                          (errors.monthEnd ||
-                            errors.dateRange ||
-                            (touched.monthEnd && !form.monthEnd))
-                            ? "1px solid #e60023"
-                            : undefined,
-                        background: form.isStudying ? "#f5f5f5" : "#fff",
-                      }}
-                    >
-                      <option value="">Month</option>
-                      {months.map((m) => (
-                        <option key={m} value={m}>
-                          {m}
-                        </option>
-                      ))}
-                    </select>
-                    {!form.isStudying &&
+                <div style={{ display: "flex", gap: 12 }}>
+                  <select
+                    name="monthEnd"
+                    className={`edu-select${
+                      !form.isStudying &&
                       (errors.monthEnd ||
-                        (touched.monthEnd && !form.monthEnd)) && (
-                        <div
-                          style={{
-                            color: "#e60023",
-                            fontSize: 13,
-                            marginTop: 2,
-                          }}
-                        >
-                          {errors.monthEnd}
-                        </div>
-                      )}
-                  </div>
-                  <div style={{ flex: 1 }}>
-                    <select
-                      name="yearEnd"
-                      value={form.yearEnd}
-                      onChange={handleChange}
-                      onBlur={handleBlur}
-                      required={!form.isStudying}
-                      disabled={form.isStudying}
-                      style={{
-                        border:
-                          !form.isStudying &&
-                          (errors.yearEnd ||
-                            errors.dateRange ||
-                            (touched.yearEnd && !form.yearEnd))
-                            ? "2px solid #e60023"
-                            : form.yearEnd
-                            ? "2px solid #28a745"
-                            : "1px solid #ddd",
-                        outline:
-                          !form.isStudying &&
-                          (errors.yearEnd ||
-                            errors.dateRange ||
-                            (touched.yearEnd && !form.yearEnd))
-                            ? "1px solid #e60023"
-                            : undefined,
-                        background: form.isStudying ? "#f5f5f5" : "#fff",
-                      }}
-                    >
-                      <option value="">Year</option>
-                      {years.map((y) => (
-                        <option key={y} value={y}>
-                          {y}
-                        </option>
-                      ))}
-                    </select>
-                    {!form.isStudying &&
+                        errors.dateRange ||
+                        (touched.monthEnd && !form.monthEnd))
+                        ? " error"
+                        : form.monthEnd
+                        ? " valid"
+                        : ""
+                    }`}
+                    value={form.monthEnd}
+                    onChange={handleChange}
+                    onBlur={handleBlur}
+                    required={!form.isStudying}
+                    disabled={form.isStudying}
+                  >
+                    <option value="">Month</option>
+                    {months.map((m) => (
+                      <option key={m} value={m}>
+                        {m}
+                      </option>
+                    ))}
+                  </select>
+                  <select
+                    name="yearEnd"
+                    className={`edu-select${
+                      !form.isStudying &&
                       (errors.yearEnd ||
-                        (touched.yearEnd && !form.yearEnd)) && (
-                        <div
-                          style={{
-                            color: "#e60023",
-                            fontSize: 13,
-                            marginTop: 2,
-                          }}
-                        >
-                          {errors.yearEnd}
-                        </div>
-                      )}
-                  </div>
+                        errors.dateRange ||
+                        (touched.yearEnd && !form.yearEnd))
+                        ? " error"
+                        : form.yearEnd
+                        ? " valid"
+                        : ""
+                    }`}
+                    value={form.yearEnd}
+                    onChange={handleChange}
+                    onBlur={handleBlur}
+                    required={!form.isStudying}
+                    disabled={form.isStudying}
+                  >
+                    <option value="">Year</option>
+                    {years.map((y) => (
+                      <option key={y} value={y}>
+                        {y}
+                      </option>
+                    ))}
+                  </select>
                 </div>
-                {errors.dateRange && (
-                  <div style={{ color: "#e60023", fontSize: 13, marginTop: 2 }}>
-                    {errors.dateRange}
-                  </div>
-                )}
+                <div className="edu-error">
+                  {!form.isStudying &&
+                    (errors.monthEnd || (touched.monthEnd && !form.monthEnd)) &&
+                    errors.monthEnd}
+                  {!form.isStudying &&
+                    (errors.yearEnd || (touched.yearEnd && !form.yearEnd)) &&
+                    errors.yearEnd}
+                  {errors.dateRange && errors.dateRange}
+                </div>
               </div>
               <div style={{ gridColumn: "1/3" }}>
-                <label>Additional details</label>
+                <label className="edu-label">Additional details</label>
                 <input
                   name="detail"
+                  className="edu-input"
+                  placeholder="Additional details"
                   value={form.detail}
                   onChange={handleChange}
                 />
@@ -517,33 +457,12 @@ const EducationModal = ({ open, onClose, onSubmit, education }) => {
             <div className="edu-modal-actions">
               <button
                 type="button"
+                className="edu-btn-cancel"
                 onClick={handleClose}
-                style={{
-                  background: "#fff",
-                  border: "1px solid #e60023",
-                  color: "#e60023",
-                  padding: "10px 32px",
-                  borderRadius: 8,
-                  fontWeight: 600,
-                  fontSize: 16,
-                  cursor: "pointer",
-                }}
               >
                 Cancel
               </button>
-              <button
-                type="submit"
-                style={{
-                  background: "#e60023",
-                  color: "#fff",
-                  border: "none",
-                  padding: "10px 32px",
-                  borderRadius: 8,
-                  fontWeight: 600,
-                  fontSize: 16,
-                  cursor: "pointer",
-                }}
-              >
+              <button type="submit" className="edu-btn-save">
                 Save
               </button>
             </div>
