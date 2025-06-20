@@ -14,6 +14,7 @@ import Award from "./Award";
 import EditProfileModal from "./EditProfileModal";
 import { updateCandidateProfile } from "@/services/useResumeData";
 import { useState } from "react";
+import ForeignLanguageModal from "./ForeignLanguageModal";
 
 const index = () => {
   const {
@@ -31,6 +32,7 @@ const index = () => {
   const [editOpen, setEditOpen] = useState(false);
   const [reload, setReload] = useState(0);
   const [saving, setSaving] = useState(false);
+  const [openFL, setOpenFL] = useState(false);
 
   if (loading) return <div>Loading...</div>;
   const handleSubmit = (event) => {
@@ -75,7 +77,10 @@ const index = () => {
           <Skills skills={skills} />
         </div>
         <div className="form-group col-lg-12 col-md-12">
-          <ForeignLanguague foreignlanguage={foreignlanguage} />
+          <ForeignLanguague
+            foreignlanguage={foreignlanguage}
+            onEdit={() => setOpenFL(true)}
+          />
         </div>
         <div className="form-group col-lg-12 col-md-12">
           <HighlightProject project={project} />
@@ -100,6 +105,11 @@ const index = () => {
         onClose={handleCloseEdit}
         onSubmit={handleSaveEdit}
         profile={profile}
+      />
+      <ForeignLanguageModal
+        open={openFL}
+        onClose={() => setOpenFL(false)}
+        initialLanguages={foreignlanguage}
       />
     </div>
   );

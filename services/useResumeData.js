@@ -244,3 +244,48 @@ export async function deleteSkill(skillId) {
   if (response.status === 204) return;
   return;
 }
+
+export async function createForeignLanguage(language) {
+  const token = getToken();
+  if (!token) throw new Error("No token found");
+  const response = await fetch(`${API_URL}/ForeignLanguage/me`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(language),
+  });
+  if (!response.ok) throw new Error("Tạo ngoại ngữ thất bại");
+  return await response.json();
+}
+
+export async function updateForeignLanguage(id, language) {
+  const token = getToken();
+  if (!token) throw new Error("No token found");
+  const response = await fetch(`${API_URL}/ForeignLanguage/me/${id}`, {
+    method: "PUT",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(language),
+  });
+  if (!response.ok) throw new Error("Cập nhật ngoại ngữ thất bại");
+  if (response.status === 204) return;
+  return await response.json();
+}
+
+export async function deleteForeignLanguage(id) {
+  const token = getToken();
+  if (!token) throw new Error("No token found");
+  const response = await fetch(`${API_URL}/ForeignLanguage/me/${id}`, {
+    method: "DELETE",
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+  if (!response.ok) throw new Error("Xóa ngoại ngữ thất bại");
+  if (response.status === 204) return;
+  return;
+}
