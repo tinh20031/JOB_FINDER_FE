@@ -3,7 +3,7 @@
 import Awards from "./Awards";
 import Education from "./Education";
 import Experiences from "./Experiences";
-import SkillsMultiple from "./SkillsMultiple";
+import Skills from "./Skills";
 import useResumeData from "@/services/useResumeData";
 import ProfileCard from "./ProfileCard";
 import AboutMe from "./AboutMe";
@@ -21,7 +21,6 @@ const index = () => {
     profile,
     education,
     experiences,
-    awards,
     skills,
     foreignlanguage,
     project,
@@ -70,11 +69,10 @@ const index = () => {
         </div>
 
         <div className="form-group col-lg-12 col-md-12">
-          <Awards awards={awards} />
+          <Awards awards={award} />
         </div>
         <div className="form-group col-lg-12 col-md-12">
-          <label>Skills</label>
-          <SkillsMultiple skills={skills} />
+          <Skills skills={skills} />
         </div>
         <div className="form-group col-lg-12 col-md-12">
           <ForeignLanguague foreignlanguage={foreignlanguage} />

@@ -190,3 +190,57 @@ export async function updateWorkExperience(workExperience) {
   if (response.status === 204) return;
   return await response.json();
 }
+
+export async function createSkill(skill) {
+  const token = getToken();
+  if (!token) throw new Error("No token found");
+  const response = await fetch(`${API_URL}/Skill/me`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(skill),
+  });
+  if (!response.ok) {
+    console.error("Create skill failed:", await response.text());
+    throw new Error("Tạo kỹ năng thất bại");
+  }
+  return await response.json();
+}
+
+export async function updateSkill(skillId, skill) {
+  const token = getToken();
+  if (!token) throw new Error("No token found");
+  const response = await fetch(`${API_URL}/Skill/me/${skillId}`, {
+    method: "PUT",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(skill),
+  });
+  if (!response.ok) {
+    console.error("Update skill failed:", await response.text());
+    throw new Error("Cập nhật kỹ năng thất bại");
+  }
+  if (response.status === 204) return;
+  return;
+}
+
+export async function deleteSkill(skillId) {
+  const token = getToken();
+  if (!token) throw new Error("No token found");
+  const response = await fetch(`${API_URL}/Skill/me/${skillId}`, {
+    method: "DELETE",
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+  if (!response.ok) {
+    console.error("Delete skill failed:", await response.text());
+    throw new Error("Xóa kỹ năng thất bại");
+  }
+  if (response.status === 204) return;
+  return;
+}
