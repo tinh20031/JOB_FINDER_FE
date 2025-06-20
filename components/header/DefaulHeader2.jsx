@@ -13,6 +13,7 @@ import { isActiveLink } from "../../utils/linkActiveChecker";
 import candidatesMenuData from "../../data/candidatesMenuData";
 import adminMenuData from "../../data/adminMenuData";
 import BecomeRecruiterModal from '../common/form/shared/BecomeRecruiterModal';
+import { useFavoriteJobs } from "../../contexts/FavoriteJobsContext";
 
 
 
@@ -29,6 +30,9 @@ const DefaulHeader2 = () => {
   const dispatch = useDispatch();
 
   const [openRecruiterModal, setOpenRecruiterModal] = useState(false);
+  const { favoriteCount } = useFavoriteJobs();
+  const [isFavoriteLoading, setIsFavoriteLoading] = useState(true);
+  const userId = typeof window !== 'undefined' ? Number(localStorage.getItem('userId')) : null;
 
   const changeBackground = () => {
     if (typeof window !== 'undefined' && window.scrollY >= 10) {
@@ -144,168 +148,49 @@ const DefaulHeader2 = () => {
         </div>
 
         <div className="outer-box">
-          {isLoggedIn ? (
-            <div className="logged-in-info" style={{display: 'flex', alignItems: 'center', gap: '16px'}}>
-              {role === 'Candidate' && (
-                <>
-                  <button
-                    type="button"
-                    className="become-recruiter-btn"
-                    style={{
-                      marginRight: '12px',
-                      background: '#f1f6fd',
-                      color: '#1967d2',
-                      borderRadius: '8px',
-                      padding: '6px 18px',
-                      fontWeight: 500,
-                      fontSize: '15px',
-                      transition: 'background 0.2s, color 0.2s',
-                      border: 'none',
-                      display: 'inline-block',
-                      cursor: 'pointer',
-                      textAlign: 'center',
-                      textDecoration: 'none',
-                    }}
-                    onMouseOver={e => {
-                      e.currentTarget.style.background = '#0a4ba1';
-                      e.currentTarget.style.color = '#fff';
-                    }}
-                    onMouseOut={e => {
-                      e.currentTarget.style.background = '#f1f6fd';
-                      e.currentTarget.style.color = '#1967d2';
-                    }}
-                    onClick={() => setOpenRecruiterModal(true)}
-                  >
-                    Become Recruiter
-                  </button>
-                  {openRecruiterModal && (
-                    <BecomeRecruiterModal
-                      open={openRecruiterModal}
-                      onCancel={() => setOpenRecruiterModal(false)}
-                      userId={user?.id || user?.userId || user?._id || user.uid || user}
-                    />
-                  )}
-                </>
-              )}
-              {role === 'Company' && (
-                <div className="dropdown dashboard-option">
-                  <a className="dropdown-toggle" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                    <img
-                      alt="avatar"
-                      width={50}
-                      height={50}
-                      src={user?.image?.startsWith('http') ? user.image : user?.avatar?.startsWith('http') ? user.avatar : "/images/resource/candidate-1.png"}
-                      className="thumb"
-                      style={{ objectFit: 'cover', objectPosition: 'center', borderRadius: '50%' }}
-                    />
-                    <span className="name">{user?.fullName || user?.name || 'My Account'}</span>
-                  </a>
-                  <ul className="dropdown-menu">
-                    {employerMenuData.map((item) => (
-                      <li
-                        className={`${
-                          isActiveLink(item.routePath, pathname)
-                            ? "active"
-                            : ""
-                        } mb-1`}
-                        key={item.id}
-                      >
-                        {item.isLogout ? (
-                          <a href="#" onClick={(e) => { e.preventDefault(); handleMenuClick(item); }}>
-                            <i className={`la ${item.icon}`}></i>{" "}
-                            {item.name}
-                          </a>
-                        ) : (
-                          <Link href={item.routePath}>
-                            <i className={`la ${item.icon}`}></i>{" "}
-                            {item.name}
-                          </Link>
-                        )}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-              {role === 'Candidate' && (
-                <div className="dropdown dashboard-option">
-                  <a className="dropdown-toggle" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                    <img
-                      alt="avatar"
-                      width={50}
-                      height={50}
-                      src={user?.image?.startsWith('http') ? user.image : user?.avatar?.startsWith('http') ? user.avatar : "/images/resource/candidate-1.png"}
-                      className="thumb"
-                      style={{ objectFit: 'cover', objectPosition: 'center', borderRadius: '50%' }}
-                    />
-                    <span className="name">{user?.fullName || user?.name || 'My Account'}</span>
-                  </a>
-                  <ul className="dropdown-menu">
-                    {candidatesMenuData.map((item) => (
-                      <li
-                        className={`${
-                          isActiveLink(item.routePath, pathname)
-                            ? "active"
-                            : ""
-                        } mb-1`}
-                        key={item.id}
-                      >
-                        {item.isLogout ? (
-                          <a href="#" onClick={(e) => { e.preventDefault(); handleMenuClick(item); }}>
-                            <i className={`la ${item.icon}`}></i>{" "}
-                            {item.name}
-                          </a>
-                        ) : (
-                          <Link href={item.routePath}>
-                            <i className={`la ${item.icon}`}></i>{" "}
-                            {item.name}
-                          </Link>
-                        )}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-              {role === 'Admin' && (
-                <div className="dropdown dashboard-option">
-                  <a className="dropdown-toggle" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                    <img
-                      alt="avatar"
-                      width={50}
-                      height={50}
-                      src={user?.image?.startsWith('http') ? user.image : user?.avatar?.startsWith('http') ? user.avatar : "/images/resource/candidate-1.png"}
-                      className="thumb"
-                      style={{ objectFit: 'cover', objectPosition: 'center', borderRadius: '50%' }}
-                    />
-                    <span className="name">{user?.fullName || user?.name || 'My Account'}</span>
-                  </a>
-                  <ul className="dropdown-menu">
-                    {adminMenuData.map((item) => (
-                      <li
-                        className={`${
-                          isActiveLink(item.routePath, pathname)
-                            ? "active"
-                            : ""
-                        } mb-1`}
-                        key={item.id}
-                      >
-                        {item.isLogout ? (
-                          <a href="#" onClick={(e) => { e.preventDefault(); handleMenuClick(item); }}>
-                            <i className={`la ${item.icon}`}></i>{" "}
-                            {item.name}
-                          </a>
-                        ) : (
-                          <Link href={item.routePath}>
-                            <i className={`la ${item.icon}`}></i>{" "}
-                            {item.name}
-                          </Link>
-                        )}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-            </div>
-          ) : (
+          {/* Nút Become Recruiter */}
+          {role === 'Candidate' && (
+            <button
+              type="button"
+              className="become-recruiter-btn"
+              style={{
+                marginRight: '12px',
+                background: '#f1f6fd',
+                color: '#1967d2',
+                borderRadius: '8px',
+                padding: '6px 18px',
+                fontWeight: 500,
+                fontSize: '15px',
+                transition: 'background 0.2s, color 0.2s',
+                border: 'none',
+                display: 'inline-block',
+                cursor: 'pointer',
+                textAlign: 'center',
+                textDecoration: 'none',
+              }}
+              onMouseOver={e => {
+                e.currentTarget.style.background = '#0a4ba1';
+                e.currentTarget.style.color = '#fff';
+              }}
+              onMouseOut={e => {
+                e.currentTarget.style.background = '#f1f6fd';
+                e.currentTarget.style.color = '#1967d2';
+              }}
+              onClick={() => setOpenRecruiterModal(true)}
+            >
+              Become Recruiter
+            </button>
+          )}
+          {/* Icon trái tim */}
+          {isLoggedIn && (
+            <Link href="/favorite-jobs">
+              <button className="menu-btn">
+                <span className="count">{favoriteCount}</span>
+                <span className="icon la la-heart-o"></span>
+              </button>
+            </Link>
+          )}
+          {!isLoggedIn && (
             <>
               <Link href="/candidates-dashboard/cv-manager" className="upload-cv">
                 Upload your CV
@@ -328,8 +213,128 @@ const DefaulHeader2 = () => {
               </div>
             </>
           )}
+          {/* Avatar + tên user chỉ trong dropdown, không lặp lại */}
+          {role === 'Candidate' && isLoggedIn && (
+            <div className="dropdown dashboard-option">
+              <a className="dropdown-toggle" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                <img
+                  alt="avatar"
+                  width={50}
+                  height={50}
+                  src={user?.image?.startsWith('http') ? user.image : user?.avatar?.startsWith('http') ? user.avatar : "/images/resource/candidate-1.png"}
+                  className="thumb"
+                  style={{ objectFit: 'cover', objectPosition: 'center', borderRadius: '50%' }}
+                />
+                <span className="name">{user?.fullName || user?.name || 'My Account'}</span>
+              </a>
+              <ul className="dropdown-menu">
+                {candidatesMenuData.map((item) => (
+                  <li
+                    className={`${isActiveLink(item.routePath, pathname) ? "active" : ""} mb-1`}
+                    key={item.id}
+                  >
+                    {item.isLogout ? (
+                      <a href="#" onClick={(e) => { e.preventDefault(); handleMenuClick(item); }}>
+                        <i className={`la ${item.icon}`}></i>{" "}{item.name}
+                      </a>
+                    ) : (
+                      <Link href={item.routePath}>
+                        <i className={`la ${item.icon}`}></i>{" "}{item.name}
+                      </Link>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+          {role === 'Company' && isLoggedIn && (
+            <div className="dropdown dashboard-option">
+              <a className="dropdown-toggle" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                <img
+                  alt="avatar"
+                  width={50}
+                  height={50}
+                  src={user?.image?.startsWith('http') ? user.image : user?.avatar?.startsWith('http') ? user.avatar : "/images/resource/candidate-1.png"}
+                  className="thumb"
+                  style={{ objectFit: 'cover', objectPosition: 'center', borderRadius: '50%' }}
+                />
+                <span className="name">{user?.fullName || user?.name || 'My Account'}</span>
+              </a>
+              <ul className="dropdown-menu">
+                {employerMenuData.map((item) => (
+                  <li
+                    className={`${
+                      isActiveLink(item.routePath, pathname)
+                        ? "active"
+                        : ""
+                    } mb-1`}
+                    key={item.id}
+                  >
+                    {item.isLogout ? (
+                      <a href="#" onClick={(e) => { e.preventDefault(); handleMenuClick(item); }}>
+                        <i className={`la ${item.icon}`}></i>{" "}
+                        {item.name}
+                      </a>
+                    ) : (
+                      <Link href={item.routePath}>
+                        <i className={`la ${item.icon}`}></i>{" "}
+                        {item.name}
+                      </Link>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+          {role === 'Admin' && isLoggedIn && (
+            <div className="dropdown dashboard-option">
+              <a className="dropdown-toggle" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                <img
+                  alt="avatar"
+                  width={50}
+                  height={50}
+                  src={user?.image?.startsWith('http') ? user.image : user?.avatar?.startsWith('http') ? user.avatar : "/images/resource/candidate-1.png"}
+                  className="thumb"
+                  style={{ objectFit: 'cover', objectPosition: 'center', borderRadius: '50%' }}
+                />
+                <span className="name">{user?.fullName || user?.name || 'My Account'}</span>
+              </a>
+              <ul className="dropdown-menu">
+                {adminMenuData.map((item) => (
+                  <li
+                    className={`${
+                      isActiveLink(item.routePath, pathname)
+                        ? "active"
+                        : ""
+                    } mb-1`}
+                    key={item.id}
+                  >
+                    {item.isLogout ? (
+                      <a href="#" onClick={(e) => { e.preventDefault(); handleMenuClick(item); }}>
+                        <i className={`la ${item.icon}`}></i>{" "}
+                        {item.name}
+                      </a>
+                    ) : (
+                      <Link href={item.routePath}>
+                        <i className={`la ${item.icon}`}></i>{" "}
+                        {item.name}
+                      </Link>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+          {/* ...phần còn lại giữ nguyên... */}
         </div>
       </div>
+      {openRecruiterModal && (
+        <BecomeRecruiterModal
+          open={openRecruiterModal}
+          onCancel={() => setOpenRecruiterModal(false)}
+          userId={user?.id || user?.userId || user?._id || user.uid || user}
+        />
+      )}
     </header>
   );
 };

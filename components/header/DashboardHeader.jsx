@@ -12,6 +12,8 @@ import { authService } from "../../services/authService";
 import { clearLoginState } from "../../features/auth/authSlice";
 import { useRouter } from "next/navigation";
 import { useDispatch } from "react-redux";
+import { getUserFavorites } from "../../services/favoriteJobService";
+import { useFavoriteJobs } from "../../contexts/FavoriteJobsContext";
 
 const getValidAvatarPath = (user) => {
     const avatar = user?.avatar || user?.image;
@@ -32,6 +34,7 @@ const DashboardHeader = () => {
     // Use state for user info to handle updates
     const [displayUserName, setDisplayUserName] = useState("My Account");
     const [displayAvatar, setDisplayAvatar] = useState("/images/resource/company-6.png");
+    const { favoriteCount } = useFavoriteJobs();
 
     // Update state when user data from Redux changes
     useEffect(() => {
@@ -112,10 +115,14 @@ const DashboardHeader = () => {
                     {/* End .nav-outer */}
 
                     <div className="outer-box">
-                        <button className="menu-btn">
-                            <span className="count">1</span>
-                            <span className="icon la la-heart-o"></span>
-                        </button>
+                        {isLoggedIn && (
+                            <Link href="/favorite-jobs">
+                                <button className="menu-btn">
+                                    <span className="count">{favoriteCount}</span>
+                                    <span className="icon la la-heart-o"></span>
+                                </button>
+                            </Link>
+                        )}
                         {/* wishlisted menu */}
 
                         <button className="menu-btn">

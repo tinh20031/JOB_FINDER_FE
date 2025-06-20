@@ -27,6 +27,8 @@ import { jobService } from "../../../services/jobService";
 import { toast } from "react-toastify";
 import "./FilterJobsBox.css"; // Thêm import CSS
 import { useSearchParams } from 'next/navigation';
+import { getUserFavorites, addFavoriteJob, removeFavoriteJob } from '../../../services/favoriteJobService';
+import { useFavoriteJobs } from '../../../contexts/FavoriteJobsContext';
 
 // Thêm CSS styles
 const styles = {
@@ -55,7 +57,7 @@ const FilterJobsBox = () => {
   const [totalJobs, setTotalJobs] = useState(0);
   const [displayCount, setDisplayCount] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [itemsPerPage, setItemsPerPage] = useState(8);
 
   // Thêm state để lưu dữ liệu lookup
   const [companies, setCompanies] = useState([]);
@@ -89,6 +91,9 @@ const FilterJobsBox = () => {
   const jobTypeId = searchParams.get('jobTypeId');
   const experienceLevelId = searchParams.get('experienceLevelId');
   const excludeJobId = searchParams.get('excludeJobId');
+
+  const { favoriteJobIds, updateFavoriteJobs, fetchFavoriteJobs } = useFavoriteJobs();
+  const userId = typeof window !== 'undefined' ? Number(localStorage.getItem('userId')) : null;
 
   // Fetch jobs khi filters hoặc pagination thay đổi
   useEffect(() => {
@@ -161,6 +166,16 @@ const FilterJobsBox = () => {
     };
     fetchFavoriteCompanies();
   }, []);
+
+  useEffect(() => {
+    if (userId) {
+      getUserFavorites(userId)
+        .then((res) => {
+          setFavoriteJobIds(res.data.map((item) => item.jobId));
+        })
+        .catch((err) => console.error(err));
+    }
+  }, [userId]);
 
   // Helper function để tìm tên từ ID trong dữ liệu lookup
   const getCompanyName = (companyId) => {
@@ -245,30 +260,21 @@ const FilterJobsBox = () => {
   };
 
   // Cập nhật hàm xử lý bookmark
-  const handleBookmark = async (companyId) => {
-    try {
-      const token = localStorage.getItem('token');
-      if (!token) {
-        toast.error("Vui lòng đăng nhập để sử dụng tính năng này");
-        return;
-      }
-      const id = Number(companyId);
-      if (bookmarkedCompanies.includes(id)) {
-        await jobService.unfavoriteCompany(id);
-        setBookmarkedCompanies(prev => prev.filter(cid => cid !== id));
-        toast.success("Đã xóa khỏi danh sách yêu thích");
-      } else {
-        await jobService.favoriteCompany(id);
-        setBookmarkedCompanies(prev => [...prev, id]);
-        toast.success("Đã thêm vào danh sách yêu thích");
-      }
-    } catch (error) {
-      console.error("Error handling bookmark:", error);
-      if (error.response?.status === 401) {
-        toast.error("Phiên đăng nhập đã hết hạn, vui lòng đăng nhập lại");
-      } else {
-        toast.error("Có lỗi xảy ra khi xử lý yêu thích");
-      }
+  const handleToggleFavorite = (jobId) => {
+    if (favoriteJobIds.includes(jobId)) {
+      removeFavoriteJob(userId, jobId)
+        .then(() => {
+          const newIds = favoriteJobIds.filter((id) => id !== jobId);
+          updateFavoriteJobs(newIds);
+        })
+        .catch((err) => console.error(err));
+    } else {
+      addFavoriteJob(userId, jobId)
+        .then(() => {
+          const newIds = [...favoriteJobIds, jobId];
+          updateFavoriteJobs(newIds);
+        })
+        .catch((err) => console.error(err));
     }
   };
 
@@ -326,7 +332,7 @@ const FilterJobsBox = () => {
           tag !== "" ||
           sort !== "" ||
           currentPage !== 1 ||
-          itemsPerPage !== 10 ? (
+          itemsPerPage !== 8 ? (
             <button
               onClick={() => {
                 dispatch(addKeyword(""));
@@ -343,7 +349,7 @@ const FilterJobsBox = () => {
                 dispatch(addTag(""));
                 dispatch(addSort(""));
                 setCurrentPage(1);
-                setItemsPerPage(10);
+                setItemsPerPage(8);
                 setDisplayCount(10);
               }}
               className="btn btn-danger text-nowrap me-2"
@@ -378,10 +384,10 @@ const FilterJobsBox = () => {
             className="chosen-single form-select ms-3"
             value={itemsPerPage}
           >
-            <option value="10">10 Per Page</option>
-            <option value="20">20 Per Page</option>
-            <option value="30">30 Per Page</option>
-            <option value="50">50 Per Page</option>
+            <option value="8">8 Per Page</option>
+            <option value="16">16 Per Page</option>
+            <option value="24">24 Per Page</option>
+            <option value="40">40 Per Page</option>
           </select>
           {/* End select */}
         </div>
@@ -451,7 +457,7 @@ const FilterJobsBox = () => {
                   </h4>
                   <ul className="job-info">
                     <li>
-                      <span className="icon flaticon-building"></span>
+                      <span className="icon flaticon-briefcase"></span>
                       {item.company?.companyName || getCompanyName(item.companyId)}
                     </li>
                     <li>
@@ -495,9 +501,8 @@ const FilterJobsBox = () => {
                     )}
                   </div>
                   <button
-                    className={`bookmark-btn ${bookmarkedCompanies.includes(Number(item.companyId)) ? 'active' : ''}`}
-                    onClick={() => handleBookmark(item.companyId)}
-                    disabled={isLoadingBookmarks}
+                    className={`bookmark-btn ${favoriteJobIds.includes(item.id) ? 'active' : ''}`}
+                    onClick={() => handleToggleFavorite(item.id)}
                     style={{
                       position: 'absolute',
                       right: '20px',
@@ -507,10 +512,23 @@ const FilterJobsBox = () => {
                       cursor: 'pointer',
                       padding: '5px',
                       transition: 'all 0.3s ease',
-                      color: bookmarkedCompanies.includes(Number(item.companyId)) ? '#ff5a5f' : '#666',
+                      color: favoriteJobIds.includes(item.id) ? '#ff5a5f' : '#666',
                     }}
                   >
-                    <span className="flaticon-bookmark" style={{ fontSize: '20px' }}></span>
+                    {favoriteJobIds.includes(item.id) ? (
+                      <svg
+                        width="24"
+                        height="24"
+                        viewBox="0 0 24 24"
+                        fill="#2563eb"
+                        xmlns="http://www.w3.org/2000/svg"
+                        style={{ display: 'inline-block', verticalAlign: 'middle' }}
+                      >
+                        <path d="M6 2a2 2 0 0 0-2 2v18l8-5.333L20 22V4a2 2 0 0 0-2-2H6z"/>
+                      </svg>
+                    ) : (
+                      <span className="flaticon-bookmark" style={{ fontSize: '24px', display: 'inline-block', verticalAlign: 'middle' }}></span>
+                    )}
                   </button>
                 </div>
               </div>
