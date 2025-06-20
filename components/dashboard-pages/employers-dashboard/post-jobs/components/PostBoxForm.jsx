@@ -4,6 +4,7 @@ import Map from "../../../Map";
 import { useState, useEffect } from "react";
 // import Map from "../../../Map";
 import Select from "react-select";
+import CreatableSelect from 'react-select/creatable';
 import { useRouter } from 'next/navigation';
 import ApiService from "../../../../../services/api.service";
 import { authService } from "../../../../../services/authService";
@@ -28,13 +29,15 @@ const PostBoxForm = () => {
     { value: "Creative Art", label: "Creative Art" },
   ];
   const router = useRouter();
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [formData, setFormData] = useState({
-    jobId: 0,
     title: '',
     description: '',
+    education: '',
     companyId: 0,
-    salary: "",
+    isSalaryNegotiable: false,
+    minSalary: null,
+    maxSalary: null,
     industryId: 0,
     expiryDate: '',
     levelId: 0,
@@ -42,11 +45,12 @@ const PostBoxForm = () => {
     experienceLevelId: 0,
     timeStart: '',
     timeEnd: '',
-    status: 0,
     provinceName: '',
     addressDetail: '',
     createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString()
+    updatedAt: new Date().toISOString(),
+    YourSkill: '',
+    YourExperience: ''
   });
 
   const [levels, setLevels] = useState([]);
@@ -61,7 +65,7 @@ const PostBoxForm = () => {
   const [selectedImage, setSelectedImage] = useState(null);
   const [imagePreviewUrl, setImagePreviewUrl] = useState(null);
 
-  // Lấy thông tin user từ localStorage hoặc cookies
+  // Get user information from localStorage or cookies
   const [user, setUser] = useState(null);
   const [isFormBeingReset, setIsFormBeingReset] = useState(false);
 
@@ -117,18 +121,52 @@ const PostBoxForm = () => {
   const [clearSuccess, setClearSuccess] = useState(false);
   const [showClearConfirm, setShowClearConfirm] = useState(false);
 
+  const [selectedSkills, setSelectedSkills] = useState([]);
+  const [availableSkills, setAvailableSkills] = useState([
+    { skillId: 1, skillName: "JavaScript" },
+    { skillId: 2, skillName: "React" },
+    { skillId: 3, skillName: "Node.js" },
+    { skillId: 4, skillName: "Python" },
+    { skillId: 5, skillName: "Java" },
+    { skillId: 6, skillName: "C#" },
+    { skillId: 7, skillName: "SQL" },
+    { skillId: 8, skillName: "HTML/CSS" },
+    { skillId: 9, skillName: "TypeScript" },
+    { skillId: 10, skillName: "Angular" },
+    { skillId: 11, skillName: "Vue.js" },
+    { skillId: 12, skillName: "PHP" },
+    { skillId: 13, skillName: "Ruby" },
+    { skillId: 14, skillName: "Go" },
+    { skillId: 15, skillName: "Swift" },
+    { skillId: 16, skillName: "Kotlin" },
+    { skillId: 17, skillName: "Docker" },
+    { skillId: 18, skillName: "Kubernetes" },
+    { skillId: 19, skillName: "AWS" },
+    { skillId: 20, skillName: "Azure" }
+  ]);
+  const [newSkill, setNewSkill] = useState('');
+
   useEffect(() => {
-    ApiService.get(API_CONFIG.ENDPOINTS.LEVEL).then(setLevels);
-    ApiService.get(API_CONFIG.ENDPOINTS.JOB_TYPE).then(setJobTypes);
-    ApiService.get(API_CONFIG.ENDPOINTS.EXPERIENCE_LEVEL).then(setExperienceLevels);
-    ApiService.get(API_CONFIG.ENDPOINTS.INDUSTRY).then(setIndustries);
-    axios.get("https://provinces.open-api.vn/api/p/")
-      .then(res => setProvinces(res.data))
-      .catch(() => setProvinces([]));
-    // Lấy userId từ localStorage hoặc cookies
+    Promise.all([
+      ApiService.get(API_CONFIG.ENDPOINTS.LEVEL),
+      ApiService.get(API_CONFIG.ENDPOINTS.JOB_TYPE),
+      ApiService.get(API_CONFIG.ENDPOINTS.EXPERIENCE_LEVEL),
+      ApiService.get(API_CONFIG.ENDPOINTS.INDUSTRY),
+      axios.get("https://provinces.open-api.vn/api/p/")
+    ]).then(([levels, jobTypes, experienceLevels, industries, provinces]) => {
+      setLevels(levels);
+      setJobTypes(jobTypes);
+      setExperienceLevels(experienceLevels);
+      setIndustries(industries);
+      setProvinces(provinces.data);
+      setIsLoading(false);
+    }).catch(() => {
+      setIsLoading(false);
+    });
+    // Get userId from localStorage or cookies
     const userId = localStorage.getItem('userId') || Cookies.get('userId');
     const userRole = localStorage.getItem('role') || Cookies.get('role');
-    setUser({ userId, role: userRole });
+    setUser({ userId: userId ? parseInt(userId, 10) : 0, role: userRole });
     setIsClient(true);
   }, []);
 
@@ -159,7 +197,9 @@ const PostBoxForm = () => {
   const hasActualChanges = () => {
     return formData.title || 
            formData.description || 
-           formData.salary || 
+           formData.education ||
+           formData.minSalary || 
+           formData.maxSalary || 
            formData.industryId || 
            formData.levelId || 
            formData.jobTypeId || 
@@ -168,7 +208,9 @@ const PostBoxForm = () => {
            formData.timeStart || 
            formData.timeEnd || 
            formData.provinceName || 
-           formData.addressDetail;
+           formData.addressDetail ||
+           formData.YourSkill ||
+           formData.YourExperience;
   };
 
   // Handle navigation away
@@ -207,11 +249,13 @@ const PostBoxForm = () => {
   const handleConfirmClear = () => {
     localStorage.removeItem(DRAFT_KEY);
     setFormData({
-      jobId: 0,
       title: '',
       description: '',
+      education: '',
       companyId: 0,
-      salary: "",
+      isSalaryNegotiable: false,
+      minSalary: null,
+      maxSalary: null,
       industryId: 0,
       expiryDate: '',
       levelId: 0,
@@ -219,11 +263,12 @@ const PostBoxForm = () => {
       experienceLevelId: 0,
       timeStart: '',
       timeEnd: '',
-      status: 0,
       provinceName: '',
       addressDetail: '',
       createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
+      updatedAt: new Date().toISOString(),
+      YourSkill: '',
+      YourExperience: ''
     });
     setHasUnsavedChanges(false);
     setErrors({});
@@ -269,8 +314,16 @@ const PostBoxForm = () => {
     if (!formData.description.trim()) {
       newErrors.description = 'Job description is required';
     }
-    if (!formData.salary) {
-      newErrors.salary = 'Salary is required';
+    if (!formData.education.trim()) {
+      newErrors.education = 'Education requirements are required';
+    }
+    if (!formData.minSalary && !formData.maxSalary && !formData.isSalaryNegotiable) {
+      newErrors.minSalary = 'Minimum salary is required if not negotiable';
+      newErrors.maxSalary = 'Maximum salary is required if not negotiable';
+    }
+    if (formData.minSalary && formData.maxSalary && formData.minSalary > formData.maxSalary) {
+      newErrors.minSalary = 'Min salary cannot be greater than Max salary';
+      newErrors.maxSalary = 'Max salary cannot be less than Min salary';
     }
     if (!formData.industryId) {
       newErrors.industryId = 'Industry is required';
@@ -298,6 +351,16 @@ const PostBoxForm = () => {
     }
     if (!formData.addressDetail) {
       newErrors.addressDetail = 'Address detail is required';
+    }
+    if (!formData.YourSkill.trim()) {
+      newErrors.YourSkill = 'Skills are required';
+    }
+    if (!formData.YourExperience.trim()) {
+      newErrors.YourExperience = 'Experience is required';
+    }
+
+    if (selectedSkills.length === 0) {
+      newErrors.skills = 'At least one skill is required';
     }
 
     // Validate dates
@@ -375,10 +438,23 @@ const PostBoxForm = () => {
     }
   };
 
+  const handleEducationChange = (value) => {
+    setFormData(prev => ({
+      ...prev,
+      education: value,
+    }));
+    // Clear error when user starts typing
+    if (errors.education) {
+      setErrors(prev => ({
+        ...prev,
+        education: ''
+      }));
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    // Don't proceed with submission if showing leave confirmation
     if (showLeaveConfirmation) {
       return;
     }
@@ -388,48 +464,105 @@ const PostBoxForm = () => {
     setSuccess(false);
 
     if (!validateForm()) {
-      setError("Please fill in all information!");
+      setError("Please fill in all required fields!");
       return;
     }
 
     if (!user?.userId || user.role !== 'Company') {
-      setError("You must login with a company account to post a job.");
+      setError("You must log in with a company account to post a job.");
       return;
     }
 
-    try {
-      const postFormData = new FormData();
-      postFormData.append('Title', formData.title);
-      postFormData.append('Description', formData.description);
-      postFormData.append('CompanyId', user.userId);
-      postFormData.append('Salary', formData.salary);
-      postFormData.append('IndustryId', formData.industryId);
-      postFormData.append('ExpiryDate', formData.expiryDate);
-      postFormData.append('LevelId', formData.levelId);
-      postFormData.append('JobTypeId', formData.jobTypeId);
-      postFormData.append('ExperienceLevelId', formData.experienceLevelId);
-      postFormData.append('TimeStart', formData.timeStart);
-      postFormData.append('TimeEnd', formData.timeEnd);
-      postFormData.append('ProvinceName', formData.provinceName);
-      postFormData.append('AddressDetail', formData.addressDetail);
+    console.log("Type of user.userId before jobData:", typeof user.userId, user.userId);
 
-      if (selectedImage) {
-        postFormData.append('ImageFile', selectedImage);
+    try {
+      // Create job first
+      const jobData = {
+        title: formData.title,
+        description: formData.description,
+        education: formData.education,
+        companyId: parseInt(user.userId, 10), // Ensure companyId is an integer here
+        isSalaryNegotiable: formData.isSalaryNegotiable,
+        minSalary: formData.minSalary,
+        maxSalary: formData.maxSalary,
+        industryId: formData.industryId,
+        expiryDate: formData.expiryDate,
+        levelId: formData.levelId,
+        jobTypeId: formData.jobTypeId,
+        experienceLevelId: formData.experienceLevelId,
+        timeStart: formData.timeStart,
+        timeEnd: formData.timeEnd,
+        provinceName: formData.provinceName,
+        addressDetail: formData.addressDetail,
+        createdAt: formData.createdAt,
+        updatedAt: formData.updatedAt,
+        YourSkill: formData.YourSkill,
+        YourExperience: formData.YourExperience
+      };
+
+      console.log("Sending job data:", jobData);
+      const jobResult = await ApiService.createJob(jobData);
+      console.log("Job creation response:", jobResult);
+      
+      // Sau khi tạo job thành công, xử lý skills
+      if (selectedSkills.length > 0) {
+        try {
+          for (const skill of selectedSkills) {
+            let skillIdToUse = skill.skillId;
+
+            // Nếu là skill mới (không có skillId), tạo skill trước
+            if (!skillIdToUse) {
+              try {
+                const newSkillResult = await ApiService.post(API_CONFIG.ENDPOINTS.SKILLS, {
+                  skillName: skill.skillName
+                });
+                skillIdToUse = newSkillResult?.skillId; // Lấy ID của skill mới tạo. Sử dụng optional chaining để an toàn hơn.
+                
+                if (!skillIdToUse) {
+                  console.error("Lỗi: Không nhận được skillId hợp lệ sau khi tạo skill mới.", newSkillResult);
+                  setError(`Không thể liên kết skill mới '${skill.skillName}' vì không có ID hợp lệ.`);
+                  continue; // Bỏ qua skill này và tiếp tục với các skill khác
+                }
+
+              } catch (createSkillError) {
+                console.error("Lỗi khi tạo skill mới:", createSkillError.response?.data || createSkillError.message);
+                setError(`Không thể tạo skill '${skill.skillName}'. Vui lòng thử lại.`);
+                continue; // Đổi từ return thành continue để không chặn các skill khác
+              }
+            }
+
+            // Sau đó, liên kết skill với job
+            try {
+              const payload = {
+                JobId: parseInt(jobResult.jobId, 10),
+                SkillId: parseInt(skillIdToUse, 10)
+              };
+              console.log("Đang gửi payload liên kết skill:", payload);
+              await ApiService.post(API_CONFIG.ENDPOINTS.JOB_SKILLS, payload);
+            } catch (jobSkillError) {
+              console.error("Lỗi khi liên kết skill với job:", jobSkillError.response?.data || jobSkillError.message);
+              // Tiếp tục với các skill khác nếu một skill thất bại
+              continue;
+            }
+          }
+        } catch (error) {
+          console.error("Lỗi khi xử lý skills:", error);
+          // Không return ở đây, để job creation được coi là thành công
+        }
       }
 
-      const result = await ApiService.createJob(postFormData);
-      console.log("API gọi thành công", result);
       setSuccess(true);
       setShowSuccessModal(true);
-      // Clear draft after successful submission
       localStorage.removeItem(DRAFT_KEY);
       setHasUnsavedChanges(false);
       setFormData({
-        jobId: 0,
         title: '',
         description: '',
+        education: '',
         companyId: 0,
-        salary: "",
+        isSalaryNegotiable: false,
+        minSalary: null,
+        maxSalary: null,
         industryId: 0,
         expiryDate: '',
         levelId: 0,
@@ -437,13 +570,14 @@ const PostBoxForm = () => {
         experienceLevelId: 0,
         timeStart: '',
         timeEnd: '',
-        status: 0,
         provinceName: '',
         addressDetail: '',
         createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
+        updatedAt: new Date().toISOString(),
+        YourSkill: '',
+        YourExperience: ''
       });
-      // Clear errors after successful submission
+      setSelectedSkills([]);
       setErrors({});
     } catch (error) {
       console.error("API Error:", error.response?.data || error.message);
@@ -458,6 +592,21 @@ const PostBoxForm = () => {
       setHasUnsavedChanges(true);
     }
   }, [formData]);
+
+  if (isLoading) {
+    return (
+      <div className="skeleton-loader">
+        <div className="skeleton-line long"></div>
+        <div className="skeleton-line short"></div>
+        <div className="skeleton-line large"></div>
+        <div className="skeleton-line medium"></div>
+        <div className="skeleton-line short"></div>
+        <div className="skeleton-line long"></div>
+        <div className="skeleton-line medium"></div>
+        <div className="skeleton-line short"></div>
+      </div>
+    );
+  }
 
   return (
     <motion.form 
@@ -584,7 +733,7 @@ const PostBoxForm = () => {
                 'list', 'bullet', 'indent',
                 'link', 'image'
               ]}
-              className="job-description-quill"
+              className={`job-description-quill ${errors.description ? 'is-invalid' : ''}`}
             />
           ) : (
             <textarea
@@ -598,20 +747,304 @@ const PostBoxForm = () => {
           {errors.description && <div className="invalid-feedback">{errors.description}</div>}
         </motion.div>
 
-        {/* Salary */}
-        <motion.div className="form-group col-lg-6 col-md-12" variants={itemVariants}>
-          <label>Salary</label>
-          <input 
-            type="number" 
-            name="salary" 
-            value={formData.salary}
-            onChange={handleInputChange}
-            placeholder="Enter salary amount"
-            className={errors.salary ? 'form-control is-invalid' : 'form-control'}
-            disabled={isLoading}
-          />
-          {errors.salary && <div className="invalid-feedback">{errors.salary}</div>}
+        {/* Education Requirements */}
+        <motion.div className="form-group col-lg-12 col-md-12" variants={itemVariants}>
+          <label>Education Requirements</label>
+          {isClient ? (
+            <ReactQuill
+              theme="snow"
+              value={formData.education}
+              onChange={handleEducationChange}
+              modules={{
+                toolbar: [
+                  [{ 'header': [1, 2, false] }],
+                  ['bold', 'italic', 'underline', 'strike', 'blockquote'],
+                  [{ 'list': 'ordered' }, { 'list': 'bullet' }, { 'indent': '-1' }, { 'indent': '+1' }],
+                  ['link', 'image'],
+                  ['clean']
+                ]
+              }}
+              formats={[
+                'header',
+                'bold', 'italic', 'underline', 'strike', 'blockquote',
+                'list', 'bullet', 'indent',
+                'link', 'image'
+              ]}
+              className={`job-description-quill ${errors.education ? 'is-invalid' : ''}`}
+            />
+          ) : (
+            <textarea
+              name="education"
+              placeholder="Education Requirements"
+              value={formData.education}
+              onChange={handleInputChange}
+              rows="8"
+            ></textarea>
+          )}
+          {errors.education && <div className="invalid-feedback">{errors.education}</div>}
         </motion.div>
+
+        {/* Your Skills */}
+        <motion.div className="form-group col-lg-12 col-md-12" variants={itemVariants}>
+          <label>Skills</label>
+          {isClient ? (
+            <ReactQuill
+              theme="snow"
+              value={formData.YourSkill}
+              onChange={(value) => {
+                setFormData(prev => ({
+                  ...prev,
+                  YourSkill: value,
+                }));
+                // Clear error when user starts typing
+                if (errors.YourSkill) {
+                  setErrors(prev => ({
+                    ...prev,
+                    YourSkill: ''
+                  }));
+                }
+              }}
+              modules={{
+                toolbar: [
+                  [{ 'header': [1, 2, false] }],
+                  ['bold', 'italic', 'underline', 'strike', 'blockquote'],
+                  [{ 'list': 'ordered' }, { 'list': 'bullet' }, { 'indent': '-1' }, { 'indent': '+1' }],
+                  ['link', 'image'],
+                  ['clean']
+                ],
+              }}
+              formats={[
+                'header', 'bold', 'italic', 'underline', 'strike', 'blockquote',
+                'list', 'bullet', 'indent',
+                'link', 'image'
+              ]}
+              className={`job-description-quill ${errors.YourSkill ? 'is-invalid' : ''}`}
+            />
+          ) : (
+            <textarea
+              name="YourSkill"
+              placeholder="Describe the required skills for this position..."
+              value={formData.YourSkill}
+              onChange={handleInputChange}
+              rows="8"
+              className={errors.YourSkill ? 'form-control is-invalid' : 'form-control'}
+            ></textarea>
+          )}
+          {errors.YourSkill && <div className="invalid-feedback">{errors.YourSkill}</div>}
+        </motion.div>
+
+        {/* Your Experience */}
+        <motion.div className="form-group col-lg-12 col-md-12" variants={itemVariants}>
+          <label>Experience</label>
+          {isClient ? (
+            <ReactQuill
+              theme="snow"
+              value={formData.YourExperience}
+              onChange={(value) => {
+                setFormData(prev => ({
+                  ...prev,
+                  YourExperience: value,
+                }));
+                // Clear error when user starts typing
+                if (errors.YourExperience) {
+                  setErrors(prev => ({
+                    ...prev,
+                    YourExperience: ''
+                  }));
+                }
+              }}
+              modules={{
+                toolbar: [
+                  [{ 'header': [1, 2, false] }],
+                  ['bold', 'italic', 'underline', 'strike', 'blockquote'],
+                  [{ 'list': 'ordered' }, { 'list': 'bullet' }, { 'indent': '-1' }, { 'indent': '+1' }],
+                  ['link', 'image'],
+                  ['clean']
+                ]
+              }}
+              formats={[
+                'header', 'bold', 'italic', 'underline', 'strike', 'blockquote',
+                'list', 'bullet', 'indent',
+                'link', 'image'
+              ]}
+              className={`job-description-quill ${errors.YourExperience ? 'is-invalid' : ''}`}
+            />
+          ) : (
+            <textarea
+              name="YourExperience"
+              placeholder="Describe the required skills and experience for this position..."
+              value={formData.YourExperience}
+              onChange={handleInputChange}
+              rows="8"
+              className={errors.YourExperience ? 'form-control is-invalid' : 'form-control'}
+            ></textarea>
+          )}
+          {errors.YourExperience && <div className="invalid-feedback">{errors.YourExperience}</div>}
+        </motion.div>
+
+        {/* Skills Section */}
+        <motion.div className="form-group col-lg-12 col-md-12" variants={itemVariants}>
+          <label>Required Skills (Tag)</label>
+          <div className="skills-input-container">
+            <CreatableSelect
+              isMulti
+              value={selectedSkills.map(skill => ({
+                value: skill.skillId || skill.skillName,
+                label: skill.skillName
+              }))}
+              options={availableSkills.map(skill => ({
+                value: skill.skillId,
+                label: skill.skillName
+              }))}
+              onChange={(newValue) => {
+                setSelectedSkills(
+                  newValue.map(option => ({
+                    skillId: option.value ? parseInt(option.value, 10) : null,
+                    skillName: option.label
+                  }))
+                );
+              }}
+              onCreateOption={(inputValue) => {
+                const newSkill = {
+                  skillId: null,
+                  skillName: inputValue
+                };
+                setSelectedSkills(prev => [...prev, newSkill]);
+              }}
+              placeholder="Select or enter skills..."
+              className="basic-multi-select"
+              classNamePrefix="select"
+              isClearable
+              isSearchable
+              noOptionsMessage={() => "No skills found"}
+              formatCreateLabel={(inputValue) => `Create skill "${inputValue}"`}
+              menuPortalTarget={document.body}
+              menuShouldScrollIntoView={true}
+              maxMenuHeight={190}
+              styles={{
+                control: (base) => ({
+                  ...base,
+                  minHeight: '42px',
+                  borderColor: errors.skills ? '#dc3545' : '#ced4da',
+                  '&:hover': {
+                    borderColor: errors.skills ? '#dc3545' : '#ced4da'
+                  }
+                }),
+                menu: (base) => ({
+                  ...base,
+                  zIndex: 9999 
+                }),
+                multiValue: (base) => ({
+                  ...base,
+                  backgroundColor: '#e9ecef',
+                  borderRadius: '0.25rem'
+                }),
+                multiValueLabel: (base) => ({
+                  ...base,
+                  color: '#212529',
+                  padding: '0.25rem 0.5rem'
+                }),
+                multiValueRemove: (base) => ({
+                  ...base,
+                  color: '#212529',
+                  ':hover': {
+                    backgroundColor: '#dee2e6',
+                    color: '#212529'
+                  }
+                })
+              }}
+            />
+            {errors.skills && <div className="invalid-feedback d-block">{errors.skills}</div>}
+          </div>
+        </motion.div>
+
+        {/* Salary Section */}
+        <motion.div className="form-group col-lg-12 col-md-12" variants={itemVariants}>
+          <label>Salary</label>
+          <div className="d-flex flex-wrap mb-3" style={{ gap: '20px' }}>
+            <div className="form-check">
+              <input
+                type="radio"
+                className="form-check-input"
+                id="salaryNegotiableRadio"
+                name="salaryOption"
+                value="negotiable"
+                checked={formData.isSalaryNegotiable}
+                onChange={(e) => {
+                  setFormData(prev => ({
+                    ...prev,
+                    isSalaryNegotiable: true,
+                    minSalary: null,
+                    maxSalary: null
+                  }));
+                  setErrors(prev => ({ ...prev, minSalary: '', maxSalary: '' }));
+                }}
+              />
+              <label className="form-check-label" htmlFor="salaryNegotiableRadio">
+                Wage Agreement
+              </label>
+            </div>
+            <div className="form-check">
+              <input
+                type="radio"
+                className="form-check-input"
+                id="salarySpecificRadio"
+                name="salaryOption"
+                value="specific"
+                checked={!formData.isSalaryNegotiable}
+                onChange={(e) => {
+                  setFormData(prev => ({
+                    ...prev,
+                    isSalaryNegotiable: false,
+                  }));
+                }}
+              />
+              <label className="form-check-label" htmlFor="salarySpecificRadio">
+                Specific Salary
+              </label>
+            </div>
+          </div>
+        </motion.div>
+
+        {!formData.isSalaryNegotiable && (
+          <>
+            <motion.div className="form-group col-lg-6 col-md-12" variants={itemVariants}>
+              <label>Min Salary</label>
+              <input 
+                type="number" 
+                name="minSalary" 
+                value={formData.minSalary || ''}
+                onChange={handleInputChange}
+                placeholder="Enter min salary"
+                className={errors.minSalary ? 'form-control is-invalid' : 'form-control'}
+                disabled={isLoading}
+              />
+              {errors.minSalary && <div className="invalid-feedback">{errors.minSalary}</div>}
+            </motion.div>
+
+            <motion.div className="form-group col-lg-6 col-md-12" variants={itemVariants}>
+              <label>Max Salary</label>
+              <input 
+                type="number" 
+                name="maxSalary" 
+                value={formData.maxSalary || ''}
+                onChange={handleInputChange}
+                placeholder="Enter Max salary"
+                className={errors.maxSalary ? 'form-control is-invalid' : 'form-control'}
+                disabled={isLoading}
+              />
+              {errors.maxSalary && <div className="invalid-feedback">{errors.maxSalary}</div>}
+            </motion.div>
+          </>
+        )}
+
+        {formData.isSalaryNegotiable && (
+          <motion.div className="form-group col-lg-12 col-md-12" variants={itemVariants}>
+            <div className="alert alert-info" role="alert">
+              You have selected wage agreement, specific salary cannot be entered.
+            </div>
+          </motion.div>
+        )}
 
         {/* Industry */}
         <motion.div className="form-group col-lg-6 col-md-12" variants={itemVariants}>
@@ -685,22 +1118,8 @@ const PostBoxForm = () => {
           {errors.experienceLevelId && <div className="invalid-feedback">{errors.experienceLevelId}</div>}
         </motion.div>
 
-        {/* Expiry Date */}
-        <motion.div className="form-group col-lg-6 col-md-12" variants={itemVariants}>
-          <label>Application Deadline</label>
-          <input 
-            type="date" 
-            name="expiryDate" 
-            value={formData.expiryDate}
-            onChange={handleInputChange}
-            className={`custom-date-input form-select ${errors.expiryDate ? 'is-invalid' : ''}`}
-            disabled={isLoading}
-          />
-          {errors.expiryDate && <div className="invalid-feedback">{errors.expiryDate}</div>}
-        </motion.div>
-
         {/* Time Start */}
-        <motion.div className="form-group col-lg-6 col-md-12" variants={itemVariants}>
+        <motion.div className="form-group col-lg-4 col-md-6 col-sm-12" variants={itemVariants}>
           <label>Start Date</label>
           <input 
             type="date" 
@@ -714,7 +1133,7 @@ const PostBoxForm = () => {
         </motion.div>
 
         {/* Time End */}
-        <motion.div className="form-group col-lg-6 col-md-12" variants={itemVariants}>
+        <motion.div className="form-group col-lg-4 col-md-6 col-sm-12" variants={itemVariants}>
           <label>End Date</label>
           <input 
             type="date" 
@@ -725,6 +1144,20 @@ const PostBoxForm = () => {
             disabled={isLoading}
           />
           {errors.timeEnd && <div className="invalid-feedback">{errors.timeEnd}</div>}
+        </motion.div>
+
+        {/* Expiry Date */}
+        <motion.div className="form-group col-lg-4 col-md-6 col-sm-12" variants={itemVariants}>
+          <label>Application Deadline</label>
+          <input 
+            type="date" 
+            name="expiryDate" 
+            value={formData.expiryDate}
+            onChange={handleInputChange}
+            className={`custom-date-input form-select ${errors.expiryDate ? 'is-invalid' : ''}`}
+            disabled={isLoading}
+          />
+          {errors.expiryDate && <div className="invalid-feedback">{errors.expiryDate}</div>}
         </motion.div>
 
         {/* Province Name */}
@@ -759,9 +1192,6 @@ const PostBoxForm = () => {
           />
           {errors.addressDetail && <div className="invalid-feedback">{errors.addressDetail}</div>}
         </motion.div>
-
-        {/* Image File Input */}
-        
 
         {/* Submit Button */}
         <motion.div 
@@ -946,18 +1376,20 @@ const PostBoxForm = () => {
               }}
             >
               <h3>Success!</h3>
-              <p>Post job successfully!</p>
+              <p>Job posted successfully!</p>
               <button
                 className="theme-btn btn-style-one"
                 onClick={(e) => {
                   e.preventDefault();
                   setShowSuccessModal(false);
                   setFormData({
-                    jobId: 0,
                     title: '',
                     description: '',
+                    education: '',
                     companyId: 0,
-                    salary: "",
+                    isSalaryNegotiable: false,
+                    minSalary: null,
+                    maxSalary: null,
                     industryId: 0,
                     expiryDate: '',
                     levelId: 0,
@@ -965,11 +1397,12 @@ const PostBoxForm = () => {
                     experienceLevelId: 0,
                     timeStart: '',
                     timeEnd: '',
-                    status: 0,
                     provinceName: '',
                     addressDetail: '',
                     createdAt: new Date().toISOString(),
-                    updatedAt: new Date().toISOString()
+                    updatedAt: new Date().toISOString(),
+                    YourSkill: '',
+                    YourExperience: ''
                   });
                   setErrors({});
                 }}
@@ -980,6 +1413,24 @@ const PostBoxForm = () => {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Add some CSS for skills section */}
+      <style jsx>{`
+        .skills-input-container {
+          margin-bottom: 1rem;
+        }
+        .custom-form-check {
+          display: flex;
+          align-items: center;
+        }
+        .custom-form-check .form-check-input {
+          margin-right: 8px;
+          margin-top: 0;
+        }
+        .custom-form-check .form-check-label {
+          margin-bottom: 0;
+        }
+      `}</style>
     </motion.form>
   );
 };

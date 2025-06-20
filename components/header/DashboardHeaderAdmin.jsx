@@ -10,6 +10,8 @@ import { useDispatch } from 'react-redux';
 import { clearLoginState } from '@/features/auth/authSlice';
 import { authService } from "../../services/authService";
 import Cookies from 'js-cookie';
+import { getUserFavorites } from "../../services/favoriteJobService";
+import { useFavoriteJobs } from "../../contexts/FavoriteJobsContext";
 
 const DashboardHeader = () => {
     const [navbar, setNavbar] = useState(false);
@@ -17,6 +19,8 @@ const DashboardHeader = () => {
     const [avatar, setAvatar] = useState("/images/resource/company-6.png");
     const router = useRouter();
     const dispatch = useDispatch();
+    const { favoriteCount } = useFavoriteJobs() || {};
+    const userId = typeof window !== 'undefined' ? Number(localStorage.getItem('userId')) : null;
 
     const changeBackground = () => {
         if (window.scrollY >= 0) {
@@ -161,6 +165,14 @@ const DashboardHeader = () => {
                                         )}
                                     </li>
                                 ))}
+                                <li>
+                                    <Link href="/favorite-jobs">
+                                        <button className="menu-btn">
+                                            <span className="count">{favoriteCount}</span>
+                                            <span className="icon la la-heart-o"></span>
+                                        </button>
+                                    </Link>
+                                </li>
                             </ul>
                         </div>
                         {/* End dropdown */}

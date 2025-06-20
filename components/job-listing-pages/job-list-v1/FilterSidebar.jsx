@@ -19,8 +19,6 @@ const FilterSidebar = () => {
   const [jobTypesData, setJobTypesData] = useState([]);
   const [experienceLevels, setExperienceLevels] = useState([]);
   const [industries, setIndustries] = useState([]);
-  const [loadingLookupData, setLoadingLookupData] = useState(true);
-  const [lookupDataError, setLookupDataError] = useState(null);
   // Add state for provinces
   const [provinces, setProvinces] = useState([]);
 
@@ -30,6 +28,9 @@ const FilterSidebar = () => {
   const [selectedExperienceLevels, setSelectedExperienceLevels] = useState([]);
   const [selectedIndustry, setSelectedIndustry] = useState(null);
   const [selectedSalaryRange, setSelectedSalaryRange] = useState([0, 20000]); // Default salary range
+
+  // Add state for loading lookup data
+  const [loadingLookupData, setLoadingLookupData] = useState(true);
 
   // Handler functions for filter changes
   const handleJobTypeChange = (jobTypeId) => {
@@ -67,7 +68,7 @@ const FilterSidebar = () => {
           jobService.getJobTypes(),
           jobService.getExperienceLevels(),
           jobService.getIndustries(),
-          locationService.getProvinces(), // Sử dụng locationService thay vì gọi API trực tiếp
+          locationService.getProvinces(),
         ]);
         setJobTypesData(jobTypesRes);
         setExperienceLevels(expLevelsRes);
@@ -75,19 +76,16 @@ const FilterSidebar = () => {
         setProvinces(provincesRes);
         console.log('Lookup data fetched in FilterSidebar', { jobTypesRes, expLevelsRes, industriesRes, provincesRes });
       } catch (err) {
-        setLookupDataError('Failed to fetch lookup data in sidebar');
         console.error('Failed to fetch lookup data in FilterSidebar', err);
       } finally {
         setLoadingLookupData(false);
       }
     };
     fetchLookupData();
-  }, []); // Mảng rỗng đảm bảo chỉ chạy một lần khi mount
+  }, []);
 
   return (
     <div className="inner-column">
-      {loadingLookupData && <div className="text-center py-3">Loading filters...</div>}
-      {lookupDataError && <div className="text-center py-3 text-danger">Error loading filters: {lookupDataError}</div>}
       <div className="filters-outer">
         <button
           type="button"
@@ -100,7 +98,7 @@ const FilterSidebar = () => {
         <div className="filter-block">
           <h4>Search by Keywords</h4>
           <div className="form-group">
-            <SearchBox />
+            <SearchBox disabled={loadingLookupData} />
           </div>
         </div>
         {/* <!-- Filter Block --> */}
@@ -108,7 +106,11 @@ const FilterSidebar = () => {
         <div className="filter-block">
           <h4>Location</h4>
           <div className="form-group">
-            <LocationBox provinces={provinces} />
+            {loadingLookupData ? (
+              <div className="skeleton" style={{ width: '100%', height: 32, borderRadius: 6 }} />
+            ) : (
+              <LocationBox provinces={provinces} disabled={loadingLookupData} />
+            )}
           </div>
         </div>
         {/* <!-- Filter Block --> */}
@@ -116,33 +118,52 @@ const FilterSidebar = () => {
         <div className="filter-block">
           <h4>Industry</h4>
           <div className="form-group">
-            <Categories industries={industries} onSelectIndustry={handleIndustryChange} />
+            {loadingLookupData ? (
+              <div className="skeleton" style={{ width: '100%', height: 32, borderRadius: 6 }} />
+            ) : (
+              <Categories industries={industries} onSelectIndustry={handleIndustryChange} disabled={loadingLookupData} />
+            )}
           </div>
         </div>
         {/* <!-- Filter Block --> */}
 
         <div className="switchbox-outer">
           <h4>Job type</h4>
-          <JobType jobTypes={jobTypesData} onSelectJobType={handleJobTypeChange} />
+          {loadingLookupData ? (
+            <div className="skeleton" style={{ width: '100%', height: 32, borderRadius: 6 }} />
+          ) : (
+            <JobType jobTypes={jobTypesData} onSelectJobType={handleJobTypeChange} disabled={loadingLookupData} />
+          )}
         </div>
         {/* <!-- Switchbox Outer --> */}
 
         <div className="checkbox-outer">
           <h4>Date Posted</h4>
-          <DatePosted onSelectDatePosted={handleDatePostedChange} />
+          {loadingLookupData ? (
+            <div className="skeleton" style={{ width: '100%', height: 32, borderRadius: 6 }} />
+          ) : (
+            <DatePosted onSelectDatePosted={handleDatePostedChange} disabled={loadingLookupData} />
+          )}
         </div>
         {/* <!-- Checkboxes Ouer --> */}
 
         <div className="checkbox-outer">
           <h4>Experience Level</h4>
-          <ExperienceLevel experienceLevels={experienceLevels} onSelectExperienceLevel={handleExperienceLevelChange} />
+          {loadingLookupData ? (
+            <div className="skeleton" style={{ width: '100%', height: 32, borderRadius: 6 }} />
+          ) : (
+            <ExperienceLevel experienceLevels={experienceLevels} onSelectExperienceLevel={handleExperienceLevelChange} disabled={loadingLookupData} />
+          )}
         </div>
         {/* <!-- Checkboxes Ouer --> */}
 
         <div className="filter-block">
           <h4>Salary</h4>
-
-          <SalaryRangeSlider onChange={handleSalaryRangeChange} />
+          {loadingLookupData ? (
+            <div className="skeleton" style={{ width: '100%', height: 32, borderRadius: 6 }} />
+          ) : (
+            <SalaryRangeSlider onChange={handleSalaryRangeChange} disabled={loadingLookupData} />
+          )}
         </div>
         {/* <!-- Filter Block --> */}
 
@@ -155,6 +176,17 @@ const FilterSidebar = () => {
 
       <CallToActions />
       {/* <!-- End Call To Action --> */}
+      <style jsx>{`
+        .skeleton {
+          background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 37%, #f0f0f0 63%);
+          background-size: 400% 100%;
+          animation: skeleton-loading 1.4s ease infinite;
+        }
+        @keyframes skeleton-loading {
+          0% { background-position: 100% 50%; }
+          100% { background-position: 0 50%; }
+        }
+      `}</style>
     </div>
   );
 };

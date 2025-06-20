@@ -35,9 +35,13 @@ const FormContent = ({ isPopup = false }) => {
       const responseData = await authService.login(formData.email, formData.password);
       const user = responseData.user || {};
 
+      // Lưu token vào localStorage
+      if (responseData.token) {
+        localStorage.setItem('token', responseData.token);
+      }
+
       // Lưu thông tin user vào localStorage trước
       const userInfo = {
-        
         fullName: user.fullName || '',
         avatar: user.image || '/images/resource/company-6.png',
         email: user.email || formData.email
