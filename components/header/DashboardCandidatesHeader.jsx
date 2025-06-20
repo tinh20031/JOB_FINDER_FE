@@ -12,7 +12,7 @@ import { useSelector } from "react-redux";
 
 const DashboardCandidatesHeader = () => {
     const [navbar, setNavbar] = useState(false);
-    const [fullName, setFullName] = useState("Tài khoản của tôi");
+    const [fullName, setFullName] = useState("My Account");
     const [avatar, setAvatar] = useState("/images/resource/candidate-1.png");
 
     const { isLoggedIn, user, role } = useSelector((state) => state.auth); // Added useSelector

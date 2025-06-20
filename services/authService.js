@@ -37,6 +37,9 @@ export const authService = {
       if (data.companyId) {
         localStorage.setItem('companyId', data.companyId);
       }
+      if (data.user) {
+        localStorage.setItem('user', JSON.stringify(data.user));
+      }
       if (data.user && data.user.companyName) {
         localStorage.setItem('fullNameCompany', data.user.companyName);
         Cookies.set('fullNameCompany', data.user.companyName, cookieOptions);
