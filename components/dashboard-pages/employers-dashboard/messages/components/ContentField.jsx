@@ -4,7 +4,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { format, parseISO, isValid } from 'date-fns';
 import { authService } from "../../../../../services/authService";
 
-const ChatBoxContentField = ({ messages, sendMessage, currentChatPartner, currentUserId, currentUserFullName, currentUserProfileImage }) => {
+const ChatBoxContentField = ({ messages, sendMessage, currentChatPartner, currentUserId, currentUserFullName, currentUserProfileImage, partnerOnline }) => {
   const [messageInput, setMessageInput] = useState('');
   const messagesEndRef = useRef(null);
 
@@ -13,8 +13,6 @@ const ChatBoxContentField = ({ messages, sendMessage, currentChatPartner, curren
   };
 
   useEffect(() => {
-    // Log toàn bộ localStorage khi vào trang home/chat
-    console.log('localStorage snapshot:', { ...localStorage });
     scrollToBottom();
   }, [messages]);
 
@@ -25,6 +23,16 @@ const ChatBoxContentField = ({ messages, sendMessage, currentChatPartner, curren
       setMessageInput('');
     }
   };
+
+  let partnerIsOnline = partnerOnline;
+  if (partnerIsOnline === undefined && messages && messages.length > 0 && currentChatPartner) {
+    const lastMessage = messages[messages.length - 1];
+    if (currentChatPartner.id === lastMessage.senderId && 'senderIsOnline' in lastMessage) {
+      partnerIsOnline = lastMessage.senderIsOnline;
+    } else if (currentChatPartner.id === lastMessage.receiverId && 'receiverIsOnline' in lastMessage) {
+      partnerIsOnline = lastMessage.receiverIsOnline;
+    }
+  }
 
   if (!currentChatPartner) {
     return (
@@ -49,7 +57,10 @@ const ChatBoxContentField = ({ messages, sendMessage, currentChatPartner, curren
           </div>
           <div className="user_info">
             <span>{currentChatPartner.name}</span>
-            <p>Active</p>
+            <span style={{ display: 'inline-flex', alignItems: 'center', fontSize: 13, color: partnerIsOnline ? '#4caf50' : '#aaa', margin: 0, fontWeight: 500 }}>
+              <span style={{ display: 'inline-block', width: 10, height: 10, borderRadius: '50%', background: partnerIsOnline ? '#4caf50' : '#aaa', marginRight: 6 }} />
+              {partnerIsOnline ? 'Online' : 'Offline'}
+            </span>
           </div>
         </div>
         <div className="btn-box">
@@ -129,7 +140,7 @@ const ChatBoxContentField = ({ messages, sendMessage, currentChatPartner, curren
         .msg_card_body {
           flex-grow: 1;
           overflow-y: auto;
-          padding-bottom: 15px;
+          padding-bottom: 0px;
         }
         .card-footer {
           flex-shrink: 0;
@@ -141,7 +152,7 @@ const ChatBoxContentField = ({ messages, sendMessage, currentChatPartner, curren
         .type_msg {
           resize: none;
           min-height: 40px;
-          max-height: 120px;
+          max-height: 1200px;
         }
         .submit-btn {
           border-top-left-radius: 0;
@@ -173,6 +184,19 @@ const ChatBoxContentField = ({ messages, sendMessage, currentChatPartner, curren
         .msg_time.small-time {
           font-size: 11px !important;
           margin-left: 4px;
+        }
+        .msg_cotainer {
+          padding: 10px 15px;
+          border-radius: 15px;
+          margin-bottom: 5px;
+        }
+        .reply .msg_cotainer {
+          background-color: #e6f0ff;
+          color: #333;
+        }
+        .justify-content-start .msg_cotainer {
+          background-color: #f1f0f0;
+          color: #333;
         }
       `}</style>
     </div>

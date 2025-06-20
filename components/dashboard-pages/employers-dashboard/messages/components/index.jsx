@@ -2,14 +2,14 @@
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import * as signalR from '@microsoft/signalr';
-import axios from 'axios';
 import SearchBox from "./SearchBox";
 import ContactList from "./ContactList";
 import ContentField from "./ContentField";
 import { useDispatch } from "react-redux";
 import { chatSidebarToggle } from "../../../../../features/toggle/toggleSlice";
-import { authService } from "../../../../../services/authService"; 
+import { authService } from "../../../../../services/authService";
 import { jwtDecode } from 'jwt-decode';
+import messageService from '../../../../../services/messageService';
 
 const ChatBox = () => {
   const dispatch = useDispatch();
@@ -23,6 +23,8 @@ const ChatBox = () => {
   const [currentUserFullName, setCurrentUserFullName] = useState('');
   const [currentUserProfileImage, setCurrentUserProfileImage] = useState('');
   const [unreadContactIds, setUnreadContactIds] = useState([]);
+  const [partnerOnline, setPartnerOnline] = useState(false);
+  const [onlineUserIds, setOnlineUserIds] = useState([]);
 
   // Thêm useRef để lưu giá trị mới nhất
   const currentUserIdRef = useRef(currentUserId);
@@ -47,44 +49,37 @@ const ChatBox = () => {
   // Fetch chat contacts
   const fetchChatContacts = useCallback(async () => {
     if (!currentUserId) {
-      console.log("[DEBUG] currentUserId is missing!", currentUserId);
       return;
     }
     
     setLoadingContacts(true);
     setErrorLoadingContacts(null);
     try {
-      const token = authService.getToken();
-      console.log("[DEBUG] Calling API with companyId:", currentUserId);
+      const response = await messageService.getMessagedCandidates(currentUserId);
+      const fetchedContacts = response.data.map(msg => ({
+        id: String(msg.candidateId),
+        name: msg.candidateFullName,
+        lastMessageText: msg.messageText,
+        timestamp: msg.sentAt,
+        avatar: msg.candidateImage || "/images/resource/default-avatar.png",
+        unreadCount: 0,
+      }));
       
-      const response = await axios.get(`http://localhost:5194/api/Message/candidates-messaged/${currentUserId}`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
+      const uniqueContacts = Array.from(new Map(fetchedContacts.map(item => [item.id, item])).values());
+      setChatContacts(() => {
+        const newContacts = uniqueContacts.map(c => ({
+          ...c,
+          isOnline: onlineUserIds.includes(String(c.id))
+        }));
+        return newContacts.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
       });
-      
-      console.log("[DEBUG] API response:", response.data);
-      
-      const fetchedContacts = response.data.map(msg => {
-        return {
-          id: msg.candidateId,
-          name: msg.candidateFullName || msg.senderFullName || "Unknown",
-          lastMessageText: msg.messageText,
-          timestamp: msg.sentAt,
-          avatar: msg.candidateImage || msg.senderImage || "/images/resource/default-avatar.png",
-          unreadCount: 0,
-        };
-      });
-      
-      const uniqueContacts = Array.from(new Map(fetchedContacts.map(item => [item['id'], item])).values());
-      setChatContacts(uniqueContacts.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp)));
     } catch (err) {
-      console.error("[DEBUG] Error loading contacts:", err);
+      console.error("Error loading contacts:", err);
       setErrorLoadingContacts("Failed to load chat contacts. Please try again later.");
     } finally {
       setLoadingContacts(false);
     }
-  }, [currentUserId]);
+  }, [currentUserId, onlineUserIds]);
 
   useEffect(() => {
     fetchChatContacts();
@@ -116,14 +111,8 @@ const ChatBox = () => {
       if (connection.state === signalR.HubConnectionState.Disconnected) {
         connection.start()
           .then(async () => {
-            console.log('SignalR Connection Established!');
-            // Join user group
             try {
-              await axios.post('http://localhost:5194/api/Message/join-group', {}, {
-                headers: {
-                  'Authorization': `Bearer ${authService.getToken()}`
-                }
-              });
+              await messageService.joinGroup();
             } catch (error) {
               console.error('Error joining SignalR group:', error);
             }
@@ -136,7 +125,6 @@ const ChatBox = () => {
         const partnerId = Number(currentChatPartnerIdRef.current);
         const senderId = Number(messageData.senderId);
         const receiverId = Number(messageData.receiverId);
-        console.log('ReceiveMessage:', { senderId, receiverId, myId, partnerId, messageData });
         if (
           (senderId === myId && receiverId === partnerId) ||
           (senderId === partnerId && receiverId === myId)
@@ -149,18 +137,49 @@ const ChatBox = () => {
         // Hiệu ứng nổi bật khi có tin nhắn mới
         const contactId = senderId === myId ? receiverId : senderId;
         if (contactId !== partnerId) {
-          setUnreadContactIds(prev => prev.includes(contactId) ? prev : [...prev, contactId]);
+          setUnreadContactIds(prev => prev.includes(String(contactId)) ? prev : [...prev, String(contactId)]);
         }
       };
       connection.on("ReceiveMessage", handler);
       // Set up contact list update handler
       connection.on("UpdateContactList", () => {
-        console.log("Updating contact list...");
         fetchChatContacts();
+      });
+      // Lắng nghe realtime online status
+      connection.on("UserOnlineStatusChanged", ({ userId, isOnline }) => {
+        setOnlineUserIds(prev =>
+          isOnline
+            ? [...new Set([...prev, String(userId)])]
+            : prev.filter(id => id !== String(userId))
+        );
+        setChatContacts(contacts => {
+          const mapped = contacts.map(c =>
+            String(c.id) === String(userId)
+              ? { ...c, isOnline }
+              : c
+          );
+          return mapped;
+        });
+        if (currentChatPartnerId && String(currentChatPartnerId) === String(userId)) {
+          setPartnerOnline(isOnline);
+        }
+      });
+      // Lắng nghe danh sách user online khi vừa kết nối
+      connection.on("OnlineUsersList", (onlineUserIds) => {
+        setOnlineUserIds(onlineUserIds);
+        setChatContacts(contacts => {
+          const mapped = contacts.map(c => ({
+            ...c,
+            isOnline: onlineUserIds.includes(String(c.id))
+          }));
+          return mapped;
+        });
+        if (currentChatPartnerId) {
+          setPartnerOnline(onlineUserIds.includes(String(currentChatPartnerId)));
+        }
       });
       // Connection event handlers
       connection.onreconnected(() => {
-        console.log("SignalR Reconnected.");
         fetchChatContacts();
       });
       connection.onreconnecting((error) => {
@@ -172,22 +191,18 @@ const ChatBox = () => {
       // Cleanup
       return () => {
         connection.off("ReceiveMessage", handler);
+        connection.off("UpdateContactList");
+        connection.off("UserOnlineStatusChanged");
+        connection.off("OnlineUsersList");
       };
     }
-  }, [connection, fetchChatContacts, currentUserId, currentChatPartnerId]);
+  }, [connection, fetchChatContacts, currentUserId, currentChatPartnerId, onlineUserIds]);
 
   // Fetch message history when chat partner changes
   useEffect(() => {
     if (connection && connection.state === signalR.HubConnectionState.Connected && currentChatPartnerId && currentUserId) {
-      console.log(`Fetching history for current user ${currentUserId} and partner ${currentChatPartnerId}`);
-      
-      axios.get(`http://localhost:5194/api/Message/history/${currentUserId}/${currentChatPartnerId}`, {
-        headers: {
-          'Authorization': `Bearer ${authService.getToken()}`
-        }
-      })
+      messageService.getMessageHistory(currentUserId, currentChatPartnerId)
         .then(response => {
-          console.log("Message history API response:", response.data);
           const historyMessages = response.data.map(msg => ({
             ...msg,
             timestamp: msg.timestamp ? new Date(msg.timestamp).toISOString() : null,
@@ -209,20 +224,18 @@ const ChatBox = () => {
       return;
     }
     try {
-      const token = authService.getToken();
       const messagePayload = {
         senderId: currentUserId,
         receiverId: currentChatPartnerId,
         relatedJobId: 0,
         messageText: messageText,
+        sentAt: new Date().toISOString(),
       };
-      // KHÔNG setMessages ở đây nữa để tránh double message
-      await axios.post("http://localhost:5194/api/Message/send", messagePayload, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-      });
+      await messageService.sendMessage(messagePayload);
+      setMessages(prevMessages => [
+        ...prevMessages,
+        { ...messagePayload }
+      ]);
     } catch (error) {
       console.error('Error sending message:', error);
     }
@@ -233,12 +246,19 @@ const ChatBox = () => {
   };
 
   const handleContactSelect = (partnerId) => {
-    if (partnerId !== currentChatPartnerId) {
-      setCurrentChatPartnerId(partnerId);
-      currentChatPartnerIdRef.current = partnerId;
-      setUnreadContactIds(prev => prev.filter(id => id !== partnerId));
+    if (String(partnerId) !== currentChatPartnerId) {
+      setCurrentChatPartnerId(String(partnerId));
+      setUnreadContactIds(prev => prev.filter(id => id !== String(partnerId)));
     }
   };
+
+  // Khi đổi partner hoặc chatContacts thay đổi, luôn lấy trạng thái online từ contact list nếu có
+  useEffect(() => {
+    if (currentChatPartnerId && chatContacts.length > 0) {
+      const partner = chatContacts.find(c => String(c.id) === String(currentChatPartnerId));
+      setPartnerOnline(!!partner?.isOnline);
+    }
+  }, [currentChatPartnerId, chatContacts]);
 
   return (
     <div className="row" style={{ height: "80vh", overflow: "hidden" }}>
@@ -278,6 +298,7 @@ const ChatBox = () => {
           currentUserId={currentUserId}
           currentUserFullName={currentUserFullName}
           currentUserProfileImage={currentUserProfileImage}
+          partnerOnline={partnerOnline}
         />
       </div>
     </div>

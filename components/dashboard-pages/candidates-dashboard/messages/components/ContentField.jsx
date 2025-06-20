@@ -3,7 +3,7 @@ import ChatHamburger from "../../../employers-dashboard/messages/components/Chat
 import React, { useState, useEffect, useRef } from 'react';
 import { format, parseISO, isValid } from 'date-fns';
 
-const ChatBoxContentField = ({ messages, sendMessage, currentChatPartner, currentUserId, currentUserFullName, currentUserProfileImage }) => {
+const ChatBoxContentField = ({ messages, sendMessage, sendFile, currentChatPartner, currentUserId, currentUserFullName, currentUserProfileImage, partnerOnline }) => {
   const [messageInput, setMessageInput] = useState('');
   const messagesEndRef = useRef(null);
 
@@ -17,12 +17,23 @@ const ChatBoxContentField = ({ messages, sendMessage, currentChatPartner, curren
 
   const handleSendMessage = (e) => {
     e.preventDefault();
-    console.log("Attempting to send message...");
     if (messageInput.trim()) {
       sendMessage(messageInput);
       setMessageInput('');
     }
   };
+
+  // Ưu tiên trạng thái online realtime từ prop partnerOnline
+  let partnerIsOnline = partnerOnline;
+  // Nếu prop chưa có, fallback về trạng thái từ message cuối
+  if (partnerIsOnline === undefined && messages && messages.length > 0 && currentChatPartner) {
+    const lastMessage = messages[messages.length - 1];
+    if (currentChatPartner.id === lastMessage.senderId && 'senderIsOnline' in lastMessage) {
+      partnerIsOnline = lastMessage.senderIsOnline;
+    } else if (currentChatPartner.id === lastMessage.receiverId && 'receiverIsOnline' in lastMessage) {
+      partnerIsOnline = lastMessage.receiverIsOnline;
+    }
+  }
 
   if (!currentChatPartner) {
     return (
@@ -48,7 +59,10 @@ const ChatBoxContentField = ({ messages, sendMessage, currentChatPartner, curren
           </div>
           <div className="user_info" style={{ marginLeft: 12 }}>
             <span style={{ fontWeight: 600, fontSize: 18 }}>{currentChatPartner.name}</span>
-            <p style={{ fontSize: 13, color: '#1890ff', margin: 0 }}>Active</p>
+            <span style={{ display: 'inline-flex', alignItems: 'center', fontSize: 13, color: partnerIsOnline ? '#4caf50' : '#aaa', margin: 0, fontWeight: 500 }}>
+              <span style={{ display: 'inline-block', width: 10, height: 10, borderRadius: '50%', background: partnerIsOnline ? '#4caf50' : '#aaa', marginRight: 6 }} />
+              {partnerIsOnline ? 'Online' : 'Offline'}
+            </span>
           </div>
         </div>
 
@@ -178,6 +192,19 @@ const ChatBoxContentField = ({ messages, sendMessage, currentChatPartner, curren
         .msg_time.small-time {
           font-size: 11px !important;
           margin-left: 4px;
+        }
+        .msg_cotainer {
+          padding: 10px 15px;
+          border-radius: 15px;
+          margin-bottom: 5px;
+        }
+        .reply .msg_cotainer {
+          background-color: #e6f0ff;
+          color: #333;
+        }
+        .justify-content-start .msg_cotainer {
+          background-color: #f1f0f0;
+          color: #333;
         }
       `}</style>
     </div>

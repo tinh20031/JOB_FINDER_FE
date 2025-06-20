@@ -75,7 +75,16 @@ const ChatboxContactList = ({ onContactSelect, currentChatPartnerId, contacts = 
                                 <div className="message-overview">
                                     <div className="name-time">
                                         <h4 className="name">{contact.name}</h4>
-                                        <span className="time">{getTimeAgo(contact.timestamp)}</span>
+                                        <span className="status-dot" title={contact.isOnline ? 'Online' : 'Offline'}>
+                                          <span style={{
+                                            display: 'inline-block',
+                                            width: 10,
+                                            height: 10,
+                                            borderRadius: '50%',
+                                            background: contact.isOnline ? '#4caf50' : '#aaa',
+                                            marginRight: 0
+                                          }} />
+                                        </span>
                                     </div>
                                     <p className="last-message-preview">
                                         {contact.lastMessageText && contact.lastMessageText.length > 30 
@@ -250,6 +259,11 @@ const ChatboxContactList = ({ onContactSelect, currentChatPartnerId, contacts = 
           height: 10px;
           background: #1890ff;
           border-radius: 50%;
+          margin-left: 8px;
+        }
+        .status-dot {
+          display: flex;
+          align-items: center;
           margin-left: 8px;
         }
       `}</style>

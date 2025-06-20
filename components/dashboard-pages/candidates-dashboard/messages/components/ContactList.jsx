@@ -55,54 +55,68 @@ const ChatboxContactList = ({ onContactSelect, currentChatPartnerId, contacts = 
 
       <ul className="contacts-list" style={{ flexGrow: 1, overflowY: "auto" }}>
         {filteredContacts.length > 0 ? (
-          filteredContacts.map((contact) => (
-            <li
-              key={contact.id}
-              className={`contact-item ${contact.id === currentChatPartnerId ? "active" : ""} ${unreadContactIds.includes(contact.id) ? "unread" : ""}`}
-              onClick={() => onContactSelect(contact.id)}
-            >
-              <div className="contact-info">
-                <div className="avatar-container">
-                  <Image
-                    src={contact.avatar}
-                    className="rounded-circle user_img"
-                    alt={contact.name}
-                    width={60}
-                    height={60}
-                  />
-                  {contact.unreadCount > 0 && (
-                    <span className="unread-badge-on-avatar">{contact.unreadCount}</span>
-                  )}
-                  {unreadContactIds.includes(contact.id) && (
-                    <span className="unread-badge"></span>
-                  )}
-                </div>
-                <div className="message-overview">
-                  <div className="name-time">
-                    <h4 className="name">{contact.name}</h4>
-                    <span className="time">{getTimeAgo(contact.timestamp)}</span>
-                  </div>
-                  <p className="last-message-preview">
-                    {contact.lastMessageText.length > 30 
-                      ? `${contact.lastMessageText.substring(0, 30)}...` 
-                      : contact.lastMessageText}
-                  </p>
-                  <p className="contact-position">{contact.position}</p>
-                </div>
-                {contact.productImage && (
-                  <div className="product-image-container">
+          filteredContacts.map((contact) => {
+            return (
+              <li
+                key={contact.id}
+                className={`contact-item ${contact.id === currentChatPartnerId ? "active" : ""} ${unreadContactIds.includes(contact.id) ? "unread" : ""}`}
+                onClick={() => onContactSelect(contact.id)}
+              >
+                <div className="contact-info">
+                  <div className="avatar-container">
                     <Image
-                      src={contact.productImage}
-                      alt={contact.productName || "Product"}
-                      width={50}
-                      height={50}
-                      objectFit="cover"
+                      src={contact.avatar}
+                      className="rounded-circle user_img"
+                      alt={contact.name}
+                      width={60}
+                      height={60}
                     />
+                    {contact.unreadCount > 0 && (
+                      <span className="unread-badge-on-avatar">{contact.unreadCount}</span>
+                    )}
+                    {unreadContactIds.includes(contact.id) && (
+                      <span className="unread-badge"></span>
+                    )}
                   </div>
-                )}
-              </div>
-            </li>
-          ))
+                  <div className="message-overview">
+                    <div className="name-time">
+                      <h4 className="name">{contact.name}</h4>
+                      <span className="status-dot" title={contact.isOnline ? 'Online' : 'Offline'}>
+                        <span style={{
+                          display: 'inline-block',
+                          width: 10,
+                          height: 10,
+                          borderRadius: '50%',
+                          background: contact.isOnline ? '#4caf50' : '#aaa',
+                          marginRight: 4
+                        }} />
+                        <span style={{ fontSize: 12, color: contact.isOnline ? '#4caf50' : '#aaa', marginLeft: 2 }}>
+                          {contact.isOnline ? 'Online' : 'Offline'}
+                        </span>
+                      </span>
+                    </div>
+                    <p className="last-message-preview">
+                      {contact.lastMessageText.length > 30 
+                        ? `${contact.lastMessageText.substring(0, 30)}...` 
+                        : contact.lastMessageText}
+                    </p>
+                    <p className="contact-position">{contact.position}</p>
+                  </div>
+                  {contact.productImage && (
+                    <div className="product-image-container">
+                      <Image
+                        src={contact.productImage}
+                        alt={contact.productName || "Product"}
+                        width={50}
+                        height={50}
+                        objectFit="cover"
+                      />
+                    </div>
+                  )}
+                </div>
+              </li>
+            );
+          })
         ) : (
           <li className="no-contacts">
             <p>No conversations found.</p>
@@ -235,6 +249,11 @@ const ChatboxContactList = ({ onContactSelect, currentChatPartnerId, contacts = 
           height: 10px;
           background: #1890ff;
           border-radius: 50%;
+          margin-left: 8px;
+        }
+        .status-dot {
+          display: flex;
+          align-items: center;
           margin-left: 8px;
         }
       `}</style>
