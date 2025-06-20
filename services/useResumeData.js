@@ -171,3 +171,22 @@ export async function updateEducation(education) {
   if (response.status === 204) return;
   return await response.json();
 }
+
+export async function updateWorkExperience(workExperience) {
+  const token = getToken();
+  if (!token) throw new Error("No token found");
+  const response = await fetch(
+    `${API_URL}/WorkExperience/me/${workExperience.workExperienceId}`,
+    {
+      method: "PUT",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(workExperience),
+    }
+  );
+  if (!response.ok) throw new Error("Cập nhật Work Experience thất bại");
+  if (response.status === 204) return;
+  return await response.json();
+}
