@@ -37,72 +37,105 @@ const Education = ({ education = [] }) => {
   };
 
   return (
-    <div className="resume-outer">
-      <div className="upper-title">
-        <h4>Education</h4>
-        <button className="add-info-btn" onClick={handleAdd}>
-          <span className="icon flaticon-plus"></span> Add Education
-        </button>
+    <div
+      style={{
+        background: "#fff",
+        borderRadius: 20,
+        padding: 32,
+        marginBottom: 32,
+        boxShadow: "0 4px 24px rgba(0,0,0,0.08)",
+        position: "relative",
+        minHeight: 100,
+      }}
+    >
+      {/* Nút add nổi bật góc phải */}
+      <button
+        onClick={handleAdd}
+        style={{
+          position: "absolute",
+          top: 24,
+          right: 32,
+          background: "none",
+          border: "none",
+          color: "#e60023",
+          fontSize: 28,
+          cursor: "pointer",
+          padding: 0,
+        }}
+        title="Add"
+      >
+        <span className="icon flaticon-plus"></span>
+      </button>
+      <div style={{ fontWeight: 800, fontSize: 24, marginBottom: 12 }}>
+        Education
       </div>
-      {education.length === 0 && <div>No education info.</div>}
-      {education.map((edu) => (
-        <div className="resume-block" key={edu.educationId}>
+      {education.length === 0 && (
+        <div style={{ color: "#aaa", fontStyle: "italic", fontSize: 18 }}>
+          No education info.
+        </div>
+      )}
+      {education.map((edu, idx) => (
+        <div
+          key={edu.educationId}
+          style={{
+            background: "#f8f9fa",
+            borderRadius: 14,
+            padding: 20,
+            marginBottom: 18,
+            boxShadow: "0 1px 4px #0001",
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "flex-start",
+          }}
+        >
+          <div style={{ flex: 1 }}>
+            <div style={{ fontWeight: 700, fontSize: 18, marginBottom: 4 }}>
+              {edu.school}
+            </div>
+            <div style={{ color: "#222", marginBottom: 2 }}>
+              {edu.degree} - {edu.major}
+            </div>
+            <div style={{ color: "#888", marginBottom: 2 }}>
+              {formatMonthYear(edu.yearStart)} -{" "}
+              {edu.isStudying ? "NOW" : formatMonthYear(edu.yearEnd)}
+            </div>
+            <div className="text" style={{ marginTop: 6 }}>
+              {edu.detail}
+            </div>
+          </div>
           <div
-            className="inner"
             style={{
+              marginLeft: 16,
               display: "flex",
-              justifyContent: "space-between",
-              alignItems: "flex-start",
+              flexDirection: "column",
+              gap: 8,
             }}
           >
-            <div style={{ flex: 1 }}>
-              <div style={{ fontWeight: 700, fontSize: 18, marginBottom: 4 }}>
-                {edu.school}
-              </div>
-              <div style={{ color: "#222", marginBottom: 2 }}>
-                {edu.degree} - {edu.major}
-              </div>
-              <div style={{ color: "#888", marginBottom: 2 }}>
-                {formatMonthYear(edu.yearStart)} -{" "}
-                {edu.isStudying ? "NOW" : formatMonthYear(edu.yearEnd)}
-              </div>
-              <div className="text" style={{ marginTop: 6 }}>
-                {edu.detail}
-              </div>
-            </div>
-            <div
-              className="edit-btns"
+            <button
+              onClick={() => handleEdit(edu)}
               style={{
-                marginLeft: 16,
-                display: "flex",
-                flexDirection: "column",
-                gap: 8,
+                background: "none",
+                border: "none",
+                cursor: "pointer",
+                color: "#e60023",
+                fontSize: 20,
               }}
+              title="Edit"
             >
-              <button
-                onClick={() => handleEdit(edu)}
-                style={{
-                  background: "none",
-                  border: "none",
-                  cursor: "pointer",
-                  color: "#e60023",
-                  fontSize: 20,
-                }}
-              >
-                <span className="la la-pencil"></span>
-              </button>
-              <button
-                style={{
-                  background: "none",
-                  border: "none",
-                  cursor: "pointer",
-                  color: "#888",
-                  fontSize: 20,
-                }}
-              >
-                <span className="la la-trash"></span>
-              </button>
-            </div>
+              <span className="la la-pencil"></span>
+            </button>
+            <button
+              style={{
+                background: "none",
+                border: "none",
+                cursor: "pointer",
+                color: "#888",
+                fontSize: 20,
+              }}
+              title="Delete"
+            >
+              <span className="la la-trash"></span>
+            </button>
           </div>
         </div>
       ))}

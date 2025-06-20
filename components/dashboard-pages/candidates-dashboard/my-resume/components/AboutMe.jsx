@@ -27,24 +27,45 @@ const AboutMe = ({ aboutme }) => {
   };
 
   return (
-    <div className="resume-outer">
-      <div className="upper-title">
-        <h4>About Me</h4>
-        <button onClick={handleEdit}>
-          <span className="la la-pencil" style={{ color: "red" }}></span>
-        </button>
+    <div
+      style={{
+        background: "#fff",
+        borderRadius: 20,
+        padding: 32,
+        marginBottom: 32,
+        boxShadow: "0 4px 24px rgba(0,0,0,0.08)",
+        position: "relative",
+        minHeight: 100,
+      }}
+    >
+      <button
+        onClick={handleEdit}
+        style={{
+          position: "absolute",
+          top: 24,
+          right: 32,
+          background: "none",
+          border: "none",
+          color: "#e60023",
+          fontSize: 28,
+          cursor: "pointer",
+          padding: 0,
+        }}
+        title="Edit"
+      >
+        <span className="la la-pencil"></span>
+      </button>
+      <div style={{ fontWeight: 800, fontSize: 24, marginBottom: 12 }}>
+        About Me
       </div>
-      {!aboutme?.aboutMeDescription && <div>No about me info.</div>}
+      {!aboutme?.aboutMeDescription && (
+        <div style={{ color: "#aaa", fontStyle: "italic", fontSize: 18 }}>
+          No about me info.
+        </div>
+      )}
       {aboutme?.aboutMeDescription && (
-        <div className="resume-block">
-          <div className="inner">
-            <div className="title-box">
-              <div className="edit-box">
-                <div className="text">{aboutme.aboutMeDescription}</div>
-                <div className="edit-btns"></div>
-              </div>
-            </div>
-          </div>
+        <div style={{ color: "#222", fontSize: 18, lineHeight: 1.7 }}>
+          {aboutme.aboutMeDescription}
         </div>
       )}
       <AboutMeModal

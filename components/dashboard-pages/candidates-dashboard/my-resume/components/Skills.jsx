@@ -100,107 +100,109 @@ const Skills = ({ skills: initialSkills = [] }) => {
   };
 
   return (
-    <div className="resume-outer">
-      <div className="upper-title">
-        <h4>Skills</h4>
-        <div style={{ position: "relative" }}>
-          <button
-            className="add-info-btn"
-            onClick={() => setShowAddGroup((p) => !p)}
+    <div
+      style={{
+        background: "#fff",
+        borderRadius: 20,
+        padding: 32,
+        marginBottom: 32,
+        boxShadow: "0 4px 24px rgba(0,0,0,0.08)",
+        position: "relative",
+        minHeight: 100,
+      }}
+    >
+      {/* Popup chọn loại group khi bấm add group */}
+      {showAddGroup && (
+        <div
+          style={{
+            position: "absolute",
+            top: 60,
+            right: 32,
+            background: "#fff",
+            border: "1px solid #ddd",
+            borderRadius: "8px",
+            boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
+            zIndex: 10,
+            width: "220px",
+            padding: "8px",
+          }}
+        >
+          <div
+            style={{
+              padding: "8px 12px",
+              fontWeight: "600",
+              color: "#888",
+              fontSize: "14px",
+            }}
           >
-            <span className="icon flaticon-plus"></span>
+            Add group:
+          </div>
+          <button
+            onClick={() => handleOpenModal("core")}
+            style={{
+              background: "none",
+              border: "none",
+              padding: "8px 12px",
+              width: "100%",
+              textAlign: "left",
+              cursor: "pointer",
+            }}
+          >
+            + Core skills
           </button>
-          {showAddGroup && (
-            <div
-              style={{
-                position: "absolute",
-                top: "100%",
-                right: 0,
-                background: "#fff",
-                border: "1px solid #ddd",
-                borderRadius: "8px",
-                boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
-                zIndex: 10,
-                width: "220px",
-                padding: "8px",
-              }}
-            >
+          <div
+            style={{
+              padding: "8px 12px",
+              color: hasSoftSkillsGroup ? "#aaa" : "inherit",
+              cursor: hasSoftSkillsGroup ? "not-allowed" : "pointer",
+              display: "flex",
+              alignItems: "center",
+              gap: "8px",
+              position: "relative",
+            }}
+            onClick={() => !hasSoftSkillsGroup && handleOpenModal("soft")}
+            onMouseEnter={() =>
+              hasSoftSkillsGroup && setShowSoftSkillTooltip(true)
+            }
+            onMouseLeave={() => setShowSoftSkillTooltip(false)}
+          >
+            + Soft skills
+            {hasSoftSkillsGroup && <span className="la la-info-circle"></span>}
+            {showSoftSkillTooltip && (
               <div
                 style={{
+                  position: "absolute",
+                  bottom: "100%",
+                  left: "20px",
+                  background: "#333",
+                  color: "#fff",
                   padding: "8px 12px",
-                  fontWeight: "600",
-                  color: "#888",
+                  borderRadius: "6px",
+                  zIndex: 20,
+                  whiteSpace: "nowrap",
                   fontSize: "14px",
                 }}
               >
-                Add group:
+                Maximum of 1 soft skills group
+                <div
+                  style={{
+                    position: "absolute",
+                    top: "100%",
+                    left: "50%",
+                    marginLeft: "-6px",
+                    borderWidth: "6px",
+                    borderStyle: "solid",
+                    borderColor: "#333 transparent transparent transparent",
+                  }}
+                />
               </div>
-              <button
-                onClick={() => handleOpenModal("core")}
-                style={{
-                  background: "none",
-                  border: "none",
-                  padding: "8px 12px",
-                  width: "100%",
-                  textAlign: "left",
-                  cursor: "pointer",
-                }}
-              >
-                + Core skills
-              </button>
-              <div
-                style={{
-                  padding: "8px 12px",
-                  color: hasSoftSkillsGroup ? "#aaa" : "inherit",
-                  cursor: hasSoftSkillsGroup ? "not-allowed" : "pointer",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "8px",
-                  position: "relative",
-                }}
-                onClick={() => !hasSoftSkillsGroup && handleOpenModal("soft")}
-                onMouseEnter={() =>
-                  hasSoftSkillsGroup && setShowSoftSkillTooltip(true)
-                }
-                onMouseLeave={() => setShowSoftSkillTooltip(false)}
-              >
-                + Soft skills
-                {hasSoftSkillsGroup && (
-                  <span className="la la-info-circle"></span>
-                )}
-                {showSoftSkillTooltip && (
-                  <div
-                    style={{
-                      position: "absolute",
-                      bottom: "100%",
-                      left: "20px",
-                      background: "#333",
-                      color: "#fff",
-                      padding: "8px 12px",
-                      borderRadius: "6px",
-                      zIndex: 20,
-                      whiteSpace: "nowrap",
-                      fontSize: "14px",
-                    }}
-                  >
-                    Maximum of 1 soft skills group
-                    <div
-                      style={{
-                        position: "absolute",
-                        top: "100%",
-                        left: "50%",
-                        marginLeft: "-6px",
-                        borderWidth: "6px",
-                        borderStyle: "solid",
-                        borderColor: "#333 transparent transparent transparent",
-                      }}
-                    />
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
+            )}
+          </div>
         </div>
+      )}
+
+      <div style={{ fontWeight: 800, fontSize: 24, marginBottom: 12 }}>
+        Skills
       </div>
 
       {groups.length === 0 && (
@@ -209,62 +211,119 @@ const Skills = ({ skills: initialSkills = [] }) => {
         </div>
       )}
 
-      {groups.map(({ groupName, type, skills, groupKey, createdAt }) => (
+      {groups.map((group, idx) => (
         <div
-          className="resume-block"
-          key={groupKey || createdAt}
-          style={{ borderTop: "1px solid #eee", paddingTop: "16px" }}
+          key={group.groupKey}
+          style={{
+            background: "#f8f9fa",
+            borderRadius: 14,
+            padding: 20,
+            marginBottom: 18,
+            boxShadow: "0 1px 4px #0001",
+            position: "relative",
+            cursor: "pointer",
+          }}
+          onClick={(e) => {
+            // Không mở modal nếu click vào nút edit/delete
+            if (e.target.closest("button")) return;
+            handleOpenModal(group.type === 0 ? "core" : "soft", group.groupKey);
+          }}
         >
-          <div className="upper-title" style={{ marginBottom: "12px" }}>
-            <h5 style={{ fontWeight: 600 }}>{groupName}</h5>
-            <div className="edit-btns">
-              <button
-                onClick={() =>
-                  handleOpenModal(
-                    type === 0 ? "core" : "soft",
-                    groupKey || createdAt
-                  )
-                }
-              >
-                <span
-                  className="la la-pencil"
-                  style={{ color: "#e60023" }}
-                ></span>
-              </button>
-              <button onClick={() => handleDeleteGroup(groupKey || createdAt)}>
-                <span className="la la-trash"></span>
-              </button>
-            </div>
+          {/* Chỉ còn nút edit/delete căn phải, KHÔNG có nút add skill */}
+          <div
+            style={{
+              position: "absolute",
+              top: 18,
+              right: 18,
+              display: "flex",
+              gap: 8,
+            }}
+          >
+            <button
+              onClick={() =>
+                handleOpenModal(
+                  group.type === 0 ? "core" : "soft",
+                  group.groupKey
+                )
+              }
+              style={{
+                background: "none",
+                border: "none",
+                cursor: "pointer",
+                color: "#e60023",
+                fontSize: 20,
+                padding: 4,
+              }}
+              title="Edit"
+            >
+              <span className="la la-pencil"></span>
+            </button>
+            <button
+              onClick={() => handleDeleteGroup(group.groupKey)}
+              style={{
+                background: "none",
+                border: "none",
+                cursor: "pointer",
+                color: "#888",
+                fontSize: 20,
+                padding: 4,
+              }}
+              title="Delete"
+            >
+              <span className="la la-trash"></span>
+            </button>
           </div>
-          <div className="inner" style={{ padding: 0 }}>
-            {type === 0 ? (
-              <div style={{ display: "flex", flexWrap: "wrap", gap: "10px" }}>
-                {skills.map((s) => (
+          <div style={{ fontWeight: 700, fontSize: 18, marginBottom: 8 }}>
+            {group.groupName}
+          </div>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 10 }}>
+            {group.skills.map((skill) => (
+              <span
+                key={skill.skillId}
+                style={{
+                  background: group.type === 0 ? "#e6f7ff" : "#fff3cd",
+                  color: group.type === 0 ? "#007bff" : "#856404",
+                  borderRadius: 8,
+                  padding: "6px 16px",
+                  fontWeight: 600,
+                  fontSize: 15,
+                  marginBottom: 6,
+                  display: "inline-block",
+                }}
+              >
+                {skill.skillName}
+                {group.type === 0 && skill.experienceLevel && (
                   <span
-                    key={s.skillId}
-                    style={{
-                      background: "#f0f0f0",
-                      padding: "6px 12px",
-                      borderRadius: "16px",
-                      fontSize: "14px",
-                    }}
+                    style={{ color: "#888", fontWeight: 400, marginLeft: 8 }}
                   >
-                    {s.skillName} ({s.experience})
+                    ({skill.experienceLevel})
                   </span>
-                ))}
-              </div>
-            ) : (
-              <ul style={{ listStyle: "disc", paddingLeft: "20px" }}>
-                {skills.map((s) => (
-                  <li key={s.skillId} style={{ marginBottom: "4px" }}>
-                    {s.skillName}
-                  </li>
-                ))}
-              </ul>
-            )}
+                )}
+              </span>
+            ))}
           </div>
         </div>
       ))}
+
+      {/* Khi bấm add group sẽ mở modal với selectedGroup=null */}
+      <button
+        className="add-info-btn"
+        onClick={() => setShowAddGroup((p) => !p)}
+        style={{
+          position: "absolute",
+          top: 24,
+          right: 32,
+          background: "none",
+          border: "none",
+          color: "#e60023",
+          fontSize: 28,
+          cursor: "pointer",
+          padding: 0,
+        }}
+        title="Add group"
+      >
+        <span className="icon flaticon-plus"></span>
+      </button>
 
       {modalType === "core" && modalOpen && (
         <CoreSkillsModal
