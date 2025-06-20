@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
+import locationService from "@/services/locationService";
 
 const genderOptions = [
   { value: "male", label: "Male" },
@@ -23,6 +24,11 @@ const EditProfileModal = ({ open, onClose, onSubmit, profile }) => {
   const [preview, setPreview] = useState(profile?.image || "");
   const fileInputRef = useRef();
   const [show, setShow] = useState(false);
+  const [errors, setErrors] = useState({});
+  const [touched, setTouched] = useState({});
+  const [provinces, setProvinces] = useState([]);
+  const [cities, setCities] = useState([]);
+  const [provinceCodeMap, setProvinceCodeMap] = useState({});
 
   useEffect(() => {
     setForm({
@@ -45,7 +51,48 @@ const EditProfileModal = ({ open, onClose, onSubmit, profile }) => {
     } else {
       setShow(false);
     }
+    // Fetch provinces when modal opens
+    if (open) {
+      locationService.getProvinces().then((data) => {
+        const arr = Array.isArray(data) ? data : data || [];
+        setProvinces(arr);
+        // Tạo map tên -> code để lấy code khi chọn
+        const codeMap = {};
+        arr.forEach((p) => {
+          codeMap[p.name] = p.code || p.id;
+        });
+        setProvinceCodeMap(codeMap);
+        // Nếu đã có province và city cũ, fetch districts luôn
+        if (profile?.province && codeMap[profile.province]) {
+          locationService
+            .getDistricts(codeMap[profile.province])
+            .then((districts) => {
+              setCities(Array.isArray(districts) ? districts : []);
+            });
+        } else {
+          setCities([]);
+        }
+      });
+    }
   }, [profile, open]);
+
+  // Khi chọn province, fetch city, chỉ reset City nếu đổi province (không reset khi khởi tạo từ profile)
+  useEffect(() => {
+    if (form.Province && provinceCodeMap[form.Province]) {
+      locationService
+        .getDistricts(provinceCodeMap[form.Province])
+        .then((districts) => {
+          setCities(Array.isArray(districts) ? districts : []);
+        });
+      // Nếu province khác với profile.province thì reset City
+      if (form.Province !== (profile?.province || "")) {
+        setForm((f) => ({ ...f, City: "" }));
+      }
+    } else {
+      setCities([]);
+      setForm((f) => ({ ...f, City: "" }));
+    }
+  }, [form.Province]);
 
   if (!open) return null;
 
@@ -75,8 +122,26 @@ const EditProfileModal = ({ open, onClose, onSubmit, profile }) => {
     setPreview("");
   };
 
+  const handleBlur = (e) => {
+    const { name } = e.target;
+    setTouched((prev) => ({ ...prev, [name]: true }));
+  };
+
+  const validate = () => {
+    const newErrors = {};
+    if (!form.FullName.trim()) newErrors.FullName = "Full name is required.";
+    if (!form.JobTitle.trim()) newErrors.JobTitle = "Title is required.";
+    if (!form.Dob) newErrors.Dob = "Date of birth is required.";
+    if (!form.Province.trim()) newErrors.Province = "Province is required.";
+    if (!form.City.trim()) newErrors.City = "City is required.";
+    return newErrors;
+  };
+
   const handleSubmit = (e) => {
     e.preventDefault();
+    const validationErrors = validate();
+    setErrors(validationErrors);
+    if (Object.keys(validationErrors).length > 0) return;
     const submitData = {
       FullName: form.FullName,
       JobTitle: form.JobTitle,
@@ -291,22 +356,74 @@ const EditProfileModal = ({ open, onClose, onSubmit, profile }) => {
             <form className="modal-form-flex" onSubmit={handleSubmit}>
               <div className="modal-form-grid">
                 <div className="form-group">
-                  <label>Full name *</label>
+                  <label>
+                    Full name <span style={{ color: "#e60023" }}>*</span>
+                  </label>
                   <input
                     name="FullName"
                     value={form.FullName}
                     onChange={handleChange}
+                    onBlur={handleBlur}
                     required
+                    style={{
+                      border:
+                        errors.FullName ||
+                        (touched.FullName && !form.FullName.trim())
+                          ? "2px solid #e60023"
+                          : form.FullName.trim()
+                          ? "2px solid #28a745"
+                          : "1px solid #ddd",
+                      outline:
+                        errors.FullName ||
+                        (touched.FullName && !form.FullName.trim())
+                          ? "1px solid #e60023"
+                          : undefined,
+                      background: "#fff",
+                    }}
                   />
+                  {(errors.FullName ||
+                    (touched.FullName && !form.FullName.trim())) && (
+                    <div
+                      style={{ color: "#e60023", fontSize: 13, marginTop: 2 }}
+                    >
+                      Please enter your full name
+                    </div>
+                  )}
                 </div>
                 <div className="form-group">
-                  <label>Title *</label>
+                  <label>
+                    Title <span style={{ color: "#e60023" }}>*</span>
+                  </label>
                   <input
                     name="JobTitle"
                     value={form.JobTitle}
                     onChange={handleChange}
+                    onBlur={handleBlur}
                     required
+                    style={{
+                      border:
+                        errors.JobTitle ||
+                        (touched.JobTitle && !form.JobTitle.trim())
+                          ? "2px solid #e60023"
+                          : form.JobTitle.trim()
+                          ? "2px solid #28a745"
+                          : "1px solid #ddd",
+                      outline:
+                        errors.JobTitle ||
+                        (touched.JobTitle && !form.JobTitle.trim())
+                          ? "1px solid #e60023"
+                          : undefined,
+                      background: "#fff",
+                    }}
                   />
+                  {(errors.JobTitle ||
+                    (touched.JobTitle && !form.JobTitle.trim())) && (
+                    <div
+                      style={{ color: "#e60023", fontSize: 13, marginTop: 2 }}
+                    >
+                      Please enter your title
+                    </div>
+                  )}
                 </div>
                 <div className="form-group">
                   <label>Email address</label>
@@ -317,17 +434,40 @@ const EditProfileModal = ({ open, onClose, onSubmit, profile }) => {
                   <input name="Phone" value={form.Phone} disabled />
                 </div>
                 <div className="form-group">
-                  <label>Date of Birth *</label>
+                  <label>
+                    Date of Birth <span style={{ color: "#e60023" }}>*</span>
+                  </label>
                   <input
                     type="date"
                     name="Dob"
                     value={form.Dob}
                     onChange={handleChange}
+                    onBlur={handleBlur}
                     required
+                    style={{
+                      border:
+                        errors.Dob || (touched.Dob && !form.Dob)
+                          ? "2px solid #e60023"
+                          : form.Dob
+                          ? "2px solid #28a745"
+                          : "1px solid #ddd",
+                      outline:
+                        errors.Dob || (touched.Dob && !form.Dob)
+                          ? "1px solid #e60023"
+                          : undefined,
+                      background: "#fff",
+                    }}
                   />
+                  {(errors.Dob || (touched.Dob && !form.Dob)) && (
+                    <div
+                      style={{ color: "#e60023", fontSize: 13, marginTop: 2 }}
+                    >
+                      Please enter your date of birth
+                    </div>
+                  )}
                 </div>
                 <div className="form-group">
-                  <label>Gender *</label>
+                  <label>Gender</label>
                   <select
                     name="Gender"
                     value={form.Gender}
@@ -342,13 +482,93 @@ const EditProfileModal = ({ open, onClose, onSubmit, profile }) => {
                   </select>
                 </div>
                 <div className="form-group">
-                  <label>Current province/city *</label>
-                  <input
+                  <label>
+                    Current province/city{" "}
+                    <span style={{ color: "#e60023" }}>*</span>
+                  </label>
+                  <select
                     name="Province"
                     value={form.Province}
                     onChange={handleChange}
+                    onBlur={handleBlur}
                     required
-                  />
+                    style={{
+                      border:
+                        errors.Province ||
+                        (touched.Province && !form.Province.trim())
+                          ? "2px solid #e60023"
+                          : form.Province.trim()
+                          ? "2px solid #28a745"
+                          : "1px solid #ddd",
+                      outline:
+                        errors.Province ||
+                        (touched.Province && !form.Province.trim())
+                          ? "1px solid #e60023"
+                          : undefined,
+                      background: "#fff",
+                    }}
+                  >
+                    <option value="">Select province</option>
+                    {provinces.map((province) => (
+                      <option
+                        key={province.code || province.id || province.name}
+                        value={province.name}
+                      >
+                        {province.name}
+                      </option>
+                    ))}
+                  </select>
+                  {(errors.Province ||
+                    (touched.Province && !form.Province.trim())) && (
+                    <div
+                      style={{ color: "#e60023", fontSize: 13, marginTop: 2 }}
+                    >
+                      Please enter your province
+                    </div>
+                  )}
+                </div>
+                <div className="form-group">
+                  <label>
+                    City <span style={{ color: "#e60023" }}>*</span>
+                  </label>
+                  <select
+                    name="City"
+                    value={form.City}
+                    onChange={handleChange}
+                    onBlur={handleBlur}
+                    required
+                    style={{
+                      border:
+                        errors.City || (touched.City && !form.City.trim())
+                          ? "2px solid #e60023"
+                          : form.City.trim()
+                          ? "2px solid #28a745"
+                          : "1px solid #ddd",
+                      outline:
+                        errors.City || (touched.City && !form.City.trim())
+                          ? "1px solid #e60023"
+                          : undefined,
+                      background: "#fff",
+                    }}
+                    disabled={!form.Province || cities.length === 0}
+                  >
+                    <option value="">Select city</option>
+                    {cities.map((city) => (
+                      <option
+                        key={city.code || city.id || city.name}
+                        value={city.name}
+                      >
+                        {city.name}
+                      </option>
+                    ))}
+                  </select>
+                  {(errors.City || (touched.City && !form.City.trim())) && (
+                    <div
+                      style={{ color: "#e60023", fontSize: 13, marginTop: 2 }}
+                    >
+                      Please enter your city
+                    </div>
+                  )}
                 </div>
                 <div className="form-group address">
                   <label>Address (Street, district,...)</label>

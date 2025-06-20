@@ -12,7 +12,7 @@ import Certificate from "./Certificate";
 import Awards from "./Awards";
 import EditProfileModal from "./EditProfileModal";
 import { updateCandidateProfile } from "@/services/useResumeData";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import ForeignLanguageModal from "./ForeignLanguageModal";
 
 const index = () => {
@@ -27,11 +27,17 @@ const index = () => {
     certificate,
     awards,
     loading,
+    refetch,
   } = useResumeData();
   const [editOpen, setEditOpen] = useState(false);
   const [reload, setReload] = useState(0);
   const [saving, setSaving] = useState(false);
   const [openFL, setOpenFL] = useState(false);
+  const [profileState, setProfileState] = useState(profile);
+
+  useEffect(() => {
+    setProfileState(profile);
+  }, [profile]);
 
   if (loading) return <div>Loading...</div>;
   const handleSubmit = (event) => {
@@ -42,13 +48,12 @@ const index = () => {
   const handleEditAboutMe = () => setEditOpen(true);
   const handleCloseEdit = () => setEditOpen(false);
   const handleSaveEdit = async (form) => {
-    console.log("handleSaveEdit called:", form);
     setSaving(true);
     try {
-      await updateCandidateProfile(form);
+      const updated = await updateCandidateProfile(form);
       setEditOpen(false);
-      setReload((r) => r + 1); // trigger reload
-      window.location.reload(); // hoặc refetch lại dữ liệu nếu muốn mượt hơn
+      setProfileState((prev) => ({ ...prev, ...form, ...updated }));
+      if (typeof refetch === "function") await refetch();
     } catch (e) {
       alert("Cập nhật thất bại!");
     }
@@ -59,7 +64,7 @@ const index = () => {
     <div className="default-form">
       <div className="row">
         <div className="form-group col-lg-12 col-md-12">
-          <ProfileCard profile={profile} onEdit={handleEditProfile} />
+          <ProfileCard profile={profileState} onEdit={handleEditProfile} />
         </div>
         <div className="form-group col-lg-12 col-md-12">
           <AboutMe aboutme={aboutme} onEdit={handleEditAboutMe} />
@@ -99,7 +104,7 @@ const index = () => {
         open={editOpen}
         onClose={handleCloseEdit}
         onSubmit={handleSaveEdit}
-        profile={profile}
+        profile={profileState}
       />
       <ForeignLanguageModal
         open={openFL}

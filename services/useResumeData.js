@@ -19,77 +19,77 @@ export default function useResumeData() {
   });
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
+  const fetchAll = async () => {
     const token = getToken();
     if (!token) return;
-
-    async function fetchAll() {
-      setLoading(true);
-      try {
-        const [
-          aboutme,
-          profile,
-          education,
-          experiences,
-          awards,
-          skills,
-          foreignlanguage,
-          project,
-          certificate,
-          award,
-        ] = await Promise.all([
-          fetch(`${API_URL}/AboutMe/me`, {
-            headers: { Authorization: `Bearer ${token}` },
-          }).then((r) => r.json()),
-          fetch(`${API_URL}/CandidateProfile/me`, {
-            headers: { Authorization: `Bearer ${token}` },
-          }).then((r) => r.json()),
-          fetch(`${API_URL}/Education/me`, {
-            headers: { Authorization: `Bearer ${token}` },
-          }).then((r) => r.json()),
-          fetch(`${API_URL}/WorkExperience/me`, {
-            headers: { Authorization: `Bearer ${token}` },
-          }).then((r) => r.json()),
-          fetch(`${API_URL}/Award/me`, {
-            headers: { Authorization: `Bearer ${token}` },
-          }).then((r) => r.json()),
-          fetch(`${API_URL}/Skill/me`, {
-            headers: { Authorization: `Bearer ${token}` },
-          }).then((r) => r.json()),
-          fetch(`${API_URL}/ForeignLanguage/me`, {
-            headers: { Authorization: `Bearer ${token}` },
-          }).then((r) => r.json()),
-          fetch(`${API_URL}/HighlightProject/me`, {
-            headers: { Authorization: `Bearer ${token}` },
-          }).then((r) => r.json()),
-          fetch(`${API_URL}/Certificate/me`, {
-            headers: { Authorization: `Bearer ${token}` },
-          }).then((r) => r.json()),
-          fetch(`${API_URL}/Award/me`, {
-            headers: { Authorization: `Bearer ${token}` },
-          }).then((r) => r.json()),
-        ]);
-        setData({
-          aboutme,
-          profile,
-          education,
-          experiences,
-          awards,
-          skills,
-          foreignlanguage,
-          project,
-          certificate,
-          award,
-        });
-      } catch (e) {
-        alert("Lỗi khi lấy dữ liệu hồ sơ!");
-      }
-      setLoading(false);
+    setLoading(true);
+    try {
+      const [
+        aboutme,
+        profile,
+        education,
+        experiences,
+        awards,
+        skills,
+        foreignlanguage,
+        project,
+        certificate,
+        award,
+      ] = await Promise.all([
+        fetch(`${API_URL}/AboutMe/me`, {
+          headers: { Authorization: `Bearer ${token}` },
+        }).then((r) => r.json()),
+        fetch(`${API_URL}/CandidateProfile/me`, {
+          headers: { Authorization: `Bearer ${token}` },
+        }).then((r) => r.json()),
+        fetch(`${API_URL}/Education/me`, {
+          headers: { Authorization: `Bearer ${token}` },
+        }).then((r) => r.json()),
+        fetch(`${API_URL}/WorkExperience/me`, {
+          headers: { Authorization: `Bearer ${token}` },
+        }).then((r) => r.json()),
+        fetch(`${API_URL}/Award/me`, {
+          headers: { Authorization: `Bearer ${token}` },
+        }).then((r) => r.json()),
+        fetch(`${API_URL}/Skill/me`, {
+          headers: { Authorization: `Bearer ${token}` },
+        }).then((r) => r.json()),
+        fetch(`${API_URL}/ForeignLanguage/me`, {
+          headers: { Authorization: `Bearer ${token}` },
+        }).then((r) => r.json()),
+        fetch(`${API_URL}/HighlightProject/me`, {
+          headers: { Authorization: `Bearer ${token}` },
+        }).then((r) => r.json()),
+        fetch(`${API_URL}/Certificate/me`, {
+          headers: { Authorization: `Bearer ${token}` },
+        }).then((r) => r.json()),
+        fetch(`${API_URL}/Award/me`, {
+          headers: { Authorization: `Bearer ${token}` },
+        }).then((r) => r.json()),
+      ]);
+      setData({
+        aboutme,
+        profile,
+        education,
+        experiences,
+        awards,
+        skills,
+        foreignlanguage,
+        project,
+        certificate,
+        award,
+      });
+    } catch (e) {
+      alert("Lỗi khi lấy dữ liệu hồ sơ!");
     }
+    setLoading(false);
+  };
+
+  useEffect(() => {
     fetchAll();
   }, []);
 
-  return { ...data, loading };
+  return { ...data, loading, refetch: fetchAll };
 }
 
 export async function updateCandidateProfile({

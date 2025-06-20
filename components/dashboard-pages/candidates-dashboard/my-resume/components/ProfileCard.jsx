@@ -45,18 +45,41 @@ const ProfileCard = ({ profile, onEdit }) => {
           }}
         />
         <div>
-          <div style={{ fontWeight: 800, fontSize: 28, marginBottom: 2 }}>
+          <div
+            style={{
+              fontWeight: 800,
+              fontSize: 28,
+              marginBottom: 2,
+              color: !profile.fullName ? "#e60023" : undefined,
+            }}
+          >
             {profile.fullName || "Your name"}
+            {!profile.fullName && (
+              <span
+                style={{ marginLeft: 8, fontSize: 16, color: "#e60023" }}
+                title="Required"
+              >
+                ⚠️
+              </span>
+            )}
           </div>
           <div
             style={{
-              color: "#e60023",
+              color: profile.jobTitle ? "#e60023" : "#e60023",
               fontWeight: 600,
               fontSize: 18,
               marginBottom: 8,
             }}
           >
             {profile.jobTitle || "Update your title"}
+            {!profile.jobTitle && (
+              <span
+                style={{ marginLeft: 8, fontSize: 16, color: "#e60023" }}
+                title="Required"
+              >
+                ⚠️
+              </span>
+            )}
           </div>
           <div
             style={{
@@ -86,9 +109,19 @@ const ProfileCard = ({ profile, onEdit }) => {
                 className="fa fa-birthday-cake"
                 style={{ color: "#ffc107", marginRight: 6 }}
               />
-              {profile.dob
-                ? new Date(profile.dob).toLocaleDateString()
-                : "Your date of birth"}
+              {profile.dob ? (
+                (() => {
+                  const d = new Date(profile.dob);
+                  const day = String(d.getDate()).padStart(2, "0");
+                  const month = String(d.getMonth() + 1).padStart(2, "0");
+                  const year = d.getFullYear();
+                  return `${day}/${month}/${year}`;
+                })()
+              ) : (
+                <span style={{ color: "#e60023" }}>
+                  Your date of birth <span title="Required">⚠️</span>
+                </span>
+              )}
             </div>
             <div>
               <i
@@ -102,21 +135,35 @@ const ProfileCard = ({ profile, onEdit }) => {
                 className="fa fa-map-marker"
                 style={{ color: "#e60023", marginRight: 6 }}
               />
-              {profile.address || "Your current address"}
-            </div>
-            <div>
-              <i
-                className="fa fa-map"
-                style={{ color: "#17a2b8", marginRight: 6 }}
-              />
-              {profile.province || ""} {profile.city || ""}
+              {[profile.address, profile.city, profile.province]
+                .filter(Boolean)
+                .join(", ") || "Province/City"}
             </div>
             <div>
               <i
                 className="fa fa-link"
                 style={{ color: "#343a40", marginRight: 6 }}
               />
-              {profile.personalLink || "Your personal link"}
+              {profile.personalLink ? (
+                <a
+                  href={
+                    profile.personalLink.startsWith("http")
+                      ? profile.personalLink
+                      : `https://${profile.personalLink}`
+                  }
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{
+                    color: "#1967d2",
+                    textDecoration: "none",
+                    wordBreak: "break-all",
+                  }}
+                >
+                  {profile.personalLink}
+                </a>
+              ) : (
+                "Your personal link"
+              )}
             </div>
           </div>
         </div>
