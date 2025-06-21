@@ -394,6 +394,20 @@ export async function createHighlighProject(highlightProject) {
   return await response.json();
 }
 
+export async function deleteHighlighProject(id) {
+  const token = getToken();
+  if (!token) throw new Error("No token found");
+  const response = await fetch(`${API_URL}/HighlightProject/${id}`, {
+    method: "DELETE",
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+  if (!response.ok) throw new Error("Xóa highlight Project thất bại");
+  if (response.status === 204) return;
+  return;
+}
+
 export async function creatCertificate(certificate) {
   const token = getToken();
   if (!token) throw new Error("No token found");

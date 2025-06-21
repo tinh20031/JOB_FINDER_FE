@@ -88,7 +88,7 @@ const index = () => {
           />
         </div>
         <div className="form-group col-lg-12 col-md-12">
-          <HighlightProject project={project} />
+          <HighlightProject project={project} refetch={refetch} />
         </div>
         <div className="form-group col-lg-12 col-md-12">
           <Certificate certificate={certificate} />

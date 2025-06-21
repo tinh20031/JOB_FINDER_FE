@@ -3,12 +3,15 @@ import HighlightProjectModal from "./HighlighProjectModal";
 import {
   updateHighlighProject,
   createHighlighProject,
+  deleteHighlighProject,
 } from "@/services/useResumeData";
+import { toast } from "react-toastify";
 
-const HighlightProject = ({ project = [] }) => {
+const HighlightProject = ({ project = [], refetch }) => {
   const [open, setOpen] = useState(false);
   const [selectedProject, setselectedProject] = useState(null);
-  const [reload, setReload] = useState(0);
+  const [deletingId, setDeletingId] = useState(null);
+  const [lastDeletedProject, setLastDeletedProject] = useState(null);
 
   const handleEdit = (proj) => {
     setselectedProject(proj);
@@ -30,11 +33,70 @@ const HighlightProject = ({ project = [] }) => {
         await createHighlighProject(projectData);
       }
       setOpen(false);
-      setReload((r) => r + 1);
-      window.location.reload();
+      if (typeof refetch === "function") await refetch();
+      toast.success("Project updated successfully!");
     } catch (e) {
-      alert("Cập nhật thất bại!");
+      toast.error("Cập nhật thất bại!");
     }
+  };
+
+  const handleUndo = async (proj) => {
+    try {
+      const { highlightProjectId, highlighProjectId, ...rest } = proj;
+      await createHighlighProject({ ...rest, highlightProjectId: 0 });
+      if (typeof refetch === "function") await refetch();
+      toast.success("Restored successfully");
+      setLastDeletedProject(null);
+    } catch {
+      toast.error("Undo failed!");
+    }
+  };
+
+  const handleDelete = async (id) => {
+    const proj = project.find(
+      (p) => (p.highlightProjectId || p.highlighProjectId) === id
+    );
+    if (!proj) return;
+
+    setDeletingId(id);
+    try {
+      await deleteHighlighProject(id);
+      setLastDeletedProject(proj);
+      if (typeof refetch === "function") {
+        await refetch();
+      }
+      toast.info(
+        <span style={{ display: "flex", alignItems: "center" }}>
+          <span style={{ marginRight: 12, fontWeight: 500 }}>
+            You deleted a Project.
+          </span>
+          <button
+            style={{
+              color: "#fff",
+              background: "#28a745",
+              border: "none",
+              borderRadius: 6,
+              fontWeight: 700,
+              fontSize: 16,
+              padding: "6px 18px",
+              marginLeft: 8,
+              cursor: "pointer",
+              boxShadow: "0 2px 8px #0002",
+            }}
+            onClick={async (e) => {
+              e.preventDefault();
+              await handleUndo(proj);
+            }}
+          >
+            Undo
+          </button>
+        </span>,
+        { autoClose: 10000 }
+      );
+    } catch (e) {
+      toast.error("Xóa thất bại!");
+    }
+    setDeletingId(null);
   };
 
   // Helper to format date MM/YYYY
@@ -82,6 +144,10 @@ const HighlightProject = ({ project = [] }) => {
           <span className="icon flaticon-plus"></span>
         </button>
       </div>
+      <style>{`
+        .text p { margin-bottom: 2px !important; }
+        .text ul, .text ol { margin-bottom: 2px !important; }
+      `}</style>
       <hr style={{ margin: "8px 0 16px 0" }} />
       {list.length === 0 && (
         <div style={{ color: "#888", fontStyle: "italic" }}>
@@ -105,9 +171,11 @@ const HighlightProject = ({ project = [] }) => {
             {formatMonthYear(proj.yearStart)} -{" "}
             {proj.isWorking ? "NOW" : formatMonthYear(proj.yearEnd)}
           </div>
-          <div style={{ margin: "0 0 12px 0", color: "#222", fontSize: 16 }}>
-            {proj.projectDescription}
-          </div>
+          <div
+            className="text"
+            style={{ margin: "0 0 12px 0", color: "#222", fontSize: 16 }}
+            dangerouslySetInnerHTML={{ __html: proj.projectDescription }}
+          ></div>
           {proj.projectLink && (
             <div style={{ marginBottom: 0 }}>
               <a
@@ -157,6 +225,13 @@ const HighlightProject = ({ project = [] }) => {
               <span className="la la-pencil"></span>
             </button>
             <button
+              onClick={() =>
+                handleDelete(proj.highlightProjectId || proj.highlighProjectId)
+              }
+              disabled={
+                deletingId ===
+                (proj.highlightProjectId || proj.highlighProjectId)
+              }
               style={{
                 background: "none",
                 border: "none",
@@ -166,7 +241,6 @@ const HighlightProject = ({ project = [] }) => {
                 padding: 4,
               }}
               title="Delete"
-              // TODO: Thêm logic xóa nếu cần
             >
               <span className="la la-trash"></span>
             </button>

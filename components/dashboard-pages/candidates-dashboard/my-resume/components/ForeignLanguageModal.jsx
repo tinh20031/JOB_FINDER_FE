@@ -25,12 +25,7 @@ const levelOptions = [
   { value: "Fluent", label: "Fluent" },
 ];
 
-const ForeignLanguageModal = ({
-  open,
-  onClose,
-  initialLanguages,
-  refetch,
-}) => {
+const ForeignLanguageModal = ({ open, onClose, initialLanguages, refetch }) => {
   const [languages, setLanguages] = useState([]);
   const [selectedLanguage, setSelectedLanguage] = useState(null);
   const [selectedLevel, setSelectedLevel] = useState(null);
@@ -204,20 +199,15 @@ const ForeignLanguageModal = ({
                   No items selected
                 </div>
               ) : (
-                <div
-                  style={{ display: "flex", flexWrap: "wrap", gap: "10px" }}
-                >
+                <div style={{ display: "flex", flexWrap: "wrap", gap: "10px" }}>
                   {languages.map((l) => (
                     <span
                       key={l.foreignLanguageId}
                       className={`skill-tag ${l.isNew ? "new" : ""}`}
                     >
                       <b>{l.languageName}</b> (
-                      <span style={{ color: "#555" }}>{l.languageLevel}</span>
-                      )
-                      <button
-                        onClick={() => handleRemove(l.foreignLanguageId)}
-                      >
+                      <span style={{ color: "#555" }}>{l.languageLevel}</span>)
+                      <button onClick={() => handleRemove(l.foreignLanguageId)}>
                         ×
                       </button>
                     </span>
