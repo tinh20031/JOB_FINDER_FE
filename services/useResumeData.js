@@ -7,7 +7,7 @@ const getToken = () =>
 export default function useResumeData() {
   const [data, setData] = useState({
     aboutme: [],
-    profile: [],
+    profile: {},
     education: [],
     experiences: [],
     awards: [],
@@ -15,9 +15,36 @@ export default function useResumeData() {
     foreignlanguage: [],
     project: [],
     certificate: [],
-    award: [],
   });
   const [loading, setLoading] = useState(true);
+
+  // Hàm fetch an toàn, nếu lỗi trả về mảng rỗng hoặc object rỗng
+  async function safeFetch(url, defaultValue = []) {
+    try {
+      const res = await fetch(url, {
+        headers: { Authorization: `Bearer ${getToken()}` },
+      });
+      if (!res.ok) return defaultValue;
+      const data = await res.json();
+      return data ?? defaultValue;
+    } catch {
+      return defaultValue;
+    }
+  }
+
+  // Hàm fetch riêng cho profile (trả về object)
+  async function safeFetchProfile(url) {
+    try {
+      const res = await fetch(url, {
+        headers: { Authorization: `Bearer ${getToken()}` },
+      });
+      if (!res.ok) return {};
+      const data = await res.json();
+      return data ?? {};
+    } catch {
+      return {};
+    }
+  }
 
   const fetchAll = async () => {
     const token = getToken();
@@ -34,53 +61,34 @@ export default function useResumeData() {
         foreignlanguage,
         project,
         certificate,
-        award,
       ] = await Promise.all([
-        fetch(`${API_URL}/AboutMe/me`, {
-          headers: { Authorization: `Bearer ${token}` },
-        }).then((r) => r.json()),
-        fetch(`${API_URL}/CandidateProfile/me`, {
-          headers: { Authorization: `Bearer ${token}` },
-        }).then((r) => r.json()),
-        fetch(`${API_URL}/Education/me`, {
-          headers: { Authorization: `Bearer ${token}` },
-        }).then((r) => r.json()),
-        fetch(`${API_URL}/WorkExperience/me`, {
-          headers: { Authorization: `Bearer ${token}` },
-        }).then((r) => r.json()),
-        fetch(`${API_URL}/Award/me`, {
-          headers: { Authorization: `Bearer ${token}` },
-        }).then((r) => r.json()),
-        fetch(`${API_URL}/Skill/me`, {
-          headers: { Authorization: `Bearer ${token}` },
-        }).then((r) => r.json()),
-        fetch(`${API_URL}/ForeignLanguage/me`, {
-          headers: { Authorization: `Bearer ${token}` },
-        }).then((r) => r.json()),
-        fetch(`${API_URL}/HighlightProject/me`, {
-          headers: { Authorization: `Bearer ${token}` },
-        }).then((r) => r.json()),
-        fetch(`${API_URL}/Certificate/me`, {
-          headers: { Authorization: `Bearer ${token}` },
-        }).then((r) => r.json()),
-        fetch(`${API_URL}/Award/me`, {
-          headers: { Authorization: `Bearer ${token}` },
-        }).then((r) => r.json()),
+        safeFetch(`${API_URL}/AboutMe/me`),
+        safeFetchProfile(`${API_URL}/CandidateProfile/me`),
+        safeFetch(`${API_URL}/Education/me`),
+        safeFetch(`${API_URL}/WorkExperience/me`),
+        safeFetch(`${API_URL}/Award/me`),
+        safeFetch(`${API_URL}/Skill/me`),
+        safeFetch(`${API_URL}/ForeignLanguage/me`),
+        safeFetch(`${API_URL}/HighlightProject/me`),
+        safeFetch(`${API_URL}/Certificate/me`),
       ]);
       setData({
-        aboutme,
-        profile,
-        education,
-        experiences,
-        awards,
-        skills,
-        foreignlanguage,
-        project,
-        certificate,
-        award,
+        aboutme: aboutme,
+        profile:
+          profile && typeof profile === "object" && !Array.isArray(profile)
+            ? profile
+            : {},
+        education: Array.isArray(education) ? education : [],
+        experiences: Array.isArray(experiences) ? experiences : [],
+        awards: Array.isArray(awards) ? awards : [],
+        skills: Array.isArray(skills) ? skills : [],
+        foreignlanguage: Array.isArray(foreignlanguage) ? foreignlanguage : [],
+        project: Array.isArray(project) ? project : [],
+        certificate: Array.isArray(certificate) ? certificate : [],
       });
     } catch (e) {
-      alert("Lỗi khi lấy dữ liệu hồ sơ!");
+      // Không alert nữa, chỉ log lỗi
+      console.error("Lỗi khi lấy dữ liệu hồ sơ!", e);
     }
     setLoading(false);
   };
@@ -133,6 +141,24 @@ export async function updateCandidateProfile({
   return await response.json();
 }
 
+export async function createAboutMe(aboutMe) {
+  const token = getToken();
+  if (!token) throw new Error("No token found");
+  const response = await fetch(`${API_URL}/AboutMe/me`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(aboutMe),
+  });
+  if (!response.ok) {
+    console.error("Create About Me failed:", await response.text());
+    throw new Error("Tạo About Me thất bại");
+  }
+  return await response.json();
+}
+
 export async function updateAboutMe(aboutMe) {
   const token = getToken();
   if (!token) throw new Error("No token found");
@@ -151,6 +177,23 @@ export async function updateAboutMe(aboutMe) {
     return;
   }
   return await response.json();
+}
+
+export async function deleteAboutMe(id) {
+  const token = getToken();
+  if (!token) throw new Error("No token found");
+  const response = await fetch(`${API_URL}/AboutMe/${id}`, {
+    method: "DELETE",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      accept: "*/*",
+    },
+  });
+  if (!response.ok) {
+    throw new Error("Xóa about me thất bại");
+  }
+  if (response.status === 204) return true;
+  return true;
 }
 
 export async function createEducation(education) {
@@ -499,4 +542,20 @@ export async function deleteAward(id) {
   if (!response.ok) throw new Error("Xóa Award thất bại");
   if (response.status === 204) return;
   return;
+}
+
+export async function fetchProfileStrength(token) {
+  const response = await fetch(
+    `${API_URL}/CandidateProfile/me/profile-strength`,
+    {
+      headers: {
+        Authorization: `Bearer ${token || getToken()}`,
+        Accept: "*/*",
+      },
+    }
+  );
+  if (!response.ok) {
+    throw new Error("Không lấy được profile strength");
+  }
+  return await response.json();
 }

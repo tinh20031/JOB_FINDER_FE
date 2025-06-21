@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import WorkExperienceModal from "./WorkExperienceModal";
 import {
   updateWorkExperience,
@@ -7,12 +7,22 @@ import {
 } from "@/services/useResumeData";
 import { toast } from "react-toastify";
 
-const Experiences = ({ workExperience = [], refetch }) => {
+const Experiences = ({
+  workExperience = [],
+  refetch,
+  openExternal,
+  setOpenExternal,
+}) => {
   const [open, setOpen] = useState(false);
   const [selectedWork, setSelectedWork] = useState(null);
   const [deletingId, setDeletingId] = useState(null);
   const [lastDeletedWorkExperience, setLastDeletedWorkExperience] =
     useState(null);
+
+  // Sync with external open prop
+  useEffect(() => {
+    if (openExternal) setOpen(true);
+  }, [openExternal]);
 
   const handleEdit = (work) => {
     setSelectedWork(work);
@@ -22,7 +32,10 @@ const Experiences = ({ workExperience = [], refetch }) => {
     setSelectedWork(null);
     setOpen(true);
   };
-  const handleClose = () => setOpen(false);
+  const handleClose = () => {
+    setOpen(false);
+    if (setOpenExternal) setOpenExternal(false);
+  };
   const handleSave = async (workData) => {
     try {
       if (!workData.workExperienceId || workData.workExperienceId === 0) {
@@ -31,6 +44,7 @@ const Experiences = ({ workExperience = [], refetch }) => {
         await updateWorkExperience(workData);
       }
       setOpen(false);
+      if (setOpenExternal) setOpenExternal(false);
       if (typeof refetch === "function") {
         await refetch();
       }

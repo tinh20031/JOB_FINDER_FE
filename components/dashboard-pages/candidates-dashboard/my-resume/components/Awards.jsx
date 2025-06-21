@@ -1,13 +1,18 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import AwardModal from "./AwardModal";
 import { updateAward, creatAward, deleteAward } from "@/services/useResumeData";
 import { toast } from "react-toastify";
 
-const Awards = ({ awards = [], refetch }) => {
+const Awards = ({ awards = [], refetch, openExternal, setOpenExternal }) => {
   const [open, setOpen] = useState(false);
   const [selectAwards, setselectedAwards] = useState(null);
   const [deletingId, setDeletingId] = useState(null);
   const [lastDeletedAward, setLastDeletedAward] = useState(null);
+
+  // Sync with external open prop
+  useEffect(() => {
+    if (openExternal) setOpen(true);
+  }, [openExternal]);
 
   const handleEdit = (item) => {
     setselectedAwards(item);
@@ -19,7 +24,10 @@ const Awards = ({ awards = [], refetch }) => {
     setOpen(true);
   };
 
-  const handleClose = () => setOpen(false);
+  const handleClose = () => {
+    setOpen(false);
+    if (setOpenExternal) setOpenExternal(false);
+  };
 
   const handleSave = async (awardData) => {
     try {
@@ -29,6 +37,7 @@ const Awards = ({ awards = [], refetch }) => {
         await creatAward(awardData);
       }
       setOpen(false);
+      if (setOpenExternal) setOpenExternal(false);
       if (typeof refetch === "function") await refetch();
       toast.success("Award updated successfully!");
     } catch (e) {

@@ -1,15 +1,43 @@
 import React, { useState } from "react";
 import AboutMeModal from "./AboutMeModal";
-import { updateAboutMe } from "@/services/useResumeData";
+import {
+  updateAboutMe,
+  createAboutMe,
+  deleteAboutMe,
+} from "@/services/useResumeData";
 import { toast } from "react-toastify";
 
-const AboutMe = ({ aboutme, refetch }) => {
+const AboutMe = ({ aboutme, refetch, openExternal, setOpenExternal }) => {
   const [open, setOpen] = useState(false);
 
+  // Sync with external open prop
+  React.useEffect(() => {
+    if (openExternal) setOpen(true);
+  }, [openExternal]);
+
   const handleEdit = () => setOpen(true);
-  const handleClose = () => setOpen(false);
+  const handleClose = () => {
+    setOpen(false);
+    if (setOpenExternal) setOpenExternal(false);
+  };
+
   const handleSave = async (value) => {
+    // Loại bỏ thẻ HTML để kiểm tra rỗng thực sự
+    const plainText = value.replace(/<[^>]+>/g, "").trim();
     try {
+      if (!plainText) {
+        // Nếu không có nội dung, gọi API xóa nếu có aboutMeId
+        if (aboutme?.aboutMeId) {
+          await deleteAboutMe(aboutme.aboutMeId);
+          toast.success("Đã xóa About Me");
+        }
+        setOpen(false);
+        if (setOpenExternal) setOpenExternal(false);
+        if (typeof refetch === "function") {
+          await refetch();
+        }
+        return;
+      }
       const aboutMeData = {
         aboutMeId: aboutme?.aboutMeId || 0,
         candidateProfileId: aboutme?.candidateProfileId || 0,
@@ -17,8 +45,13 @@ const AboutMe = ({ aboutme, refetch }) => {
         createdAt: aboutme?.createdAt || new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       };
-      await updateAboutMe(aboutMeData);
+      if (!aboutme?.aboutMeId) {
+        await createAboutMe(aboutMeData);
+      } else {
+        await updateAboutMe(aboutMeData);
+      }
       setOpen(false);
+      if (setOpenExternal) setOpenExternal(false);
       if (typeof refetch === "function") {
         await refetch();
       }

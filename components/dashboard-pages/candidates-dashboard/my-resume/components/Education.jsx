@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import EducationModal from "./EducationModal";
 import {
   updateEducation,
@@ -7,11 +7,21 @@ import {
 } from "@/services/useResumeData";
 import { toast } from "react-toastify";
 
-const Education = ({ education = [], refetch }) => {
+const Education = ({
+  education = [],
+  refetch,
+  openExternal,
+  setOpenExternal,
+}) => {
   const [open, setOpen] = useState(false);
   const [selectedEdu, setSelectedEdu] = useState(null);
   const [deletingId, setDeletingId] = useState(null);
   const [lastDeletedEducation, setLastDeletedEducation] = useState(null);
+
+  // Sync with external open prop
+  useEffect(() => {
+    if (openExternal) setOpen(true);
+  }, [openExternal]);
 
   const handleEdit = (edu) => {
     setSelectedEdu(edu);
@@ -21,7 +31,11 @@ const Education = ({ education = [], refetch }) => {
     setSelectedEdu(null);
     setOpen(true);
   };
-  const handleClose = () => setOpen(false);
+  const handleClose = () => {
+    setOpen(false);
+    if (setOpenExternal) setOpenExternal(false);
+  };
+
   const handleSave = async (eduData) => {
     try {
       if (!eduData.educationId || eduData.educationId === 0) {
@@ -30,6 +44,7 @@ const Education = ({ education = [], refetch }) => {
         await updateEducation(eduData);
       }
       setOpen(false);
+      if (setOpenExternal) setOpenExternal(false);
       if (typeof refetch === "function") {
         await refetch();
       }

@@ -4,7 +4,13 @@ import SoftSkillsModal from "./SoftSkillsModal";
 import { deleteSkill, createSkill } from "@/services/useResumeData";
 import { toast } from "react-toastify";
 
-const Skills = ({ skills: initialSkills = [], refetch }) => {
+const Skills = ({
+  skills: initialSkills = [],
+  refetch,
+  openExternal,
+  setOpenExternal,
+  forceCoreSkillModal,
+}) => {
   const [showAddGroup, setShowAddGroup] = useState(false);
   const [modalType, setModalType] = useState(null); // 'core' or 'soft'
   const [selectedGroup, setSelectedGroup] = useState(null);
@@ -12,6 +18,17 @@ const Skills = ({ skills: initialSkills = [], refetch }) => {
   const [showSoftSkillTooltip, setShowSoftSkillTooltip] = useState(false);
   const [lastDeletedGroup, setLastDeletedGroup] = useState(null);
   const [deletingId, setDeletingId] = useState(null);
+
+  // Sync with external open prop
+  React.useEffect(() => {
+    if (openExternal) {
+      if (forceCoreSkillModal) {
+        setModalType("core");
+        setSelectedGroup(null);
+      }
+      setModalOpen(true);
+    }
+  }, [openExternal, forceCoreSkillModal]);
 
   // Group by unique group (groupName + min skillId)
   const groups = useMemo(() => {
@@ -83,6 +100,7 @@ const Skills = ({ skills: initialSkills = [], refetch }) => {
     setModalType(null);
     setSelectedGroup(null);
     setModalOpen(false);
+    if (setOpenExternal) setOpenExternal(false);
     if (typeof refetch === "function") {
       refetch();
     }

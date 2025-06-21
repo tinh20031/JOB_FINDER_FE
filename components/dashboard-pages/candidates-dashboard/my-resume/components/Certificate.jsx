@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import CertificateModal from "./CertificateModal";
 import {
   updateCertificate,
@@ -7,11 +7,21 @@ import {
 } from "@/services/useResumeData";
 import { toast } from "react-toastify";
 
-const Certificate = ({ certificate = [], refetch }) => {
+const Certificate = ({
+  certificate = [],
+  refetch,
+  openExternal,
+  setOpenExternal,
+}) => {
   const [open, setOpen] = useState(false);
   const [selectCertificate, setselectedCertificate] = useState(null);
   const [deletingId, setDeletingId] = useState(null);
   const [lastDeletedCertificate, setLastDeletedCertificate] = useState(null);
+
+  // Sync with external open prop
+  useEffect(() => {
+    if (openExternal) setOpen(true);
+  }, [openExternal]);
 
   const handleEdit = (cer) => {
     setselectedCertificate(cer);
@@ -21,7 +31,10 @@ const Certificate = ({ certificate = [], refetch }) => {
     setselectedCertificate(null);
     setOpen(true);
   };
-  const handleClose = () => setOpen(false);
+  const handleClose = () => {
+    setOpen(false);
+    if (setOpenExternal) setOpenExternal(false);
+  };
   const handleSave = async (cerData) => {
     try {
       if (cerData.certificateId && cerData.certificateId > 0) {
@@ -30,6 +43,7 @@ const Certificate = ({ certificate = [], refetch }) => {
         await creatCertificate(cerData);
       }
       setOpen(false);
+      if (setOpenExternal) setOpenExternal(false);
       if (typeof refetch === "function") await refetch();
       toast.success("Certificate updated successfully!");
     } catch (e) {

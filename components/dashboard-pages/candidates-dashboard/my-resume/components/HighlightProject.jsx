@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import HighlightProjectModal from "./HighlighProjectModal";
 import {
   updateHighlighProject,
@@ -7,11 +7,21 @@ import {
 } from "@/services/useResumeData";
 import { toast } from "react-toastify";
 
-const HighlightProject = ({ project = [], refetch }) => {
+const HighlightProject = ({
+  project = [],
+  refetch,
+  openExternal,
+  setOpenExternal,
+}) => {
   const [open, setOpen] = useState(false);
   const [selectedProject, setselectedProject] = useState(null);
   const [deletingId, setDeletingId] = useState(null);
   const [lastDeletedProject, setLastDeletedProject] = useState(null);
+
+  // Sync with external open prop
+  useEffect(() => {
+    if (openExternal) setOpen(true);
+  }, [openExternal]);
 
   const handleEdit = (proj) => {
     setselectedProject(proj);
@@ -21,7 +31,10 @@ const HighlightProject = ({ project = [], refetch }) => {
     setselectedProject(null);
     setOpen(true);
   };
-  const handleClose = () => setOpen(false);
+  const handleClose = () => {
+    setOpen(false);
+    if (setOpenExternal) setOpenExternal(false);
+  };
   const handleSave = async (projectData) => {
     try {
       if (
@@ -33,6 +46,7 @@ const HighlightProject = ({ project = [], refetch }) => {
         await createHighlighProject(projectData);
       }
       setOpen(false);
+      if (setOpenExternal) setOpenExternal(false);
       if (typeof refetch === "function") await refetch();
       toast.success("Project updated successfully!");
     } catch (e) {
