@@ -349,7 +349,7 @@ export async function updateForeignLanguage(id, language) {
 export async function deleteForeignLanguage(id) {
   const token = getToken();
   if (!token) throw new Error("No token found");
-  const response = await fetch(`${API_URL}/ForeignLanguage/me/${id}`, {
+  const response = await fetch(`${API_URL}/ForeignLanguage/${id}`, {
     method: "DELETE",
     headers: {
       Authorization: `Bearer ${token}`,
@@ -485,4 +485,18 @@ export async function updateAward(award) {
   if (!response.ok) throw new Error("Cập nhật Award thất bại");
   if (response.status === 204) return;
   return await response.json();
+}
+
+export async function deleteAward(id) {
+  const token = getToken();
+  if (!token) throw new Error("No token found");
+  const response = await fetch(`${API_URL}/Award/${id}`, {
+    method: "DELETE",
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+  if (!response.ok) throw new Error("Xóa Award thất bại");
+  if (response.status === 204) return;
+  return;
 }
