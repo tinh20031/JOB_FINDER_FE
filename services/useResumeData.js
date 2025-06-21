@@ -442,6 +442,20 @@ export async function updateCertificate(certificate) {
   return await response.json();
 }
 
+export async function deleteCertificate(id) {
+  const token = getToken();
+  if (!token) throw new Error("No token found");
+  const response = await fetch(`${API_URL}/Certificate/${id}`, {
+    method: "DELETE",
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+  if (!response.ok) throw new Error("Xóa Certificate thất bại");
+  if (response.status === 204) return;
+  return;
+}
+
 export async function creatAward(award) {
   const token = getToken();
   if (!token) throw new Error("No token found");

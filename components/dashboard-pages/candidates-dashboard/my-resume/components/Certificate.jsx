@@ -1,11 +1,17 @@
 import React, { useState } from "react";
 import CertificateModal from "./CertificateModal";
-import { updateCertificate, creatCertificate } from "@/services/useResumeData";
+import {
+  updateCertificate,
+  creatCertificate,
+  deleteCertificate,
+} from "@/services/useResumeData";
+import { toast } from "react-toastify";
 
-const Certificate = ({ certificate = [] }) => {
+const Certificate = ({ certificate = [], refetch }) => {
   const [open, setOpen] = useState(false);
   const [selectCertificate, setselectedCertificate] = useState(null);
-  const [reload, setReload] = useState(0);
+  const [deletingId, setDeletingId] = useState(null);
+  const [lastDeletedCertificate, setLastDeletedCertificate] = useState(null);
 
   const handleEdit = (cer) => {
     setselectedCertificate(cer);
@@ -24,11 +30,68 @@ const Certificate = ({ certificate = [] }) => {
         await creatCertificate(cerData);
       }
       setOpen(false);
-      setReload((r) => r + 1);
-      window.location.reload();
+      if (typeof refetch === "function") await refetch();
+      toast.success("Certificate updated successfully!");
     } catch (e) {
-      alert("Cập nhật thất bại!");
+      toast.error("Cập nhật thất bại!");
     }
+  };
+
+  const handleUndo = async (cer) => {
+    try {
+      const { certificateId, ...rest } = cer;
+      await creatCertificate({ ...rest, certificateId: 0 });
+      if (typeof refetch === "function") await refetch();
+      toast.success("Restored successfully");
+      setLastDeletedCertificate(null);
+    } catch {
+      toast.error("Undo failed!");
+    }
+  };
+
+  const handleDelete = async (id) => {
+    const cer = certificate.find((c) => c.certificateId === id);
+    if (!cer) return;
+
+    setDeletingId(id);
+    try {
+      await deleteCertificate(id);
+      setLastDeletedCertificate(cer);
+      if (typeof refetch === "function") {
+        await refetch();
+      }
+      toast.info(
+        <span style={{ display: "flex", alignItems: "center" }}>
+          <span style={{ marginRight: 12, fontWeight: 500 }}>
+            You deleted a Certificate.
+          </span>
+          <button
+            style={{
+              color: "#fff",
+              background: "#28a745",
+              border: "none",
+              borderRadius: 6,
+              fontWeight: 700,
+              fontSize: 16,
+              padding: "6px 18px",
+              marginLeft: 8,
+              cursor: "pointer",
+              boxShadow: "0 2px 8px #0002",
+            }}
+            onClick={async (e) => {
+              e.preventDefault();
+              await handleUndo(cer);
+            }}
+          >
+            Undo
+          </button>
+        </span>,
+        { autoClose: 10000 }
+      );
+    } catch (e) {
+      toast.error("Xóa thất bại!");
+    }
+    setDeletingId(null);
   };
 
   // Helper to format date MM/YYYY
@@ -76,6 +139,10 @@ const Certificate = ({ certificate = [] }) => {
           <span className="icon flaticon-plus"></span>
         </button>
       </div>
+      <style>{`
+        .text p { margin-bottom: 2px !important; }
+        .text ul, .text ol { margin-bottom: 2px !important; }
+      `}</style>
       <hr style={{ margin: "8px 0 16px 0" }} />
       {list.length === 0 && (
         <div style={{ color: "#888", fontStyle: "italic" }}>
@@ -98,9 +165,11 @@ const Certificate = ({ certificate = [] }) => {
           <div style={{ fontWeight: 700, fontSize: 20, marginBottom: 4 }}>
             {cer.organization}
           </div>
-          <div style={{ margin: "0 0 12px 0", color: "#222", fontSize: 16 }}>
-            {cer.certificateDescription}
-          </div>
+          <div
+            className="text"
+            style={{ margin: "0 0 12px 0", color: "#222", fontSize: 16 }}
+            dangerouslySetInnerHTML={{ __html: cer.certificateDescription }}
+          ></div>
           {cer.certificateUrl && (
             <div style={{ marginBottom: 0 }}>
               <a
@@ -151,6 +220,8 @@ const Certificate = ({ certificate = [] }) => {
               <span className="la la-pencil"></span>
             </button>
             <button
+              onClick={() => handleDelete(cer.certificateId)}
+              disabled={deletingId === cer.certificateId}
               style={{
                 background: "none",
                 border: "none",
@@ -160,7 +231,6 @@ const Certificate = ({ certificate = [] }) => {
                 padding: 4,
               }}
               title="Delete"
-              // TODO: Thêm logic xóa nếu cần
             >
               <span className="la la-trash"></span>
             </button>
