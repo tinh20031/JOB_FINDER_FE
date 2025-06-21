@@ -1,11 +1,18 @@
 import React, { useState } from "react";
 import WorkExperienceModal from "./WorkExperienceModal";
-import { updateWorkExperience } from "@/services/useResumeData";
+import {
+  updateWorkExperience,
+  createWorkExperience,
+  deleteWorkExperience,
+} from "@/services/useResumeData";
+import { toast } from "react-toastify";
 
-const Experiences = ({ experiences = [] }) => {
+const Experiences = ({ workExperience = [], refetch }) => {
   const [open, setOpen] = useState(false);
   const [selectedWork, setSelectedWork] = useState(null);
-  const [reload, setReload] = useState(0);
+  const [deletingId, setDeletingId] = useState(null);
+  const [lastDeletedWorkExperience, setLastDeletedWorkExperience] =
+    useState(null);
 
   const handleEdit = (work) => {
     setSelectedWork(work);
@@ -18,13 +25,80 @@ const Experiences = ({ experiences = [] }) => {
   const handleClose = () => setOpen(false);
   const handleSave = async (workData) => {
     try {
-      await updateWorkExperience(workData);
+      if (!workData.workExperienceId || workData.workExperienceId === 0) {
+        await createWorkExperience(workData);
+      } else {
+        await updateWorkExperience(workData);
+      }
       setOpen(false);
-      setReload((r) => r + 1);
-      window.location.reload();
+      if (typeof refetch === "function") {
+        await refetch();
+      }
+      toast.success("Updated successfully");
     } catch (e) {
-      alert("Cập nhật thất bại!");
+      toast.error("Cập nhật thất bại!");
     }
+  };
+
+  const handleUndo = async (work) => {
+    try {
+      // Loại bỏ các trường không hợp lệ khi tạo mới
+      const { workExperienceId, createdAt, updatedAt, ...rest } = work;
+      await createWorkExperience(rest);
+      if (typeof refetch === "function") await refetch();
+      toast.success("Restored successfully");
+      setLastDeletedWorkExperience(null);
+    } catch {
+      toast.error("Undo failed!");
+    }
+  };
+
+  const handleDelete = async (id) => {
+    const work = workExperience.find((e) => e.workExperienceId === id);
+    // if (!window.confirm("Are you sure you want to delete this education?"))
+    // return;
+    setDeletingId(id);
+    try {
+      await deleteWorkExperience(id);
+      setLastDeletedWorkExperience(work); // Lưu lại education vừa xóa
+      if (typeof refetch === "function") {
+        await refetch();
+      }
+      toast.info(
+        <span style={{ display: "flex", alignItems: "center" }}>
+          <span style={{ marginRight: 12, fontWeight: 500 }}>
+            You deleted an Work Experience.
+          </span>
+          <button
+            style={{
+              color: "#fff",
+              background: "#28a745",
+              border: "none",
+              borderRadius: 6,
+              fontWeight: 700,
+              fontSize: 16,
+              padding: "6px 18px",
+              marginLeft: 8,
+              cursor: "pointer",
+              boxShadow: "0 2px 8px #0002",
+              display: "flex",
+              alignItems: "center",
+              gap: 6,
+            }}
+            onClick={async (e) => {
+              e.preventDefault();
+              await handleUndo(work);
+            }}
+          >
+            <span style={{ fontSize: 18, marginRight: 4 }}>⟲</span> Undo
+          </button>
+        </span>,
+        { autoClose: 10000 }
+      );
+    } catch (e) {
+      toast.error("Xóa thất bại!");
+    }
+    setDeletingId(null);
   };
 
   // Helper to format date MM/YYYY
@@ -48,6 +122,10 @@ const Experiences = ({ experiences = [] }) => {
         minHeight: 100,
       }}
     >
+      <style>{`
+        .text p { margin-bottom: 2px !important; }
+        .text ul, .text ol { margin-bottom: 2px !important; }
+      `}</style>
       {/* Nút add nổi bật góc phải */}
       <button
         onClick={handleAdd}
@@ -69,82 +147,98 @@ const Experiences = ({ experiences = [] }) => {
       <div style={{ fontWeight: 800, fontSize: 24, marginBottom: 12 }}>
         Work Experience
       </div>
-      {experiences.length === 0 && (
+
+      {workExperience.length === 0 && (
         <div style={{ color: "#aaa", fontStyle: "italic", fontSize: 18 }}>
-          No Work Experience info.
+          No work experiences info.
         </div>
       )}
-      {experiences.map((work, idx) => (
-        <div
-          key={work.workExperienceId}
-          style={{
-            background: "#f8f9fa",
-            borderRadius: 14,
-            padding: 20,
-            marginBottom: 18,
-            boxShadow: "0 1px 4px #0001",
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "flex-start",
-          }}
-        >
-          <div style={{ flex: 1 }}>
-            <div style={{ fontWeight: 700, fontSize: 18, marginBottom: 4 }}>
-              {work.jobTitle}
-            </div>
-            <div style={{ color: "#222", marginBottom: 2 }}>
-              {work.companyName}
-            </div>
-            <div style={{ color: "#888", marginBottom: 2 }}>
-              {formatMonthYear(work.yearStart)} -{" "}
-              {work.isWorking ? "NOW" : formatMonthYear(work.yearEnd)}
-            </div>
-            <div className="text" style={{ marginTop: 6 }}>
-              {work.workDescription}
-            </div>
-            {work.proJects && (
-              <div style={{ marginTop: 6 }}>
-                <div style={{ fontWeight: 700 }}>Project:</div>
-                <div className="text">{work.proJects}</div>
-              </div>
-            )}
-          </div>
+      {workExperience.map((work, idx) => {
+        return (
           <div
+            key={work.workExperienceId}
             style={{
-              marginLeft: 16,
+              background: "#f8f9fa",
+              borderRadius: 14,
+              padding: 20,
+              marginBottom: 18,
+              boxShadow: "0 1px 4px #0001",
               display: "flex",
-              flexDirection: "column",
-              gap: 8,
+              justifyContent: "space-between",
+              alignItems: "flex-start",
             }}
           >
-            <button
-              onClick={() => handleEdit(work)}
+            <div style={{ flex: 1 }}>
+              <div style={{ fontWeight: 700, fontSize: 18, marginBottom: 4 }}>
+                {work.jobTitle}
+              </div>
+              <div style={{ fontWeight: 700, fontSize: 18, marginBottom: 4 }}>
+                {work.companyName}
+              </div>
+              <div style={{ color: "#888", marginBottom: 2 }}>
+                {formatMonthYear(work.yearStart)} -{" "}
+                {work.isWorking ? "NOW" : formatMonthYear(work.yearEnd)}
+              </div>
+              <div
+                className="text"
+                style={{ marginTop: 6 }}
+                dangerouslySetInnerHTML={{ __html: work.workDescription }}
+              ></div>
+              {work.proJects && (
+                <div style={{ marginTop: 10 }}>
+                  <div style={{ fontWeight: 700, marginBottom: 2 }}>
+                    Project
+                  </div>
+                  <div
+                    className="text"
+                    dangerouslySetInnerHTML={{ __html: work.proJects }}
+                  ></div>
+                </div>
+              )}
+            </div>
+            <div
               style={{
-                background: "none",
-                border: "none",
-                cursor: "pointer",
-                color: "#e60023",
-                fontSize: 20,
+                marginLeft: 16,
+                display: "flex",
+                flexDirection: "column",
+                gap: 8,
               }}
-              title="Edit"
             >
-              <span className="la la-pencil"></span>
-            </button>
-            <button
-              style={{
-                background: "none",
-                border: "none",
-                cursor: "pointer",
-                color: "#888",
-                fontSize: 20,
-              }}
-              title="Delete"
-            >
-              <span className="la la-trash"></span>
-            </button>
+              <button
+                onClick={() => handleEdit(work)}
+                style={{
+                  background: "none",
+                  border: "none",
+                  cursor: "pointer",
+                  color: "#e60023",
+                  fontSize: 20,
+                }}
+                title="Edit"
+              >
+                <span className="la la-pencil"></span>
+              </button>
+              <button
+                onClick={() => handleDelete(work.workExperienceId)}
+                disabled={deletingId === work.workExperienceId}
+                style={{
+                  background: "none",
+                  border: "none",
+                  cursor:
+                    deletingId === work.workExperienceId
+                      ? "not-allowed"
+                      : "pointer",
+                  color: deletingId === work.workExperienceId ? "#ccc" : "#888",
+                  fontSize: 20,
+                  opacity: deletingId === work.workExperienceId ? 0.6 : 1,
+                }}
+                title="Delete"
+              >
+                <span className="la la-trash"></span>
+              </button>
+            </div>
           </div>
-        </div>
-      ))}
+        );
+      })}
       <WorkExperienceModal
         open={open}
         onClose={handleClose}

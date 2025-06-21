@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from "react";
+import ReactQuill from "react-quill";
+import "react-quill/dist/quill.snow.css";
 
 const months = Array.from({ length: 12 }, (_, i) =>
   (i + 1).toString().padStart(2, "0")
@@ -29,6 +31,29 @@ const WorkExperienceModal = ({ open, onClose, onSubmit, workExperience }) => {
     createdAt: workExperience?.createdAt || new Date().toISOString(),
     updatedAt: new Date().toISOString(),
   });
+  const [show, setShow] = useState(false);
+  const [errors, setErrors] = useState({});
+  const [touched, setTouched] = useState({});
+
+  const quillModules = {
+    toolbar: [
+      ["bold", "italic", "underline"],
+      [{ list: "ordered" }, { list: "bullet" }],
+    ],
+  };
+
+  const projectTemplate = "<p><strong>Project name | 01/2025 - 05/2025</strong></p><p><strong>Description:</strong> Write a short description of your project</p><p><strong>Role:</strong> Your role in this project</p><p><strong>Responsibilities:</strong></p><ul><li>First responsibility</li><li>Second responsibility</li></ul><p><strong>Tech stack:</strong> List technologies used</p><p><strong>Team size:</strong> x members</p>";
+
+  const handleInsertTemplate = () => {
+    const currentContent = form.proJects;
+    const isEditorEmpty = !currentContent || currentContent.trim() === "" || currentContent === "<p><br></p>";
+
+    const newContent = isEditorEmpty
+        ? projectTemplate
+        : `${currentContent}<p><br></p>${projectTemplate}`;
+    
+    handleQuillChange("proJects", newContent);
+  };
 
   useEffect(() => {
     setForm({
@@ -54,9 +79,16 @@ const WorkExperienceModal = ({ open, onClose, onSubmit, workExperience }) => {
       createdAt: workExperience?.createdAt || new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     });
+    setErrors({});
+    setTouched({});
+    if (open) {
+      setTimeout(() => setShow(true), 10);
+    } else {
+      setShow(false);
+    }
   }, [workExperience, open]);
 
-  if (!open) return null;
+  if (!open && !show) return null;
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -75,19 +107,80 @@ const WorkExperienceModal = ({ open, onClose, onSubmit, workExperience }) => {
     }
   };
 
+  const handleQuillChange = (name, value) => {
+    setForm((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleBlur = (e) => {
+    const { name } = e.target;
+    setTouched((prev) => ({ ...prev, [name]: true }));
+  };
+
+  const validate = () => {
+    const newErrors = {};
+    let endBeforeStart = false;
+    if (!form.jobTitle.trim()) newErrors.jobTitle = "Job Title is required.";
+    if (!form.companyName.trim())
+      newErrors.companyName = "Company Name is required.";
+    if (!form.monthStart) newErrors.monthStart = "Month is required.";
+    if (!form.yearStart) newErrors.yearStart = "Year is required.";
+    if (!form.isWorking) {
+      if (!form.monthEnd) newErrors.monthEnd = "Month is required.";
+      if (!form.yearEnd) newErrors.yearEnd = "Year is required.";
+      // Validate end > start
+      if (form.monthStart && form.yearStart && form.monthEnd && form.yearEnd) {
+        const start = new Date(
+          `${form.yearStart}-${form.monthStart}-01T00:00:00.000Z`
+        );
+        const end = new Date(
+          `${form.yearEnd}-${form.monthEnd}-01T00:00:00.000Z`
+        );
+        if (end <= start) {
+          endBeforeStart = true;
+        }
+      }
+    }
+    if (endBeforeStart) {
+      newErrors.dateRange =
+        "Please enter an end date bigger than the start date.";
+    }
+    return newErrors;
+  };
+
   const handleSubmit = (e) => {
     e.preventDefault();
-    // Chuyển tháng/năm về ISO string cho API
-    const toISO = (y, m) => (y && m ? `${y}-${m}-01T00:00:00.000Z` : null);
-    const data = {
-      ...form,
-      monthStart: toISO(form.yearStart, form.monthStart),
-      yearStart: toISO(form.yearStart, form.monthStart),
-      monthEnd: form.isWorking ? null : toISO(form.yearEnd, form.monthEnd),
-      yearEnd: form.isWorking ? null : toISO(form.yearEnd, form.monthEnd),
-      updatedAt: new Date().toISOString(),
-    };
-    onSubmit(data);
+    const validationErrors = validate();
+    setErrors(validationErrors);
+    setTouched({
+      jobTitle: true,
+      companyName: true,
+      monthStart: true,
+      yearStart: true,
+      monthEnd: true,
+      yearEnd: true,
+    });
+    if (Object.keys(validationErrors).length > 0) return;
+    setShow(false);
+    setTimeout(() => {
+      // Chuyển tháng/năm về ISO string cho API
+      const toISO = (y, m) => (y && m ? `${y}-${m}-01T00:00:00.000Z` : null);
+      const data = {
+        ...form,
+        monthStart: toISO(form.yearStart, form.monthStart),
+        yearStart: toISO(form.yearStart, form.monthStart),
+        monthEnd: form.isWorking ? null : toISO(form.yearEnd, form.monthEnd),
+        yearEnd: form.isWorking ? null : toISO(form.yearEnd, form.monthEnd),
+        updatedAt: new Date().toISOString(),
+      };
+      onSubmit(data);
+    }, 300); // match animation
+  };
+
+  const handleClose = () => {
+    setShow(false);
+    setTimeout(() => {
+      onClose();
+    }, 300);
   };
 
   return (
@@ -97,41 +190,78 @@ const WorkExperienceModal = ({ open, onClose, onSubmit, workExperience }) => {
           position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
           background: rgba(0,0,0,0.3); z-index: 1000;
           display: flex; align-items: center; justify-content: center;
+          transition: opacity 0.3s;
+          opacity: ${show ? 1 : 0};
+          pointer-events: ${show ? "auto" : "none"};
         }
         .work-modal-content {
           background: #fff; border-radius: 12px; min-width: 320px;
-          width: 95vw; max-width: 900px; min-height: 40vh; max-height: 90vh;
+          width: 95vw; max-width: 700px; min-height: 40vh; max-height: 90vh;
           display: flex; flex-direction: column; box-shadow: 0 8px 32px rgba(0,0,0,0.12);
-          padding: 32px 24px 0 24px; position: relative; overflow-y: auto;
-          padding-bottom: 20px;
+          padding: 32px 32px 0 32px; position: relative; overflow-y: auto;
+          padding-bottom: 30px;
+          transform: scale(${show ? 1 : 0.95});
+          transition: all 0.3s cubic-bezier(.4,0,.2,1);
         }
         .work-modal-title { font-size: 2rem; font-weight: 700; margin-bottom: 24px; }
         .work-modal-form { flex: 1 1 auto; display: flex; flex-direction: column; min-height: 0; }
-        .work-modal-row { display: flex; gap: 20px; margin-bottom: 20px; }
-        .work-modal-row > div { flex: 1; }
-        .work-modal-checkbox { display: flex; align-items: center; gap: 8px; margin-bottom: 20px; }
+        .work-modal-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px 32px; }
+        .form-group { margin-bottom: 24px; }
+        @media (max-width: 700px) { .work-modal-grid { grid-template-columns: 1fr; gap: 18px; } }
+        .work-label { font-size: 15px; font-weight: 600; color: #222; margin-bottom: 6px; display: flex; align-items: center; }
+        .work-required { color: #e60023; margin-left: 2px; }
+        .work-input, .work-select {
+          width: 100%; border-radius: 8px; border: 1.5px solid #ddd; padding: 12px 14px; font-size: 16px;
+          margin-bottom: 0; background: #fff; transition: border 0.2s;
+        }
+        .work-input:focus, .work-select:focus { border: 1.5px solid #1967d2; outline: none; }
+        .work-input.error, .work-select.error { border: 2px solid #e60023 !important; }
+        .work-input.valid, .work-select.valid { border: 2px solid #28a745 !important; }
+        .work-error { color: #e60023; font-size: 13px; margin-top: 2px; min-height: 18px; }
+        .work-checkbox-row { display: flex; align-items: center; gap: 8px; margin: 16px 0 8px 0; }
+        .work-checkbox {
+          width: 18px; height: 18px; accent-color: #1967d2; margin: 0;
+        }
         .work-modal-actions {
           display: flex; justify-content: flex-end; gap: 16px;
-          background: #fff; border-top: 1px solid #eee; padding: 16px 0 0 0; margin-top: 20px;
+          background: #fff; border-top: 1px solid #eee; padding: 18px 0 0 0; margin-top: 24px;
         }
-        label { font-weight: 600; margin-bottom: 6px; display: block; }
-        input, select, textarea {
-          width: 100%;
-          padding: 10px 14px;
+        .work-btn-cancel {
+          background: #fff; border: 1.5px solid #e60023; color: #e60023;
+          padding: 12px 36px; border-radius: 8px; font-weight: 700; font-size: 16px; cursor: pointer;
+        }
+        .work-btn-save {
+          background: #e60023; color: #fff; border: none;
+          padding: 12px 36px; border-radius: 8px; font-weight: 700; font-size: 16px; cursor: pointer;
+        }
+        .quill { border-radius: 8px; }
+        .ql-toolbar.ql-snow { border-top-left-radius: 8px; border-top-right-radius: 8px; border: 1.5px solid #ddd; border-bottom: none}
+        .ql-container.ql-snow { border-bottom-left-radius: 8px; border-bottom-right-radius: 8px; border: 1.5px solid #ddd; }
+        .ql-editor { min-height: 120px; }
+        .ql-editor p {
+          margin: 0;
+          line-height: 1.5;
+        }
+        .char-counter { font-size: 12px; color: #888; text-align: right; margin-top: 4px; }
+        .field-tip { background: #f0f8ff; border-left: 3px solid #1967d2; padding: 8px 12px; margin-bottom: 8px; font-size: 14px; color: #444; }
+        .insert-template-btn {
+          background: #f0f0f0;
+          border: 1px solid #ccc;
           border-radius: 6px;
-          border: 1px solid #ddd;
-          font-size: 1rem;
-          margin-top: 2px;
+          padding: 4px 12px;
+          font-size: 13px;
+          font-weight: 600;
+          cursor: pointer;
+          transition: background 0.2s;
         }
-        textarea {
-          min-height: 100px;
-          resize: vertical;
+        .insert-template-btn:hover {
+          background: #e0e0e0;
         }
       `}</style>
       <div className="work-modal-overlay">
         <div className="work-modal-content">
           <button
-            onClick={onClose}
+            onClick={handleClose}
             style={{
               position: "absolute",
               top: 16,
@@ -142,40 +272,104 @@ const WorkExperienceModal = ({ open, onClose, onSubmit, workExperience }) => {
               cursor: "pointer",
               color: "#888",
             }}
+            aria-label="Close"
           >
             ×
           </button>
           <div className="work-modal-title">Work Experience</div>
-          <form className="work-modal-form" onSubmit={handleSubmit}>
-            <div className="work-modal-row">
-              <div>
-                <label>Job Title *</label>
-                <input
-                  name="jobTitle"
-                  value={form.jobTitle}
-                  onChange={handleChange}
-                  required
-                />
-              </div>
-              <div>
-                <label>Company Name *</label>
-                <input
-                  name="companyName"
-                  value={form.companyName}
-                  onChange={handleChange}
-                  required
-                />
+          <form
+            className="work-modal-form"
+            onSubmit={handleSubmit}
+            autoComplete="off"
+          >
+            <div className="form-group">
+              <label className="work-label">
+                Job Title <span className="work-required">*</span>
+              </label>
+              <input
+                name="jobTitle"
+                className={`work-input${
+                  errors.jobTitle || (touched.jobTitle && !form.jobTitle.trim())
+                    ? " error"
+                    : form.jobTitle.trim()
+                    ? " valid"
+                    : ""
+                }`}
+                placeholder="JobTitle"
+                value={form.jobTitle}
+                onChange={handleChange}
+                onBlur={handleBlur}
+                required
+              />
+              <div className="work-error">
+                {(errors.jobTitle ||
+                  (touched.jobTitle && !form.jobTitle.trim())) &&
+                  "Please enter your Job Title"}
               </div>
             </div>
 
-            <div className="work-modal-row">
+            <div className="form-group">
+              <label className="work-label">
+                Company Name <span className="work-required">*</span>
+              </label>
+              <input
+                name="companyName"
+                className={`work-input${
+                  errors.companyName ||
+                  (touched.companyName && !form.companyName.trim())
+                    ? " error"
+                    : form.companyName.trim()
+                    ? " valid"
+                    : ""
+                }`}
+                placeholder="Company Name"
+                value={form.companyName}
+                onChange={handleChange}
+                onBlur={handleBlur}
+                required
+              />
+              <div className="work-error">
+                {(errors.companyName ||
+                  (touched.companyName && !form.companyName.trim())) &&
+                  "Please enter your company nam"}
+              </div>
+            </div>
+            <div className="work-checkbox-row">
+              <input
+                type="checkbox"
+                className="work-checkbox"
+                name="isWorking"
+                checked={form.isWorking}
+                onChange={handleChange}
+                id="isWorking"
+              />
+              <label
+                htmlFor="isWorking"
+                style={{ margin: 0, fontWeight: 500, fontSize: 15 }}
+              >
+                I am currently working here
+              </label>
+            </div>
+            <div className="work-modal-grid">
               <div>
-                <label>From *</label>
-                <div style={{ display: "flex", gap: 8 }}>
+                <label className="work-label">
+                  From <span className="work-required">*</span>
+                </label>
+                <div style={{ display: "flex", gap: 12 }}>
                   <select
                     name="monthStart"
+                    className={`work-select${
+                      errors.monthStart ||
+                      errors.dateRange ||
+                      (touched.monthStart && !form.monthStart)
+                        ? " error"
+                        : form.monthStart
+                        ? " valid"
+                        : ""
+                    }`}
                     value={form.monthStart}
                     onChange={handleChange}
+                    onBlur={handleBlur}
                     required
                   >
                     <option value="">Month</option>
@@ -187,8 +381,18 @@ const WorkExperienceModal = ({ open, onClose, onSubmit, workExperience }) => {
                   </select>
                   <select
                     name="yearStart"
+                    className={`work-select${
+                      errors.yearStart ||
+                      errors.dateRange ||
+                      (touched.yearStart && !form.yearStart)
+                        ? " error"
+                        : form.yearStart
+                        ? " valid"
+                        : ""
+                    }`}
                     value={form.yearStart}
                     onChange={handleChange}
+                    onBlur={handleBlur}
                     required
                   >
                     <option value="">Year</option>
@@ -199,14 +403,36 @@ const WorkExperienceModal = ({ open, onClose, onSubmit, workExperience }) => {
                     ))}
                   </select>
                 </div>
+                <div className="work-error">
+                  {(errors.monthStart ||
+                    (touched.monthStart && !form.monthStart)) &&
+                    errors.monthStart}
+                  {(errors.yearStart ||
+                    (touched.yearStart && !form.yearStart)) &&
+                    errors.yearStart}
+                </div>
               </div>
               <div>
-                <label>To *</label>
-                <div style={{ display: "flex", gap: 8 }}>
+                <label className="work-label">
+                  To
+                  {!form.isWorking && <span className="work-required"> *</span>}
+                </label>
+                <div style={{ display: "flex", gap: 12 }}>
                   <select
                     name="monthEnd"
+                    className={`work-select${
+                      !form.isWorking &&
+                      (errors.monthEnd ||
+                        errors.dateRange ||
+                        (touched.monthEnd && !form.monthEnd))
+                        ? " error"
+                        : form.monthEnd
+                        ? " valid"
+                        : ""
+                    }`}
                     value={form.monthEnd}
                     onChange={handleChange}
+                    onBlur={handleBlur}
                     required={!form.isWorking}
                     disabled={form.isWorking}
                   >
@@ -219,8 +445,19 @@ const WorkExperienceModal = ({ open, onClose, onSubmit, workExperience }) => {
                   </select>
                   <select
                     name="yearEnd"
+                    className={`work-select${
+                      !form.isWorking &&
+                      (errors.yearEnd ||
+                        errors.dateRange ||
+                        (touched.yearEnd && !form.yearEnd))
+                        ? " error"
+                        : form.yearEnd
+                        ? " valid"
+                        : ""
+                    }`}
                     value={form.yearEnd}
                     onChange={handleChange}
+                    onBlur={handleBlur}
                     required={!form.isWorking}
                     disabled={form.isWorking}
                   >
@@ -232,72 +469,89 @@ const WorkExperienceModal = ({ open, onClose, onSubmit, workExperience }) => {
                     ))}
                   </select>
                 </div>
+                <div className="work-error">
+                  {!form.isWorking &&
+                    (errors.monthEnd || (touched.monthEnd && !form.monthEnd)) &&
+                    errors.monthEnd}
+                  {!form.isWorking &&
+                    (errors.yearEnd || (touched.yearEnd && !form.yearEnd)) &&
+                    errors.yearEnd}
+                  {errors.dateRange && errors.dateRange}
+                </div>
               </div>
             </div>
-
-            <div className="work-modal-checkbox">
-              <input
-                type="checkbox"
-                name="isWorking"
-                checked={form.isWorking}
-                onChange={handleChange}
-                id="isWorking"
+            <div className="form-group" style={{ marginTop: 24 }}>
+              <label className="work-label">Description</label>
+              <div style={{ marginBottom: 12, fontWeight: 600 }}>
+                <span role="img" aria-label="tips">
+                  📝
+                </span>{" "}
+                <span style={{ color: "#ff9800" }}>Tips:</span>{" "}
+                <span style={{ color: "#000000" }}>
+                  Brief the company's industry, then detail your
+                  responsibilities and achievements. For projects, write on the
+                  "Project" field below.
+                </span>
+              </div>
+              <ReactQuill
+                theme="snow"
+                value={form.workDescription}
+                onChange={(value) =>
+                  handleQuillChange("workDescription", value)
+                }
+                modules={quillModules}
               />
-              <label htmlFor="isWorking" style={{ margin: 0 }}>
-                I am currently working here
-              </label>
+              <div className="char-counter">
+                {form.workDescription.length}/2500
+              </div>
+            </div>
+            <div className="form-group">
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                }}
+              >
+                <label className="work-label" style={{ marginBottom: 0 }}>
+                  Project
+                </label>
+                <button
+                  type="button"
+                  className="insert-template-btn"
+                  onClick={handleInsertTemplate}
+                >
+                  Insert template
+                </button>
+              </div>
+              <div style={{ marginTop: 8, marginBottom: 12, fontWeight: 600 }}>
+                <span role="img" aria-label="tips">
+                  📝
+                </span>{" "}
+                <span style={{ color: "#ff9800" }}>Tips:</span>{" "}
+                <span style={{ color: "#000000" }}>
+                  Include project details, your role, technologies and team
+                  size.
+                </span>
+              </div>
+              <ReactQuill
+                theme="snow"
+                value={form.proJects}
+                onChange={(value) => handleQuillChange("proJects", value)}
+                modules={quillModules}
+              />
+              <div className="char-counter">{form.proJects.length}/2500</div>
             </div>
 
-            <div className="work-modal-row">
-              <div style={{ flex: 1, flexDirection: "column" }}>
-                <label>Description</label>
-                <textarea
-                  name="workDescription"
-                  value={form.workDescription}
-                  onChange={handleChange}
-                />
-              </div>
-            </div>
-            <div className="work-modal-row">
-              <div style={{ flex: 1, flexDirection: "column" }}>
-                <label>Project</label>
-                <textarea
-                  name="proJects"
-                  value={form.proJects}
-                  onChange={handleChange}
-                />
-              </div>
-            </div>
             <div className="work-modal-actions">
               <button
                 type="button"
-                onClick={onClose}
-                style={{
-                  background: "#fff",
-                  border: "1px solid #e60023",
-                  color: "#e60023",
-                  padding: "10px 32px",
-                  borderRadius: 8,
-                  fontWeight: 600,
-                  fontSize: 16,
-                  cursor: "pointer",
-                }}
+                className="work-btn-cancel"
+                onClick={handleClose}
               >
                 Cancel
               </button>
-              <button
-                type="submit"
-                style={{
-                  background: "#e60023",
-                  color: "#fff",
-                  border: "none",
-                  padding: "10px 32px",
-                  borderRadius: 8,
-                  fontWeight: 600,
-                  fontSize: 16,
-                  cursor: "pointer",
-                }}
-              >
+              <button type="submit" className="work-btn-save">
                 Save
               </button>
             </div>

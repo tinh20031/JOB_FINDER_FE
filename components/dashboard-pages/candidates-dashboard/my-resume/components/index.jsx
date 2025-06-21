@@ -29,6 +29,7 @@ const index = () => {
     loading,
     refetch,
   } = useResumeData();
+
   const [editOpen, setEditOpen] = useState(false);
   const [reload, setReload] = useState(0);
   const [saving, setSaving] = useState(false);
@@ -75,7 +76,7 @@ const index = () => {
         </div>
         <div className="form-group col-lg-12 col-md-12">
           <Education education={education} refetch={refetch} />
-          <Experiences experiences={experiences} />
+          <Experiences workExperience={experiences} refetch={refetch} />
         </div>
         <div className="form-group col-lg-12 col-md-12">
           <Skills skills={skills} />
