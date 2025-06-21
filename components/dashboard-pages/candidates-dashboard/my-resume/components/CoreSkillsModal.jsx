@@ -6,6 +6,7 @@ import {
   updateSkill,
   deleteSkill,
 } from "@/services/useResumeData";
+import { toast } from "react-toastify";
 
 // Mock data, replace with API call if available
 const initialSkillOptions = [
@@ -43,22 +44,26 @@ const CoreSkillsModal = ({ open, onClose, initialSkills }) => {
   const [selectedExperience, setSelectedExperience] = useState(null);
   const [saving, setSaving] = useState(false);
   const [groupKey, setGroupKey] = useState(null);
+  const [show, setShow] = useState(false);
 
   useEffect(() => {
-    if (initialSkills && initialSkills.length > 0) {
-      setGroupName(initialSkills[0]?.groupName || "Core Skills");
-      setSkills(initialSkills);
-      setGroupKey(
-        initialSkills[0]?.groupKey || initialSkills[0]?.createdAt || null
-      );
+    if (open) {
+      if (initialSkills && initialSkills.length > 0) {
+        setGroupName(initialSkills[0]?.groupName || "Core Skills");
+        setSkills(initialSkills);
+        setGroupKey(
+          initialSkills[0]?.groupKey || initialSkills[0]?.createdAt || null
+        );
+      } else {
+        setGroupName("Core Skills");
+        setSkills([]);
+        setGroupKey(null);
+      }
+      setTimeout(() => setShow(true), 10);
     } else {
-      setGroupName("Core Skills");
-      setSkills([]);
-      setGroupKey(null);
+      setShow(false);
     }
   }, [initialSkills, open]);
-
-  if (!open) return null;
 
   const handleCreateSkill = (inputValue) => {
     const newSkill = { value: inputValue, label: inputValue };
@@ -68,16 +73,16 @@ const CoreSkillsModal = ({ open, onClose, initialSkills }) => {
 
   const handleAddSkill = () => {
     if (!selectedSkill || !selectedExperience) {
-      alert("Please select a skill and experience level.");
+      toast.warn("Please select a skill and experience level.");
       return;
     }
     if (skills.length >= 20) {
-      alert("You can add a maximum of 20 skills.");
+      toast.warn("You can add a maximum of 20 skills.");
       return;
     }
     // Avoid duplicates
     if (skills.find((s) => s.skillName === selectedSkill.value)) {
-      alert("This skill has already been added.");
+      toast.warn("This skill has already been added.");
       return;
     }
 
@@ -91,6 +96,7 @@ const CoreSkillsModal = ({ open, onClose, initialSkills }) => {
         type: 0,
         groupKey: groupKey || new Date().toISOString(),
         createdAt: groupKey || new Date().toISOString(),
+        isNew: true, // For animation
       },
     ]);
     setSelectedSkill(null);
@@ -153,19 +159,37 @@ const CoreSkillsModal = ({ open, onClose, initialSkills }) => {
         ),
       ]);
 
-      onClose();
+      toast.success("Skills updated successfully!");
+      handleClose();
     } catch (e) {
-      alert("An error occurred while saving.");
+      toast.error("An error occurred while saving.");
       console.error(e);
     }
     setSaving(false);
   };
 
+  const handleClose = () => {
+    setShow(false);
+    setTimeout(onClose, 300);
+  };
+
+  if (!open && !show) return null;
+
   return (
     <>
-      <div className="modal-overlay-animated" style={{ zIndex: 1001 }}>
-        <div className="modal-content-animated" style={{ maxWidth: "800px" }}>
-          <button onClick={onClose} className="modal-close-btn">
+      <div
+        className="modal-overlay-animated"
+        style={{ opacity: show ? 1 : 0, zIndex: 1001 }}
+      >
+        <div
+          className="modal-content-animated"
+          style={{
+            maxWidth: "800px",
+            transform: show ? "scale(1)" : "scale(0.95)",
+            opacity: show ? 1 : 0,
+          }}
+        >
+          <button onClick={handleClose} className="modal-close-btn">
             ×
           </button>
           <h2 className="modal-title">Core Skills</h2>
@@ -237,7 +261,10 @@ const CoreSkillsModal = ({ open, onClose, initialSkills }) => {
             ) : (
               <div style={{ display: "flex", flexWrap: "wrap", gap: "10px" }}>
                 {skills.map((s) => (
-                  <span key={s.skillId} className="skill-tag">
+                  <span
+                    key={s.skillId}
+                    className={`skill-tag ${s.isNew ? "new" : ""}`}
+                  >
                     {s.skillName} ({s.experience})
                     <button onClick={() => handleRemoveSkill(s.skillId)}>
                       ×
@@ -251,7 +278,7 @@ const CoreSkillsModal = ({ open, onClose, initialSkills }) => {
           <div className="modal-actions">
             <button
               type="button"
-              onClick={onClose}
+              onClick={handleClose}
               className="theme-btn btn-style-three"
             >
               Cancel
@@ -268,15 +295,29 @@ const CoreSkillsModal = ({ open, onClose, initialSkills }) => {
         </div>
       </div>
       <style>{`
-        .modal-overlay-animated { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.4); display: flex; align-items: center; justify-content: center; }
-        .modal-content-animated { background: #fff; padding: 24px; border-radius: 8px; width: 95%; max-height: 90vh; overflow-y: auto; position: relative; }
+        .modal-overlay-animated { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.4); display: flex; align-items: center; justify-content: center; transition: opacity 0.3s; pointer-events: ${
+          show ? "auto" : "none"
+        }; }
+        .modal-content-animated { background: #fff; padding: 24px; border-radius: 8px; width: 95%; max-height: 90vh; overflow-y: auto; position: relative; transition: all 0.3s; }
         .modal-close-btn { position: absolute; top: 10px; right: 10px; background: none; border: none; font-size: 24px; cursor: pointer; }
         .modal-title { font-size: 24px; font-weight: 700; margin-bottom: 16px; }
-        .modal-tip { background: #fefbec; border: 1px solid #fde488; padding: 12px; border-radius: 8px; margin-bottom: 16px; }
+        .modal-tip { background: #f0f8ff; border: 1px solid #cce5ff; padding: 12px; border-radius: 8px; margin-bottom: 16px; }
         .form-group { margin-bottom: 16px; }
         .form-group label { display: block; font-weight: 600; margin-bottom: 8px; }
-        .skill-tag { background: #f0f0f0; padding: 6px 12px; border-radius: 16px; display: inline-flex; align-items: center; gap: 8px; }
-        .skill-tag button { background: #ccc; color: #fff; border: none; border-radius: 50%; width: 18px; height: 18px; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+        .skill-tag { 
+          display: inline-flex; align-items: center; gap: 8px;
+          background: #e6f7ff; color: #007bff; border-radius: 8px;
+          padding: 6px 12px; font-weight: 600; font-size: 15px;
+          transition: all 0.3s; animation: fadeIn 0.4s;
+        }
+        .skill-tag.new { animation: fadeIn 0.4s; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+        .skill-tag button { 
+          background: none; border: none; cursor: pointer; 
+          color: #007bff; opacity: 0.6; font-size: 16px; 
+          line-height: 1;
+        }
+        .skill-tag button:hover { opacity: 1; }
         .modal-actions { display: flex; justify-content: flex-end; gap: 12px; margin-top: 24px; padding-top: 16px; border-top: 1px solid #eee; }
       `}</style>
     </>

@@ -1,14 +1,17 @@
 import React, { useState, useMemo } from "react";
 import CoreSkillsModal from "./CoreSkillsModal";
 import SoftSkillsModal from "./SoftSkillsModal";
-import { deleteSkill } from "@/services/useResumeData";
+import { deleteSkill, createSkill } from "@/services/useResumeData";
+import { toast } from "react-toastify";
 
-const Skills = ({ skills: initialSkills = [] }) => {
+const Skills = ({ skills: initialSkills = [], refetch }) => {
   const [showAddGroup, setShowAddGroup] = useState(false);
   const [modalType, setModalType] = useState(null); // 'core' or 'soft'
   const [selectedGroup, setSelectedGroup] = useState(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [showSoftSkillTooltip, setShowSoftSkillTooltip] = useState(false);
+  const [lastDeletedGroup, setLastDeletedGroup] = useState(null);
+  const [deletingId, setDeletingId] = useState(null);
 
   // Group by unique group (groupName + min skillId)
   const groups = useMemo(() => {
@@ -80,22 +83,75 @@ const Skills = ({ skills: initialSkills = [] }) => {
     setModalType(null);
     setSelectedGroup(null);
     setModalOpen(false);
-    window.location.reload();
+    if (typeof refetch === "function") {
+      refetch();
+    }
+  };
+
+  const handleUndo = async (group) => {
+    if (!group) return;
+    try {
+      const skillsToRestore = group.skills.map((s) => {
+        const { skillId, ...rest } = s;
+        return { ...rest, skillId: 0 }; // Ensure skillId is 0 for creation
+      });
+      await Promise.all(skillsToRestore.map((s) => createSkill(s)));
+      toast.success("Group restored successfully!");
+      if (typeof refetch === "function") refetch();
+      setLastDeletedGroup(null);
+    } catch {
+      toast.error("Failed to restore group.");
+    }
   };
 
   const handleDeleteGroup = async (groupKey) => {
-    if (
-      window.confirm(
-        `Are you sure you want to delete this group and all its skills?`
-      )
-    ) {
-      try {
-        const group = groups.find((g) => g.groupKey === groupKey);
-        await Promise.all(group.skills.map((s) => deleteSkill(s.skillId)));
-        window.location.reload();
-      } catch (e) {
-        alert("Failed to delete skill group.");
+    const groupToDelete = groups.find((g) => g.groupKey === groupKey);
+    if (!groupToDelete) return;
+
+    setDeletingId(groupKey);
+    try {
+      await Promise.all(
+        groupToDelete.skills.map((s) => deleteSkill(s.skillId))
+      );
+      setLastDeletedGroup(groupToDelete);
+      if (typeof refetch === "function") {
+        refetch();
       }
+      toast.info(
+        <span style={{ display: "flex", alignItems: "center" }}>
+          <span style={{ marginRight: 12, fontWeight: 500 }}>
+            You deleted a Skill Group.
+          </span>
+          <button
+            style={{
+              color: "#fff",
+              background: "#28a745",
+              border: "none",
+              borderRadius: 6,
+              fontWeight: 700,
+              fontSize: 16,
+              padding: "6px 18px",
+              marginLeft: 8,
+              cursor: "pointer",
+              boxShadow: "0 2px 8px #0002",
+              display: "flex",
+              alignItems: "center",
+              gap: 6,
+            }}
+            onClick={async (e) => {
+              e.preventDefault();
+              await handleUndo(groupToDelete);
+            }}
+          >
+            <span style={{ fontSize: 18, marginRight: 4 }}>⟲</span> Undo
+          </button>
+        </span>,
+        { autoClose: 10000 }
+      );
+    } catch (e) {
+      toast.error("Failed to delete skill group.");
+    } finally {
+      setDeletingId(null);
     }
   };
 
@@ -260,13 +316,16 @@ const Skills = ({ skills: initialSkills = [] }) => {
             </button>
             <button
               onClick={() => handleDeleteGroup(group.groupKey)}
+              disabled={deletingId === group.groupKey}
               style={{
                 background: "none",
                 border: "none",
-                cursor: "pointer",
-                color: "#888",
+                cursor:
+                  deletingId === group.groupKey ? "not-allowed" : "pointer",
+                color: deletingId === group.groupKey ? "#ccc" : "#888",
                 fontSize: 20,
                 padding: 4,
+                opacity: deletingId === group.groupKey ? 0.6 : 1,
               }}
               title="Delete"
             >

@@ -42,16 +42,20 @@ const WorkExperienceModal = ({ open, onClose, onSubmit, workExperience }) => {
     ],
   };
 
-  const projectTemplate = "<p><strong>Project name | 01/2025 - 05/2025</strong></p><p><strong>Description:</strong> Write a short description of your project</p><p><strong>Role:</strong> Your role in this project</p><p><strong>Responsibilities:</strong></p><ul><li>First responsibility</li><li>Second responsibility</li></ul><p><strong>Tech stack:</strong> List technologies used</p><p><strong>Team size:</strong> x members</p>";
+  const projectTemplate =
+    "<p><strong>Project name | 01/2025 - 05/2025</strong></p><p><strong>Description:</strong> Write a short description of your project</p><p><strong>Role:</strong> Your role in this project</p><p><strong>Responsibilities:</strong></p><ul><li>First responsibility</li><li>Second responsibility</li></ul><p><strong>Tech stack:</strong> List technologies used</p><p><strong>Team size:</strong> x members</p>";
 
   const handleInsertTemplate = () => {
     const currentContent = form.proJects;
-    const isEditorEmpty = !currentContent || currentContent.trim() === "" || currentContent === "<p><br></p>";
+    const isEditorEmpty =
+      !currentContent ||
+      currentContent.trim() === "" ||
+      currentContent === "<p><br></p>";
 
     const newContent = isEditorEmpty
-        ? projectTemplate
-        : `${currentContent}<p><br></p>${projectTemplate}`;
-    
+      ? projectTemplate
+      : `${currentContent}<p><br></p>${projectTemplate}`;
+
     handleQuillChange("proJects", newContent);
   };
 

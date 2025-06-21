@@ -301,7 +301,7 @@ export async function updateSkill(skillId, skill) {
 export async function deleteSkill(skillId) {
   const token = getToken();
   if (!token) throw new Error("No token found");
-  const response = await fetch(`${API_URL}/Skill/me/${skillId}`, {
+  const response = await fetch(`${API_URL}/Skill/${skillId}`, {
     method: "DELETE",
     headers: {
       Authorization: `Bearer ${token}`,

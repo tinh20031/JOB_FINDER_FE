@@ -79,7 +79,7 @@ const index = () => {
           <Experiences workExperience={experiences} refetch={refetch} />
         </div>
         <div className="form-group col-lg-12 col-md-12">
-          <Skills skills={skills} />
+          <Skills skills={skills} refetch={refetch} />
         </div>
         <div className="form-group col-lg-12 col-md-12">
           <ForeignLanguague
