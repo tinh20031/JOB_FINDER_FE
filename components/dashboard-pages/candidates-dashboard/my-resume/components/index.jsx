@@ -115,6 +115,7 @@ const index = () => {
         open={openFL}
         onClose={() => setOpenFL(false)}
         initialLanguages={foreignlanguage}
+        refetch={refetch}
       />
     </div>
   );
