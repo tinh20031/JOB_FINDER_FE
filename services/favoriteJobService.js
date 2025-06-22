@@ -1,0 +1,15 @@
+import axios from "axios";
+
+const API_URL = "/api/UserFavoriteJob"; // Đổi port nếu BE khác
+
+export const getUserFavorites = (userId) =>
+  axios.get(`${API_URL}/user/${userId}`);
+
+export const isJobFavorite = (userId, jobId) =>
+  axios.get(`${API_URL}/${userId}/${jobId}`);
+
+export const addFavoriteJob = (userId, jobId) =>
+  axios.post(API_URL, { UserId: userId, JobId: jobId });
+
+export const removeFavoriteJob = (userId, jobId) =>
+  axios.delete(`${API_URL}/${userId}/${jobId}`); 

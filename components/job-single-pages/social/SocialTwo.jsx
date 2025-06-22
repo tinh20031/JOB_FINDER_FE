@@ -1,25 +1,35 @@
+import { useEffect, useState } from "react";
+
 const SocialTwo = () => {
+  const [currentUrl, setCurrentUrl] = useState("");
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      setCurrentUrl(window.location.href);
+    }
+  }, []);
+
   const socialContent = [
     {
       id: 1,
       name: "Facebook",
       icon: "fa-facebook-f",
       iconClass: "facebook",
-      link: "https://www.facebook.com/",
+      link: `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(currentUrl)}`,
     },
     {
       id: 2,
       name: "Twitter",
       icon: "fa-twitter",
       iconClass: "twitter",
-      link: "https://www.twitter.com/",
+      link: `https://twitter.com/intent/tweet?url=${encodeURIComponent(currentUrl)}`,
     },
     {
       id: 3,
-      name: "Linkedin",
-      icon: "fa-likedin",
+      name: "LinkedIn",
+      icon: "fa-linkedin-in",
       iconClass: "linkedin",
-      link: "https://www.linkedin.com/",
+      link: `https://www.linkedin.com/shareArticle?mini=true&url=${encodeURIComponent(currentUrl)}`,
     },
   ];
 

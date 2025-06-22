@@ -3,13 +3,16 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import employerMenuData from "../../data/adminMenuData";
+import employerMenuData from "../../data/adminHeadedrMenuData";
 import { isActiveLink } from "../../utils/linkActiveChecker";
 import { usePathname, useRouter } from "next/navigation";
 import { useDispatch } from 'react-redux';
 import { clearLoginState } from '@/features/auth/authSlice';
 import { authService } from "../../services/authService";
 import Cookies from 'js-cookie';
+import { getUserFavorites } from "../../services/favoriteJobService";
+import { useFavoriteJobs } from "../../contexts/FavoriteJobsContext";
+
 
 // Helper function to validate image URLs
 const getValidImageUrl = (url) => {
@@ -27,12 +30,16 @@ const getValidImageUrl = (url) => {
   return "/images/resource/company-6.png"; // Invalid URL
 };
 
-const DashboardHeader = () => {
+
+const DashboardHeaderAdmin = () => {
+
     const [navbar, setNavbar] = useState(false);
     const [fullName, setFullName] = useState("Admin");
     const [avatar, setAvatar] = useState("/images/resource/company-6.png");
     const router = useRouter();
     const dispatch = useDispatch();
+    const { favoriteCount } = useFavoriteJobs() || {};
+    const userId = typeof window !== 'undefined' ? Number(localStorage.getItem('userId')) : null;
 
     const changeBackground = () => {
         if (window.scrollY >= 0) {
@@ -167,6 +174,14 @@ const DashboardHeader = () => {
                                         )}
                                     </li>
                                 ))}
+                                <li>
+                                    <Link href="/favorite-jobs">
+                                        <button className="menu-btn">
+                                            <span className="count">{favoriteCount}</span>
+                                            <span className="icon la la-heart-o"></span>
+                                        </button>
+                                    </Link>
+                                </li>
                             </ul>
                         </div>
                         {/* End dropdown */}
@@ -178,4 +193,4 @@ const DashboardHeader = () => {
     );
 };
 
-export default DashboardHeader;
+export default DashboardHeaderAdmin;

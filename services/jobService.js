@@ -99,6 +99,13 @@ function getToken() {
   return token;
 }
 
+function getValidToken() {
+  let token = localStorage.getItem('token');
+  if (!token || token === 'null' || token === 'undefined') token = Cookies.get('token');
+  if (!token || token === 'null' || token === 'undefined') return null;
+  return token;
+}
+
 // Helper function to set auth header
 function getAuthConfig() {
   const token = getToken();
@@ -116,7 +123,8 @@ export const jobService = {
   // GET: Lấy danh sách tất cả jobs
   async getJobs(filters = {}) {
     try {
-      const response = await axios.get(`${API_URL}/Job`);
+      const config = getAuthConfig();
+      const response = await axios.get(`${API_URL}/Job`, config);
       const apiJobs = response.data;
 
       // Ánh xạ dữ liệu từ API sang cấu trúc frontend
@@ -194,32 +202,32 @@ export const jobService = {
         );
       }
 
-      if (filters.jobType?.length) {
-        filteredJobs = filteredJobs.filter(job =>
-          filters.jobType.includes(job.jobTypeId)
-        );
-      }
+       if (filters.jobType?.length) {
+         filteredJobs = filteredJobs.filter(job =>
+           filters.jobType.includes(job.jobTypeId)
+         );
+       }
 
       if (filters.category) {
-        filteredJobs = filteredJobs.filter(job =>
+          filteredJobs = filteredJobs.filter(job =>
           job.industryId === parseInt(filters.category)
-        );
-      }
+          );
+        }
 
       if (filters.salary?.min !== undefined) {
-        filteredJobs = filteredJobs.filter(job =>
+         filteredJobs = filteredJobs.filter(job =>
           job.minSalary >= filters.salary.min
-        );
-      }
+         );
+       }
 
       if (filters.salary?.max !== undefined) {
-        filteredJobs = filteredJobs.filter(job =>
+         filteredJobs = filteredJobs.filter(job =>
           job.maxSalary <= filters.salary.max
-        );
-      }
+         );
+       }
 
       if (filters.experience?.length) {
-        filteredJobs = filteredJobs.filter(job =>
+         filteredJobs = filteredJobs.filter(job =>
           filters.experience.includes(job.experienceLevelId)
         );
       }
@@ -243,7 +251,9 @@ export const jobService = {
   // GET: Lấy job theo ID
   async getJobById(id) {
     try {
-      const response = await axios.get(`${API_URL}/Job/${id}`);
+      const token = getValidToken();
+      const headers = token ? { Authorization: `Bearer ${token}` } : {};
+      const response = await axios.get(`${API_URL}/Job/${id}`, { headers });
       const job = response.data;
 
       if (!job) return null;
@@ -307,6 +317,11 @@ export const jobService = {
         skills: job.skills || []
       };
     } catch (error) {
+      // Nếu là lỗi 403 hoặc 404 thì ném lại để page.jsx bắt được
+      if (error?.response?.status === 403 || error?.response?.status === 404) {
+        throw error;
+      }
+      // Các lỗi khác thì log và trả về null
       console.error(`Error fetching job by ID ${id}:`, error);
       return null;
     }
@@ -530,10 +545,10 @@ export const jobService = {
     } catch (error) {
       console.error("Error fetching job categories:", error);
       // Fallback to static categories
-      return CATEGORIES.map((category, index) => ({
-        id: index + 1,
-        title: category
-      }));
+     return CATEGORIES.map((category, index) => ({
+       id: index + 1,
+       title: category
+     }));
     }
   },
 
@@ -842,7 +857,31 @@ export const jobService = {
       'inactive': 'secondary'
     };
     return colorMap[status] || 'default';
-  }
+
+  },
+
+
+
+  async getAppliedCount(jobId) {
+    try {
+      const response = await axios.get(`${API_URL}/Application/job/${jobId}`);
+      return Array.isArray(response.data) ? response.data.length : 0;
+    } catch (error) {
+      if (error && error.response && error.response.status === 404) {
+        // Không log nếu là 404
+        return 0;
+      }
+      // Các lỗi khác mới log
+      console.error('Error fetching applied count:', error);
+      return 0;
+    }
+  },
+
+  // Hàm lấy tất cả job active (status === 1)
+  async getActiveJobs(filters = {}) {
+    const { data: jobs } = await this.getJobs(filters);
+    return jobs.filter(job => job.status === 1);
+  },
 
 };
 

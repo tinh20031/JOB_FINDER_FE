@@ -329,20 +329,27 @@ const Index = () => {
         }
 
         try {
-            const payload = {
-                CompanyName: companyProfileData.formData.companyName,
-                Contact: companyProfileData.formData.phone,
-                Website: companyProfileData.formData.website,
-                Location: companyProfileData.formData.location,
-                TeamSize: companyProfileData.formData.teamSize,
-                IndustryId: parseInt(companyProfileData.formData.industryId),
-                CompanyProfileDescription: companyProfileData.formData.aboutCompany,
-            };
+            // Sử dụng FormData để gửi cả file và dữ liệu text
+            const formData = new FormData();
+            formData.append('CompanyName', companyProfileData.formData.companyName);
+            formData.append('Contact', companyProfileData.formData.phone);
+            formData.append('Website', companyProfileData.formData.website);
+            formData.append('Location', companyProfileData.formData.location);
+            formData.append('TeamSize', companyProfileData.formData.teamSize);
+            formData.append('IndustryId', parseInt(companyProfileData.formData.industryId));
+            formData.append('CompanyProfileDescription', companyProfileData.formData.aboutCompany);
+            if (companyProfileData.logoFile) {
+                formData.append('LogoFile', companyProfileData.logoFile);
+            }
+            if (companyProfileData.coverFile) {
+                formData.append('LogoLgrFile', companyProfileData.coverFile);
+            }
 
             setIsSaving(true);
             setConfirmLoading(true);
 
-            const response = await companyProfileService.updateCompanyProfile(userId, payload);
+            // Gọi API với FormData
+            const response = await companyProfileService.updateCompanyProfile(userId, formData);
 
             console.log('Profile update response:', response);
             toast.success("Profile updated successfully!");

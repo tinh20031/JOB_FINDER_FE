@@ -26,6 +26,9 @@ import Image from "next/image";
 import { jobService } from "../../../services/jobService";
 import { toast } from "react-toastify";
 import "./FilterJobsBox.css"; // Thêm import CSS
+import { useSearchParams } from 'next/navigation';
+import { getUserFavorites, addFavoriteJob, removeFavoriteJob } from '../../../services/favoriteJobService';
+import { useFavoriteJobs } from '../../../contexts/FavoriteJobsContext';
 
 // Thêm CSS styles
 const styles = {
@@ -54,7 +57,7 @@ const FilterJobsBox = () => {
   const [totalJobs, setTotalJobs] = useState(0);
   const [displayCount, setDisplayCount] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [itemsPerPage, setItemsPerPage] = useState(8);
 
   // Thêm state để lưu dữ liệu lookup
   const [companies, setCompanies] = useState([]);
@@ -81,6 +84,17 @@ const FilterJobsBox = () => {
   const [bookmarkedCompanies, setBookmarkedCompanies] = useState([]);
   const [isLoadingBookmarks, setIsLoadingBookmarks] = useState(false);
 
+  const searchParams = useSearchParams();
+  const industryId = searchParams.get('industryId');
+  const provinceName = searchParams.get('provinceName');
+  const levelId = searchParams.get('levelId');
+  const jobTypeId = searchParams.get('jobTypeId');
+  const experienceLevelId = searchParams.get('experienceLevelId');
+  const excludeJobId = searchParams.get('excludeJobId');
+
+  const { favoriteJobIds, updateFavoriteJobs, fetchFavoriteJobs } = useFavoriteJobs() || {};
+  const userId = typeof window !== 'undefined' ? Number(localStorage.getItem('userId')) : null;
+
   // Fetch jobs khi filters hoặc pagination thay đổi
   useEffect(() => {
     console.log('useEffect in FilterJobsBox triggered');
@@ -90,59 +104,37 @@ const FilterJobsBox = () => {
         // Fetch từng loại dữ liệu lookup độc lập để xử lý lỗi riêng
         const companiesRes = await jobService.getCompanies().catch(err => {
           console.error('Failed to fetch companies data', err);
-          return []; // Trả về mảng rỗng nếu fetch thất bại
+          return [];
         });
         const jobTypesRes = await jobService.getJobTypes().catch(err => {
           console.error('Failed to fetch job types data', err);
-          return []; // Trả về mảng rỗng nếu fetch thất bại
+          return [];
         });
         const expLevelsRes = await jobService.getExperienceLevels().catch(err => {
           console.error('Failed to fetch experience levels data', err);
-          return []; // Trả về mảng rỗng nếu fetch thất bại
+          return [];
         });
         const industriesRes = await jobService.getIndustries().catch(err => {
           console.error('Failed to fetch industries data', err);
-          return []; // Trả về mảng rỗng nếu fetch thất bại
+          return [];
         });
 
         setCompanies(companiesRes);
         setJobTypesData(jobTypesRes);
         setExperienceLevels(expLevelsRes);
         setIndustries(industriesRes);
-        console.log('Lookup data fetched', { companiesRes, jobTypesRes, expLevelsRes, industriesRes });
-        console.log('Current companies state after fetch:', companiesRes);
       } catch (err) {
-        // Catch block này có thể không cần thiết nữa nếu các catch riêng lẻ hoạt động
         console.error('An unexpected error occurred during lookup data fetching', err);
       }
     };
-    fetchLookupData();
 
-    // Logic fetch jobs (giữ nguyên)
+    // Gọi API lấy tất cả job active (status === 1)
     const fetchJobs = async () => {
       try {
         setLoading(true);
-        const filters = {
-          status: 1, // Chỉ lấy job đã được approve
-          ...(keyword !== "" && { keyword }),
-          ...(location !== "" && { location }),
-          ...(destination?.min !== 0 || destination?.max !== 100) && { destination },
-          ...(salary?.min !== 0 || salary?.max !== 20000) && { salary },
-          ...(category !== "" && { category }),
-          ...(jobType?.length > 0 && { jobType }),
-          ...(datePosted !== "" && datePosted !== "all" && { datePosted }),
-          ...(experience?.length > 0 && { experience }),
-          ...(tag !== "" && { tag }),
-          ...(sort !== "" && { sort }),
-          page: currentPage,
-          limit: itemsPerPage
-        };
-
-        console.log('Fetching jobs with filters:', filters);
-        const response = await jobService.getJobs(filters);
-        console.log('Jobs fetch response:', response);
-        setJobs(response.data);
-        setTotalJobs(response.total);
+        const jobs = await jobService.getActiveJobs();
+        setJobs(jobs);
+        setTotalJobs(jobs.length);
         setError(null);
       } catch (err) {
         console.error('Error in fetchJobs:', err);
@@ -154,8 +146,9 @@ const FilterJobsBox = () => {
       }
     };
 
+    fetchLookupData();
     fetchJobs();
-  }, [keyword, location, destination, category, jobType, datePosted, experience, salary, tag, sort, currentPage, itemsPerPage]);
+  }, [keyword, location, destination, category, jobType, datePosted, experience, salary, tag, sort, currentPage, itemsPerPage, industryId, provinceName, levelId, jobTypeId, experienceLevelId, excludeJobId]);
 
   // Thêm useEffect để lấy danh sách công ty đã bookmark
   useEffect(() => {
@@ -174,11 +167,20 @@ const FilterJobsBox = () => {
     fetchFavoriteCompanies();
   }, []);
 
+  useEffect(() => {
+    if (userId) {
+      getUserFavorites(userId)
+        .then((res) => {
+          setFavoriteJobIds(res.data.map((item) => item.jobId));
+        })
+        .catch((err) => console.error(err));
+    }
+  }, [userId]);
+
   // Helper function để tìm tên từ ID trong dữ liệu lookup
   const getCompanyName = (companyId) => {
     if (!companyId) return 'N/A';
     const company = companies.find(c => Number(c.id) === Number(companyId));
-    console.log(`getCompanyName for companyId ${companyId}:`, company);
     return company ? company.name : 'N/A';
   };
 
@@ -258,164 +260,39 @@ const FilterJobsBox = () => {
   };
 
   // Cập nhật hàm xử lý bookmark
-  const handleBookmark = async (companyId) => {
-    try {
-      const token = localStorage.getItem('token');
-      if (!token) {
-        toast.error("Vui lòng đăng nhập để sử dụng tính năng này");
-        return;
-      }
-      const id = Number(companyId);
-      if (bookmarkedCompanies.includes(id)) {
-        await jobService.unfavoriteCompany(id);
-        setBookmarkedCompanies(prev => prev.filter(cid => cid !== id));
-        toast.success("Đã xóa khỏi danh sách yêu thích");
-      } else {
-        await jobService.favoriteCompany(id);
-        setBookmarkedCompanies(prev => [...prev, id]);
-        toast.success("Đã thêm vào danh sách yêu thích");
-      }
-    } catch (error) {
-      console.error("Error handling bookmark:", error);
-      if (error.response?.status === 401) {
-        toast.error("Phiên đăng nhập đã hết hạn, vui lòng đăng nhập lại");
-      } else {
-        toast.error("Có lỗi xảy ra khi xử lý yêu thích");
-      }
+  const handleToggleFavorite = (jobId) => {
+    if (favoriteJobIds.includes(jobId)) {
+      removeFavoriteJob(userId, jobId)
+        .then(() => {
+          const newIds = favoriteJobIds.filter((id) => id !== jobId);
+          updateFavoriteJobs(newIds);
+        })
+        .catch((err) => console.error(err));
+    } else {
+      addFavoriteJob(userId, jobId)
+        .then(() => {
+          const newIds = [...favoriteJobIds, jobId];
+          updateFavoriteJobs(newIds);
+        })
+        .catch((err) => console.error(err));
     }
   };
 
-  let content = jobs
-    ?.filter(item => item.status === 1)
-    ?.map((item, index) => (
-      <div key={item.id || index} className="job-block">
-        <div className="inner-box">
-          <div className="content">
-            {/* Restored Company Logo */}
-             <span className="company-logo">
-               {(() => {
-                 const company = companies.find(c => c.id === item.companyId);
-                 const logoSrc = company?.logo || '/images/company-logo/default-logo.png';
-                 const companyName = company?.name || getCompanyName(item.companyId);
-                 console.log(`Job ID: ${item.jobId}, Company ID: ${item.companyId}, Company: ${company?.name}, Logo Source: ${logoSrc}`);
-                 return <Image width={50} height={49} src={logoSrc} alt={companyName} />;
-               })()}
-             </span>
-            {/* Restored Job Title */}
-             <h4>
-               <Link href={`/job-single-v3/${item.id}`}>{item.jobTitle}</Link>
-             </h4>
-
-            <ul className="job-info">
-              {/* Removed Industry from job-info */}
-              {/* Hiển thị Industry với icon cặp xách */}
-              {/* {item.industryId ? (
-                 <li>
-                     <span className="icon flaticon-briefcase"></span>
-                     {getIndustryName(item.industryId)}
-                 </li>
-               ) : null} */}
-              {/* Add Company Name here */}
-              {item.companyId ? (
-                <li>
-                  <span className="icon flaticon-building"></span>{/* Use building icon if available */}
-                  {getCompanyName(item.companyId)}
-                </li>
-              ) : null}
-              <li>
-                <span className="icon flaticon-map-locator"></span>
-                {/* Chỉ hiển thị ProvinceName */}
-                {console.log('Item provinceName:', item.provinceName)}
-                {item.provinceName || 'Province N/A'}
-              </li>
-              {/* Removed Date Posted */}
-              {/* Kept only salary */}
-              <li>
-                <span className="icon flaticon-money"></span>
-                 {item.salary || 'Salary N/A'} {/* Giữ lại Salary */}
-              </li>
-            </ul>
-
-            {/* Restored Job Type, Experience Level, other tags */}
-             <ul className="job-other-info">
-               {/* Hiển thị Industry tag */}
-               {item.industryId ? (
-                 <li className="time">{getIndustryName(item.industryId)}</li>
-               ) : null}
-               {/* Hiển thị Job Type tag */}
-               {item.jobTypeId ? (
-                  <li className="time">{getJobTypeName(item.jobTypeId)}</li>
-               ) : null}
-                {/* Hiển thị Experience Level tag */}
-               {item.experienceLevelId ? (
-                 <li className="urgent">{getExperienceLevelName(item.experienceLevelId)}</li>
-                ) : null}
-                {/* Removed other placeholder tags */}
-
-             </ul>
-
-            {/* Cập nhật Bookmark button */}
-            <button
-              className={`bookmark-btn ${bookmarkedCompanies.includes(Number(item.companyId)) ? 'active' : ''}`}
-              onClick={() => handleBookmark(item.companyId)}
-              disabled={isLoadingBookmarks}
-              style={{
-                position: 'absolute',
-                right: '20px',
-                top: '20px',
-                background: 'none',
-                border: 'none',
-                cursor: 'pointer',
-                padding: '5px',
-                transition: 'all 0.3s ease',
-                color: bookmarkedCompanies.includes(Number(item.companyId)) ? '#ff5a5f' : '#666',
-              }}
-            >
-              <span className="flaticon-bookmark" style={{ fontSize: '20px' }}></span>
-            </button>
-          </div>
-        </div>
-      </div>
-    ));
-
-
-  // sort handler
-  const sortHandler = (e) => {
-    dispatch(addSort(e.target.value));
-    setCurrentPage(1);
-  };
-
-
-  // per page handler
-  const perPageHandler = (e) => {
-    const limit = Number(e.target.value);
-    setItemsPerPage(limit);
-    setCurrentPage(1);
-  };
-
-  // Điều chỉnh logic phân trang hiển thị
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const endIndex = startIndex + jobs.length;
-
-  // clear all filters
-  const clearAll = () => {
-    dispatch(addKeyword(""));
-    dispatch(addLocation(""));
-    dispatch(addDestination({ min: 0, max: 100 }));
-    dispatch(addCategory(""));
-    dispatch(clearJobType());
-    dispatch(clearJobTypeToggle());
-    dispatch(addDatePosted(""));
-    dispatch(clearDatePostToggle());
-    dispatch(clearExperience());
-    dispatch(clearExperienceToggle());
-    dispatch(addSalary({ min: 0, max: 20000 }));
-    dispatch(addTag(""));
-    dispatch(addSort(""));
-    setCurrentPage(1);
-    setItemsPerPage(10);
-    setDisplayCount(10);
-  };
+  // Lọc job active và áp dụng filter từ query string
+  const filteredActiveJobs = jobs
+    .filter(job => job.status === 1)
+    .filter(job => !industryId || String(job.industryId) === String(industryId))
+    .filter(job => !provinceName || job.provinceName === provinceName)
+    .filter(job => !levelId || String(job.levelId) === String(levelId))
+    .filter(job => !jobTypeId || String(job.jobTypeId) === String(jobTypeId))
+    .filter(job => !experienceLevelId || String(job.experienceLevelId) === String(experienceLevelId));
+  const totalActiveJobs = filteredActiveJobs.length;
+  const totalPages = Math.ceil(totalActiveJobs / itemsPerPage);
+  // Phân trang trên mảng đã lọc
+  const jobsToShow = filteredActiveJobs.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
 
   return (
     <>
@@ -435,7 +312,7 @@ const FilterJobsBox = () => {
 
 
           <div className="text">
-            Show <strong>{content?.length || 0}</strong> of <strong>{jobs.filter(job => job.status === 1).length || 0}</strong> jobs
+            Show <strong>{jobsToShow.length || 0}</strong> of <strong>{totalActiveJobs || 0}</strong> jobs
           </div>
         </div>
         {/* End show-result */}
@@ -455,9 +332,26 @@ const FilterJobsBox = () => {
           tag !== "" ||
           sort !== "" ||
           currentPage !== 1 ||
-          itemsPerPage !== 10 ? (
+          itemsPerPage !== 8 ? (
             <button
-              onClick={clearAll}
+              onClick={() => {
+                dispatch(addKeyword(""));
+                dispatch(addLocation(""));
+                dispatch(addDestination({ min: 0, max: 100 }));
+                dispatch(addCategory(""));
+                dispatch(clearJobType());
+                dispatch(clearJobTypeToggle());
+                dispatch(addDatePosted(""));
+                dispatch(clearDatePostToggle());
+                dispatch(clearExperience());
+                dispatch(clearExperienceToggle());
+                dispatch(addSalary({ min: 0, max: 20000 }));
+                dispatch(addTag(""));
+                dispatch(addSort(""));
+                setCurrentPage(1);
+                setItemsPerPage(8);
+                setDisplayCount(10);
+              }}
               className="btn btn-danger text-nowrap me-2"
               style={{ minHeight: "45px", marginBottom: "15px" }}
             >
@@ -469,7 +363,10 @@ const FilterJobsBox = () => {
           <select
             value={sort}
             className="chosen-single form-select"
-            onChange={sortHandler}
+            onChange={(e) => {
+              dispatch(addSort(e.target.value));
+              setCurrentPage(1);
+            }}
           >
             <option value="">Sort by (default)</option>
             <option value="CreatedAtAsc">Newest</option>
@@ -479,14 +376,18 @@ const FilterJobsBox = () => {
 
 
           <select
-            onChange={perPageHandler}
+            onChange={(e) => {
+              const limit = Number(e.target.value);
+              setItemsPerPage(limit);
+              setCurrentPage(1);
+            }}
             className="chosen-single form-select ms-3"
             value={itemsPerPage}
           >
-            <option value="10">10 Per Page</option>
-            <option value="20">20 Per Page</option>
-            <option value="30">30 Per Page</option>
-            <option value="50">50 Per Page</option>
+            <option value="8">8 Per Page</option>
+            <option value="16">16 Per Page</option>
+            <option value="24">24 Per Page</option>
+            <option value="40">40 Per Page</option>
           </select>
           {/* End select */}
         </div>
@@ -494,7 +395,31 @@ const FilterJobsBox = () => {
       {/* End ls-switcher */}
 
       {loading ? (
-        <div className="text-center py-5">Loading...</div>
+        <div className="row">
+          {[...Array(6)].map((_, idx) => (
+            <div className="job-block col-12 mb-4" key={idx}>
+              <div className="inner-box" style={{ minHeight: 180, position: 'relative', padding: 24 }}>
+                <div className="skeleton" style={{ width: 54, height: 53, borderRadius: 8, marginBottom: 16 }} />
+                <div className="skeleton" style={{ width: '60%', height: 24, marginBottom: 12 }} />
+                <div className="skeleton" style={{ width: '40%', height: 16, marginBottom: 8 }} />
+                <div className="skeleton" style={{ width: '80%', height: 16, marginBottom: 8 }} />
+                <div className="skeleton" style={{ width: '30%', height: 16, marginBottom: 8 }} />
+                <div className="skeleton" style={{ width: 40, height: 40, borderRadius: '50%', position: 'absolute', right: 20, top: 20 }} />
+              </div>
+            </div>
+          ))}
+          <style jsx>{`
+            .skeleton {
+              background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 37%, #f0f0f0 63%);
+              background-size: 400% 100%;
+              animation: skeleton-loading 1.4s ease infinite;
+            }
+            @keyframes skeleton-loading {
+              0% { background-position: 100% 50%; }
+              100% { background-position: 0 50%; }
+            }
+          `}</style>
+        </div>
       ) : error ? (
         <div className="text-center py-5 text-danger">{error}</div>
       ) : jobs.length === 0 ? (
@@ -504,23 +429,144 @@ const FilterJobsBox = () => {
         </div>
       ) : (
         <div className="row">
-          {content}
+          {jobsToShow.map((item, index) => (
+            <div key={item.id || index} className="job-block">
+              <div className="inner-box">
+                <div className="content">
+                  <span className="company-logo" style={{
+                    display: 'inline-block',
+                    width: 54,
+                    height: 54,
+                    borderRadius: 12,
+                    border: '1px solid #e5e7eb',
+                    background: '#fff',
+                    overflow: 'hidden',
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
+                    marginRight: 18,
+                    verticalAlign: 'middle',
+                  }}>
+                    {(() => {
+                      const company = companies.find(c => c.id === item.companyId);
+                      const logoSrc = company?.logo || item.company?.urlCompanyLogo || '/images/company-logo/default-logo.png';
+                      const companyName = company?.name || item.company?.companyName || 'Company';
+                      return <Image width={54} height={54} src={logoSrc} alt={companyName} style={{ objectFit: 'cover', width: 54, height: 54, display: 'block' }} />;
+                    })()}
+                  </span>
+                  <h4>
+                    <Link href={`/job-single-v3/${item.id}`}>{item.jobTitle}</Link>
+                  </h4>
+                  <ul className="job-info">
+                    <li>
+                      <span className="icon flaticon-briefcase"></span>
+                      {item.company?.companyName || getCompanyName(item.companyId)}
+                    </li>
+                    <li>
+                      <span className="icon flaticon-map-locator"></span>
+                      {item.provinceName || 'Province N/A'}
+                    </li>
+                    <li>
+                      <span className="icon flaticon-clock-3"></span>
+                      {item.createdAt ? (() => {
+                        const diff = Math.floor((Date.now() - new Date(item.createdAt)) / (1000 * 60 * 60));
+                        return diff < 24 ? `${diff} hours ago` : `${Math.floor(diff / 24)} days ago`;
+                      })() : 'N/A'}
+                    </li>
+                    <li>
+                      <span className="icon flaticon-money"></span>
+                      {item.isSalaryNegotiable
+                        ? 'Negotiable Salary'
+                        : (item.minSalary && item.maxSalary
+                            ? `$${item.minSalary.toLocaleString()} - $${item.maxSalary.toLocaleString()}`
+                            : 'Salary N/A')}
+                    </li>
+                  </ul>
+                  <div style={{ display: 'flex', gap: 8, marginTop: 8, flexWrap: 'wrap' }}>
+                    {/* Job Type Tag */}
+                    {item.jobType?.jobTypeName && (
+                      <span style={{ background: '#e0edff', color: '#2563eb', borderRadius: 16, padding: '4px 16px', fontWeight: 500, fontSize: 14 }}>
+                        {item.jobType.jobTypeName}
+                      </span>
+                    )}
+                    {/* Industry Tag */}
+                    {item.industry?.industryName && (
+                      <span style={{ background: '#e6f4ea', color: '#1dbf73', borderRadius: 16, padding: '4px 16px', fontWeight: 500, fontSize: 14 }}>
+                        {item.industry.industryName}
+                      </span>
+                    )}
+                    {/* Level Tag */}
+                    {item.level?.levelName && (
+                      <span style={{ background: '#fff4e6', color: '#ffb200', borderRadius: 16, padding: '4px 16px', fontWeight: 500, fontSize: 14 }}>
+                        {item.level.levelName}
+                      </span>
+                    )}
+                  </div>
+                  <button
+                    className={`bookmark-btn ${(favoriteJobIds || []).includes(item.id) ? 'active' : ''}`}
+                    onClick={() => handleToggleFavorite(item.id)}
+                    style={{
+                      position: 'absolute',
+                      right: '20px',
+                      top: '20px',
+                      background: 'none',
+                      border: 'none',
+                      cursor: 'pointer',
+                      padding: '5px',
+                      transition: 'all 0.3s ease',
+                      color: (favoriteJobIds || []).includes(item.id) ? '#ff5a5f' : '#666',
+                    }}
+                  >
+                    {(favoriteJobIds || []).includes(item.id) ? (
+                      <svg
+                        width="24"
+                        height="24"
+                        viewBox="0 0 24 24"
+                        fill="#2563eb"
+                        xmlns="http://www.w3.org/2000/svg"
+                        style={{ display: 'inline-block', verticalAlign: 'middle' }}
+                      >
+                        <path d="M6 2a2 2 0 0 0-2 2v18l8-5.333L20 22V4a2 2 0 0 0-2-2H6z"/>
+                      </svg>
+                    ) : (
+                      <span className="flaticon-bookmark" style={{ fontSize: '24px', display: 'inline-block', verticalAlign: 'middle' }}></span>
+                    )}
+                  </button>
+                </div>
+              </div>
+            </div>
+          ))}
         </div>
       )}
 
-
-
-      <div className="ls-show-more">
-        <p>
-          Total {jobs.length} jobs. <span className="text-theme-color">{totalJobs - jobs.length}</span> more to show
-        </p>
-        <a
-          className="theme-btn btn-style-one"
-          href="#"
-          onClick={handleShowMore}
-        >
-          Load More
-        </a>
+      {/* Pagination */}
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 16, margin: '24px 0' }}>
+        <button disabled={currentPage === 1} onClick={() => setCurrentPage(currentPage - 1)} style={{ background: 'none', border: 'none', fontSize: 22, cursor: 'pointer', color: currentPage === 1 ? '#ccc' : '#444' }}>
+          &#8592;
+        </button>
+        {Array.from({ length: totalPages }, (_, i) => (
+          <button
+            key={i + 1}
+            onClick={() => setCurrentPage(i + 1)}
+            style={{
+              width: 40,
+              height: 40,
+              borderRadius: '50%',
+              background: currentPage === i + 1 ? '#2563eb' : 'none',
+              color: currentPage === i + 1 ? '#fff' : '#444',
+              border: 'none',
+              fontWeight: 600,
+              fontSize: 18,
+              cursor: 'pointer',
+              outline: 'none',
+              boxShadow: 'none',
+              transition: 'background 0.2s, color 0.2s'
+            }}
+          >
+            {i + 1}
+          </button>
+        ))}
+        <button disabled={currentPage === totalPages} onClick={() => setCurrentPage(currentPage + 1)} style={{ background: 'none', border: 'none', fontSize: 22, cursor: 'pointer', color: currentPage === totalPages ? '#ccc' : '#444' }}>
+          &#8594;
+        </button>
       </div>
     </>
   );

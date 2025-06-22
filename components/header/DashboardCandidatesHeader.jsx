@@ -3,12 +3,14 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import candidatesMenuData from "../../data/candidatesMenuData";
+import candidatesMenuData from "../../data/candidatesHeaderMenuData";
 import HeaderNavContent from "./HeaderNavContent";
 import { isActiveLink } from "../../utils/linkActiveChecker";
 import { usePathname } from "next/navigation";
 import { authService } from "../../services/authService";
 import { useSelector } from "react-redux";
+import { getUserFavorites } from "../../services/favoriteJobService";
+import { useFavoriteJobs } from "../../contexts/FavoriteJobsContext";
 
 // Helper function to validate image URLs
 const getValidImageUrl = (url) => {
@@ -28,10 +30,12 @@ const getValidImageUrl = (url) => {
 
 const DashboardCandidatesHeader = () => {
     const [navbar, setNavbar] = useState(false);
-    const [fullName, setFullName] = useState("Tài khoản của tôi");
+    const [fullName, setFullName] = useState("My Account");
     const [avatar, setAvatar] = useState("/images/resource/candidate-1.png");
+    const userId = typeof window !== 'undefined' ? Number(localStorage.getItem('userId')) : null;
 
-    const { isLoggedIn, user, role } = useSelector((state) => state.auth); // Added useSelector
+    const { isLoggedIn, user, role } = useSelector((state) => state.auth);
+    const { favoriteCount } = useFavoriteJobs() || {};
 
     const changeBackground = () => {
         if (typeof window !== 'undefined' && window.scrollY >= 0) {
@@ -100,10 +104,14 @@ const DashboardCandidatesHeader = () => {
                     {/* End .nav-outer */}
 
                     <div className="outer-box">
-                        <button className="menu-btn">
-                            <span className="count">1</span>
-                            <span className="icon la la-heart-o"></span>
-                        </button>
+                        {isLoggedIn && (
+                            <Link href="/favorite-jobs">
+                                <button className="menu-btn">
+                                    <span className="count">{favoriteCount}</span>
+                                    <span className="icon la la-heart-o"></span>
+                                </button>
+                            </Link>
+                        )}
                         {/* Danh sách yêu thích */}
 
                         <button className="menu-btn">
