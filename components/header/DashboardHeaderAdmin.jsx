@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import employerMenuData from "../../data/adminMenuData";
+import employerMenuData from "../../data/adminHeadedrMenuData";
 import { isActiveLink } from "../../utils/linkActiveChecker";
 import { usePathname, useRouter } from "next/navigation";
 import { useDispatch } from 'react-redux';
@@ -13,7 +13,7 @@ import Cookies from 'js-cookie';
 import { getUserFavorites } from "../../services/favoriteJobService";
 import { useFavoriteJobs } from "../../contexts/FavoriteJobsContext";
 
-const DashboardHeader = () => {
+const DashboardHeaderAdmin = () => {
     const [navbar, setNavbar] = useState(false);
     const [fullName, setFullName] = useState("Admin");
     const [avatar, setAvatar] = useState("/images/resource/company-6.png");
@@ -184,4 +184,4 @@ const DashboardHeader = () => {
     );
 };
 
-export default DashboardHeader;
+export default DashboardHeaderAdmin;

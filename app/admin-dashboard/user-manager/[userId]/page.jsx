@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
-import DashboardHeader from "@/components/header/DashboardHeader";
+import DashboardHeaderAdmin from "@/components/header/DashboardHeaderAdmin";
 import DashboardAdminSidebar from "@/components/header/DashboardAdminSidebar";
 import BreadCrumb from "@/components/dashboard-pages/BreadCrumb";
 import Image from "next/image";
@@ -19,6 +19,7 @@ const UserDetailPage = () => {
   const [confirmLoading, setConfirmLoading] = useState(false);
   const [successModalOpen, setSuccessModalOpen] = useState(false);
   const [error, setError] = useState(null);
+  const [errorModalOpen, setErrorModalOpen] = useState(false);
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -36,20 +37,21 @@ const UserDetailPage = () => {
   }, [userId]);
 
   const handleVerify = async () => {
+    setConfirmLoading(true);
     try {
-      setLoading(true);
       await userService.verifyCandidate(userIdInt);
-      // Handle success
+      setConfirmModalOpen(false);
+      setSuccessModalOpen(true);
     } catch (err) {
       console.error("Error verifying candidate:", err);
       setError("Failed to verify candidate");
+      setErrorModalOpen(true);
     } finally {
-      setLoading(false);
+      setConfirmLoading(false);
     }
   };
 
   if (loading) return <div>Loading...</div>;
-  if (error) return <div>{error}</div>;
   if (!user) return <div>User not found</div>;
 
   // Fake data bổ sung cho các trường còn thiếu
@@ -78,7 +80,7 @@ const UserDetailPage = () => {
   return (
     <div className="page-wrapper dashboard">
       <span className="header-span"></span>
-      <DashboardHeader />
+      <DashboardHeaderAdmin />
       <DashboardAdminSidebar />
       <section className="candidate-detail-section">
         <div className="upper-box">
@@ -161,6 +163,24 @@ const UserDetailPage = () => {
                       >
                         <div style={{textAlign: 'center', padding: '32px 0', fontSize: 18, color: '#1967d2', fontWeight: 600}}>
                           Set user to recruiter successfully!
+                        </div>
+                      </Modal>
+                      <Modal
+                        open={errorModalOpen}
+                        onCancel={() => setErrorModalOpen(false)}
+                        title="Error"
+                        footer={[
+                          <Button
+                            key="ok"
+                            type="primary"
+                            onClick={() => setErrorModalOpen(false)}
+                          >
+                            OK
+                          </Button>
+                        ]}
+                      >
+                        <div style={{textAlign: 'center', padding: '32px 0', fontSize: 18, color: 'red', fontWeight: 600}}>
+                          {error}
                         </div>
                       </Modal>
                     </>

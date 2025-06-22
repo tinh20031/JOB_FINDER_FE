@@ -27,6 +27,14 @@ const DefaulHeader2 = () => {
   const [openRecruiterModal, setOpenRecruiterModal] = useState(false);
   const [displayUserName, setDisplayUserName] = useState("My Account");
   const [displayAvatar, setDisplayAvatar] = useState("/images/resource/candidate-1.png");
+  const [currentUserId, setCurrentUserId] = useState(null);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined' && isLoggedIn) {
+      const id = localStorage.getItem('userId');
+      setCurrentUserId(id);
+    }
+  }, [isLoggedIn]);
 
   useEffect(() => {
     if (isLoggedIn) {
@@ -148,7 +156,7 @@ const DefaulHeader2 = () => {
                     <BecomeRecruiterModal
                       open={openRecruiterModal}
                       onCancel={() => setOpenRecruiterModal(false)}
-                      userId={user?.id || user?.userId || user?._id || user.uid || user}
+                      userId={currentUserId}
                     />
                   )}
                 </>

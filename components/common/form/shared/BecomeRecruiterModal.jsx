@@ -13,6 +13,7 @@ const BecomeRecruiterModal = ({ open, onCancel, userId }) => {
   const [provinces, setProvinces] = useState([]);
   const [industries, setIndustries] = useState([]);
   const [requestSent, setRequestSent] = useState(false);
+  const [statusMessage, setStatusMessage] = useState('');
   const [error, setError] = useState(null);
 
   useEffect(() => { 
@@ -21,15 +22,6 @@ const BecomeRecruiterModal = ({ open, onCancel, userId }) => {
         setProvinces(data);
       });
       fetchIndustries();
-    }
-  }, [open]);
-
-  useEffect(() => {
-    if (open) {
-      const userIdLocal = localStorage.getItem('userId');
-      if (userIdLocal && localStorage.getItem('recruiterRequestSent_' + userIdLocal) === '1') {
-        setRequestSent(true);
-      }
     }
   }, [open]);
 
@@ -47,9 +39,16 @@ const BecomeRecruiterModal = ({ open, onCancel, userId }) => {
     try {
       const values = await form.validateFields();
       setLoading(true);
-      const userIdLocal = localStorage.getItem('userId');
+      const currentUserId = userId || localStorage.getItem('userId');
+
+      if (!currentUserId) {
+        message.error("You must be logged in to submit this request.");
+        setLoading(false);
+        return;
+      }
+      
       const payload = {
-        userId: Number(userIdLocal),
+        userId: Number(currentUserId),
         companyName: values.companyName,
         companyProfileDescription: values.companyProfileDescription,
         location: values.location,
@@ -63,11 +62,19 @@ const BecomeRecruiterModal = ({ open, onCancel, userId }) => {
       message.success("Request sent successfully!");
       form.resetFields();
       setRequestSent(true);
-      if (userIdLocal) localStorage.setItem('recruiterRequestSent_' + userIdLocal, '1');
+      setStatusMessage("We have received your request, please wait...");
+      if (currentUserId) localStorage.setItem('recruiterRequestSent_' + currentUserId, '1');
     } catch (err) {
       console.error("Error submitting request:", err);
-      // Only show a general error message if it's not a validation error
-      if (!err.errorFields) {
+      const currentUserId = userId || localStorage.getItem('userId');
+
+      if (err.response && typeof err.response.data === 'string' && err.response.data.includes("You have submitted a request before please wait")) {
+        setRequestSent(true);
+        setStatusMessage(err.response.data);
+        if (currentUserId) {
+          localStorage.setItem('recruiterRequestSent_' + currentUserId, '1');
+        }
+      } else if (!err.errorFields) {
         message.error("Failed to submit request");
       }
     } finally {
@@ -99,7 +106,7 @@ const BecomeRecruiterModal = ({ open, onCancel, userId }) => {
       {requestSent ? (
         <div className="success-message">
           <CheckCircleOutlined style={{ fontSize: 48, marginBottom: 20, color: '#52c41a' }} />
-          We have received your request, please wait...
+          {statusMessage}
         </div>
       ) : (
         <Form

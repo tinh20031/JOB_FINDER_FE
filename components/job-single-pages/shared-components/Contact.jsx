@@ -42,7 +42,7 @@ const Contact = ({ companyId, jobId, companyName, industry, urlCompanyLogo }) =>
     };
 
     if (!payload.senderId || !payload.receiverId) {
-      setError("Cannot identify sender or receiver.");
+      setError("You must be loggin in");
       return;
     }
 

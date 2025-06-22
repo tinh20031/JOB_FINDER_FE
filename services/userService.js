@@ -46,7 +46,7 @@ export const userService = {
         throw new Error('No authentication token found');   
       }
 
-      const response = await axios.put(
+      const response = await axios.post(
         `${API_URL}/CandidateToCompany/verify/${userId}`,
         {},
         {

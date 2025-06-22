@@ -34,6 +34,9 @@ export const authService = {
       if (decodedToken && decodedToken.profileImage) {
         localStorage.setItem('profileImage', decodedToken.profileImage);
       }
+      if (decodedToken && decodedToken.sub) {
+        localStorage.setItem('userId', decodedToken.sub);
+      }
       if (data.companyId) {
         localStorage.setItem('companyId', data.companyId);
       }
@@ -60,6 +63,9 @@ export const authService = {
       }
       if (decodedToken && decodedToken.profileImage) {
         Cookies.set('profileImage', decodedToken.profileImage, cookieOptions);
+      }
+      if (decodedToken && decodedToken.sub) {
+        Cookies.set('userId', decodedToken.sub, cookieOptions);
       }
       if (data.companyId) {
         Cookies.set('companyId', data.companyId, cookieOptions);
@@ -96,6 +102,7 @@ export const authService = {
     localStorage.removeItem('companyId');
     localStorage.removeItem('fullName'); // Remove fullName
     localStorage.removeItem('profileImage'); // Remove profileImage
+    localStorage.removeItem('userId');
 
     // Xóa token và các thông tin khác từ Cookies
     Cookies.remove('token', { path: '/' });
@@ -104,6 +111,7 @@ export const authService = {
     Cookies.remove('companyId', { path: '/' });
     Cookies.remove('fullName', { path: '/' }); // Remove fullName
     Cookies.remove('profileImage', { path: '/' }); // Remove profileImage
+    Cookies.remove('userId', { path: '/' });
     // Nếu bạn có các domain cụ thể, cũng cần xóa
     Cookies.remove('token', { path: '/', domain: 'localhost' });
     Cookies.remove('role', { path: '/', domain: 'localhost' });
@@ -111,6 +119,7 @@ export const authService = {
     Cookies.remove('companyId', { path: '/', domain: 'localhost' });
     Cookies.remove('fullName', { path: '/', domain: 'localhost' }); // Remove fullName
     Cookies.remove('profileImage', { path: '/', domain: 'localhost' }); // Remove profileImage
+    Cookies.remove('userId', { path: '/', domain: 'localhost' });
   },
 
   getToken() {
