@@ -3,6 +3,7 @@ import { fetchProfileStrength } from "../../../../../services/useResumeData";
 import { useSelector } from "react-redux";
 import { CircularProgressbar, buildStyles } from "react-circular-progressbar";
 import "react-circular-progressbar/dist/styles.css";
+import { useRouter } from "next/navigation";
 
 const ProfileStrengthSidebar = ({
   onClickEducation,
@@ -13,6 +14,7 @@ const ProfileStrengthSidebar = ({
   onClickCertificate,
   onClickAwards,
   onClickForeignLang,
+  onPreviewDownloadCV,
 }) => {
   const [strength, setStrength] = useState({
     percentage: 0,
@@ -22,6 +24,7 @@ const ProfileStrengthSidebar = ({
   const [listHeight, setListHeight] = useState(0);
   const ulRef = useRef(null);
   const token = useSelector((state) => state.auth.token);
+  const router = useRouter();
 
   // Helper to normalize and map field names to handlers
   const getHandler = (field) => {
@@ -61,6 +64,15 @@ const ProfileStrengthSidebar = ({
     (f, i, arr) => !!f && f.trim() !== "" && arr.indexOf(f) === i
   );
 
+  // Hàm xử lý chuyển trang
+  const handlePreviewDownloadCV = () => {
+    if (typeof onPreviewDownloadCV === "function") {
+      onPreviewDownloadCV();
+    } else {
+      router.push("/candidates-dashboard/cv-templates");
+    }
+  };
+
   return (
     <div className="sidebar-inner">
       <div
@@ -92,6 +104,102 @@ const ProfileStrengthSidebar = ({
             })}
           />
         </div>
+        {/* Thông báo theo phần trăm hoàn thành - style giống mẫu */}
+        <div
+          style={{
+            position: "relative",
+            width: "fit-content",
+            margin: "0 auto 18px auto",
+            maxWidth: 260,
+          }}
+        >
+          <div
+            style={{
+              background: "#fff",
+              border: "2px solid #222",
+              borderRadius: 10,
+              padding: "10px 14px",
+              minWidth: 180,
+              maxWidth: 260,
+              boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
+              fontSize: 14,
+              color: "#222",
+              fontWeight: 400,
+              position: "relative",
+              zIndex: 2,
+              textAlign: "left",
+            }}
+          >
+            {strength.percentage < 70 ? (
+              <>
+                Complete profile to{" "}
+                <span style={{ color: "#e60023", fontWeight: 700 }}>70%</span>{" "}
+                to
+                <br />
+                generate CV template for IT professionals.
+              </>
+            ) : (
+              <>
+                Congratulations! You are ready to generate your CV. Continue to
+                complete your profile for an attractive CV.
+              </>
+            )}
+            {/* Mũi tên tam giác nhỏ */}
+            <span
+              style={{
+                position: "absolute",
+                right: -12,
+                top: "50%",
+                transform: "translateY(-50%)",
+                width: 0,
+                height: 0,
+                borderTop: "7px solid transparent",
+                borderBottom: "7px solid transparent",
+                borderLeft: "12px solid #222",
+                zIndex: 3,
+              }}
+            />
+            <span
+              style={{
+                position: "absolute",
+                right: -11,
+                top: "50%",
+                transform: "translateY(-50%)",
+                width: 0,
+                height: 0,
+                borderTop: "6px solid transparent",
+                borderBottom: "6px solid transparent",
+                borderLeft: "11px solid #fff",
+                zIndex: 4,
+              }}
+            />
+          </div>
+          {/* Icon robot ngoài khung nhỏ lại */}
+          <div
+            style={{
+              position: "absolute",
+              right: -34,
+              top: "50%",
+              transform: "translateY(-50%)",
+              zIndex: 5,
+            }}
+          >
+            <img
+              src="https://itviec.com/assets/robby/robby-welcome-88a1fef0ec2128f54ffb2a0c49dfaebccf1a839062f13ede6178846644afd639.svg"
+              alt="robot"
+              style={{
+                width: 28,
+                height: 28,
+                objectFit: "contain",
+                background: "#fff",
+                borderRadius: "50%",
+                border: "2px solid #222",
+                boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
+              }}
+            />
+          </div>
+        </div>
+        {/* End thông báo */}
         {strength.missingFields.length > 0 && (
           <div style={{ marginTop: 18 }}>
             <div
@@ -101,9 +209,7 @@ const ProfileStrengthSidebar = ({
                 color: "#e60023",
                 fontWeight: 600,
               }}
-            >
-              Thiếu thông tin:
-            </div>
+            ></div>
             <div
               style={{
                 overflow: "hidden",
@@ -209,6 +315,31 @@ const ProfileStrengthSidebar = ({
             )}
           </div>
         )}
+        {/* Nút Preview & Download CV */}
+        {strength.percentage >= 70 && (
+          <button
+            onClick={handlePreviewDownloadCV}
+            style={{
+              width: "100%",
+              margin: "8px auto 0 auto",
+              display: "block",
+              background: "#7367F0",
+              color: "#fff",
+              border: "none",
+              borderRadius: 8,
+              padding: "10px 0",
+              fontWeight: 600,
+              fontSize: 15,
+              cursor: "pointer",
+              boxShadow: "0 2px 8px rgba(115,103,240,0.08)",
+              transition: "background 0.2s",
+            }}
+            onMouseOver={(e) => (e.currentTarget.style.background = "#5e50ee")}
+            onMouseOut={(e) => (e.currentTarget.style.background = "#7367F0")}
+          >
+            Preview & Download CV
+          </button>
+        )}
       </div>
     </div>
   );
@@ -223,6 +354,7 @@ ProfileStrengthSidebar.defaultProps = {
   onClickCertificate: undefined,
   onClickAwards: undefined,
   onClickForeignLang: undefined,
+  onPreviewDownloadCV: undefined,
 };
 
 export default ProfileStrengthSidebar;
