@@ -167,26 +167,6 @@ const JobPostManagement = () => {
     </div>
   );
 
-  const renderPagination = () => {
-    return (
-        <nav className="mt-3">
-            <ul className="pagination justify-content-end">
-                <li className={`page-item ${currentPage === 1 ? 'disabled' : ''}`}>
-                    <button className="page-link" onClick={() => setCurrentPage(currentPage - 1)}>&laquo;</button>
-                </li>
-                {Array.from({ length: totalPages }, (_, i) => (
-                    <li key={i + 1} className={`page-item ${currentPage === i + 1 ? 'active' : ''}`}>
-                        <button className="page-link" onClick={() => setCurrentPage(i + 1)}>{i + 1}</button>
-                    </li>
-                ))}
-                <li className={`page-item ${currentPage === totalPages ? 'disabled' : ''}`}>
-                    <button className="page-link" onClick={() => setCurrentPage(currentPage + 1)}>&raquo;</button>
-                </li>
-            </ul>
-        </nav>
-    );
-  }
-
   if (loading) return <div className="page-wrapper dashboard" style={{background:'#f7f8fa', minHeight:'100vh'}}><div className="text-center py-5">Loading...</div></div>;
   if (error) return <div className="page-wrapper dashboard" style={{background:'#f7f8fa', minHeight:'100vh'}}><div className="text-center py-5 text-danger">{error}</div></div>;
 
@@ -236,7 +216,7 @@ const JobPostManagement = () => {
                         <div className="inner-box">
                           <div className="content">
                             <span className="company-logo">
-                              <Image width={50} height={49} src={item.company?.urlCompanyLogo || '/images/company-logo/default-logo.png'} alt={item.company?.companyName || 'N/A'} />
+                              <Image width={50} height={49} src={item.company?.urlCompanyLogo || '/images/company-logo/default-logo.png'} alt={item.company?.companyName || 'N/A'} style={{ borderRadius: '50%' }} />
                             </span>
                             <h4><Link href={`/job-single-v3/${item.jobId}`}>{item.title}</Link></h4>
                             <ul className="job-info">
@@ -275,7 +255,23 @@ const JobPostManagement = () => {
                       </div>
                     ))
                   )}
-                  {totalPages > 1 && renderPagination()}
+                  {totalPages > 1 && (
+                    <nav className="mt-3">
+                        <ul className="pagination justify-content-center">
+                            <li className={`page-item ${currentPage === 1 ? 'disabled' : ''}`}>
+                                <button className="page-link" onClick={() => setCurrentPage(currentPage - 1)}>&laquo;</button>
+                            </li>
+                            {Array.from({ length: totalPages }, (_, i) => (
+                                <li key={i + 1} className={`page-item ${currentPage === i + 1 ? 'active' : ''}`}>
+                                    <button className="page-link" onClick={() => setCurrentPage(i + 1)}>{i + 1}</button>
+                                </li>
+                            ))}
+                            <li className={`page-item ${currentPage === totalPages ? 'disabled' : ''}`}>
+                                <button className="page-link" onClick={() => setCurrentPage(currentPage + 1)}>&raquo;</button>
+                            </li>
+                        </ul>
+                    </nav>
+                  )}
                 </div>
               </div>
             </div>
