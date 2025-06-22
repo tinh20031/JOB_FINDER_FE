@@ -10,9 +10,12 @@ import { chatSidebarToggle } from "../../../../../features/toggle/toggleSlice";
 import { authService } from "../../../../../services/authService"; 
 import { jwtDecode } from 'jwt-decode';
 import messageService from '../../../../../services/messageService';
+import { useSearchParams } from 'next/navigation';
 
 const ChatBox = () => {
   const dispatch = useDispatch();
+  const searchParams = useSearchParams();
+  const urlCompanyId = searchParams.get('companyId');
   const [connection, setConnection] = useState(null);
   const [messages, setMessages] = useState([]);
   const [currentChatPartnerId, setCurrentChatPartnerId] = useState(null);
@@ -287,6 +290,27 @@ const ChatBox = () => {
       setPartnerOnline(!!partner?.isOnline);
     }
   }, [currentChatPartnerId, chatContacts]);
+
+  // Khi fetch xong contact, nếu có companyId trên URL thì tự động chọn
+  useEffect(() => {
+    if (urlCompanyId && chatContacts.length > 0) {
+      const found = chatContacts.find(c => String(c.id) === String(urlCompanyId));
+      if (found) {
+        setCurrentChatPartnerId(String(urlCompanyId));
+      }
+    }
+  }, [urlCompanyId, chatContacts]);
+
+  // Nếu có companyId trên URL mà contact chưa có, sau khi gửi tin nhắn xong sẽ fetch lại contact list
+  useEffect(() => {
+    if (urlCompanyId && chatContacts.length === 0) {
+      // Đợi 1s rồi fetch lại contact list (sau khi gửi tin nhắn lần đầu)
+      const timeout = setTimeout(() => {
+        fetchChatContacts();
+      }, 1000);
+      return () => clearTimeout(timeout);
+    }
+  }, [urlCompanyId, chatContacts, fetchChatContacts]);
 
   return (
     <div className="row" style={{ height: "100%" }}>

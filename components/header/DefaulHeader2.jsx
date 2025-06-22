@@ -8,9 +8,9 @@ import { clearLoginState, setLoginState } from '@/features/auth/authSlice';
 import { authService } from "@/services/authService";
 import HeaderNavContent from "./HeaderNavContent";
 import Image from "next/image";
-import employerMenuData from "../../data/employerMenuData";
+import employerMenuData from "../../data/employerHeaderMenuData";
 import { isActiveLink } from "../../utils/linkActiveChecker";
-import candidatesMenuData from "../../data/candidatesMenuData";
+import candidatesMenuData from "../../data/candidatesHeaderMenuData";
 import adminMenuData from "../../data/adminMenuData";
 import BecomeRecruiterModal from '../common/form/shared/BecomeRecruiterModal';
 

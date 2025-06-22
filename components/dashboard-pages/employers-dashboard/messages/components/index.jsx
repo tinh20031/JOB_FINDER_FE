@@ -126,7 +126,6 @@ const ChatBox = () => {
         const senderId = Number(messageData.senderId);
         const receiverId = Number(messageData.receiverId);
         if (
-          (senderId === myId && receiverId === partnerId) ||
           (senderId === partnerId && receiverId === myId)
         ) {
           setMessages(prevMessages => [...prevMessages, {
@@ -136,7 +135,7 @@ const ChatBox = () => {
         }
         // Hiệu ứng nổi bật khi có tin nhắn mới
         const contactId = senderId === myId ? receiverId : senderId;
-        if (contactId !== partnerId) {
+        if (senderId !== myId && contactId !== partnerId) {
           setUnreadContactIds(prev => prev.includes(String(contactId)) ? prev : [...prev, String(contactId)]);
         }
       };

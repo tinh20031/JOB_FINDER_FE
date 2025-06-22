@@ -56,10 +56,10 @@ const JobSingleDynamicV3 = ({ params }) => {
         setFetchError(null);
 
         if (jobResponse?.companyId) {
-          companyProfileService.getCompanyProfile(jobResponse.companyId)
+          ApiService.getCompanyProfileById(jobResponse.companyId)
             .then(setCompany)
             .catch((err) => {
-                console.error("Error fetching company profile:", err);
+                console.error("Error fetching company profile with ApiService:", err);
                 setCompany(null);
             });
         }
@@ -182,7 +182,7 @@ const JobSingleDynamicV3 = ({ params }) => {
                       <h4 className="widget-title">Contact Us</h4>
                       <div className="widget-content">
                         <div className="default-form">
-                          <Contact />
+                          <Contact companyId={job?.companyId} jobId={job?.id} jobTitle={job?.jobTitle} />
                         </div>
                         {/* End .default-form */}
                       </div>
@@ -362,7 +362,7 @@ const JobSingleDynamicV3 = ({ params }) => {
                       </div>
                       {/* End company title */}
 
-                      <CompnayInfo companyId={job?.companyId} />
+                      <CompnayInfo company={company} industries={industries} />
 
                       <div className="btn-box">
                         {company?.website && (
@@ -385,7 +385,13 @@ const JobSingleDynamicV3 = ({ params }) => {
                     <h4 className="widget-title">Contact Us</h4>
                     <div className="widget-content">
                       <div className="default-form">
-                        <Contact />
+                        <Contact 
+                          companyId={job?.companyId} 
+                          jobId={job?.id} 
+                          companyName={company?.companyName}
+                          industry={getIndustryName(company?.industryId)}
+                          urlCompanyLogo={company?.urlCompanyLogo}
+                        />
                       </div>
                       {/* End .default-form */}
                     </div>

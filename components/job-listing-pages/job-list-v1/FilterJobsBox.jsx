@@ -501,7 +501,7 @@ const FilterJobsBox = () => {
                     )}
                   </div>
                   <button
-                    className={`bookmark-btn ${favoriteJobIds.includes(item.id) ? 'active' : ''}`}
+                    className={`bookmark-btn ${(favoriteJobIds || []).includes(item.id) ? 'active' : ''}`}
                     onClick={() => handleToggleFavorite(item.id)}
                     style={{
                       position: 'absolute',
@@ -512,10 +512,10 @@ const FilterJobsBox = () => {
                       cursor: 'pointer',
                       padding: '5px',
                       transition: 'all 0.3s ease',
-                      color: favoriteJobIds.includes(item.id) ? '#ff5a5f' : '#666',
+                      color: (favoriteJobIds || []).includes(item.id) ? '#ff5a5f' : '#666',
                     }}
                   >
-                    {favoriteJobIds.includes(item.id) ? (
+                    {(favoriteJobIds || []).includes(item.id) ? (
                       <svg
                         width="24"
                         height="24"

@@ -78,13 +78,7 @@ module.exports = [
     isLogout: true,
   },
 
-  {
-    id: 12,
-    name: "Delete Profile",
-    icon: "la-trash",
-    routePath: "/",
-    active: "",
-  },
+ 
   {
     id: 13,
     name: "Favorite Companies",
