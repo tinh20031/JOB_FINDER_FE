@@ -11,6 +11,8 @@ import { authService } from "../../../../../services/authService";
 import { jwtDecode } from 'jwt-decode';
 import messageService from '../../../../../services/messageService';
 import { useSearchParams } from 'next/navigation';
+import { HubConnectionBuilder, HttpTransportType } from '@microsoft/signalr';
+import chatService from '../../../../../services/chatService';
 
 const ChatBox = () => {
   const dispatch = useDispatch();
@@ -87,18 +89,12 @@ const ChatBox = () => {
 
   // Initialize SignalR connection
   useEffect(() => {
-    const newConnection = new signalR.HubConnectionBuilder()
-      .withUrl("http://localhost:5194/chatHub", {
-        accessTokenFactory: () => authService.getToken()
-      })
-      .withAutomaticReconnect()
-      .build();
-
-    setConnection(newConnection);
+    const connection = chatService.createHubConnection();
+    setConnection(connection);
 
     return () => {
-      if (newConnection.state === signalR.HubConnectionState.Connected) {
-        newConnection.stop();
+      if (connection.state === signalR.HubConnectionState.Connected) {
+        connection.stop();
       }
     };
   }, []);

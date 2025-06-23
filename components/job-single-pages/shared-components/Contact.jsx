@@ -2,6 +2,7 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import axios from 'axios';
 import { authService } from '@/services/authService';
+import messageService from '@/services/messageService';
 
 const Contact = ({ companyId, jobId, companyName, industry, urlCompanyLogo }) => {
   const router = useRouter();
@@ -47,13 +48,7 @@ const Contact = ({ companyId, jobId, companyName, industry, urlCompanyLogo }) =>
     }
 
     try {
-      const token = authService.getToken();
-      await axios.post('/api/Message/send', payload, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        }
-      });
+      await messageService.sendMessage(payload);
       closeModal();
       router.push(`/candidates-dashboard/messages?companyId=${companyId}&jobId=${jobId}`);
     } catch (err) {

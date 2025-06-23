@@ -10,12 +10,11 @@ const EditProfileModal = ({ open, onClose, onSubmit, profile }) => {
   const [form, setForm] = useState({
     FullName: profile?.fullName || "",
     JobTitle: profile?.jobTitle || "",
-    Gender: profile?.gender || "male",
-    City: profile?.city || "",
+    Gender: profile?.gender || "Male",
+    Dob: profile?.dob || "",
     Province: profile?.province || "",
+    City: profile?.city || "",
     Address: profile?.address || "",
-    Dob: profile?.dob ? profile.dob.split("T")[0] : "",
-    imageFile: null,
     PersonalLink: profile?.personalLink || "",
     Phone: profile?.phone || "",
     image: profile?.image || "",
@@ -34,12 +33,11 @@ const EditProfileModal = ({ open, onClose, onSubmit, profile }) => {
     setForm({
       FullName: profile?.fullName || "",
       JobTitle: profile?.jobTitle || "",
-      Gender: profile?.gender || "male",
-      City: profile?.city || "",
+      Gender: profile?.gender || "Male",
+      Dob: profile?.dob || "",
       Province: profile?.province || "",
+      City: profile?.city || "",
       Address: profile?.address || "",
-      Dob: profile?.dob ? profile.dob.split("T")[0] : "",
-      imageFile: null,
       PersonalLink: profile?.personalLink || "",
       Phone: profile?.phone || "",
       image: profile?.image || "",
@@ -154,6 +152,17 @@ const EditProfileModal = ({ open, onClose, onSubmit, profile }) => {
       PersonalLink: form.PersonalLink,
     };
     onSubmit(submitData);
+  };
+
+  // Add URL validation function
+  const getValidImageUrl = (url) => {
+    if (!url || typeof url !== 'string') {
+      return null;
+    }
+    if (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('/')) {
+      return url;
+    }
+    return null;
   };
 
   return (
@@ -304,16 +313,24 @@ const EditProfileModal = ({ open, onClose, onSubmit, profile }) => {
             {/* Avatar + Edit/Delete */}
             <div className="avatar-section">
               <img
-                src={preview || "/images/resource/default-avatar.png"}
+                src={getValidImageUrl(preview) || getValidImageUrl(form.image) || "/images/resource/default-avatar.png"}
                 alt="avatar"
+                style={{
+                  width: '120px',
+                  height: '120px',
+                  borderRadius: '50%',
+                  objectFit: 'cover',
+                  border: '2px solid #eee',
+                  marginBottom: '16px'
+                }}
               />
               <input
                 type="file"
                 name="imageFile"
-                accept="image/*"
+                onChange={handleChange}
                 ref={fileInputRef}
                 style={{ display: "none" }}
-                onChange={handleChange}
+                accept="image/*"
               />
               <div className="avatar-actions">
                 <button

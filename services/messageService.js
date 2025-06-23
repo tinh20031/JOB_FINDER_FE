@@ -1,8 +1,8 @@
 import axios from 'axios';
 import { authService } from './authService';
+import API_CONFIG from '../config/api.config';
 
-const API_URL = 'http://localhost:5194/api/Message';
-
+const API_URL = `${API_CONFIG.BASE_URL}/Message`;
 const getToken = () => authService.getToken();
 
 const getHeaders = () => ({

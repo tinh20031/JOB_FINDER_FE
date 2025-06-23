@@ -1,6 +1,6 @@
 import API_CONFIG from '../config/api.config';
 
-const BASE_URL = "/api";
+const BASE_URL = API_CONFIG.BASE_URL;
 
 // const BASE_URL = 'http://localhost:5194/api/';
 // Định nghĩa class trước

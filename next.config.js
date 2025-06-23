@@ -13,7 +13,7 @@ const nextConfig = {
     return [
       {
         source: '/api/:path*',
-        destination: 'https://job-finder-tm9i.onrender.com/api/:path*', // Chuyển tiếp request đến backend
+        destination: 'https://job-finder-kjt2.onrender.com/api/:path*', // Chuyển tiếp request đến backend
       },
     ];
   },
