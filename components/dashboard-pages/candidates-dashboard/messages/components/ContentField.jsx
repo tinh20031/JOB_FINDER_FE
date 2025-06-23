@@ -77,7 +77,7 @@ const ChatBoxContentField = ({ messages, sendMessage, sendFile, currentChatPartn
           const parsedTimestamp = msg.sentAt ? new Date(msg.sentAt) : null;
           const timeToDisplay = parsedTimestamp && isValid(parsedTimestamp) ? format(parsedTimestamp, 'HH:mm') : '';
 
-          const isMyMessage = msg.senderId === currentUserId;
+          const isMyMessage = msg.senderId == currentUserId;
           return (
             <div key={index} className={`d-flex ${isMyMessage ? 'justify-content-end reply' : 'justify-content-start'} mb-2`}>
               <div className="img_cont_msg">

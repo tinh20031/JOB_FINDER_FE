@@ -2,6 +2,7 @@
 const API_CONFIG = {
   // Base URL sẽ được set từ biến môi trường
   BASE_URL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5194/api',
+  SIGNALR_HUB_URL: process.env.NEXT_PUBLIC_SIGNALR_HUB_URL || 'http://localhost:5194/chathub',
 
   // Tách riêng các endpoint không phụ thuộc vào URL
   ENDPOINTS: {

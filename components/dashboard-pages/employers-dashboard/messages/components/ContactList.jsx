@@ -1,5 +1,5 @@
 import Image from "next/image";
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import axios from 'axios';
 import { formatDistanceToNowStrict, parseISO } from 'date-fns';
 import { enUS } from 'date-fns/locale';
@@ -7,12 +7,6 @@ import { authService } from "../../../../../services/authService";
 
 const ChatboxContactList = ({ onContactSelect, currentChatPartnerId, contacts = [], loading = false, error = null, unreadContactIds = [] }) => {
     const [searchQuery, setSearchQuery] = useState('');
-    const [currentUserId, setCurrentUserId] = useState(null);
-
-    useEffect(() => {
-        const companyId = authService.getCompanyId();
-        setCurrentUserId(companyId);
-    }, []);
 
     const filteredContacts = (contacts || []).filter(contact =>
         contact.name.toLowerCase().includes(searchQuery.toLowerCase())
@@ -53,7 +47,7 @@ const ChatboxContactList = ({ onContactSelect, currentChatPartnerId, contacts = 
                     filteredContacts.map((contact) => (
                         <li
                             key={contact.id}
-                            className={`contact-item ${contact.id === currentChatPartnerId ? "active" : ""} ${unreadContactIds.includes(contact.id) ? "unread" : ""}`}
+                            className={`contact-item ${contact.id == currentChatPartnerId ? "active" : ""} ${unreadContactIds.includes(contact.id) ? "unread" : ""}`}
                             onClick={() => onContactSelect(contact.id)}
                         >
                             <div className="contact-info">
@@ -107,7 +101,7 @@ const ChatboxContactList = ({ onContactSelect, currentChatPartnerId, contacts = 
                             </div>
                         </li>
                     ))
-                ) : (currentUserId && (
+                ) : (!loading && (
                     <li className="no-contacts">
                         <p>No conversations found.</p>
                     </li>

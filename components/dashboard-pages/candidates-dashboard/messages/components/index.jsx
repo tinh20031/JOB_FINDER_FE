@@ -1,360 +1,193 @@
 'use client'
 
 import React, { useState, useEffect, useCallback } from 'react';
-import * as signalR from '@microsoft/signalr';
 import SearchBox from "./SearchBox";
 import ContactList from "./ContactList";
 import ContentField from "./ContentField";
 import { useDispatch } from "react-redux";
 import { chatSidebarToggle } from "../../../../../features/toggle/toggleSlice";
-import { authService } from "../../../../../services/authService"; 
-import { jwtDecode } from 'jwt-decode';
+import { authService } from "../../../../../services/authService";
 import messageService from '../../../../../services/messageService';
+import signalRService from '../../../../../services/signalRService';
 import { useSearchParams } from 'next/navigation';
 
 const ChatBox = () => {
-  const dispatch = useDispatch();
-  const searchParams = useSearchParams();
-  const urlCompanyId = searchParams.get('companyId');
-  const [connection, setConnection] = useState(null);
-  const [messages, setMessages] = useState([]);
-  const [currentChatPartnerId, setCurrentChatPartnerId] = useState(null);
-  const [chatContacts, setChatContacts] = useState([]);
-  const [loadingContacts, setLoadingContacts] = useState(true);
-  const [errorLoadingContacts, setErrorLoadingContacts] = useState(null);
-  const [currentUserId, setCurrentUserId] = useState(null);
-  const [currentUserFullName, setCurrentUserFullName] = useState('');
-  const [currentUserProfileImage, setCurrentUserProfileImage] = useState('');
-  const [unreadContactIds, setUnreadContactIds] = useState([]);
-  const [partnerOnline, setPartnerOnline] = useState(false);
-  const [onlineUserIds, setOnlineUserIds] = useState([]);
+    const dispatch = useDispatch();
+    const searchParams = useSearchParams();
+    const urlCompanyId = searchParams.get('companyId');
+    const [messages, setMessages] = useState([]);
+    const [currentChatPartnerId, setCurrentChatPartnerId] = useState(null);
+    const [chatContacts, setChatContacts] = useState([]);
+    const [loadingContacts, setLoadingContacts] = useState(true);
+    const [errorLoadingContacts, setErrorLoadingContacts] = useState(null);
+    const [currentUserId, setCurrentUserId] = useState(null);
+    const [currentUserFullName, setCurrentUserFullName] = useState('');
+    const [currentUserProfileImage, setCurrentUserProfileImage] = useState('');
+    const [unreadContactIds, setUnreadContactIds] = useState([]);
+    const [onlineUserIds, setOnlineUserIds] = useState([]);
+    const [partnerOnline, setPartnerOnline] = useState(false);
 
-  // Initialize user data
-  useEffect(() => {
-    const token = authService.getToken();
-    if (token) {
-      try {
-        const decoded = jwtDecode(token);
-        setCurrentUserId(parseInt(decoded.unique_name));
-        setCurrentUserFullName(authService.getFullName() || '');
-        setCurrentUserProfileImage(authService.getProfileImage() || '');
-      } catch (e) {
-        console.error('Error decoding token:', e);
-      }
-    }
-  }, []);
+    useEffect(() => {
+        const id = localStorage.getItem('userId');
+        if (id) {
+            setCurrentUserId(id);
+            setCurrentUserFullName(authService.getFullName() || '');
+            setCurrentUserProfileImage(authService.getProfileImage() || '');
+        }
+    }, []);
 
-  // Fetch chat contacts
-  const fetchChatContacts = useCallback(async () => {
-    if (!currentUserId) return;
-    
-    setLoadingContacts(true);
-    setErrorLoadingContacts(null);
-    try {
-      const response = await messageService.getMessagedCompanies(currentUserId);
-      const fetchedContacts = response.data.map(msg => {
-        return {
-          id: String(msg.companyId),
-          name: msg.companyName || "Unknown",
-          lastMessageText: msg.messageText,
-          timestamp: msg.sentAt,
-          avatar: msg.urlCompanyLogo || "/images/resource/default-avatar.png",
-          unreadCount: 0,
-        };
-      });
+    const fetchChatContacts = useCallback(async () => {
+        if (!currentUserId) return;
+        setLoadingContacts(true);
+        setErrorLoadingContacts(null);
+        try {
+            const response = await messageService.getMessagedCompanies(currentUserId);
+            const fetchedContacts = response.data.map(msg => ({
+                id: String(msg.companyId),
+                name: msg.companyName || "Unknown",
+                lastMessageText: msg.messageText,
+                timestamp: msg.sentAt,
+                avatar: msg.urlCompanyLogo || "/images/resource/default-avatar.png",
+                unreadCount: 0,
+            }));
+            const uniqueContacts = Array.from(new Map(fetchedContacts.map(item => [item['id'], item])).values());
+            setChatContacts(uniqueContacts.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp)));
+        } catch (err) {
+            console.error("Error loading contacts:", err);
+            setErrorLoadingContacts("Failed to load chat contacts. Please try again later.");
+        } finally {
+            setLoadingContacts(false);
+        }
+    }, [currentUserId]);
 
-      const uniqueContacts = Array.from(new Map(fetchedContacts.map(item => [item['id'], item])).values());
-      setChatContacts(() => {
-        const newContacts = uniqueContacts.map(c => ({
-          ...c,
-          isOnline: onlineUserIds.includes(String(c.id))
-        }));
-        return newContacts.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
-      });
-    } catch (err) {
-      console.error("Error loading contacts:", err);
-      setErrorLoadingContacts("Failed to load chat contacts. Please try again later.");
-    } finally {
-      setLoadingContacts(false);
-    }
-  }, [currentUserId, onlineUserIds]);
+    useEffect(() => {
+        fetchChatContacts();
+    }, [fetchChatContacts]);
 
-  useEffect(() => {
-    fetchChatContacts();
-  }, [fetchChatContacts]);
+    useEffect(() => {
+        signalRService.startConnection();
 
-  const currentChatPartner = chatContacts.find(contact => contact.id === currentChatPartnerId);
+        const handleReceiveMessage = (messageData) => {
+            const isForCurrentChat =
+                (String(messageData.senderId) === String(currentUserId) && String(messageData.receiverId) === String(currentChatPartnerId)) ||
+                (String(messageData.senderId) === String(currentChatPartnerId) && String(messageData.receiverId) === String(currentUserId));
 
-  // Initialize SignalR connection
-  useEffect(() => {
-    const newConnection = new signalR.HubConnectionBuilder()
-      .withUrl("http://localhost:5194/chatHub", {
-        accessTokenFactory: () => authService.getToken()
-      })
-      .withAutomaticReconnect()
-      .build();
-
-    setConnection(newConnection);
-
-    return () => {
-      if (newConnection.state === signalR.HubConnectionState.Connected) {
-        newConnection.stop();
-      }
-    };
-  }, []);
-
-  // Start SignalR connection and set up event handlers
-  useEffect(() => {
-    if (connection) {
-      if (connection.state === signalR.HubConnectionState.Disconnected) {
-        connection.start()
-          .then(async () => {
-            // Join user group
-            try {
-              await messageService.joinGroup();
-            } catch (error) {
-              console.error('Error joining SignalR group:', error);
+            if (isForCurrentChat) {
+                setMessages(prev => [...prev, messageData]);
             }
-          })
-          .catch(e => console.error('Error establishing SignalR connection: ', e));
-      }
-      // Set up message handler
-      connection.on("ReceiveMessage", (messageData) => {
-        // Check if this message is for the current chat by comparing IDs as strings
-        // We only add the message if it's from the chat partner. Our own messages are added optimistically.
-        if (
-          (String(messageData.senderId) === String(currentChatPartnerId) && String(messageData.receiverId) === String(currentUserId))
-        ) {
-          setMessages(prevMessages => [...prevMessages, {
-            ...messageData,
-            timestamp: messageData.sentAt || new Date().toISOString()
-          }]);
+            
+            const contactId = String(messageData.senderId) === String(currentUserId) ? messageData.receiverId : messageData.senderId;
+            if (String(contactId) !== String(currentChatPartnerId)) {
+                setUnreadContactIds(prev => [...new Set([...prev, String(contactId)])]);
+            }
+
+            fetchChatContacts();
+        };
+        
+        const handleUserOnlineStatus = ({ userId, isOnline }) => {
+            setOnlineUserIds(prev => isOnline ? [...new Set([...prev, String(userId)])] : prev.filter(id => id !== String(userId)));
+            if (String(userId) === String(currentChatPartnerId)) {
+                setPartnerOnline(isOnline);
+            }
+        };
+
+        const handleOnlineUsersList = (onlineUsers) => {
+            setOnlineUserIds(onlineUsers.map(String));
+        };
+
+        signalRService.on("ReceiveMessage", handleReceiveMessage);
+        signalRService.on("UserOnlineStatusChanged", handleUserOnlineStatus);
+        signalRService.on("OnlineUsersList", handleOnlineUsersList);
+
+        return () => {
+            signalRService.off("ReceiveMessage", handleReceiveMessage);
+            signalRService.off("UserOnlineStatusChanged", handleUserOnlineStatus);
+            signalRService.off("OnlineUsersList", handleOnlineUsersList);
+        };
+    }, [currentUserId, currentChatPartnerId, fetchChatContacts]);
+
+    useEffect(() => {
+        if (currentChatPartnerId && currentUserId) {
+            messageService.getMessageHistory(currentUserId, currentChatPartnerId)
+                .then(response => {
+                    const historyMessages = response.data.map(msg => ({
+                        ...msg,
+                        timestamp: msg.timestamp ? new Date(msg.timestamp).toISOString() : null,
+                    }));
+                    setMessages(historyMessages);
+                })
+                .catch(error => {
+                    console.error("Error fetching message history:", error);
+                    setMessages([]);
+                });
         }
-        // Hiệu ứng nổi bật khi có tin nhắn mới
-        const contactId = String(messageData.senderId) === String(currentUserId) ? messageData.receiverId : messageData.senderId;
-        if (String(contactId) !== String(currentChatPartnerId)) {
-          setUnreadContactIds(prev => prev.includes(String(contactId)) ? prev : [...prev, String(contactId)]);
-        }
-        // Tối ưu cập nhật chatContacts local, không fetch lại toàn bộ
-        setChatContacts(prevContacts => {
-          const contactId = String(messageData.senderId) === String(currentUserId) ? messageData.receiverId : messageData.senderId;
-          const existing = prevContacts.find(c => String(c.id) === String(contactId));
-          const updatedContact = {
-            id: String(contactId),
-            name: messageData.companyName || existing?.name || "Unknown",
-            lastMessageText: messageData.messageText,
-            timestamp: messageData.sentAt,
-            avatar: messageData.urlCompanyLogo || existing?.avatar || "/images/resource/default-avatar.png",
-            unreadCount: 0,
-            position: messageData.industryName || existing?.position || "Company",
-            isOnline: onlineUserIds.includes(String(contactId)),
-          };
-          let newContacts;
-          if (existing) {
-            newContacts = prevContacts
-              .map(c => String(c.id) === String(contactId) ? updatedContact : c)
-              .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
-          } else {
-            newContacts = [updatedContact, ...prevContacts];
-          }
-          return newContacts;
-        });
-      });
+    }, [currentChatPartnerId, currentUserId]);
 
-      // Set up contact list update handler
-      connection.on("UpdateContactList", () => {
-        fetchChatContacts();
-      });
-
-      // Connection event handlers
-      connection.onreconnected(() => {
-        fetchChatContacts();
-      });
-
-      connection.onreconnecting((error) => {
-        console.warn("SignalR Reconnecting...", error);
-      });
-
-      connection.onclose((error) => {
-        console.error("SignalR Connection closed.", error);
-      });
-
-      // Lắng nghe realtime online status
-      connection.on("UserOnlineStatusChanged", ({ userId, isOnline }) => {
-        setOnlineUserIds(prev =>
-          isOnline
-            ? prev.includes(String(userId)) ? prev : [...prev, String(userId)]
-            : prev.filter(id => id !== String(userId))
-        );
-        setChatContacts(contacts => {
-          const mapped = contacts.map(c =>
-            String(c.id) === String(userId)
-              ? { ...c, isOnline }
-              : c
-          );
-          return mapped;
-        });
-        if (currentChatPartnerId && String(currentChatPartnerId) === String(userId)) {
-          setPartnerOnline(isOnline);
-        }
-      });
-
-      // Lắng nghe danh sách user online khi vừa kết nối
-      connection.on("OnlineUsersList", (onlineUserIds) => {
-        setOnlineUserIds(onlineUserIds);
-        setChatContacts(contacts => {
-          const mapped = contacts.map(c => ({
-            ...c,
-            isOnline: onlineUserIds.includes(String(c.id))
-          }));
-          return mapped;
-        });
+    useEffect(() => {
         if (currentChatPartnerId) {
-          setPartnerOnline(onlineUserIds.includes(String(currentChatPartnerId)));
+            setPartnerOnline(onlineUserIds.includes(String(currentChatPartnerId)));
         }
-      });
-
-      // Cleanup
-      return () => {
-        connection.off("ReceiveMessage");
-        connection.off("UpdateContactList");
-        connection.off("UserOnlineStatusChanged");
-        connection.off("OnlineUsersList");
-      };
-    }
-  }, [connection, currentUserId, currentChatPartnerId, fetchChatContacts]);
-
-  // Fetch message history when chat partner changes
-  useEffect(() => {
-    if (connection && connection.state === signalR.HubConnectionState.Connected && currentChatPartnerId && currentUserId) {
-      
-      messageService.getMessageHistory(currentUserId, currentChatPartnerId)
-        .then(response => {
-          const historyMessages = response.data.map(msg => ({
-            ...msg,
-            timestamp: msg.timestamp ? new Date(msg.timestamp).toISOString() : null,
-            senderFullName: msg.senderFullName,
-            senderImage: msg.senderImage,
-          }));
-          setMessages(historyMessages);
-        })
-        .catch(error => {
-          console.error("Error fetching message history:", error);
-          setMessages([]);
-        });
-    }
-  }, [currentChatPartnerId, connection, connection?.state, currentUserId]);
-
-  const sendMessage = async (messageText) => {
-    if (!currentChatPartnerId || !currentUserId) {
-      console.warn('Cannot send message: No chat partner selected or user not authenticated.');
-      return;
-    }
-    try {
-      const messagePayload = {
-        senderId: currentUserId,
-        receiverId: currentChatPartnerId,
-        relatedJobId: 0,
-        messageText: messageText,
-        sentAt: new Date().toISOString(),
-      };
-      await messageService.sendMessage(messagePayload);
-      // Chủ động cập nhật UI ngay lập tức
-      setMessages(prevMessages => [
-        ...prevMessages,
-        {
-          ...messagePayload,
+    }, [currentChatPartnerId, onlineUserIds]);
+    
+    const sendMessage = async (messageText) => {
+        if (!messageText.trim() || !currentChatPartnerId || !currentUserId) return;
+        
+        try {
+            const payload = {
+                senderId: parseInt(currentUserId, 10),
+                receiverId: parseInt(currentChatPartnerId, 10),
+                messageText: messageText,
+            };
+            await messageService.sendMessage(payload);
+            // Giao diện sẽ được cập nhật bởi sự kiện 'ReceiveMessage' từ server.
+        } catch (e) {
+            console.error('Error sending message via HTTP: ', e);
         }
-      ]);
-    } catch (error) {
-      console.error('Error sending message:', error);
-      // You might want to show an error message to the user here
-    }
-  };
+    };
 
-  const chatToggle = () => {
-    dispatch(chatSidebarToggle());
-  };
+    const chatToggle = () => dispatch(chatSidebarToggle());
 
-  const handleContactSelect = (partnerId) => {
-    if (partnerId !== currentChatPartnerId) {
-      setCurrentChatPartnerId(String(partnerId));
-      setUnreadContactIds(prev => prev.filter(id => id !== String(partnerId)));
-    }
-  };
+    const handleContactSelect = (partnerId) => {
+        setCurrentChatPartnerId(String(partnerId));
+        setUnreadContactIds(prev => prev.filter(id => id !== String(partnerId)));
+    };
 
-  // Khi đổi partner hoặc chatContacts thay đổi, luôn lấy trạng thái online từ contact list nếu có
-  useEffect(() => {
-    if (currentChatPartnerId && chatContacts.length > 0) {
-      const partner = chatContacts.find(c => String(c.id) === String(currentChatPartnerId));
-      setPartnerOnline(!!partner?.isOnline);
-    }
-  }, [currentChatPartnerId, chatContacts]);
+    const currentChatPartner = chatContacts.find(c => String(c.id) === String(currentChatPartnerId));
 
-  // Khi fetch xong contact, nếu có companyId trên URL thì tự động chọn
-  useEffect(() => {
-    if (urlCompanyId && chatContacts.length > 0) {
-      const found = chatContacts.find(c => String(c.id) === String(urlCompanyId));
-      if (found) {
-        setCurrentChatPartnerId(String(urlCompanyId));
-      }
-    }
-  }, [urlCompanyId, chatContacts]);
-
-  // Nếu có companyId trên URL mà contact chưa có, sau khi gửi tin nhắn xong sẽ fetch lại contact list
-  useEffect(() => {
-    if (urlCompanyId && chatContacts.length === 0) {
-      // Đợi 1s rồi fetch lại contact list (sau khi gửi tin nhắn lần đầu)
-      const timeout = setTimeout(() => {
-        fetchChatContacts();
-      }, 1000);
-      return () => clearTimeout(timeout);
-    }
-  }, [urlCompanyId, chatContacts, fetchChatContacts]);
-
-  return (
-    <div className="row" style={{ height: "100%" }}>
-      <div
-        className="contacts_column col-xl-4 col-lg-5 col-md-12 col-sm-12 chat" 
-        style={{ height: "100%" }}
-        id="chat_contacts"
-      >
-        <div className="card contacts_card" style={{ height: "100%", display: "flex", flexDirection: "column" }}>
-          <div className="card-header">
-            <div
-              className="fix-icon position-absolute top-0 end-0 show-1023"
-              onClick={chatToggle}
-            >
-              <span className="flaticon-close"></span>
+    return (
+        <div className="row" style={{ height: "100%" }}>
+            <div className="contacts_column col-xl-4 col-lg-5 col-md-12 col-sm-12 chat" style={{ height: "100%" }} id="chat_contacts">
+                <div className="card contacts_card" style={{ height: "100%", display: "flex", flexDirection: "column" }}>
+                    <div className="card-header">
+                        <div className="fix-icon position-absolute top-0 end-0 show-1023" onClick={chatToggle}>
+                            <span className="flaticon-close"></span>
+                        </div>
+                    </div>
+                    <div className="card-body contacts_body" style={{ flexGrow: 1, overflowY: "auto" }}>
+                        <ContactList
+                            onContactSelect={handleContactSelect}
+                            currentChatPartnerId={currentChatPartnerId}
+                            contacts={chatContacts.map(c => ({...c, isOnline: onlineUserIds.includes(String(c.id))}))}
+                            loading={loadingContacts}
+                            error={errorLoadingContacts}
+                            unreadContactIds={unreadContactIds}
+                        />
+                    </div>
+                </div>
             </div>
-          </div>
-
-          <div className="card-body contacts_body" style={{ flexGrow: 1, overflowY: "auto" }}>
-            <ContactList
-              onContactSelect={handleContactSelect}
-              currentChatPartnerId={currentChatPartnerId}
-              contacts={chatContacts}
-              loading={loadingContacts}
-              error={errorLoadingContacts}
-              unreadContactIds={unreadContactIds}
-            />
-          </div>
+            <div className="col-xl-8 col-lg-7 col-md-12 col-sm-12 chat" style={{ height: "100%" }}>
+                <ContentField
+                    messages={messages}
+                    sendMessage={sendMessage}
+                    currentChatPartner={currentChatPartner}
+                    currentUserId={currentUserId}
+                    currentUserFullName={currentUserFullName}
+                    currentUserProfileImage={currentUserProfileImage}
+                    partnerOnline={partnerOnline}
+                />
+            </div>
         </div>
-      </div>
-
-      <div className="col-xl-8 col-lg-7 col-md-12 col-sm-12 chat" style={{ height: "100%" }}>
-        <ContentField
-          messages={messages}
-          sendMessage={sendMessage}
-          currentChatPartner={currentChatPartner}
-          currentUserId={currentUserId}
-          currentUserFullName={currentUserFullName}
-          currentUserProfileImage={currentUserProfileImage}
-          partnerOnline={partnerOnline}
-        />
-      </div>
-    </div>
-  );
+    );
 };
 
 export default ChatBox;
