@@ -36,7 +36,7 @@ const ProfileCard = ({ profile, onEdit }) => {
       </button>
       <div style={{ display: "flex", alignItems: "center", gap: 32 }}>
         <img
-          src={profile.image}
+          src={profile.image || profile.avatar || "/default-avatar.png"}
           alt="avatar"
           style={{
             width: 72,
