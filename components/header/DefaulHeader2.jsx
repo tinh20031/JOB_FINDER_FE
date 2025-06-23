@@ -91,11 +91,7 @@ const DefaulHeader2 = () => {
     authService.logout();
     localStorage.removeItem('user');
     localStorage.removeItem('userId');
-    
-    // Cập nhật state
     dispatch(clearLoginState());
-
-    // Chuyển hướng về trang chủ
     window.location.href = '/';
   };
 

@@ -47,7 +47,7 @@ export const applicationService = {
       }
 
       const response = await axios.get(
-        `${API_URL}/Application/my-applied-jobs-with-cvs`,
+        `${API_URL}/Application/my-applications`,
         {
           headers: {
             'Authorization': `Bearer ${token}`,
