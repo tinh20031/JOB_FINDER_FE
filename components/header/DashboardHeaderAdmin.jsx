@@ -174,14 +174,6 @@ const DashboardHeaderAdmin = () => {
                                         )}
                                     </li>
                                 ))}
-                                <li>
-                                    <Link href="/favorite-jobs">
-                                        <button className="menu-btn">
-                                            <span className="count">{favoriteCount}</span>
-                                            <span className="icon la la-heart-o"></span>
-                                        </button>
-                                    </Link>
-                                </li>
                             </ul>
                         </div>
                         {/* End dropdown */}

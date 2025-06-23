@@ -449,25 +449,7 @@ const Index = () => {
                     <div>Loading profile...</div>
                 ) : (
                     <>
-                        <LogoCoverUploader
-                            onLogoChange={handleLogoChange}
-                            onCoverChange={handleCoverChange}
-                            logoPreviewUrl={logoPreviewUrl}
-                            coverPreviewUrl={coverPreviewUrl}
-                            validationErrors={validationErrors}
-                            initialLogoUrl={initialProfileData?.urlCompanyLogo || null}
-                            initialCoverUrl={initialProfileData?.imageLogoLgr || null}
-                            isEditing={isEditing}
-                        />
-
-                        <FormInfoBox
-                            onFormChange={handleFormChange}
-                            validationErrors={validationErrors}
-                            initialData={companyProfileData.formData}
-                            isEditing={isEditing}
-                        />
-
-                        <div className="form-group col-lg-12 col-md-12 text-right">
+                        <div className="form-group col-lg-12 col-md-12 text-right mb-3">
                             {isEditing ? (
                                 <>
                                     <button
@@ -501,6 +483,23 @@ const Index = () => {
                                 </button>
                             )}
                         </div>
+                        <LogoCoverUploader
+                            onLogoChange={handleLogoChange}
+                            onCoverChange={handleCoverChange}
+                            logoPreviewUrl={logoPreviewUrl}
+                            coverPreviewUrl={coverPreviewUrl}
+                            validationErrors={validationErrors}
+                            initialLogoUrl={initialProfileData?.urlCompanyLogo || null}
+                            initialCoverUrl={initialProfileData?.imageLogoLgr || null}
+                            isEditing={isEditing}
+                        />
+
+                        <FormInfoBox
+                            onFormChange={handleFormChange}
+                            validationErrors={validationErrors}
+                            initialData={companyProfileData.formData}
+                            isEditing={isEditing}
+                        />
 
                         {/* Temporary Notification */}
                         {showNotification && (

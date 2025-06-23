@@ -11,7 +11,7 @@ import Image from "next/image";
 import employerMenuData from "../../data/employerHeaderMenuData";
 import { isActiveLink } from "../../utils/linkActiveChecker";
 import candidatesMenuData from "../../data/candidatesHeaderMenuData";
-import adminMenuData from "../../data/adminMenuData";
+import adminMenuData from "../../data/adminHeadedrMenuData";
 import BecomeRecruiterModal from '../common/form/shared/BecomeRecruiterModal';
 
 // Helper function to validate image URLs
