@@ -310,7 +310,7 @@ const JobSingleDynamicV3 = ({ params }) => {
                   >
                     <div className="modal-dialog modal-dialog-centered modal-dialog-scrollable">
                       <div className="apply-modal-content modal-content">
-                        <div className="text-center">
+                        <div className="text-center"></div>
                           <h3 className="title">Apply for this job</h3>
                           <button
                             type="button"
