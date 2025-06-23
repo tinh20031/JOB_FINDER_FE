@@ -26,7 +26,7 @@ const DashboardCandidatesSidebar = () => {
   const handleLogout = () => {
     authService.logout(); // Clear localStorage
     dispatch(clearLoginState()); // Clear Redux state
-    router.push("/login"); // Redirect to login page
+    window.location.href = '/'; // Redirect to home page
   };
 
   return (

@@ -24,13 +24,15 @@ const JobListingsTable = () => {
     if (token) {
       try {
         const decoded = jwtDecode(token);
-        setCurrentUserId(decoded.unique_name); // unique_name contains the user ID
+        setCurrentUserId(decoded.nameid); // dùng nameid thay vì unique_name
       } catch (error) {
         console.error('Error decoding token:', error);
         setError('Failed to authenticate user');
+        setLoading(false); // Đảm bảo loading dừng khi lỗi
       }
     } else {
       setError('No authentication token found');
+      setLoading(false); // Đảm bảo loading dừng khi không có token
     }
   }, []);
 
@@ -154,7 +156,7 @@ const JobListingsTable = () => {
         ) : error ? (
           <div className="alert alert-danger">{error}</div>
         ) : filteredJobs.length === 0 ? (
-          <div>No jobs found.</div>
+          <div>You haven't applied for any jobs.</div>
         ) : (
           <div className="table-outer">
             {filteredJobs.map((job) => {
