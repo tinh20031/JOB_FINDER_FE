@@ -121,29 +121,6 @@ const PostBoxForm = () => {
   const [clearSuccess, setClearSuccess] = useState(false);
   const [showClearConfirm, setShowClearConfirm] = useState(false);
 
-  const [selectedSkills, setSelectedSkills] = useState([]);
-  const [availableSkills, setAvailableSkills] = useState([
-    { skillId: 1, skillName: "JavaScript" },
-    { skillId: 2, skillName: "React" },
-    { skillId: 3, skillName: "Node.js" },
-    { skillId: 4, skillName: "Python" },
-    { skillId: 5, skillName: "Java" },
-    { skillId: 6, skillName: "C#" },
-    { skillId: 7, skillName: "SQL" },
-    { skillId: 8, skillName: "HTML/CSS" },
-    { skillId: 9, skillName: "TypeScript" },
-    { skillId: 10, skillName: "Angular" },
-    { skillId: 11, skillName: "Vue.js" },
-    { skillId: 12, skillName: "PHP" },
-    { skillId: 13, skillName: "Ruby" },
-    { skillId: 14, skillName: "Go" },
-    { skillId: 15, skillName: "Swift" },
-    { skillId: 16, skillName: "Kotlin" },
-    { skillId: 17, skillName: "Docker" },
-    { skillId: 18, skillName: "Kubernetes" },
-    { skillId: 19, skillName: "AWS" },
-    { skillId: 20, skillName: "Azure" }
-  ]);
   const [newSkill, setNewSkill] = useState('');
 
   useEffect(() => {
@@ -359,10 +336,6 @@ const PostBoxForm = () => {
       newErrors.YourExperience = 'Experience is required';
     }
 
-    if (selectedSkills.length === 0) {
-      newErrors.skills = 'At least one skill is required';
-    }
-
     // Validate dates
     if (formData.timeStart) {
       const startDate = new Date(formData.timeStart);
@@ -504,53 +477,6 @@ const PostBoxForm = () => {
       const jobResult = await ApiService.createJob(jobData);
       console.log("Job creation response:", jobResult);
       
-      // Sau khi tạo job thành công, xử lý skills
-      if (selectedSkills.length > 0) {
-        try {
-          for (const skill of selectedSkills) {
-            let skillIdToUse = skill.skillId;
-
-            // Nếu là skill mới (không có skillId), tạo skill trước
-            if (!skillIdToUse) {
-              try {
-                const newSkillResult = await ApiService.post(API_CONFIG.ENDPOINTS.SKILLS, {
-                  skillName: skill.skillName
-                });
-                skillIdToUse = newSkillResult?.skillId; // Lấy ID của skill mới tạo. Sử dụng optional chaining để an toàn hơn.
-                
-                if (!skillIdToUse) {
-                  console.error("Lỗi: Không nhận được skillId hợp lệ sau khi tạo skill mới.", newSkillResult);
-                  setError(`Không thể liên kết skill mới '${skill.skillName}' vì không có ID hợp lệ.`);
-                  continue; // Bỏ qua skill này và tiếp tục với các skill khác
-                }
-
-              } catch (createSkillError) {
-                console.error("Lỗi khi tạo skill mới:", createSkillError.response?.data || createSkillError.message);
-                setError(`Không thể tạo skill '${skill.skillName}'. Vui lòng thử lại.`);
-                continue; // Đổi từ return thành continue để không chặn các skill khác
-              }
-            }
-
-            // Sau đó, liên kết skill với job
-            try {
-              const payload = {
-                JobId: parseInt(jobResult.jobId, 10),
-                SkillId: parseInt(skillIdToUse, 10)
-              };
-              console.log("Đang gửi payload liên kết skill:", payload);
-              await ApiService.post(API_CONFIG.ENDPOINTS.JOB_SKILLS, payload);
-            } catch (jobSkillError) {
-              console.error("Lỗi khi liên kết skill với job:", jobSkillError.response?.data || jobSkillError.message);
-              // Tiếp tục với các skill khác nếu một skill thất bại
-              continue;
-            }
-          }
-        } catch (error) {
-          console.error("Lỗi khi xử lý skills:", error);
-          // Không return ở đây, để job creation được coi là thành công
-        }
-      }
-
       setSuccess(true);
       setShowSuccessModal(true);
       localStorage.removeItem(DRAFT_KEY);
@@ -577,7 +503,6 @@ const PostBoxForm = () => {
         YourSkill: '',
         YourExperience: ''
       });
-      setSelectedSkills([]);
       setErrors({});
     } catch (error) {
       console.error("API Error:", error.response?.data || error.message);
@@ -882,82 +807,6 @@ const PostBoxForm = () => {
           {errors.YourExperience && <div className="invalid-feedback">{errors.YourExperience}</div>}
         </motion.div>
 
-        {/* Skills Section */}
-        <motion.div className="form-group col-lg-12 col-md-12" variants={itemVariants}>
-          <label>Required Skills (Tag)</label>
-          <div className="skills-input-container">
-            <CreatableSelect
-              isMulti
-              value={selectedSkills.map(skill => ({
-                value: skill.skillId || skill.skillName,
-                label: skill.skillName
-              }))}
-              options={availableSkills.map(skill => ({
-                value: skill.skillId,
-                label: skill.skillName
-              }))}
-              onChange={(newValue) => {
-                setSelectedSkills(
-                  newValue.map(option => ({
-                    skillId: option.value ? parseInt(option.value, 10) : null,
-                    skillName: option.label
-                  }))
-                );
-              }}
-              onCreateOption={(inputValue) => {
-                const newSkill = {
-                  skillId: null,
-                  skillName: inputValue
-                };
-                setSelectedSkills(prev => [...prev, newSkill]);
-              }}
-              placeholder="Select or enter skills..."
-              className="basic-multi-select"
-              classNamePrefix="select"
-              isClearable
-              isSearchable
-              noOptionsMessage={() => "No skills found"}
-              formatCreateLabel={(inputValue) => `Create skill "${inputValue}"`}
-              menuPortalTarget={document.body}
-              menuShouldScrollIntoView={true}
-              maxMenuHeight={190}
-              styles={{
-                control: (base) => ({
-                  ...base,
-                  minHeight: '42px',
-                  borderColor: errors.skills ? '#dc3545' : '#ced4da',
-                  '&:hover': {
-                    borderColor: errors.skills ? '#dc3545' : '#ced4da'
-                  }
-                }),
-                menu: (base) => ({
-                  ...base,
-                  zIndex: 9999 
-                }),
-                multiValue: (base) => ({
-                  ...base,
-                  backgroundColor: '#e9ecef',
-                  borderRadius: '0.25rem'
-                }),
-                multiValueLabel: (base) => ({
-                  ...base,
-                  color: '#212529',
-                  padding: '0.25rem 0.5rem'
-                }),
-                multiValueRemove: (base) => ({
-                  ...base,
-                  color: '#212529',
-                  ':hover': {
-                    backgroundColor: '#dee2e6',
-                    color: '#212529'
-                  }
-                })
-              }}
-            />
-            {errors.skills && <div className="invalid-feedback d-block">{errors.skills}</div>}
-          </div>
-        </motion.div>
-
         {/* Salary Section */}
         <motion.div className="form-group col-lg-12 col-md-12" variants={itemVariants}>
           <label>Salary</label>
@@ -981,7 +830,7 @@ const PostBoxForm = () => {
                 }}
               />
               <label className="form-check-label" htmlFor="salaryNegotiableRadio">
-                Wage Agreement
+                Negotiable Salary
               </label>
             </div>
             <div className="form-check">
