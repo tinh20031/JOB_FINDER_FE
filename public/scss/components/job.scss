@@ -1871,3 +1871,49 @@ Job Detail Section
   border-radius: 0;
   margin: 5px 0;
 }
+
+/*====================================================================
+Media Query
+====================================================================*/
+
+@media (max-width: 767px) {
+  .upper-title-box {
+    text-align: center;
+  }
+  .upper-title-box h3 {
+    text-align: center;
+    font-size: 24px;
+  }
+  .widget-title {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+  .widget-title h4 {
+    margin-bottom: 15px;
+  }
+  .widget-title .d-flex.flex-wrap.gap-2.align-items-center {
+    flex-direction: column;
+    width: 100%;
+    align-items: stretch !important;
+  }
+  .widget-title .d-flex.flex-wrap.gap-2.align-items-center .form-control,
+  .widget-title .d-flex.flex-wrap.gap-2.align-items-center .form-select,
+  .widget-title .d-flex.flex-wrap.gap-2.align-items-center .btn {
+    width: 100% !important;
+    margin-right: 0 !important;
+    margin-bottom: 10px;
+  }
+  .widget-title .d-flex.flex-wrap.gap-2.align-items-center .btn {
+    margin-top: 10px;
+  }
+  .job-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+  }
+  .job-tag {
+    white-space: nowrap;
+    margin-bottom: 5px; /* Add some vertical spacing between wrapped tags */
+  }
+}

@@ -4,14 +4,18 @@ import { useState } from 'react';
 import { authService } from '@/services/authService';
 import { useRouter } from 'next/navigation';
 import { toast } from 'react-toastify';
+import { useDispatch } from 'react-redux';
+import { setLoginState } from '@/features/auth/authSlice';
 
 const FormContent = ({ onRegistrationSuccess }) => {
   const router = useRouter();
+  const dispatch = useDispatch();
   const [formData, setFormData] = useState({
     fullName: '',
     email: '',
     phone: '',
-    password: ''
+    password: '',
+    confirmPassword: ''
   });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -27,6 +31,12 @@ const FormContent = ({ onRegistrationSuccess }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
+
+    if (formData.password !== formData.confirmPassword) {
+      setError('Passwords do not match.');
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -37,14 +47,20 @@ const FormContent = ({ onRegistrationSuccess }) => {
         formData.password
       );
 
-      console.log('Registration successful in FormContent.');
-      toast.success('Registration successful!');
+      toast.success('Registration successful! Logging you in...');
 
-      if (onRegistrationSuccess) {
-        onRegistrationSuccess();
-      } else {
-        router.push('/login');
-      }
+      // Automatically log in the user after successful registration
+      const loginData = await authService.login(formData.email, formData.password);
+      
+      dispatch(setLoginState({
+        isLoggedIn: true,
+        user: loginData.user, // Assuming loginData contains user object
+        role: loginData.role
+      }));
+
+      // Redirect to home page
+      router.push('/');
+
     } catch (error) {
       console.log('Registration error:', error);
       if (error.message && (error.message.includes('already exists') || error.message.includes('Conflict'))) {
@@ -76,6 +92,7 @@ const FormContent = ({ onRegistrationSuccess }) => {
           required 
           value={formData.fullName}
           onChange={handleChange}
+          className="form-control" 
         />
       </div>
       {/* fullName */}
@@ -89,6 +106,7 @@ const FormContent = ({ onRegistrationSuccess }) => {
           required 
           value={formData.email}
           onChange={handleChange}
+          className="form-control" 
         />
       </div>
       {/* email */}
@@ -117,9 +135,25 @@ const FormContent = ({ onRegistrationSuccess }) => {
           required
           value={formData.password}
           onChange={handleChange}
+          className="form-control" 
         />
       </div>
       {/* password */}
+
+      <div className="form-group">
+        <label>Confirm Password</label>
+        <input
+          id="confirm-password-field"
+          type="password"
+          name="confirmPassword"
+          placeholder="Confirm your password"
+          required
+          value={formData.confirmPassword}
+          onChange={handleChange}
+          className="form-control"
+        />
+      </div>
+      {/* confirm password */}
 
       <div className="form-group">
         <button 

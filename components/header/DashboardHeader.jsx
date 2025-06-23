@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import employerMenuData from "../../data/employerMenuData";
+import employerMenuData from "../../data/employerHeaderMenuData";
 import HeaderNavContent from "./HeaderNavContent";
 import { isActiveLink } from "../../utils/linkActiveChecker";
 import { usePathname } from "next/navigation";
@@ -12,16 +12,7 @@ import { authService } from "../../services/authService";
 import { clearLoginState } from "../../features/auth/authSlice";
 import { useRouter } from "next/navigation";
 import { useDispatch } from "react-redux";
-import { getUserFavorites } from "../../services/favoriteJobService";
-import { useFavoriteJobs } from "../../contexts/FavoriteJobsContext";
 
-const getValidAvatarPath = (user) => {
-    const avatar = user?.avatar || user?.image;
-    if (avatar && typeof avatar === 'string' && (avatar.startsWith('/') || avatar.startsWith('http://') || avatar.startsWith('https://'))) {
-        return avatar;
-    }
-    return "/images/resource/company-6.png";
-};
 
 const DashboardHeader = () => {
     const [navbar, setNavbar] = useState(false);
@@ -34,35 +25,35 @@ const DashboardHeader = () => {
     // Use state for user info to handle updates
     const [displayUserName, setDisplayUserName] = useState("My Account");
     const [displayAvatar, setDisplayAvatar] = useState("/images/resource/company-6.png");
-    const { favoriteCount } = useFavoriteJobs();
 
     // Update state when user data from Redux changes
     useEffect(() => {
-        // First, try to get user from Redux
-        if (user) {
-            console.log('DashboardHeader: Using user from Redux', user);
-            setDisplayUserName(user.fullName || user.name || "My Account");
-            setDisplayAvatar(getValidAvatarPath(user));
-        } else if (typeof window !== 'undefined') { // If not in Redux, try localStorage
+        if (role === 'Company') {
+            const companyName = authService.getFullNameCompany();
+            const companyLogo = authService.getProfileImageCompany();
+            setDisplayUserName(companyName || "My Account");
+            setDisplayAvatar(companyLogo || "/images/resource/company-6.png");
+        } else if (user) {
+            setDisplayUserName(user.fullName || "My Account");
+            setDisplayAvatar(user.avatar || "/images/resource/company-6.png");
+        } else {
+            // Fallback for non-company users if Redux is empty
             const userString = localStorage.getItem('user');
             if (userString) {
                 try {
                     const userObj = JSON.parse(userString);
-                    console.log('DashboardHeader: Using user from localStorage', userObj);
-                    setDisplayUserName(userObj.fullName || userObj.name || "My Account");
-                    setDisplayAvatar(getValidAvatarPath(userObj));
+                    setDisplayUserName(userObj.fullName || "My Account");
+                    setDisplayAvatar(userObj.avatar || "/images/resource/company-6.png");
                 } catch (e) {
-                    console.error('DashboardHeader: Failed to parse user from localStorage', e);
                     setDisplayUserName("My Account");
                     setDisplayAvatar("/images/resource/company-6.png");
                 }
             } else {
-                 console.log('DashboardHeader: No user found in Redux or localStorage');
                  setDisplayUserName("My Account");
                  setDisplayAvatar("/images/resource/company-6.png");
             }
         }
-    }, [user]); // Depend on user from Redux
+    }, [user, role]); 
 
     const changeBackground = () => {
         if (window.scrollY >= 0) {
@@ -115,14 +106,10 @@ const DashboardHeader = () => {
                     {/* End .nav-outer */}
 
                     <div className="outer-box">
-                        {isLoggedIn && (
-                            <Link href="/favorite-jobs">
-                                <button className="menu-btn">
-                                    <span className="count">{favoriteCount}</span>
-                                    <span className="icon la la-heart-o"></span>
-                                </button>
-                            </Link>
-                        )}
+                        <button className="menu-btn">
+                            <span className="count">1</span>
+                            <span className="icon la la-heart-o"></span>
+                        </button>
                         {/* wishlisted menu */}
 
                         <button className="menu-btn">
@@ -138,13 +125,12 @@ const DashboardHeader = () => {
                                 data-bs-toggle="dropdown"
                                 aria-expanded="false"
                             >
-                                <img
+                                <Image
                                     alt="avatar"
                                     className="thumb"
                                     src={displayAvatar}
                                     width={50}
                                     height={50}
-                                    style={{ objectFit: 'cover', objectPosition: 'center', borderRadius: '50%' }}
                                 />
                                 <span className="name">{displayUserName}</span>
                             </a>

@@ -184,14 +184,29 @@ const ApiService = {
     });
   },
   post: (endpoint, data) => {
+    const token = localStorage.getItem('token');
     return fetch(`${BASE_URL}${endpoint}`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
       body: JSON.stringify(data)
     }).then(async res => {
-      if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+      if (!res.ok) {
+        // Cố gắng parse lỗi từ body
+        const errorData = await res.json().catch(() => ({ message: `HTTP error! status: ${res.status}` }));
+        throw new Error(errorData.message || `HTTP error! status: ${res.status}`);
+      }
+      
       const text = await res.text();
-      return text ? JSON.parse(text) : null;
+      try {
+        // Thử parse dưới dạng JSON trước
+        return JSON.parse(text);
+      } catch (error) {
+        // Nếu không phải JSON, trả về dạng text (cho các response như "OK")
+        return text;
+      }
     });
   },
   login: ApiServiceClass.login,
@@ -225,7 +240,13 @@ const ApiService = {
   },
   getCompanyProfileById: ApiServiceClass.getCompanyProfileById,
   getCandidateProfileById: ApiServiceClass.getCandidateProfileById,
-  getSkillById: ApiServiceClass.getSkillById
+  getSkillById: ApiServiceClass.getSkillById,
+  changePassword: (payload) => {
+    return ApiService.post('/Auth/change-password', payload);
+  },
+  getJobList: (params) => {
+    return ApiService.get('/Job/list-job', { params });
+  }
 };
 
 export default ApiService; 
