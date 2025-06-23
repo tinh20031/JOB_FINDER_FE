@@ -4,7 +4,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import SearchBox from "./SearchBox";
 import ContactList from "./ContactList";
 import ContentField from "./ContentField";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { chatSidebarToggle } from "../../../../../features/toggle/toggleSlice";
 import { authService } from "../../../../../services/authService";
 import messageService from '../../../../../services/messageService';
@@ -12,6 +12,7 @@ import signalRService from '../../../../../services/signalRService';
 
 const ChatBox = () => {
     const dispatch = useDispatch();
+    const { user, token } = useSelector((state) => state.auth);
     const [messages, setMessages] = useState([]);
     const [currentChatPartnerId, setCurrentChatPartnerId] = useState(null);
     const [chatContacts, setChatContacts] = useState([]);
@@ -25,13 +26,11 @@ const ChatBox = () => {
     const [onlineUserIds, setOnlineUserIds] = useState([]);
 
     useEffect(() => {
-        const id = localStorage.getItem('userId');
-        if (id) {
-            setCurrentUserId(id);
-            setCurrentUserFullName(authService.getFullNameCompany() || '');
-            setCurrentUserProfileImage(authService.getProfileImageCompany() || '');
-        }
-    }, []);
+        const id = user?.id || user?.userId || authService.getCompanyId();
+        setCurrentUserId(id);
+        setCurrentUserFullName(authService.getFullNameCompany() || '');
+        setCurrentUserProfileImage(authService.getProfileImageCompany() || '');
+    }, [user]);
 
     const fetchChatContacts = useCallback(async () => {
         if (!currentUserId) return;

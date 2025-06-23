@@ -13,15 +13,10 @@ const Wrapper = ({ children }) => {
     if (typeof window !== 'undefined' && !isLoggedIn) {
       const token = authService.getToken();
       const role = authService.getRole();
-      const userString = localStorage.getItem('user');
+      const user = authService.getStoredUser();
       
-      if (token && role && userString) {
-        try {
-          const user = JSON.parse(userString);
-          dispatch(setLoginState({ isLoggedIn: true, user, role }));
-        } catch (error) {
-          console.error("Failed to parse user from localStorage", error);
-        }
+      if (token && role && user) {
+        dispatch(setLoginState({ isLoggedIn: true, user, role, token }));
       }
     }
   }, [dispatch, isLoggedIn]);
