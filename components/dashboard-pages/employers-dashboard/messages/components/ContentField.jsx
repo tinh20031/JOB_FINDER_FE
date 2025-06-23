@@ -71,7 +71,7 @@ const ChatBoxContentField = ({ messages, sendMessage, currentChatPartner, curren
         {messages.map((msg, index) => {
           const parsedTimestamp = msg.sentAt ? new Date(msg.sentAt) : null;
           const timeToDisplay = parsedTimestamp && isValid(parsedTimestamp) ? format(parsedTimestamp, 'HH:mm') : '';
-          const isMyMessage = Number(msg.senderId) === Number(currentUserId);
+          const isMyMessage = msg.senderId == currentUserId;
           const companyAvatar = authService.getProfileImageCompany() || '/images/resource/company-6.png';
           const companyName = authService.getFullNameCompany() || 'Company';
           return (

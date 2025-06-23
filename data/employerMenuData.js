@@ -27,13 +27,13 @@ module.exports = [
     routePath: "/employers-dashboard/manage-jobs",
     active: "",
   },
-  {
-    id: 5,
-    name: "All Applicants",
-    icon: "la-file-invoice",
-    routePath: "/employers-dashboard/all-applicants",
-    active: "",
-  },
+  // {
+  //   id: 5,
+  //   name: "All Applicants",
+  //   icon: "la-file-invoice",
+  //   routePath: "/employers-dashboard/all-applicants",
+  //   active: "",
+  // },
   {
     id: 6,
     name: "Shortlisted Resumes",

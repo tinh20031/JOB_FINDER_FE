@@ -114,9 +114,6 @@ const PostBoxForm = ({ initialData, isEditing }) => {
   // Draft key for localStorage
   const DRAFT_KEY = `job_edit_draft_${initialData?.jobId || 'new'}`;
 
-  const [selectedSkills, setSelectedSkills] = useState([]);
-  const [availableSkills, setAvailableSkills] = useState([]);
-
   useEffect(() => {
     setIsClient(true);
   }, []);
@@ -126,7 +123,6 @@ const PostBoxForm = ({ initialData, isEditing }) => {
     ApiService.get(API_CONFIG.ENDPOINTS.JOB_TYPE).then(setJobTypes);
     ApiService.get(API_CONFIG.ENDPOINTS.EXPERIENCE_LEVEL).then(setExperienceLevels);
     ApiService.get(API_CONFIG.ENDPOINTS.INDUSTRY).then(setIndustries);
-    ApiService.get(API_CONFIG.ENDPOINTS.SKILLS).then(setAvailableSkills);
     axios.get("https://provinces.open-api.vn/api/p/")
       .then(res => setProvinces(res.data))
       .catch(() => setProvinces([]));
@@ -153,13 +149,6 @@ const PostBoxForm = ({ initialData, isEditing }) => {
         timeEnd: initialData.timeEnd ? initialData.timeEnd.split('T')[0] : '',
         status: typeof initialData.status === 'number' ? initialData.status : 0
       });
-
-      if (initialData.Skills && Array.isArray(initialData.Skills)) {
-        setSelectedSkills(initialData.Skills.map(skill => ({
-          skillId: skill.skillId,
-          skillName: skill.skillName
-        })));
-      }
     }
 
   }, [initialData, isEditing]);
@@ -192,9 +181,6 @@ const PostBoxForm = ({ initialData, isEditing }) => {
     }
     if (!formData.YourExperience.trim()) {
       newErrors.YourExperience = 'Experience is required';
-    }
-    if (selectedSkills.length === 0) {
-      newErrors.skills = 'At least one skill is required';
     }
     // Validate salary based on negotiation status
     if (!formData.isSalaryNegotiable) {
@@ -375,10 +361,6 @@ const PostBoxForm = ({ initialData, isEditing }) => {
         timeEnd: new Date(formData.timeEnd).toISOString(),
         provinceName: formData.provinceName,
         addressDetail: formData.addressDetail,
-        skillInputs: selectedSkills.map(skill => ({
-          skillId: skill.skillId,
-          skillName: skill.skillName
-        }))
       };
 
       if (isEditing) {
@@ -436,7 +418,6 @@ const PostBoxForm = ({ initialData, isEditing }) => {
           YourExperience: '',
           status: 0
         });
-        setSelectedSkills([]);
         setSelectedImage(null);
         setImagePreviewUrl(null);
       }
@@ -480,10 +461,9 @@ const PostBoxForm = ({ initialData, isEditing }) => {
            formData.education.trim() !== '' ||
              formData.YourSkill.trim() !== '' ||
              formData.YourExperience.trim() !== '' ||
-             selectedSkills.length > 0 ||
-             formData.minSalary.trim() !== '' ||
-             formData.maxSalary.trim() !== '' ||
-             formData.isSalaryNegotiable !== false ||
+           formData.minSalary.trim() !== '' ||
+           formData.maxSalary.trim() !== '' ||
+           formData.isSalaryNegotiable !== false ||
            formData.industryId !== 0 ||
            formData.levelId !== 0 ||
            formData.jobTypeId !== 0 ||
@@ -501,9 +481,6 @@ const PostBoxForm = ({ initialData, isEditing }) => {
     const currentMinSalary = formData.isSalaryNegotiable ? '' : (formData.minSalary || '');
     const currentMaxSalary = formData.isSalaryNegotiable ? '' : (formData.maxSalary || '');
 
-    const initialSkills = initialData.Skills ? initialData.Skills.map(s => s.skillName).sort().join('|') : '';
-    const currentSkills = selectedSkills.map(s => s.skillName).sort().join('|');
-
     return formData.title !== (initialData.title || '') ||
            formData.description !== (initialData.description || '') ||
            formData.education !== (initialData.education || '') ||
@@ -512,7 +489,6 @@ const PostBoxForm = ({ initialData, isEditing }) => {
            formData.isSalaryNegotiable !== (initialData.isSalaryNegotiable || false) ||
            currentMinSalary !== initialMinSalary ||
            currentMaxSalary !== initialMaxSalary ||
-           currentSkills !== initialSkills ||
            formData.industryId !== (initialData.industryId || 0) ||
            formData.levelId !== (initialData.levelId || 0) ||
            formData.jobTypeId !== (initialData.jobTypeId || 0) ||
@@ -606,7 +582,6 @@ const PostBoxForm = ({ initialData, isEditing }) => {
       YourExperience: '',
       status: 0
     });
-    setSelectedSkills([]);
     setHasUnsavedChanges(false);
     setErrors({});
     setError("");
@@ -906,88 +881,6 @@ const PostBoxForm = ({ initialData, isEditing }) => {
           {errors.YourExperience && <span className="invalid-feedback d-block">{errors.YourExperience}</span>}
         </motion.div>
 
-        {/* Skills */}
-        <motion.div className="form-group col-lg-12 col-md-12" variants={itemVariants}>
-          <label>Required Skills (Tag)</label>
-          {isClient ? (
-            <CreatableSelect
-              isMulti
-              options={availableSkills.map(skill => ({
-                value: skill.skillId,
-                label: skill.skillName
-              }))}
-              value={selectedSkills.map(skill => ({
-                value: skill.skillId,
-                label: skill.skillName
-              }))}
-              onChange={(newValue) => {
-                const skillsArray = newValue.map(option => ({
-                  skillId: option.value ? parseInt(option.value, 10) : null,
-                  skillName: option.label
-                }));
-                setSelectedSkills(skillsArray);
-              }}
-              onCreateOption={(inputValue) => {
-                const newSkill = {
-                  skillId: null,
-                  skillName: inputValue
-                };
-                setSelectedSkills(prev => [...prev, newSkill]);
-              }}
-              placeholder="Select or enter skills..."
-              className="basic-multi-select"
-              classNamePrefix="select"
-              isClearable
-              isSearchable
-              noOptionsMessage={() => "No skills found"}
-              formatCreateLabel={(inputValue) => `Create skill "${inputValue}"`}
-              menuPortalTarget={document.body}
-              menuShouldScrollIntoView={true}
-              maxMenuHeight={190}
-              styles={{
-                control: (base) => ({
-                  ...base,
-                  minHeight: '42px',
-                  borderColor: errors.skills ? '#dc3545' : '#ced4da',
-                  '&:hover': {
-                    borderColor: errors.skills ? '#dc3545' : '#ced4da'
-                  }
-                }),
-                menu: (base) => ({
-                  ...base,
-                  zIndex: 9999 
-                }),
-                multiValue: (base) => ({
-                  ...base,
-                  backgroundColor: '#e9ecef',
-                  borderRadius: '0.25rem'
-                }),
-                multiValueLabel: (base) => ({
-                  ...base,
-                  color: '#212529',
-                  padding: '0.25rem 0.5rem'
-                }),
-                multiValueRemove: (base) => ({
-                  ...base,
-                  color: '#212529',
-                  ':hover': {
-                    backgroundColor: '#dee2e6',
-                    color: '#212529'
-                  }
-                })
-              }}
-            />
-          ) : (
-            <input
-              type="text"
-              placeholder="Required Skills (Loading...)"
-              className="form-control"
-              disabled
-            />
-          )}
-          {errors.skills && <span className="error-message invalid-feedback d-block">{errors.skills}</span>}
-        </motion.div>
-
         {/* Salary Section */}
         <motion.div className="form-group col-lg-12 col-md-12" variants={itemVariants}>
           <label>Salary</label>
@@ -1012,7 +905,7 @@ const PostBoxForm = ({ initialData, isEditing }) => {
                 style={{ width: '16px', height: '16px', flexShrink: 0 }}
               />
               <label className="form-check-label" htmlFor="salaryNegotiableRadio">
-                Wage Agreement
+                Negotiable Salary
               </label>
         </div>
             <div className="form-check">

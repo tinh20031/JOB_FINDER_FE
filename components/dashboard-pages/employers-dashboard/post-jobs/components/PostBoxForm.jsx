@@ -50,7 +50,11 @@ const PostBoxForm = () => {
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
     YourSkill: '',
-    YourExperience: ''
+    YourExperience: '',
+    DescriptionWeight: '',
+    SkillsWeight: '',
+    ExperienceWeight: '',
+    EducationWeight: '',
   });
 
   const [levels, setLevels] = useState([]);
@@ -121,29 +125,6 @@ const PostBoxForm = () => {
   const [clearSuccess, setClearSuccess] = useState(false);
   const [showClearConfirm, setShowClearConfirm] = useState(false);
 
-  const [selectedSkills, setSelectedSkills] = useState([]);
-  const [availableSkills, setAvailableSkills] = useState([
-    { skillId: 1, skillName: "JavaScript" },
-    { skillId: 2, skillName: "React" },
-    { skillId: 3, skillName: "Node.js" },
-    { skillId: 4, skillName: "Python" },
-    { skillId: 5, skillName: "Java" },
-    { skillId: 6, skillName: "C#" },
-    { skillId: 7, skillName: "SQL" },
-    { skillId: 8, skillName: "HTML/CSS" },
-    { skillId: 9, skillName: "TypeScript" },
-    { skillId: 10, skillName: "Angular" },
-    { skillId: 11, skillName: "Vue.js" },
-    { skillId: 12, skillName: "PHP" },
-    { skillId: 13, skillName: "Ruby" },
-    { skillId: 14, skillName: "Go" },
-    { skillId: 15, skillName: "Swift" },
-    { skillId: 16, skillName: "Kotlin" },
-    { skillId: 17, skillName: "Docker" },
-    { skillId: 18, skillName: "Kubernetes" },
-    { skillId: 19, skillName: "AWS" },
-    { skillId: 20, skillName: "Azure" }
-  ]);
   const [newSkill, setNewSkill] = useState('');
 
   useEffect(() => {
@@ -210,7 +191,11 @@ const PostBoxForm = () => {
            formData.provinceName || 
            formData.addressDetail ||
            formData.YourSkill ||
-           formData.YourExperience;
+           formData.YourExperience ||
+           formData.DescriptionWeight ||
+           formData.SkillsWeight ||
+           formData.ExperienceWeight ||
+           formData.EducationWeight;
   };
 
   // Handle navigation away
@@ -268,7 +253,11 @@ const PostBoxForm = () => {
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
       YourSkill: '',
-      YourExperience: ''
+      YourExperience: '',
+      DescriptionWeight: '',
+      SkillsWeight: '',
+      ExperienceWeight: '',
+      EducationWeight: '',
     });
     setHasUnsavedChanges(false);
     setErrors({});
@@ -359,10 +348,6 @@ const PostBoxForm = () => {
       newErrors.YourExperience = 'Experience is required';
     }
 
-    if (selectedSkills.length === 0) {
-      newErrors.skills = 'At least one skill is required';
-    }
-
     // Validate dates
     if (formData.timeStart) {
       const startDate = new Date(formData.timeStart);
@@ -388,12 +373,53 @@ const PostBoxForm = () => {
       }
     }
 
+    // Validate trọng số không được rỗng, không NaN
+    if (formData.DescriptionWeight === '' || isNaN(Number(formData.DescriptionWeight))) {
+      newErrors.DescriptionWeight = 'Vui lòng nhập Description Weight';
+    }
+    if (formData.SkillsWeight === '' || isNaN(Number(formData.SkillsWeight))) {
+      newErrors.SkillsWeight = 'Vui lòng nhập Skills Weight';
+    }
+    if (formData.ExperienceWeight === '' || isNaN(Number(formData.ExperienceWeight))) {
+      newErrors.ExperienceWeight = 'Vui lòng nhập Experience Weight';
+    }
+    if (formData.EducationWeight === '' || isNaN(Number(formData.EducationWeight))) {
+      newErrors.EducationWeight = 'Vui lòng nhập Education Weight';
+    }
+    // Validate tổng trọng số = 100
+    const totalWeight =
+      Number(formData.DescriptionWeight || 0) +
+      Number(formData.SkillsWeight || 0) +
+      Number(formData.ExperienceWeight || 0) +
+      Number(formData.EducationWeight || 0);
+    if (
+      formData.DescriptionWeight !== '' &&
+      formData.SkillsWeight !== '' &&
+      formData.ExperienceWeight !== '' &&
+      formData.EducationWeight !== '' &&
+      totalWeight !== 100
+    ) {
+      newErrors.DescriptionWeight = 'Tổng các trọng số phải bằng 100%';
+    }
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
+    if ([
+      'DescriptionWeight',
+      'SkillsWeight',
+      'ExperienceWeight',
+      'EducationWeight',
+    ].includes(name)) {
+      setFormData(prev => ({ ...prev, [name]: Number(value) }));
+      if (errors[name]) {
+        setErrors(prev => ({ ...prev, [name]: '' }));
+      }
+      return;
+    }
     if (name === 'imageFile') {
       const file = e.target.files[0];
       setSelectedImage(file);
@@ -497,60 +523,17 @@ const PostBoxForm = () => {
         createdAt: formData.createdAt,
         updatedAt: formData.updatedAt,
         YourSkill: formData.YourSkill,
-        YourExperience: formData.YourExperience
+        YourExperience: formData.YourExperience,
+        DescriptionWeight: Number(formData.DescriptionWeight),
+        SkillsWeight: Number(formData.SkillsWeight),
+        ExperienceWeight: Number(formData.ExperienceWeight),
+        EducationWeight: Number(formData.EducationWeight),
       };
 
       console.log("Sending job data:", jobData);
       const jobResult = await ApiService.createJob(jobData);
       console.log("Job creation response:", jobResult);
       
-      // Sau khi tạo job thành công, xử lý skills
-      if (selectedSkills.length > 0) {
-        try {
-          for (const skill of selectedSkills) {
-            let skillIdToUse = skill.skillId;
-
-            // Nếu là skill mới (không có skillId), tạo skill trước
-            if (!skillIdToUse) {
-              try {
-                const newSkillResult = await ApiService.post(API_CONFIG.ENDPOINTS.SKILLS, {
-                  skillName: skill.skillName
-                });
-                skillIdToUse = newSkillResult?.skillId; // Lấy ID của skill mới tạo. Sử dụng optional chaining để an toàn hơn.
-                
-                if (!skillIdToUse) {
-                  console.error("Lỗi: Không nhận được skillId hợp lệ sau khi tạo skill mới.", newSkillResult);
-                  setError(`Không thể liên kết skill mới '${skill.skillName}' vì không có ID hợp lệ.`);
-                  continue; // Bỏ qua skill này và tiếp tục với các skill khác
-                }
-
-              } catch (createSkillError) {
-                console.error("Lỗi khi tạo skill mới:", createSkillError.response?.data || createSkillError.message);
-                setError(`Không thể tạo skill '${skill.skillName}'. Vui lòng thử lại.`);
-                continue; // Đổi từ return thành continue để không chặn các skill khác
-              }
-            }
-
-            // Sau đó, liên kết skill với job
-            try {
-              const payload = {
-                JobId: parseInt(jobResult.jobId, 10),
-                SkillId: parseInt(skillIdToUse, 10)
-              };
-              console.log("Đang gửi payload liên kết skill:", payload);
-              await ApiService.post(API_CONFIG.ENDPOINTS.JOB_SKILLS, payload);
-            } catch (jobSkillError) {
-              console.error("Lỗi khi liên kết skill với job:", jobSkillError.response?.data || jobSkillError.message);
-              // Tiếp tục với các skill khác nếu một skill thất bại
-              continue;
-            }
-          }
-        } catch (error) {
-          console.error("Lỗi khi xử lý skills:", error);
-          // Không return ở đây, để job creation được coi là thành công
-        }
-      }
-
       setSuccess(true);
       setShowSuccessModal(true);
       localStorage.removeItem(DRAFT_KEY);
@@ -575,9 +558,12 @@ const PostBoxForm = () => {
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
         YourSkill: '',
-        YourExperience: ''
+        YourExperience: '',
+        DescriptionWeight: '',
+        SkillsWeight: '',
+        ExperienceWeight: '',
+        EducationWeight: '',
       });
-      setSelectedSkills([]);
       setErrors({});
     } catch (error) {
       console.error("API Error:", error.response?.data || error.message);
@@ -590,6 +576,9 @@ const PostBoxForm = () => {
     if (hasActualChanges()) {
       localStorage.setItem(DRAFT_KEY, JSON.stringify(formData));
       setHasUnsavedChanges(true);
+    } else {
+      localStorage.removeItem(DRAFT_KEY);
+      setHasUnsavedChanges(false);
     }
   }, [formData]);
 
@@ -882,82 +871,6 @@ const PostBoxForm = () => {
           {errors.YourExperience && <div className="invalid-feedback">{errors.YourExperience}</div>}
         </motion.div>
 
-        {/* Skills Section */}
-        <motion.div className="form-group col-lg-12 col-md-12" variants={itemVariants}>
-          <label>Required Skills (Tag)</label>
-          <div className="skills-input-container">
-            <CreatableSelect
-              isMulti
-              value={selectedSkills.map(skill => ({
-                value: skill.skillId || skill.skillName,
-                label: skill.skillName
-              }))}
-              options={availableSkills.map(skill => ({
-                value: skill.skillId,
-                label: skill.skillName
-              }))}
-              onChange={(newValue) => {
-                setSelectedSkills(
-                  newValue.map(option => ({
-                    skillId: option.value ? parseInt(option.value, 10) : null,
-                    skillName: option.label
-                  }))
-                );
-              }}
-              onCreateOption={(inputValue) => {
-                const newSkill = {
-                  skillId: null,
-                  skillName: inputValue
-                };
-                setSelectedSkills(prev => [...prev, newSkill]);
-              }}
-              placeholder="Select or enter skills..."
-              className="basic-multi-select"
-              classNamePrefix="select"
-              isClearable
-              isSearchable
-              noOptionsMessage={() => "No skills found"}
-              formatCreateLabel={(inputValue) => `Create skill "${inputValue}"`}
-              menuPortalTarget={document.body}
-              menuShouldScrollIntoView={true}
-              maxMenuHeight={190}
-              styles={{
-                control: (base) => ({
-                  ...base,
-                  minHeight: '42px',
-                  borderColor: errors.skills ? '#dc3545' : '#ced4da',
-                  '&:hover': {
-                    borderColor: errors.skills ? '#dc3545' : '#ced4da'
-                  }
-                }),
-                menu: (base) => ({
-                  ...base,
-                  zIndex: 9999 
-                }),
-                multiValue: (base) => ({
-                  ...base,
-                  backgroundColor: '#e9ecef',
-                  borderRadius: '0.25rem'
-                }),
-                multiValueLabel: (base) => ({
-                  ...base,
-                  color: '#212529',
-                  padding: '0.25rem 0.5rem'
-                }),
-                multiValueRemove: (base) => ({
-                  ...base,
-                  color: '#212529',
-                  ':hover': {
-                    backgroundColor: '#dee2e6',
-                    color: '#212529'
-                  }
-                })
-              }}
-            />
-            {errors.skills && <div className="invalid-feedback d-block">{errors.skills}</div>}
-          </div>
-        </motion.div>
-
         {/* Salary Section */}
         <motion.div className="form-group col-lg-12 col-md-12" variants={itemVariants}>
           <label>Salary</label>
@@ -981,7 +894,7 @@ const PostBoxForm = () => {
                 }}
               />
               <label className="form-check-label" htmlFor="salaryNegotiableRadio">
-                Wage Agreement
+                Negotiable Salary
               </label>
             </div>
             <div className="form-check">
@@ -1193,6 +1106,64 @@ const PostBoxForm = () => {
           {errors.addressDetail && <div className="invalid-feedback">{errors.addressDetail}</div>}
         </motion.div>
 
+        {/* Trọng số các trường */}
+        <motion.div className="form-group col-lg-3 col-md-6" variants={itemVariants}>
+          <label>Description Weight (%)</label>
+          <input
+            type="number"
+            name="DescriptionWeight"
+            value={formData.DescriptionWeight}
+            min={0}
+            max={100}
+            onChange={handleInputChange}
+            className={`form-control${errors.DescriptionWeight ? ' is-invalid' : ''}`}
+            placeholder="Enter description weight (%)"
+          />
+          {errors.DescriptionWeight && <div className="invalid-feedback" style={{display:'block'}}>{errors.DescriptionWeight}</div>}
+        </motion.div>
+        <motion.div className="form-group col-lg-3 col-md-6" variants={itemVariants}>
+          <label>Skills Weight (%)</label>
+          <input
+            type="number"
+            name="SkillsWeight"
+            value={formData.SkillsWeight}
+            min={0}
+            max={100}
+            onChange={handleInputChange}
+            className={`form-control${errors.SkillsWeight ? ' is-invalid' : ''}`}
+            placeholder="Enter skills weight (%)"
+          />
+          {errors.SkillsWeight && <div className="invalid-feedback" style={{display:'block'}}>{errors.SkillsWeight}</div>}
+        </motion.div>
+        <motion.div className="form-group col-lg-3 col-md-6" variants={itemVariants}>
+          <label>Experience Weight (%)</label>
+          <input
+            type="number"
+            name="ExperienceWeight"
+            value={formData.ExperienceWeight}
+            min={0}
+            max={100}
+            onChange={handleInputChange}
+            className={`form-control${errors.ExperienceWeight ? ' is-invalid' : ''}`}
+            placeholder="Enter experience weight (%)"
+          />
+          {errors.ExperienceWeight && <div className="invalid-feedback" style={{display:'block'}}>{errors.ExperienceWeight}</div>}
+        </motion.div>
+        <motion.div className="form-group col-lg-3 col-md-6" variants={itemVariants}>
+          <label>Education Weight (%)</label>
+          <input
+            type="number"
+            name="EducationWeight"
+            value={formData.EducationWeight}
+            min={0}
+            max={100}
+            onChange={handleInputChange}
+            className={`form-control${errors.EducationWeight ? ' is-invalid' : ''}`}
+            placeholder="Enter education weight (%)"
+          />
+          {errors.EducationWeight && <div className="invalid-feedback" style={{display:'block'}}>{errors.EducationWeight}</div>}
+        </motion.div>
+
         {/* Submit Button */}
         <motion.div 
           className="form-group col-lg-12 col-md-12 text-right"
@@ -1402,7 +1373,11 @@ const PostBoxForm = () => {
                     createdAt: new Date().toISOString(),
                     updatedAt: new Date().toISOString(),
                     YourSkill: '',
-                    YourExperience: ''
+                    YourExperience: '',
+                    DescriptionWeight: '',
+                    SkillsWeight: '',
+                    ExperienceWeight: '',
+                    EducationWeight: '',
                   });
                   setErrors({});
                 }}

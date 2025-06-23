@@ -6,6 +6,8 @@ import { useRouter } from 'next/navigation';
 import { toast } from 'react-toastify';
 import { useDispatch } from 'react-redux';
 import { setLoginState } from '@/features/auth/authSlice';
+import { jwtDecode } from 'jwt-decode';
+import Cookies from 'js-cookie';
 
 const FormContent = ({ onRegistrationSuccess }) => {
   const router = useRouter();
@@ -52,14 +54,51 @@ const FormContent = ({ onRegistrationSuccess }) => {
       // Automatically log in the user after successful registration
       const loginData = await authService.login(formData.email, formData.password);
       
+      // Explicitly save user data to localStorage and cookies to ensure persistence
+      if (loginData && loginData.token) {
+        const cookieOptions = {
+            expires: 7, // 7 days
+            path: '/',
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'Lax'
+        };
+
+        const decodedToken = jwtDecode(loginData.token);
+
+        // Save to localStorage
+        localStorage.setItem('token', loginData.token);
+        localStorage.setItem('role', loginData.role);
+        if (loginData.name) localStorage.setItem('name', loginData.name);
+        if (decodedToken.fullName) localStorage.setItem('fullName', decodedToken.fullName);
+        if (decodedToken.profileImage) localStorage.setItem('profileImage', decodedToken.profileImage);
+        if (decodedToken.sub) localStorage.setItem('userId', decodedToken.sub);
+        if (loginData.companyId) localStorage.setItem('companyId', loginData.companyId);
+        if (loginData.user) localStorage.setItem('user', JSON.stringify(loginData.user));
+        
+        // Save to Cookies
+        Cookies.set('token', loginData.token, cookieOptions);
+        Cookies.set('role', loginData.role, cookieOptions);
+        if (loginData.name) Cookies.set('name', loginData.name, cookieOptions);
+        if (decodedToken.fullName) Cookies.set('fullName', decodedToken.fullName, cookieOptions);
+        if (decodedToken.profileImage) Cookies.set('profileImage', decodedToken.profileImage, cookieOptions);
+        if (decodedToken.sub) Cookies.set('userId', decodedToken.sub, cookieOptions);
+        if (loginData.companyId) Cookies.set('companyId', loginData.companyId, cookieOptions);
+      }
+
       dispatch(setLoginState({
         isLoggedIn: true,
         user: loginData.user, // Assuming loginData contains user object
-        role: loginData.role
+        role: loginData.role,
+        token: loginData.token, // Truyền token vào Redux
       }));
 
-      // Redirect to home page
-      router.push('/');
+      // If onRegistrationSuccess is provided (popup context), call it to reload the page.
+      if (onRegistrationSuccess) {
+        onRegistrationSuccess();
+      } else {
+        // Fallback for non-popup registration, e.g., redirect to home page
+        router.push('/');
+      }
 
     } catch (error) {
       console.log('Registration error:', error);
