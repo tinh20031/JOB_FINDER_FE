@@ -50,7 +50,11 @@ const PostBoxForm = () => {
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
     YourSkill: '',
-    YourExperience: ''
+    YourExperience: '',
+    DescriptionWeight: '',
+    SkillsWeight: '',
+    ExperienceWeight: '',
+    EducationWeight: '',
   });
 
   const [levels, setLevels] = useState([]);
@@ -187,7 +191,11 @@ const PostBoxForm = () => {
            formData.provinceName || 
            formData.addressDetail ||
            formData.YourSkill ||
-           formData.YourExperience;
+           formData.YourExperience ||
+           formData.DescriptionWeight ||
+           formData.SkillsWeight ||
+           formData.ExperienceWeight ||
+           formData.EducationWeight;
   };
 
   // Handle navigation away
@@ -245,7 +253,11 @@ const PostBoxForm = () => {
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
       YourSkill: '',
-      YourExperience: ''
+      YourExperience: '',
+      DescriptionWeight: '',
+      SkillsWeight: '',
+      ExperienceWeight: '',
+      EducationWeight: '',
     });
     setHasUnsavedChanges(false);
     setErrors({});
@@ -361,12 +373,53 @@ const PostBoxForm = () => {
       }
     }
 
+    // Validate trọng số không được rỗng, không NaN
+    if (formData.DescriptionWeight === '' || isNaN(Number(formData.DescriptionWeight))) {
+      newErrors.DescriptionWeight = 'Vui lòng nhập Description Weight';
+    }
+    if (formData.SkillsWeight === '' || isNaN(Number(formData.SkillsWeight))) {
+      newErrors.SkillsWeight = 'Vui lòng nhập Skills Weight';
+    }
+    if (formData.ExperienceWeight === '' || isNaN(Number(formData.ExperienceWeight))) {
+      newErrors.ExperienceWeight = 'Vui lòng nhập Experience Weight';
+    }
+    if (formData.EducationWeight === '' || isNaN(Number(formData.EducationWeight))) {
+      newErrors.EducationWeight = 'Vui lòng nhập Education Weight';
+    }
+    // Validate tổng trọng số = 100
+    const totalWeight =
+      Number(formData.DescriptionWeight || 0) +
+      Number(formData.SkillsWeight || 0) +
+      Number(formData.ExperienceWeight || 0) +
+      Number(formData.EducationWeight || 0);
+    if (
+      formData.DescriptionWeight !== '' &&
+      formData.SkillsWeight !== '' &&
+      formData.ExperienceWeight !== '' &&
+      formData.EducationWeight !== '' &&
+      totalWeight !== 100
+    ) {
+      newErrors.DescriptionWeight = 'Tổng các trọng số phải bằng 100%';
+    }
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
+    if ([
+      'DescriptionWeight',
+      'SkillsWeight',
+      'ExperienceWeight',
+      'EducationWeight',
+    ].includes(name)) {
+      setFormData(prev => ({ ...prev, [name]: Number(value) }));
+      if (errors[name]) {
+        setErrors(prev => ({ ...prev, [name]: '' }));
+      }
+      return;
+    }
     if (name === 'imageFile') {
       const file = e.target.files[0];
       setSelectedImage(file);
@@ -470,7 +523,11 @@ const PostBoxForm = () => {
         createdAt: formData.createdAt,
         updatedAt: formData.updatedAt,
         YourSkill: formData.YourSkill,
-        YourExperience: formData.YourExperience
+        YourExperience: formData.YourExperience,
+        DescriptionWeight: Number(formData.DescriptionWeight),
+        SkillsWeight: Number(formData.SkillsWeight),
+        ExperienceWeight: Number(formData.ExperienceWeight),
+        EducationWeight: Number(formData.EducationWeight),
       };
 
       console.log("Sending job data:", jobData);
@@ -501,7 +558,11 @@ const PostBoxForm = () => {
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
         YourSkill: '',
-        YourExperience: ''
+        YourExperience: '',
+        DescriptionWeight: '',
+        SkillsWeight: '',
+        ExperienceWeight: '',
+        EducationWeight: '',
       });
       setErrors({});
     } catch (error) {
@@ -1042,6 +1103,64 @@ const PostBoxForm = () => {
           {errors.addressDetail && <div className="invalid-feedback">{errors.addressDetail}</div>}
         </motion.div>
 
+        {/* Trọng số các trường */}
+        <motion.div className="form-group col-lg-3 col-md-6" variants={itemVariants}>
+          <label>Description Weight (%)</label>
+          <input
+            type="number"
+            name="DescriptionWeight"
+            value={formData.DescriptionWeight}
+            min={0}
+            max={100}
+            onChange={handleInputChange}
+            className={`form-control${errors.DescriptionWeight ? ' is-invalid' : ''}`}
+            placeholder="Enter description weight (%)"
+          />
+          {errors.DescriptionWeight && <div className="invalid-feedback" style={{display:'block'}}>{errors.DescriptionWeight}</div>}
+        </motion.div>
+        <motion.div className="form-group col-lg-3 col-md-6" variants={itemVariants}>
+          <label>Skills Weight (%)</label>
+          <input
+            type="number"
+            name="SkillsWeight"
+            value={formData.SkillsWeight}
+            min={0}
+            max={100}
+            onChange={handleInputChange}
+            className={`form-control${errors.SkillsWeight ? ' is-invalid' : ''}`}
+            placeholder="Enter skills weight (%)"
+          />
+          {errors.SkillsWeight && <div className="invalid-feedback" style={{display:'block'}}>{errors.SkillsWeight}</div>}
+        </motion.div>
+        <motion.div className="form-group col-lg-3 col-md-6" variants={itemVariants}>
+          <label>Experience Weight (%)</label>
+          <input
+            type="number"
+            name="ExperienceWeight"
+            value={formData.ExperienceWeight}
+            min={0}
+            max={100}
+            onChange={handleInputChange}
+            className={`form-control${errors.ExperienceWeight ? ' is-invalid' : ''}`}
+            placeholder="Enter experience weight (%)"
+          />
+          {errors.ExperienceWeight && <div className="invalid-feedback" style={{display:'block'}}>{errors.ExperienceWeight}</div>}
+        </motion.div>
+        <motion.div className="form-group col-lg-3 col-md-6" variants={itemVariants}>
+          <label>Education Weight (%)</label>
+          <input
+            type="number"
+            name="EducationWeight"
+            value={formData.EducationWeight}
+            min={0}
+            max={100}
+            onChange={handleInputChange}
+            className={`form-control${errors.EducationWeight ? ' is-invalid' : ''}`}
+            placeholder="Enter education weight (%)"
+          />
+          {errors.EducationWeight && <div className="invalid-feedback" style={{display:'block'}}>{errors.EducationWeight}</div>}
+        </motion.div>
+
         {/* Submit Button */}
         <motion.div 
           className="form-group col-lg-12 col-md-12 text-right"
@@ -1251,7 +1370,11 @@ const PostBoxForm = () => {
                     createdAt: new Date().toISOString(),
                     updatedAt: new Date().toISOString(),
                     YourSkill: '',
-                    YourExperience: ''
+                    YourExperience: '',
+                    DescriptionWeight: '',
+                    SkillsWeight: '',
+                    ExperienceWeight: '',
+                    EducationWeight: '',
                   });
                   setErrors({});
                 }}
