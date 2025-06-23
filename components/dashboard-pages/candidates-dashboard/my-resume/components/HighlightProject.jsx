@@ -1,77 +1,88 @@
 import React, { useState, useEffect } from "react";
-import AwardModal from "./AwardModal";
-import { updateAward, creatAward, deleteAward } from "@/services/useResumeData";
+import HighlightProjectModal from "./HighlighProjectModal";
+import {
+  updateHighlighProject,
+  createHighlighProject,
+  deleteHighlighProject,
+} from "@/services/useResumeData";
 import { toast } from "react-toastify";
 
-const Awards = ({ awards = [], refetch, openExternal, setOpenExternal }) => {
+const HighlightProject = ({
+  project = [],
+  refetch,
+  openExternal,
+  setOpenExternal,
+}) => {
   const [open, setOpen] = useState(false);
-  const [selectAwards, setselectedAwards] = useState(null);
+  const [selectedProject, setselectedProject] = useState(null);
   const [deletingId, setDeletingId] = useState(null);
-  const [lastDeletedAward, setLastDeletedAward] = useState(null);
+  const [lastDeletedProject, setLastDeletedProject] = useState(null);
 
   // Sync with external open prop
   useEffect(() => {
     if (openExternal) setOpen(true);
   }, [openExternal]);
 
-  const handleEdit = (item) => {
-    setselectedAwards(item);
+  const handleEdit = (proj) => {
+    setselectedProject(proj);
     setOpen(true);
   };
-
   const handleAdd = () => {
-    setselectedAwards(null);
+    setselectedProject(null);
     setOpen(true);
   };
-
   const handleClose = () => {
     setOpen(false);
     if (setOpenExternal) setOpenExternal(false);
   };
-
-  const handleSave = async (awardData) => {
+  const handleSave = async (projectData) => {
     try {
-      if (awardData.awardId && awardData.awardId > 0) {
-        await updateAward(awardData);
+      if (
+        projectData.highlightProjectId &&
+        projectData.highlightProjectId > 0
+      ) {
+        await updateHighlighProject(projectData);
       } else {
-        await creatAward(awardData);
+        await createHighlighProject(projectData);
       }
       setOpen(false);
       if (setOpenExternal) setOpenExternal(false);
       if (typeof refetch === "function") await refetch();
-      toast.success("Award updated successfully!");
+      toast.success("Project updated successfully!");
     } catch (e) {
       toast.error("Cập nhật thất bại!");
     }
   };
 
-  const handleUndo = async (award) => {
+  const handleUndo = async (proj) => {
     try {
-      const { awardId, ...rest } = award;
-      await creatAward({ ...rest, awardId: 0 });
+      const { highlightProjectId, highlighProjectId, ...rest } = proj;
+      await createHighlighProject({ ...rest, highlightProjectId: 0 });
       if (typeof refetch === "function") await refetch();
       toast.success("Restored successfully");
-      setLastDeletedAward(null);
+      setLastDeletedProject(null);
     } catch {
       toast.error("Undo failed!");
     }
   };
 
   const handleDelete = async (id) => {
-    const award = awards.find((a) => a.awardId === id);
-    if (!award) return;
+    const proj = project.find(
+      (p) => (p.highlightProjectId || p.highlighProjectId) === id
+    );
+    if (!proj) return;
 
     setDeletingId(id);
     try {
-      await deleteAward(id);
-      setLastDeletedAward(award);
+      await deleteHighlighProject(id);
+      setLastDeletedProject(proj);
       if (typeof refetch === "function") {
         await refetch();
       }
       toast.info(
         <span style={{ display: "flex", alignItems: "center" }}>
           <span style={{ marginRight: 12, fontWeight: 500 }}>
-            You deleted an Award.
+            You deleted a Project.
           </span>
           <button
             style={{
@@ -88,7 +99,7 @@ const Awards = ({ awards = [], refetch, openExternal, setOpenExternal }) => {
             }}
             onClick={async (e) => {
               e.preventDefault();
-              await handleUndo(award);
+              await handleUndo(proj);
             }}
           >
             Undo
@@ -111,8 +122,8 @@ const Awards = ({ awards = [], refetch, openExternal, setOpenExternal }) => {
     return `${mm}/${yyyy}`;
   };
 
-  const isArray = Array.isArray(awards);
-  const list = isArray ? awards : [];
+  const isArray = Array.isArray(project);
+  const list = isArray ? project : [];
 
   return (
     <div
@@ -132,7 +143,7 @@ const Awards = ({ awards = [], refetch, openExternal, setOpenExternal }) => {
           marginBottom: 8,
         }}
       >
-        <span style={{ fontWeight: 700, fontSize: 24 }}>Awards</span>
+        <span style={{ fontWeight: 700, fontSize: 24 }}>Highlight Project</span>
         <button
           onClick={handleAdd}
           style={{
@@ -153,11 +164,13 @@ const Awards = ({ awards = [], refetch, openExternal, setOpenExternal }) => {
       `}</style>
       <hr style={{ margin: "8px 0 16px 0" }} />
       {list.length === 0 && (
-        <div style={{ color: "#888", fontStyle: "italic" }}>No Award info.</div>
+        <div style={{ color: "#888", fontStyle: "italic" }}>
+          No Highlight Project info.
+        </div>
       )}
-      {list.map((item, idx) => (
+      {list.map((proj, idx) => (
         <div
-          key={item.awardId || idx}
+          key={proj.highlighProjectId || proj.highlightProjectId || idx}
           style={{
             padding: "0 0 24px 0",
             borderBottom: idx !== list.length - 1 ? "1px solid #eee" : "none",
@@ -166,19 +179,41 @@ const Awards = ({ awards = [], refetch, openExternal, setOpenExternal }) => {
           }}
         >
           <div style={{ fontWeight: 700, fontSize: 20, marginBottom: 4 }}>
-            {item.awardName}
+            {proj.projectName}
           </div>
           <div style={{ color: "#888", marginBottom: 8, fontSize: 15 }}>
-            {item.awardOrganization}
-          </div>
-          <div style={{ color: "#888", marginBottom: 8, fontSize: 15 }}>
-            {formatMonthYear(item.month)}
+            {formatMonthYear(proj.yearStart)} -{" "}
+            {proj.isWorking ? "NOW" : formatMonthYear(proj.yearEnd)}
           </div>
           <div
             className="text"
             style={{ margin: "0 0 12px 0", color: "#222", fontSize: 16 }}
-            dangerouslySetInnerHTML={{ __html: item.awardDescription }}
-          />
+            dangerouslySetInnerHTML={{ __html: proj.projectDescription }}
+          ></div>
+          {proj.projectLink && (
+            <div style={{ marginBottom: 0 }}>
+              <a
+                href={proj.projectLink}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
+                  color: "#2563eb",
+                  fontWeight: 600,
+                  textDecoration: "none",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 4,
+                  fontSize: 16,
+                }}
+              >
+                View project{" "}
+                <span
+                  className="la la-external-link-alt"
+                  style={{ fontSize: 16 }}
+                ></span>
+              </a>
+            </div>
+          )}
           <div
             style={{
               position: "absolute",
@@ -190,7 +225,7 @@ const Awards = ({ awards = [], refetch, openExternal, setOpenExternal }) => {
             }}
           >
             <button
-              onClick={() => handleEdit(item)}
+              onClick={() => handleEdit(proj)}
               style={{
                 background: "none",
                 border: "none",
@@ -204,8 +239,13 @@ const Awards = ({ awards = [], refetch, openExternal, setOpenExternal }) => {
               <span className="la la-pencil"></span>
             </button>
             <button
-              onClick={() => handleDelete(item.awardId)}
-              disabled={deletingId === item.awardId}
+              onClick={() =>
+                handleDelete(proj.highlightProjectId || proj.highlighProjectId)
+              }
+              disabled={
+                deletingId ===
+                (proj.highlightProjectId || proj.highlighProjectId)
+              }
               style={{
                 background: "none",
                 border: "none",
@@ -221,14 +261,14 @@ const Awards = ({ awards = [], refetch, openExternal, setOpenExternal }) => {
           </div>
         </div>
       ))}
-      <AwardModal
+      <HighlightProjectModal
         open={open}
         onClose={handleClose}
         onSubmit={handleSave}
-        award={selectAwards}
+        highlightProject={selectedProject}
       />
     </div>
   );
 };
 
-export default Awards;
+export default HighlightProject;

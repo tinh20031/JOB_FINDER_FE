@@ -12,6 +12,22 @@ import { useSelector } from "react-redux";
 import { getUserFavorites } from "../../services/favoriteJobService";
 import { useFavoriteJobs } from "../../contexts/FavoriteJobsContext";
 
+// Helper function to validate image URLs
+const getValidImageUrl = (url) => {
+  if (!url || typeof url !== 'string') {
+    return null;
+  }
+  // Check if it's "string" literal or invalid
+  if (url === "string") {
+    return null;
+  }
+  // Check if it's an absolute URL or a relative path starting with /
+  if (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('/')) {
+    return url;
+  }
+  return null; // Invalid URL
+};
+
 const DashboardCandidatesHeader = () => {
     const [navbar, setNavbar] = useState(false);
     const [fullName, setFullName] = useState("My Account");
@@ -42,13 +58,16 @@ const DashboardCandidatesHeader = () => {
                     setFullName(userName);
                 }
             }
+            
+            // Handle avatar with validation
+            let userAvatar = null;
             if (user.image) {
-                setAvatar(user.image);
+                userAvatar = getValidImageUrl(user.image);
             } else if (user.avatar) {
-                setAvatar(user.avatar);
-            } else {
-                setAvatar("/images/resource/candidate-1.png");
+                userAvatar = getValidImageUrl(user.avatar);
             }
+            
+            setAvatar(userAvatar || "/images/resource/candidate-1.png");
         }
     }, []);
 

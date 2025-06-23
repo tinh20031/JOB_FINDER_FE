@@ -1,77 +1,83 @@
 import React, { useState, useEffect } from "react";
-import AwardModal from "./AwardModal";
-import { updateAward, creatAward, deleteAward } from "@/services/useResumeData";
+import CertificateModal from "./CertificateModal";
+import {
+  updateCertificate,
+  creatCertificate,
+  deleteCertificate,
+} from "@/services/useResumeData";
 import { toast } from "react-toastify";
 
-const Awards = ({ awards = [], refetch, openExternal, setOpenExternal }) => {
+const Certificate = ({
+  certificate = [],
+  refetch,
+  openExternal,
+  setOpenExternal,
+}) => {
   const [open, setOpen] = useState(false);
-  const [selectAwards, setselectedAwards] = useState(null);
+  const [selectCertificate, setselectedCertificate] = useState(null);
   const [deletingId, setDeletingId] = useState(null);
-  const [lastDeletedAward, setLastDeletedAward] = useState(null);
+  const [lastDeletedCertificate, setLastDeletedCertificate] = useState(null);
 
   // Sync with external open prop
   useEffect(() => {
     if (openExternal) setOpen(true);
   }, [openExternal]);
 
-  const handleEdit = (item) => {
-    setselectedAwards(item);
+  const handleEdit = (cer) => {
+    setselectedCertificate(cer);
     setOpen(true);
   };
-
   const handleAdd = () => {
-    setselectedAwards(null);
+    setselectedCertificate(null);
     setOpen(true);
   };
-
   const handleClose = () => {
     setOpen(false);
     if (setOpenExternal) setOpenExternal(false);
   };
-
-  const handleSave = async (awardData) => {
+  const handleSave = async (cerData) => {
     try {
-      if (awardData.awardId && awardData.awardId > 0) {
-        await updateAward(awardData);
+      if (cerData.certificateId && cerData.certificateId > 0) {
+        await updateCertificate(cerData);
       } else {
-        await creatAward(awardData);
+        await creatCertificate(cerData);
       }
       setOpen(false);
       if (setOpenExternal) setOpenExternal(false);
       if (typeof refetch === "function") await refetch();
-      toast.success("Award updated successfully!");
+      toast.success("Certificate updated successfully!");
     } catch (e) {
       toast.error("Cập nhật thất bại!");
     }
   };
 
-  const handleUndo = async (award) => {
+  const handleUndo = async (cer) => {
     try {
-      const { awardId, ...rest } = award;
-      await creatAward({ ...rest, awardId: 0 });
+      const { certificateId, ...rest } = cer;
+      await creatCertificate({ ...rest, certificateId: 0 });
       if (typeof refetch === "function") await refetch();
       toast.success("Restored successfully");
-      setLastDeletedAward(null);
+      setLastDeletedCertificate(null);
     } catch {
       toast.error("Undo failed!");
     }
   };
 
   const handleDelete = async (id) => {
-    const award = awards.find((a) => a.awardId === id);
-    if (!award) return;
+    const cer = certificate.find((c) => c.certificateId === id);
+    if (!cer) return;
 
     setDeletingId(id);
     try {
-      await deleteAward(id);
-      setLastDeletedAward(award);
+      await deleteCertificate(id);
+      setLastDeletedCertificate(cer);
       if (typeof refetch === "function") {
         await refetch();
       }
       toast.info(
         <span style={{ display: "flex", alignItems: "center" }}>
           <span style={{ marginRight: 12, fontWeight: 500 }}>
-            You deleted an Award.
+            You deleted a Certificate.
           </span>
           <button
             style={{
@@ -88,7 +94,7 @@ const Awards = ({ awards = [], refetch, openExternal, setOpenExternal }) => {
             }}
             onClick={async (e) => {
               e.preventDefault();
-              await handleUndo(award);
+              await handleUndo(cer);
             }}
           >
             Undo
@@ -111,8 +117,8 @@ const Awards = ({ awards = [], refetch, openExternal, setOpenExternal }) => {
     return `${mm}/${yyyy}`;
   };
 
-  const isArray = Array.isArray(awards);
-  const list = isArray ? awards : [];
+  const isArray = Array.isArray(certificate);
+  const list = isArray ? certificate : [];
 
   return (
     <div
@@ -132,7 +138,7 @@ const Awards = ({ awards = [], refetch, openExternal, setOpenExternal }) => {
           marginBottom: 8,
         }}
       >
-        <span style={{ fontWeight: 700, fontSize: 24 }}>Awards</span>
+        <span style={{ fontWeight: 700, fontSize: 24 }}>Certificate</span>
         <button
           onClick={handleAdd}
           style={{
@@ -153,11 +159,13 @@ const Awards = ({ awards = [], refetch, openExternal, setOpenExternal }) => {
       `}</style>
       <hr style={{ margin: "8px 0 16px 0" }} />
       {list.length === 0 && (
-        <div style={{ color: "#888", fontStyle: "italic" }}>No Award info.</div>
+        <div style={{ color: "#888", fontStyle: "italic" }}>
+          No Certificate info.
+        </div>
       )}
-      {list.map((item, idx) => (
+      {list.map((cer, idx) => (
         <div
-          key={item.awardId || idx}
+          key={cer.certificateId || idx}
           style={{
             padding: "0 0 24px 0",
             borderBottom: idx !== list.length - 1 ? "1px solid #eee" : "none",
@@ -166,19 +174,41 @@ const Awards = ({ awards = [], refetch, openExternal, setOpenExternal }) => {
           }}
         >
           <div style={{ fontWeight: 700, fontSize: 20, marginBottom: 4 }}>
-            {item.awardName}
+            {cer.certificateName}
           </div>
-          <div style={{ color: "#888", marginBottom: 8, fontSize: 15 }}>
-            {item.awardOrganization}
-          </div>
-          <div style={{ color: "#888", marginBottom: 8, fontSize: 15 }}>
-            {formatMonthYear(item.month)}
+          <div style={{ fontWeight: 700, fontSize: 20, marginBottom: 4 }}>
+            {cer.organization}
           </div>
           <div
             className="text"
             style={{ margin: "0 0 12px 0", color: "#222", fontSize: 16 }}
-            dangerouslySetInnerHTML={{ __html: item.awardDescription }}
-          />
+            dangerouslySetInnerHTML={{ __html: cer.certificateDescription }}
+          ></div>
+          {cer.certificateUrl && (
+            <div style={{ marginBottom: 0 }}>
+              <a
+                href={cer.certificateUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
+                  color: "#2563eb",
+                  fontWeight: 600,
+                  textDecoration: "none",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 4,
+                  fontSize: 16,
+                }}
+              >
+                View Certificate{" "}
+                <span
+                  className="la la-external-link-alt"
+                  style={{ fontSize: 16 }}
+                ></span>
+              </a>
+            </div>
+          )}
+
           <div
             style={{
               position: "absolute",
@@ -190,7 +220,7 @@ const Awards = ({ awards = [], refetch, openExternal, setOpenExternal }) => {
             }}
           >
             <button
-              onClick={() => handleEdit(item)}
+              onClick={() => handleEdit(cer)}
               style={{
                 background: "none",
                 border: "none",
@@ -204,8 +234,8 @@ const Awards = ({ awards = [], refetch, openExternal, setOpenExternal }) => {
               <span className="la la-pencil"></span>
             </button>
             <button
-              onClick={() => handleDelete(item.awardId)}
-              disabled={deletingId === item.awardId}
+              onClick={() => handleDelete(cer.certificateId)}
+              disabled={deletingId === cer.certificateId}
               style={{
                 background: "none",
                 border: "none",
@@ -221,14 +251,14 @@ const Awards = ({ awards = [], refetch, openExternal, setOpenExternal }) => {
           </div>
         </div>
       ))}
-      <AwardModal
+      <CertificateModal
         open={open}
         onClose={handleClose}
         onSubmit={handleSave}
-        award={selectAwards}
+        certificate={selectCertificate}
       />
     </div>
   );
 };
 
-export default Awards;
+export default Certificate;

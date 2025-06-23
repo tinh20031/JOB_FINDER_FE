@@ -9,6 +9,22 @@ import ApiService from "@/services/api.service";
 import { Modal, Button } from "antd";
 import { userService } from "@/services/userService";
 
+// Helper function to validate image URLs
+const getValidImageUrl = (url) => {
+  if (!url || typeof url !== 'string') {
+    return "/images/resource/default-avatar.png";
+  }
+  // Check if it's "string" literal or invalid
+  if (url === "string") {
+    return "/images/resource/default-avatar.png";
+  }
+  // Check if it's an absolute URL or a relative path starting with /
+  if (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('/')) {
+    return url;
+  }
+  return "/images/resource/default-avatar.png"; // Invalid URL
+};
+
 const UserDetailPage = () => {
   const params = useParams();
   const userId = params.userId;
@@ -89,7 +105,7 @@ const UserDetailPage = () => {
               <div className="inner-box">
                 <div className="content">
                   <figure className="image">
-                    <Image width={90} height={90} src={fakeUser.avatar || "/images/resource/default-avatar.png"} alt="avatar" />
+                    <Image width={90} height={90} src={getValidImageUrl(fakeUser.avatar)} alt="avatar" />
                   </figure>
                   <h4 className="name">{fakeUser.fullName}</h4>
                   <ul className="candidate-info">

@@ -45,12 +45,14 @@ const JobPostManagement = () => {
         setLoading(true);
         const jobsRes = await ApiService.request('Job', 'GET');
 
+
         if (Array.isArray(jobsRes)) {
           setAllJobs(jobsRes);
         } else {
           console.error("Jobs API did not return an array:", jobsRes);
           setAllJobs([]);
         }
+
         setError(null);
       } catch (err) {
         console.error('Error fetching jobs:', err);
@@ -129,10 +131,12 @@ const JobPostManagement = () => {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [selectedJobToDelete, setSelectedJobToDelete] = useState(null);
 
+
   const handleShowDelete = (job) => {
     setSelectedJobToDelete(job);
     setShowDeleteModal(true);
   };
+
   
   const handleDelete = async () => {
     if (!selectedJobToDelete) return;
@@ -146,6 +150,7 @@ const JobPostManagement = () => {
       setAlertMsg(`Failed to remove job post: ${error.message}`);
     }
   };
+
 
   const DeleteJobModal = () => (
     <div className={`modal fade show`} style={{ display: 'block' }} tabIndex="-1">

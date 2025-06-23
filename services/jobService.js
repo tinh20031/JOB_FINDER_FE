@@ -666,6 +666,155 @@ export const jobService = {
     return statusMap[status] || status;
   },
 
+  // Admin job management methods
+  async approveJob(jobId) {
+    try {
+      const token = getToken();
+      if (!token) {
+        throw new Error('No authentication token found');
+      }
+
+      const response = await axios.put(
+        `${API_URL}/Job/${jobId}/status?newStatus=1`,
+        {},
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        }
+      );
+      return response.data;
+    } catch (error) {
+      console.error('Error approving job:', error);
+      throw error;
+    }
+  },
+
+  async rejectJob(jobId) {
+    try {
+      const token = getToken();
+      if (!token) {
+        throw new Error('No authentication token found');
+      }
+
+      const response = await axios.put(
+        `${API_URL}/Job/${jobId}/status?newStatus=2`,
+        {},
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        }
+      );
+      return response.data;
+    } catch (error) {
+      console.error('Error rejecting job:', error);
+      throw error;
+    }
+  },
+
+  async deleteJob(jobId) {
+    try {
+      const token = getToken();
+      if (!token) {
+        throw new Error('No authentication token found');
+      }
+
+      const response = await axios.delete(
+        `${API_URL}/Job/${jobId}`,
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        }
+      );
+      return response.data;
+    } catch (error) {
+      console.error('Error deleting job:', error);
+      throw error;
+    }
+  },
+
+  async updateJob(jobId, jobData) {
+    try {
+      const token = getToken();
+      if (!token) {
+        throw new Error('No authentication token found');
+      }
+
+      const response = await axios.put(
+        `${API_URL}/Job/${jobId}`,
+        jobData,
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        }
+      );
+      return response.data;
+    } catch (error) {
+      console.error('Error updating job:', error);
+      throw error;
+    }
+  },
+
+  async createJob(jobData) {
+    try {
+      const token = getToken();
+      if (!token) {
+        throw new Error('No authentication token found');
+      }
+
+      const response = await axios.post(
+        `${API_URL}/Job/create`,
+        jobData,
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        }
+      );
+      return response.data;
+    } catch (error) {
+      console.error('Error creating job:', error);
+      throw error;
+    }
+  },
+
+  async getFilteredJobs(filters = {}) {
+    try {
+      const token = getToken();
+      if (!token) {
+        throw new Error('No authentication token found');
+      }
+
+      // Convert filters to query string
+      const queryParams = new URLSearchParams();
+      Object.entries(filters).forEach(([key, value]) => {
+        if (value !== undefined && value !== null && value !== '') {
+          if (Array.isArray(value)) {
+            value.forEach(v => queryParams.append(key, v));
+          } else {
+            queryParams.append(key, value);
+          }
+        }
+      });
+
+      const queryString = queryParams.toString();
+      const url = `${API_URL}/Job/filter${queryString ? `?${queryString}` : ''}`;
+
+      const response = await axios.get(url, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching filtered jobs:', error);
+      throw error;
+    }
+  },
+
   // Helper: Check if job can be edited by company
   canCompanyEditJob(job) {
     if (!job) return false;
@@ -708,7 +857,10 @@ export const jobService = {
       'inactive': 'secondary'
     };
     return colorMap[status] || 'default';
+
   },
+
+
 
   async getAppliedCount(jobId) {
     try {
@@ -730,6 +882,7 @@ export const jobService = {
     const { data: jobs } = await this.getJobs(filters);
     return jobs.filter(job => job.status === 1);
   },
+
 };
 
 export default jobService;

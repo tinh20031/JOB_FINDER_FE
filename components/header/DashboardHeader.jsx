@@ -14,6 +14,23 @@ import { useRouter } from "next/navigation";
 import { useDispatch } from "react-redux";
 
 
+const getValidAvatarPath = (user) => {
+    const avatar = user?.avatar || user?.image;
+    if (!avatar || typeof avatar !== 'string') {
+        return "/images/resource/company-6.png";
+    }
+    // Check if it's "string" literal or invalid
+    if (avatar === "string") {
+        return "/images/resource/company-6.png";
+    }
+    // Check if it's an absolute URL or a relative path starting with /
+    if (avatar.startsWith('/') || avatar.startsWith('http://') || avatar.startsWith('https://')) {
+        return avatar;
+    }
+    return "/images/resource/company-6.png";
+};
+
+
 const DashboardHeader = () => {
     const [navbar, setNavbar] = useState(false);
 

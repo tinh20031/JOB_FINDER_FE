@@ -13,7 +13,26 @@ import Cookies from 'js-cookie';
 import { getUserFavorites } from "../../services/favoriteJobService";
 import { useFavoriteJobs } from "../../contexts/FavoriteJobsContext";
 
+
+// Helper function to validate image URLs
+const getValidImageUrl = (url) => {
+  if (!url || typeof url !== 'string') {
+    return "/images/resource/company-6.png";
+  }
+  // Check if it's "string" literal or invalid
+  if (url === "string") {
+    return "/images/resource/company-6.png";
+  }
+  // Check if it's an absolute URL or a relative path starting with /
+  if (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('/')) {
+    return url;
+  }
+  return "/images/resource/company-6.png"; // Invalid URL
+};
+
+
 const DashboardHeaderAdmin = () => {
+
     const [navbar, setNavbar] = useState(false);
     const [fullName, setFullName] = useState("Admin");
     const [avatar, setAvatar] = useState("/images/resource/company-6.png");
@@ -41,20 +60,10 @@ const DashboardHeaderAdmin = () => {
                 console.log('Parsed user object:', user);
                 if (user.fullName) setFullName(user.fullName);
                 else if (user.name) setFullName(user.name);
-                if (user.avatar) {
-                    console.log('Found user avatar URL:', user.avatar);
-                    // Kiểm tra xem avatar có phải là URL hợp lệ không
-                    if (user.avatar.startsWith('http')) {
-                        setAvatar(user.avatar);
-                    } else if (user.avatar.startsWith('/')) {
-                        setAvatar(user.avatar);
-                    } else {
-                        setAvatar("/images/resource/company-6.png");
-                    }
-                } else {
-                    console.log('No user avatar URL found in user object.');
-                    setAvatar("/images/resource/company-6.png");
-                }
+                
+                // Handle avatar with validation
+                const userAvatar = getValidImageUrl(user.avatar || user.image);
+                setAvatar(userAvatar);
             } else {
                 console.log('No user data found in localStorage.');
                 setAvatar("/images/resource/company-6.png");
@@ -130,7 +139,7 @@ const DashboardHeaderAdmin = () => {
                                 <Image
                                     alt="avatar"
                                     className="thumb"
-                                    src={avatar.startsWith('http') ? avatar : avatar.startsWith('/') ? avatar : "/images/resource/company-6.png"}
+                                    src={avatar}
                                     width={50}
                                     height={50}
                                 />
