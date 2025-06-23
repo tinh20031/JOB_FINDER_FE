@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { applicationService } from "@/services/applicationService";
 import ApiService from "@/services/api.service";
+import { jobService } from "@/services/jobService";
 import { Tab, Tabs, TabList, TabPanel } from "react-tabs";
 import Link from "next/link";
 import Image from "next/image";
@@ -19,11 +20,96 @@ const getValidImageUrl = (url) => {
   return null; // Invalid URL
 };
 
+const ApplicantModal = ({ applicationId, show, onClose }) => {
+  const [application, setApplication] = useState(null);
+  useEffect(() => {
+    if (show && applicationId) {
+      fetch(`/api/Application/${applicationId}`)
+        .then(res => res.json())
+        .then(data => setApplication(data))
+        .catch(() => setApplication(null));
+    }
+  }, [show, applicationId]);
+  if (!show) return null;
+  return (
+    <div className="modal-overlay">
+      <div className="modal-content" style={{ maxWidth: 600, margin: "0 auto", padding: 24 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <h2>Applicant</h2>
+          <button onClick={onClose} style={{ fontSize: 24, border: "none", background: "none" }}>×</button>
+        </div>
+        {application ? (
+          <>
+            <div style={{ margin: "16px 0" }}>
+              <label><b>Cover Letter:</b></label>
+              <div style={{
+                background: "#f8f9fa",
+                borderRadius: 4,
+                padding: 12,
+                minHeight: 80,
+                marginTop: 4,
+                maxHeight: 200,
+                overflowY: 'auto'
+              }}>
+                {application.coverLetter || "No cover letter"}
+              </div>
+            </div>
+            <div style={{ margin: "16px 0", textAlign: 'center', display: 'flex', justifyContent: 'flex-end', gap: '16px' }}>
+              <button
+                className="cancel-btn"
+                style={{
+                  background: '#f0f0f0',
+                  color: '#555',
+                  border: 'none',
+                  borderRadius: 6,
+                  padding: '10px 28px',
+                  fontSize: 16,
+                  cursor: 'pointer',
+                  transition: 'background 0.2s',
+                }}
+                onClick={onClose}
+                onMouseOver={e => e.currentTarget.style.background = '#e0e0e0'}
+                onMouseOut={e => e.currentTarget.style.background = '#f0f0f0'}
+              >
+                Cancel
+              </button>
+              <button
+                className="theme-btn btn-style-one"
+                onClick={() => window.open(application.resumeUrl, "_blank")}
+              >
+                View CV (PDF)
+              </button>
+            </div>
+          </>
+        ) : (
+          <div>Loading...</div>
+        )}
+      </div>
+      <style jsx>{`
+        .modal-overlay {
+          position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+          background: rgba(0,0,0,0.3);
+          display: flex; align-items: center; justify-content: center;
+          z-index: 9999;
+        }
+        .modal-content {
+          background: #fff;
+          border-radius: 8px;
+          box-shadow: 0 2px 16px rgba(0,0,0,0.15);
+          position: relative;
+        }
+      `}</style>
+    </div>
+  );
+};
+
 const WidgetContentBox = ({ jobId }) => {
   const [applicants, setApplicants] = useState([]);
   const [loading, setLoading] = useState(true);
   const [jobTitle, setJobTitle] = useState("");
   const [error, setError] = useState(null);
+  const [showModal, setShowModal] = useState(false);
+  const [selectedApplicationId, setSelectedApplicationId] = useState(null);
 
   useEffect(() => {
     console.log("WidgetContentBox: useEffect triggered for jobId:", jobId);
@@ -36,7 +122,7 @@ const WidgetContentBox = ({ jobId }) => {
       try {
         setLoading(true);
         console.log("WidgetContentBox: Attempting to fetch job details for jobId:", jobId);
-        const jobDetails = await ApiService.getJobById(jobId);
+        const jobDetails = await jobService.getJobById(jobId);
         if (jobDetails && jobDetails.title) {
           setJobTitle(jobDetails.title);
         } else {
@@ -190,13 +276,13 @@ const WidgetContentBox = ({ jobId }) => {
                       <div className="option-box">
                         <ul className="option-list">
                           <li>
-                            <button data-text="View Application">
+                            <button onClick={() => { setSelectedApplicationId(applicant.applicationId); setShowModal(true); }} data-text="View Applicant">
                               <span className="la la-eye"></span>
                             </button>
                           </li>
                           <li>
                             <button
-                              data-text="Approve Application"
+                              data-text="Approve Applicant"
                               className={applicant.status === 'Approved' ? 'approved' : (applicant.status === 1 ? 'approved' : '')}
                             >
                               <span className="la la-check"></span>
@@ -204,14 +290,14 @@ const WidgetContentBox = ({ jobId }) => {
                           </li>
                           <li>
                             <button
-                              data-text="Reject Application"
+                              data-text="Reject Applicant"
                               className={applicant.status === 'Rejected' ? 'rejected' : (applicant.status === 2 ? 'rejected' : '')}
                             >
                               <span className="la la-times-circle"></span>
                             </button>
                           </li>
                           <li>
-                            <button data-text="Delete Application">
+                            <button data-text="Delete Applicant">
                               <span className="la la-trash"></span>
                             </button>
                           </li>
@@ -280,13 +366,16 @@ const WidgetContentBox = ({ jobId }) => {
                       <div className="option-box">
                         <ul className="option-list">
                           <li>
-                            <button data-text="View Application">
+                            <button
+                              data-text="View Applicant"
+                              onClick={() => { setSelectedApplicationId(applicant.applicationId); setShowModal(true); }}
+                            >
                               <span className="la la-eye"></span>
                             </button>
                           </li>
                           <li>
                             <button
-                              data-text="Approve Application"
+                              data-text="Approve Applicant"
                               className={applicant.status === 'Approved' ? 'approved' : (applicant.status === 1 ? 'approved' : '')}
                             >
                               <span className="la la-check"></span>
@@ -294,14 +383,14 @@ const WidgetContentBox = ({ jobId }) => {
                           </li>
                           <li>
                             <button
-                              data-text="Reject Application"
+                              data-text="Reject Applicant"
                               className={applicant.status === 'Rejected' ? 'rejected' : (applicant.status === 2 ? 'rejected' : '')}
                             >
                               <span className="la la-times-circle"></span>
                             </button>
                           </li>
                           <li>
-                            <button data-text="Delete Application">
+                            <button data-text="Delete Applicant">
                               <span className="la la-trash"></span>
                             </button>
                           </li>
@@ -370,13 +459,16 @@ const WidgetContentBox = ({ jobId }) => {
                       <div className="option-box">
                         <ul className="option-list">
                           <li>
-                            <button data-text="View Application">
+                            <button
+                              data-text="View Applicant"
+                              onClick={() => { setSelectedApplicationId(applicant.applicationId); setShowModal(true); }}
+                            >
                               <span className="la la-eye"></span>
                             </button>
                           </li>
                           <li>
                             <button
-                              data-text="Approve Application"
+                              data-text="Approve Applicant"
                               className={applicant.status === 'Approved' ? 'approved' : (applicant.status === 1 ? 'approved' : '')}
                             >
                               <span className="la la-check"></span>
@@ -384,14 +476,14 @@ const WidgetContentBox = ({ jobId }) => {
                           </li>
                           <li>
                             <button
-                              data-text="Reject Application"
+                              data-text="Reject Applicant"
                               className={applicant.status === 'Rejected' ? 'rejected' : (applicant.status === 2 ? 'rejected' : '')}
                             >
                               <span className="la la-times-circle"></span>
                             </button>
                           </li>
                           <li>
-                            <button data-text="Delete Application">
+                            <button data-text="Delete Applicant">
                               <span className="la la-trash"></span>
                             </button>
                           </li>
@@ -405,6 +497,11 @@ const WidgetContentBox = ({ jobId }) => {
           </div>
         </Tabs>
       </div>
+      <ApplicantModal
+        applicationId={selectedApplicationId}
+        show={showModal}
+        onClose={() => setShowModal(false)}
+      />
     </div>
   );
 };

@@ -13,7 +13,13 @@ const authSlice = createSlice({
   reducers: {
     setLoginState: (state, action) => {
       state.isLoggedIn = action.payload.isLoggedIn;
-      state.user = action.payload.userObject || null;
+      const userObj = action.payload.userObject || {};
+      const userAvatar = userObj.image || userObj.avatar || "/images/resource/candidate-1.png";
+      state.user = {
+        ...userObj,
+        image: userAvatar,
+        avatar: userAvatar,
+      };
       state.role = action.payload.role || null;
     },
     clearLoginState: (state) => {

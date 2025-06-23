@@ -1,6 +1,6 @@
 import API_CONFIG from '../config/api.config';
 
-const BASE_URL = 'https://job-finder-tm9i.onrender.com/api';
+const BASE_URL = "/api";
 
 // const BASE_URL = 'http://localhost:5194/api/';
 // Định nghĩa class trước
@@ -78,9 +78,9 @@ class ApiServiceClass {
     try {
       const response = await fetch(url, options);
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        console.error('Job creation error:', errorData);
-        throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+        const errorData = await response.json().catch(() => ({ message: `Failed to parse error response from server (status: ${response.status})` }));
+        console.error('Job creation error details:', errorData);
+        throw new Error(errorData.message || errorData.title || `HTTP error! status: ${response.status}`);
       }
       return response.json();
     } catch (error) {
@@ -184,14 +184,29 @@ const ApiService = {
     });
   },
   post: (endpoint, data) => {
+    const token = localStorage.getItem('token');
     return fetch(`${BASE_URL}${endpoint}`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
       body: JSON.stringify(data)
     }).then(async res => {
-      if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+      if (!res.ok) {
+        // Cố gắng parse lỗi từ body
+        const errorData = await res.json().catch(() => ({ message: `HTTP error! status: ${res.status}` }));
+        throw new Error(errorData.message || `HTTP error! status: ${res.status}`);
+      }
+      
       const text = await res.text();
-      return text ? JSON.parse(text) : null;
+      try {
+        // Thử parse dưới dạng JSON trước
+        return JSON.parse(text);
+      } catch (error) {
+        // Nếu không phải JSON, trả về dạng text (cho các response như "OK")
+        return text;
+      }
     });
   },
   login: ApiServiceClass.login,
@@ -225,7 +240,13 @@ const ApiService = {
   },
   getCompanyProfileById: ApiServiceClass.getCompanyProfileById,
   getCandidateProfileById: ApiServiceClass.getCandidateProfileById,
-  getSkillById: ApiServiceClass.getSkillById
+  getSkillById: ApiServiceClass.getSkillById,
+  changePassword: (payload) => {
+    return ApiService.post('/Auth/change-password', payload);
+  },
+  getJobList: (params) => {
+    return ApiService.get('/Job/list-job', { params });
+  }
 };
 
 export default ApiService; 

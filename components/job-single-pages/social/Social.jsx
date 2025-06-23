@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
-import { companyService } from "@/services/companyService";
+import ApiService from "@/services/api.service";
 
 const Social = ({ companyId }) => {
   const [company, setCompany] = useState(null);
@@ -10,7 +10,7 @@ const Social = ({ companyId }) => {
     const fetchCompanyInfo = async () => {
       try {
         setLoading(true);
-        const data = await companyService.getCompanyById(companyId);
+        const data = await ApiService.getCompanyProfileById(companyId);
         setCompany(data);
       } catch (err) {
         console.error("Error fetching company info:", err);

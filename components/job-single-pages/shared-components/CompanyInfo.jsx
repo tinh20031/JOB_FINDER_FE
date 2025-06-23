@@ -1,55 +1,19 @@
 "use client";
 import { useEffect, useState } from "react";
 import Social from "../social/Social";
-import { companyService } from "@/services/companyService";
+import ApiService from "@/services/api.service";
 import { jobService } from "@/services/jobService";
 import Image from "next/image";
 
-const CompanyInfo = ({ companyId }) => {
-  const [company, setCompany] = useState(null);
-  const [industries, setIndustries] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setLoading(true);
-        // Fetch company info
-        const companyData = await companyService.getCompanyById(companyId);
-        setCompany(companyData);
-
-        // Fetch industries
-        const industriesData = await jobService.getIndustries();
-        setIndustries(industriesData);
-      } catch (err) {
-        setError(err.message);
-        console.error("Error fetching data:", err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    if (companyId) {
-      fetchData();
-    }
-  }, [companyId]);
-
+const CompanyInfo = ({ company, industries = [] }) => {
   const getIndustryName = (industryId) => {
     const industry = industries.find(i => i.industryId === industryId);
     return industry ? industry.industryName : "N/A";
   };
 
-  if (loading) {
-    return <div>Loading company information...</div>;
-  }
-
-  if (error) {
-    return <div>Error loading company information</div>;
-  }
-
   if (!company) {
-    return null;
+    // You can return a loading state or null if you prefer
+    return <div>Loading company information...</div>;
   }
 
   return (
@@ -74,10 +38,7 @@ const CompanyInfo = ({ companyId }) => {
           Contact: <span>{company.contact}</span>
         </li>
       )}
-      {/* <li>
-        Social media:
-        <Social companyId={companyId} />
-      </li> */}
+      {/* Optional Social links */}
     </ul>
   );
 };

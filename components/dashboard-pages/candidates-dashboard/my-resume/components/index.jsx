@@ -1,70 +1,189 @@
+"use client";
 
-
-'use client'
-
-import AddPortfolio from "./AddPortfolio";
-import Awards from "./Awards";
 import Education from "./Education";
 import Experiences from "./Experiences";
-import SkillsMultiple from "./SkillsMultiple";
+import Skills from "./Skills";
+import useResumeData from "@/services/useResumeData";
+import ProfileCard from "./ProfileCard";
+import AboutMe from "./AboutMe";
+import ForeignLanguague from "./ForeignLanguague";
+import HighlightProject from "./HighlightProject";
+import Certificate from "./Certificate";
+import Awards from "./Awards";
+import EditProfileModal from "./EditProfileModal";
+import { updateCandidateProfile } from "@/services/useResumeData";
+import { useState, useEffect } from "react";
+import ForeignLanguageModal from "./ForeignLanguageModal";
+import ProfileStrengthSidebar from "./ProfileStrengthSidebar";
 
 const index = () => {
+  const {
+    aboutme,
+    profile,
+    education,
+    experiences,
+    skills,
+    foreignlanguage,
+    project,
+    certificate,
+    awards,
+    loading,
+    refetch,
+  } = useResumeData();
+
+  const [editOpen, setEditOpen] = useState(false);
+  const [reload, setReload] = useState(0);
+  const [saving, setSaving] = useState(false);
+  const [openFL, setOpenFL] = useState(false);
+  const [profileState, setProfileState] = useState(profile);
+  const [openEducationModal, setOpenEducationModal] = useState(false);
+  const [openSkillsModal, setOpenSkillsModal] = useState(false);
+  const [openAboutMeModal, setOpenAboutMeModal] = useState(false);
+  const [openWorkExpModal, setOpenWorkExpModal] = useState(false);
+  const [openHighlightProjectModal, setOpenHighlightProjectModal] =
+    useState(false);
+  const [openCertificateModal, setOpenCertificateModal] = useState(false);
+  const [openAwardsModal, setOpenAwardsModal] = useState(false);
+  const [openForeignLangModal, setOpenForeignLangModal] = useState(false);
+
+  useEffect(() => {
+    setProfileState(profile);
+  }, [profile]);
+
+  if (loading) return <div>Loading...</div>;
   const handleSubmit = (event) => {
     event.preventDefault();
   };
 
+  const handleEditProfile = () => setEditOpen(true);
+  const handleEditAboutMe = () => setEditOpen(true);
+  const handleCloseEdit = () => setEditOpen(false);
+  const handleSaveEdit = async (form) => {
+    setSaving(true);
+    try {
+      const updated = await updateCandidateProfile(form);
+      setEditOpen(false);
+      setProfileState((prev) => ({ ...prev, ...form, ...updated }));
+      if (typeof refetch === "function") await refetch();
+    } catch (e) {
+      alert("Cập nhật thất bại!");
+    }
+    setSaving(false);
+  };
+
   return (
-    <form className="default-form" onClick={handleSubmit}>
-      <div className="row">
-        <div className="form-group col-lg-6 col-md-12">
-          <label>Select Your CV</label>
-          <select className="chosen-single form-select">
-            <option>My CV</option>
-          </select>
+    <div className="my-resume-page" style={{ display: "flex", gap: 32 }}>
+      <div style={{ flex: 1 }}>
+        <div className="default-form">
+          <div className="row">
+            <div className="form-group col-lg-12 col-md-12">
+              <ProfileCard profile={profileState} onEdit={handleEditProfile} />
+            </div>
+            <div className="form-group col-lg-12 col-md-12">
+              <AboutMe
+                aboutme={Array.isArray(aboutme) ? aboutme[0] : aboutme}
+                refetch={refetch}
+                onEdit={handleEditAboutMe}
+                openExternal={openAboutMeModal}
+                setOpenExternal={setOpenAboutMeModal}
+              />
+            </div>
+            <div className="form-group col-lg-12 col-md-12">
+              <Education
+                education={education}
+                refetch={refetch}
+                openExternal={openEducationModal}
+                setOpenExternal={setOpenEducationModal}
+              />
+              <Experiences
+                workExperience={experiences}
+                refetch={refetch}
+                openExternal={openWorkExpModal}
+                setOpenExternal={setOpenWorkExpModal}
+              />
+            </div>
+            <div className="form-group col-lg-12 col-md-12">
+              <Skills
+                skills={skills}
+                refetch={refetch}
+                openExternal={openSkillsModal}
+                setOpenExternal={setOpenSkillsModal}
+                forceCoreSkillModal={openSkillsModal}
+              />
+            </div>
+            <div className="form-group col-lg-12 col-md-12">
+              <ForeignLanguague
+                foreignlanguage={foreignlanguage}
+                onEdit={() => setOpenFL(true)}
+                openExternal={openForeignLangModal}
+                setOpenExternal={setOpenForeignLangModal}
+              />
+            </div>
+            <div className="form-group col-lg-12 col-md-12">
+              <HighlightProject
+                project={project}
+                refetch={refetch}
+                openExternal={openHighlightProjectModal}
+                setOpenExternal={setOpenHighlightProjectModal}
+              />
+            </div>
+            <div className="form-group col-lg-12 col-md-12">
+              <Certificate
+                certificate={certificate}
+                refetch={refetch}
+                openExternal={openCertificateModal}
+                setOpenExternal={setOpenCertificateModal}
+              />
+            </div>
+            <div className="form-group col-lg-12 col-md-12">
+              <Awards
+                awards={awards}
+                refetch={refetch}
+                openExternal={openAwardsModal}
+                setOpenExternal={setOpenAwardsModal}
+              />
+            </div>
+            <div className="form-group col-lg-12 col-md-12">
+              <button type="submit" className="theme-btn btn-style-one">
+                Save
+              </button>
+            </div>
+            {/* <!-- Input --> */}
+          </div>
+          {/* End .row */}
+          <EditProfileModal
+            open={editOpen}
+            onClose={handleCloseEdit}
+            onSubmit={handleSaveEdit}
+            profile={profileState}
+          />
+          <ForeignLanguageModal
+            open={openFL}
+            onClose={() => {
+              setOpenFL(false);
+              setOpenForeignLangModal(false);
+            }}
+            initialLanguages={foreignlanguage}
+            refetch={refetch}
+          />
         </div>
-        {/* <!-- Input --> */}
-
-        <div className="form-group col-lg-12 col-md-12">
-          <label>Description</label>
-          <textarea placeholder="Spent several years working on sheep on Wall Street. Had moderate success investing in Yugo's on Wall Street. Managed a small team buying and selling Pogo sticks for farmers. Spent several years licensing licorice in West Palm Beach, FL. Developed several new methods for working it banjos in the aftermarket. Spent a weekend importing banjos in West Palm Beach, FL.In this position, the Software Engineer collaborates with Evention's Development team to continuously enhance our current software solutions as well as create new solutions to eliminate the back-office operations and management challenges present"></textarea>
-        </div>
-        {/* <!-- About Company --> */}
-
-        <div className="form-group col-lg-12 col-md-12">
-          <Education />
-          {/* <!-- Resume / Education --> */}
-
-          <Experiences />
-          {/* <!-- Resume / Work & Experience --> */}
-        </div>
-        {/* <!--  education and word-experiences --> */}
-
-        <div className="form-group col-lg-6 col-md-12">
-          <AddPortfolio />
-        </div>
-        {/* <!-- End more portfolio upload --> */}
-
-        <div className="form-group col-lg-12 col-md-12">
-          {/* <!-- Resume / Awards --> */}
-          <Awards />
-        </div>
-        {/* <!-- End Award --> */}
-
-        <div className="form-group col-lg-6 col-md-12">
-          <label>Skills </label>
-          <SkillsMultiple />
-        </div>
-        {/* <!-- Multi Selectbox --> */}
-
-        <div className="form-group col-lg-12 col-md-12">
-          <button type="submit" className="theme-btn btn-style-one">
-            Save
-          </button>
-        </div>
-        {/* <!-- Input --> */}
       </div>
-      {/* End .row */}
-    </form>
+      <div style={{ width: 320 }}>
+        <ProfileStrengthSidebar
+          onClickEducation={() => setOpenEducationModal(true)}
+          onClickSkills={() => setOpenSkillsModal(true)}
+          onClickAboutMe={() => setOpenAboutMeModal(true)}
+          onClickWorkExp={() => setOpenWorkExpModal(true)}
+          onClickHighlightProject={() => setOpenHighlightProjectModal(true)}
+          onClickCertificate={() => setOpenCertificateModal(true)}
+          onClickAwards={() => setOpenAwardsModal(true)}
+          onClickForeignLang={() => {
+            setOpenForeignLangModal(true);
+            setOpenFL(true);
+          }}
+        />
+      </div>
+    </div>
   );
 };
 

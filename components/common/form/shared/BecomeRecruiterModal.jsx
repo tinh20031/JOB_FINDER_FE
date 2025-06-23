@@ -3,30 +3,25 @@ import { Modal, Form, Input, Button, message, Select } from "antd";
 import axios from "axios";
 import { industryService } from "@/services/industryService";
 import { userService } from "@/services/userService";
+import locationService from "@/services/locationService";
+import { CheckCircleOutlined } from '@ant-design/icons';
+import './styles/_becomeRecruiterModal.scss';
 
 const BecomeRecruiterModal = ({ open, onCancel, userId }) => {
   const [form] = Form.useForm();
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [provinces, setProvinces] = useState([]);
   const [industries, setIndustries] = useState([]);
   const [requestSent, setRequestSent] = useState(false);
+  const [statusMessage, setStatusMessage] = useState('');
   const [error, setError] = useState(null);
 
-  useEffect(() => {
+  useEffect(() => { 
     if (open) {
-      fetch('https://provinces.open-api.vn/api/').then(res => res.json()).then(data => {
+      locationService.getProvinces().then(data => {
         setProvinces(data);
       });
       fetchIndustries();
-    }
-  }, [open]);
-
-  useEffect(() => {
-    if (open) {
-      const userIdLocal = localStorage.getItem('userId');
-      if (userIdLocal && localStorage.getItem('recruiterRequestSent_' + userIdLocal) === '1') {
-        setRequestSent(true);
-      }
     }
   }, [open]);
 
@@ -37,8 +32,6 @@ const BecomeRecruiterModal = ({ open, onCancel, userId }) => {
     } catch (err) {
       console.error("Error fetching industries:", err);
       setError("Failed to load industries");
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -46,9 +39,16 @@ const BecomeRecruiterModal = ({ open, onCancel, userId }) => {
     try {
       const values = await form.validateFields();
       setLoading(true);
-      const userIdLocal = localStorage.getItem('userId');
+      const currentUserId = userId || localStorage.getItem('userId');
+
+      if (!currentUserId) {
+        message.error("You must be logged in to submit this request.");
+        setLoading(false);
+        return;
+      }
+      
       const payload = {
-        userId: Number(userIdLocal),
+        userId: Number(currentUserId),
         companyName: values.companyName,
         companyProfileDescription: values.companyProfileDescription,
         location: values.location,
@@ -62,16 +62,26 @@ const BecomeRecruiterModal = ({ open, onCancel, userId }) => {
       message.success("Request sent successfully!");
       form.resetFields();
       setRequestSent(true);
-      if (userIdLocal) localStorage.setItem('recruiterRequestSent_' + userIdLocal, '1');
+      setStatusMessage("We have received your request, please wait...");
+      if (currentUserId) localStorage.setItem('recruiterRequestSent_' + currentUserId, '1');
     } catch (err) {
       console.error("Error submitting request:", err);
-      message.error("Failed to submit request");
+      const currentUserId = userId || localStorage.getItem('userId');
+
+      if (err.response && typeof err.response.data === 'string' && err.response.data.includes("You have submitted a request before please wait")) {
+        setRequestSent(true);
+        setStatusMessage(err.response.data);
+        if (currentUserId) {
+          localStorage.setItem('recruiterRequestSent_' + currentUserId, '1');
+        }
+      } else if (!err.errorFields) {
+        message.error("Failed to submit request");
+      }
     } finally {
       setLoading(false);
     }
   };
 
-  if (loading) return <div>Loading...</div>;
   if (error) return <div>{error}</div>;
 
   return (
@@ -82,13 +92,21 @@ const BecomeRecruiterModal = ({ open, onCancel, userId }) => {
       title="Become a Recruiter"
       okText="Submit"
       confirmLoading={loading}
-      destroyOnClose
+      destroyOnHidden
       width={520}
-      footer={requestSent ? null : undefined}
+      style={{ top: 10 }}
+      styles={{ body: { overflowY: 'auto', maxHeight: '70vh' } }}
+      footer={requestSent ? [
+        <Button key="close" onClick={onCancel}>
+          Close
+        </Button>,
+      ] : undefined}
+      className="become-recruiter-modal"
     >
       {requestSent ? (
-        <div style={{textAlign: 'center', padding: '30px 0', fontSize: 18, color: '#1967d2', fontWeight: 600}}>
-          We have received your request, please check
+        <div className="success-message">
+          <CheckCircleOutlined style={{ fontSize: 48, marginBottom: 20, color: '#52c41a' }} />
+          {statusMessage}
         </div>
       ) : (
         <Form
@@ -96,15 +114,15 @@ const BecomeRecruiterModal = ({ open, onCancel, userId }) => {
           layout="horizontal"
           labelCol={{ span: 7 }}
           wrapperCol={{ span: 17 }}
-          style={{ marginTop: 16 }}
+          className="become-recruiter-form"
         >
-          <Form.Item label="Company Name" name="companyName" rules={[{ required: true, message: 'Please enter company name' }]} style={{marginBottom: 16}} help="" validateStatus="">
+          <Form.Item label="Company Name" name="companyName" rules={[{ required: true, message: 'Please enter company name' }]}>
             <Input />
           </Form.Item>
-          <Form.Item label="Description" name="companyProfileDescription" rules={[{ required: true, message: 'Please enter description' }]} style={{marginBottom: 16}} help="" validateStatus="">
-            <Input.TextArea rows={2} />
+          <Form.Item label="Description" name="companyProfileDescription" rules={[{ required: true, message: 'Please enter description' }]}>
+            <Input.TextArea rows={6} />
           </Form.Item>
-          <Form.Item label="Location" name="location" rules={[{ required: true, message: 'Please select location' }]} style={{marginBottom: 16}} help="" validateStatus="">
+          <Form.Item label="Location" name="location" rules={[{ required: true, message: 'Please select location' }]}>
             <Select
               showSearch
               placeholder="Select a province/city"
@@ -116,7 +134,7 @@ const BecomeRecruiterModal = ({ open, onCancel, userId }) => {
               ))}
             </Select>
           </Form.Item>
-          <Form.Item label="Team Size" name="teamSize" rules={[{ required: true, message: 'Please enter team size' }]} style={{marginBottom: 16}} help="" validateStatus="">
+          <Form.Item label="Team Size" name="teamSize" rules={[{ required: true, message: 'Please enter team size' }]}>
             <Select placeholder="Select team size">
               <Select.Option value="50 - 100">50 - 100</Select.Option>
               <Select.Option value="100 - 150">100 - 150</Select.Option>
@@ -125,13 +143,13 @@ const BecomeRecruiterModal = ({ open, onCancel, userId }) => {
               <Select.Option value="500 - 1000">500 - 1000</Select.Option>
             </Select>
           </Form.Item>
-          <Form.Item label="Website" name="website" style={{marginBottom: 16}} help="" validateStatus="">
+          <Form.Item label="Website" name="website" style={{marginBottom: 20}}>
             <Input />
           </Form.Item>
-          <Form.Item label="Contact" name="contact" rules={[{ required: true, message: 'Please enter contact' }]} style={{marginBottom: 16}} help="" validateStatus="">
+          <Form.Item label="Contact" name="contact" rules={[{ required: true, message: 'Please enter contact' }]} style={{marginBottom: 20}}>
             <Input />
           </Form.Item>
-          <Form.Item label="Industry" name="industryId" rules={[{ required: true, message: 'Please select industry' }]} style={{marginBottom: 16}} help="" validateStatus="">
+          <Form.Item label="Industry" name="industryId" rules={[{ required: true, message: 'Please select industry' }]} style={{marginBottom: 20}}>
             <Select
               showSearch
               placeholder="Select industry"

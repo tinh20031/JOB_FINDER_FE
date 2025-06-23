@@ -6,6 +6,7 @@ import axios from 'axios';
 import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
 import { industryService } from "@/services/industryService";
+import locationService from "@/services/locationService";
 
 const FormInfoBox = ({ onFormChange, validationErrors, initialData, isEditing }) => {
     const [formData, setFormData] = useState({
@@ -25,8 +26,8 @@ const FormInfoBox = ({ onFormChange, validationErrors, initialData, isEditing })
     useEffect(() => {
         const fetchProvinces = async () => {
             try {
-                const response = await axios.get('https://provinces.open-api.vn/api/');
-                const sortedProvinces = response.data.sort((a, b) => a.name.localeCompare(b.name));
+                const response = await locationService.getProvinces();
+                const sortedProvinces = response.sort((a, b) => a.name.localeCompare(b.name));
                 setProvinces(sortedProvinces);
             } catch (error) {
                 console.error("Error fetching provinces:", error);
