@@ -177,7 +177,7 @@ const DefaulHeader2 = () => {
                     alt="avatar"
                     width={50}
                     height={50}
-                    src={displayAvatar}
+                    src={getValidImageUrl(displayAvatar)}
                     className="thumb"
                   />
                   <span className="name">{displayUserName}</span>
