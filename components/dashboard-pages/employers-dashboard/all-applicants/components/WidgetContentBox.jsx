@@ -7,6 +7,8 @@ import { jobService } from "@/services/jobService";
 import { Tab, Tabs, TabList, TabPanel } from "react-tabs";
 import Link from "next/link";
 import Image from "next/image";
+import { CircularProgressbar, buildStyles } from 'react-circular-progressbar';
+import 'react-circular-progressbar/dist/styles.css';
 
 // Helper function to validate image URLs
 const getValidImageUrl = (url) => {
@@ -38,7 +40,14 @@ const ApplicantModal = ({ applicationId, show, onClose }) => {
           <h2>Applicant</h2>
           <button onClick={onClose} style={{ fontSize: 24, border: "none", background: "none" }}>×</button>
         </div>
-        {application ? (
+        {!application ? (
+          <div className="skeleton-modal">
+            <div className="skeleton-avatar"></div>
+            <div className="skeleton-line" style={{ width: 120 }}></div>
+            <div className="skeleton-line" style={{ width: 200 }}></div>
+            <div className="skeleton-line" style={{ width: 80 }}></div>
+          </div>
+        ) : (
           <>
             <div style={{ margin: "16px 0" }}>
               <label><b>Cover Letter:</b></label>
@@ -81,8 +90,6 @@ const ApplicantModal = ({ applicationId, show, onClose }) => {
               </button>
             </div>
           </>
-        ) : (
-          <div>Loading...</div>
         )}
       </div>
       <style jsx>{`
@@ -98,6 +105,20 @@ const ApplicantModal = ({ applicationId, show, onClose }) => {
           box-shadow: 0 2px 16px rgba(0,0,0,0.15);
           position: relative;
         }
+        .skeleton-modal { padding: 24px; }
+        .skeleton-avatar {
+          width: 64px; height: 64px; border-radius: 50%;
+          background: #e0e0e0; margin-bottom: 16px;
+        }
+        .skeleton-line {
+          height: 16px; background: #e0e0e0; border-radius: 4px;
+          margin-bottom: 12px;
+          animation: skeleton-blink 1.2s infinite linear alternate;
+        }
+        @keyframes skeleton-blink {
+          0% { opacity: 0.7; }
+          100% { opacity: 1; }
+        }
       `}</style>
     </div>
   );
@@ -110,6 +131,10 @@ const WidgetContentBox = ({ jobId }) => {
   const [error, setError] = useState(null);
   const [showModal, setShowModal] = useState(false);
   const [selectedApplicationId, setSelectedApplicationId] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
+  const totalPages = Math.ceil(applicants.length / itemsPerPage);
+  const applicantsToShow = applicants.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
   useEffect(() => {
     console.log("WidgetContentBox: useEffect triggered for jobId:", jobId);
@@ -169,7 +194,11 @@ const WidgetContentBox = ({ jobId }) => {
             .filter(result => result.status === 'fulfilled')
             .map(result => result.value);
 
-          setApplicants(fulfilledApplicants);
+          const sortedApplicants = fulfilledApplicants.slice().sort(
+            (a, b) => (b.similarityScore ?? 0) - (a.similarityScore ?? 0)
+          );
+
+          setApplicants(sortedApplicants);
         } else {
           setApplicants([]);
         }
@@ -189,7 +218,47 @@ const WidgetContentBox = ({ jobId }) => {
   const rejectedApplicants = applicants.filter(app => (app.status === 'Rejected' || app.status === 2) && app.candidateProfile).length;
 
   if (loading) {
-    return <div className="text-center py-5">Loading applicants...</div>;
+    return (
+      <div className="row">
+        {[...Array(6)].map((_, idx) => (
+          <div className="col-lg-6 col-md-12 mb-4" key={idx}>
+            <div className="applicant-box" style={{ padding: 24, borderRadius: 16, background: '#fff', boxShadow: '0 2px 8px #eee', minHeight: 180 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
+                <div className="skeleton skeleton-avatar" />
+                <div style={{ flex: 1 }}>
+                  <div className="skeleton skeleton-title" />
+                  <div className="skeleton skeleton-subtitle" />
+                  <div className="skeleton skeleton-line" style={{ width: 120 }} />
+                </div>
+              </div>
+              <div className="skeleton skeleton-line" style={{ width: '80%', margin: '16px 0 0 0' }} />
+              <div style={{ display: 'flex', gap: 12, marginTop: 24 }}>
+                <div className="skeleton skeleton-btn" />
+                <div className="skeleton skeleton-btn" />
+                <div className="skeleton skeleton-btn" />
+                <div className="skeleton skeleton-line" style={{ width: 80, height: 20, marginLeft: 12 }} />
+              </div>
+            </div>
+          </div>
+        ))}
+        <style jsx>{`
+          .skeleton {
+            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 37%, #f0f0f0 63%);
+            background-size: 400% 100%;
+            animation: skeleton-loading 1.4s ease infinite;
+          }
+          @keyframes skeleton-loading {
+            0% { background-position: 100% 50%; }
+            100% { background-position: 0 50%; }
+          }
+          .skeleton-avatar { width: 72px; height: 72px; border-radius: 50%; }
+          .skeleton-title { width: 160px; height: 22px; border-radius: 6px; margin-bottom: 8px; }
+          .skeleton-subtitle { width: 120px; height: 16px; border-radius: 6px; margin-bottom: 8px; }
+          .skeleton-line { height: 14px; border-radius: 6px; margin-bottom: 6px; }
+          .skeleton-btn { width: 36px; height: 36px; border-radius: 50%; }
+        `}</style>
+      </div>
+    );
   }
 
   if (!jobId) {
@@ -221,277 +290,343 @@ const WidgetContentBox = ({ jobId }) => {
           <div className="tabs-content">
             <TabPanel>
               <div className="row">
-                {applicants.map((applicant) => (
-                  <div
-                    className="candidate-block-three col-lg-6 col-md-12 col-sm-12"
-                    key={applicant.applicationId}
-                  >
-                    <div className="inner-box">
-                      <div className="content">
-                        <figure className="image">
-                          <Image
-                            width={90}
-                            height={90}
-                            src={getValidImageUrl(applicant.user?.image) || getValidImageUrl(applicant.candidateProfile?.avatar) || "/images/resource/candidate-1.png"}
-                            alt={applicant.user?.fullName || applicant.user?.name || applicant.candidateProfile?.fullName || `Applicant ${applicant.userId}`}
+                {applicantsToShow.map((applicant) => {
+                  const percent = applicant.similarityScore !== null && applicant.similarityScore !== undefined ? Math.round(applicant.similarityScore * 100) : 0;
+                  const color = percent > 50 ? '#1967d2' : '#e53935';
+                  return (
+                    <div
+                      className="candidate-block-three col-lg-6 col-md-12 col-sm-12"
+                      key={applicant.applicationId}
+                    >
+                      <div className="inner-box" style={{ position: 'relative', padding: 24, borderRadius: 16, background: '#fff', boxShadow: '0 2px 8px #eee', minHeight: 180 }}>
+                        <div style={{ position: 'absolute', top: 16, right: 16, width: 48, height: 48, zIndex: 2 }}>
+                          <CircularProgressbar
+                            value={percent}
+                            text={`${percent}%`}
+                            styles={buildStyles({
+                              textColor: color,
+                              pathColor: color,
+                              trailColor: '#e0e0e0',
+                              textSize: '26px',
+                              strokeLinecap: 'round',
+                            })}
                           />
-                        </figure>
-                        <h4 className="name">
-                          <Link href={`/candidates-single-v1/${applicant.userId}`}>
-                            {applicant.user?.fullName || applicant.user?.name || applicant.candidateProfile?.fullName || `User ID: ${applicant.userId}`}
-                          </Link>
-                        </h4>
+                        </div>
+                        <div className="content">
+                          <figure className="image">
+                            <Image
+                              width={90}
+                              height={90}
+                              src={getValidImageUrl(applicant.user?.image) || getValidImageUrl(applicant.candidateProfile?.avatar) || "/images/resource/candidate-1.png"}
+                              alt={applicant.user?.fullName || applicant.user?.name || applicant.candidateProfile?.fullName || `Applicant ${applicant.userId}`}
+                            />
+                          </figure>
+                          <h4 className="name">
+                            <Link href={`/candidates-single-v1/${applicant.userId}`}>
+                              {applicant.user?.fullName || applicant.user?.name || applicant.candidateProfile?.fullName || `User ID: ${applicant.userId}`}
+                            </Link>
+                          </h4>
 
-                        <ul className="candidate-info">
-                          <li className="designation">
-                            {applicant.candidateProfile?.jobTitle || applicant.user?.designation || `Job ID: ${applicant.jobId}`}
-                          </li>
-                          <li>
-                            <span className="icon la la-venus-mars"></span>{" "}
-                            {applicant.candidateProfile?.gender || 'N/A'}
-                          </li>
-                          <li>
-                            <span className="icon flaticon-map-locator"></span>{" "}
-                            { 
-                              [ 
-                                applicant.candidateProfile?.address,
-                                applicant.candidateProfile?.city,
-                                applicant.candidateProfile?.province
-                              ].filter(Boolean).join(', ') || 
-                              applicant.user?.location || 
-                              `Status: ${applicant.status}`
-                            }
-                          </li>
-                        </ul>
-
-                        <ul className="post-tags">
-                          {applicant.candidateProfile?.skills?.map((skill, i) => (
-                            <li key={i}>
-                              <a href="#">{skill.id || skill}</a>
+                          <ul className="candidate-info">
+                            <li className="designation">
+                              {applicant.candidateProfile?.jobTitle || applicant.user?.designation || `Job ID: ${applicant.jobId}`}
                             </li>
-                          ))}
-                        </ul>
-                      </div>
+                            <li>
+                              <span className="icon la la-venus-mars"></span>{" "}
+                              {applicant.candidateProfile?.gender || 'N/A'}
+                            </li>
+                            <li>
+                              <span className="icon flaticon-map-locator"></span>{" "}
+                              { 
+                                [ 
+                                  applicant.candidateProfile?.address,
+                                  applicant.candidateProfile?.city,
+                                  applicant.candidateProfile?.province
+                                ].filter(Boolean).join(', ') || 
+                                applicant.user?.location || 
+                                `Status: ${applicant.status}`
+                              }
+                            </li>
+                          </ul>
 
-                      <div className="option-box">
-                        <ul className="option-list">
-                          <li>
-                            <button onClick={() => { setSelectedApplicationId(applicant.applicationId); setShowModal(true); }} data-text="View Applicant">
-                              <span className="la la-eye"></span>
-                            </button>
-                          </li>
-                          <li>
-                            <button
-                              data-text="Approve Applicant"
-                              className={applicant.status === 'Approved' ? 'approved' : (applicant.status === 1 ? 'approved' : '')}
-                            >
-                              <span className="la la-check"></span>
-                            </button>
-                          </li>
-                          <li>
-                            <button
-                              data-text="Reject Applicant"
-                              className={applicant.status === 'Rejected' ? 'rejected' : (applicant.status === 2 ? 'rejected' : '')}
-                            >
-                              <span className="la la-times-circle"></span>
-                            </button>
-                          </li>
-                          <li>
-                            <button data-text="Delete Applicant">
-                              <span className="la la-trash"></span>
-                            </button>
-                          </li>
-                        </ul>
+                          <ul className="post-tags">
+                            {applicant.candidateProfile?.skills?.map((skill, i) => (
+                              <li key={i}>
+                                <a href="#">{skill.id || skill}</a>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+
+                        <div className="option-box">
+                          <ul className="option-list">
+                            <li>
+                              <button onClick={() => { setSelectedApplicationId(applicant.applicationId); setShowModal(true); }} data-text="View Applicant">
+                                <span className="la la-eye"></span>
+                              </button>
+                            </li>
+                            <li>
+                              <button
+                                data-text="Approve Applicant"
+                                className={applicant.status === 'Approved' ? 'approved' : (applicant.status === 1 ? 'approved' : '')}
+                              >
+                                <span className="la la-check"></span>
+                              </button>
+                            </li>
+                            <li>
+                              <button
+                                data-text="Reject Applicant"
+                                className={applicant.status === 'Rejected' ? 'rejected' : (applicant.status === 2 ? 'rejected' : '')}
+                              >
+                                <span className="la la-times-circle"></span>
+                              </button>
+                            </li>
+                          </ul>
+                        </div>
                       </div>
                     </div>
-                  </div>
+                  );
+                })}
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 16, margin: '24px 0' }}>
+                <button disabled={currentPage === 1} onClick={() => setCurrentPage(currentPage - 1)} style={{ background: 'none', border: 'none', fontSize: 22, cursor: 'pointer', color: currentPage === 1 ? '#ccc' : '#444' }}>
+                  &#8592;
+                </button>
+                {Array.from({ length: totalPages || 1 }, (_, i) => (
+                  <button
+                    key={i + 1}
+                    onClick={() => setCurrentPage(i + 1)}
+                    style={{
+                      width: 40,
+                      height: 40,
+                      borderRadius: '50%',
+                      background: currentPage === i + 1 ? '#1967d2' : 'none',
+                      color: currentPage === i + 1 ? '#fff' : '#444',
+                      border: 'none',
+                      fontWeight: 600,
+                      fontSize: 18,
+                      cursor: 'pointer',
+                      outline: 'none',
+                      boxShadow: 'none',
+                      transition: 'background 0.2s, color 0.2s'
+                    }}
+                  >
+                    {i + 1}
+                  </button>
                 ))}
+                <button disabled={currentPage === totalPages || totalPages === 0} onClick={() => setCurrentPage(currentPage + 1)} style={{ background: 'none', border: 'none', fontSize: 22, cursor: 'pointer', color: currentPage === totalPages || totalPages === 0 ? '#ccc' : '#444' }}>
+                  &#8594;
+                </button>
               </div>
             </TabPanel>
 
             <TabPanel>
               <div className="row">
-                {applicants.filter(app => (app.status === 'Approved' || app.status === 1) && app.candidateProfile).map((applicant) => (
-                  <div
-                    className="candidate-block-three col-lg-6 col-md-12 col-sm-12"
-                    key={applicant.applicationId}
-                  >
-                    <div className="inner-box">
-                      <div className="content">
-                        <figure className="image">
-                          <Image
-                            width={90}
-                            height={90}
-                            src={getValidImageUrl(applicant.user?.image) || getValidImageUrl(applicant.candidateProfile?.avatar) || "/images/resource/candidate-1.png"}
-                            alt={applicant.user?.fullName || applicant.user?.name || applicant.candidateProfile?.fullName || `Applicant ${applicant.userId}`}
+                {applicants.filter(app => (app.status === 'Approved' || app.status === 1) && app.candidateProfile).map((applicant) => {
+                  const percent = applicant.similarityScore !== null && applicant.similarityScore !== undefined ? Math.round(applicant.similarityScore * 100) : 0;
+                  const color = percent > 50 ? '#1967d2' : '#e53935';
+                  return (
+                    <div
+                      className="candidate-block-three col-lg-6 col-md-12 col-sm-12"
+                      key={applicant.applicationId}
+                    >
+                      <div className="inner-box" style={{ position: 'relative', padding: 24, borderRadius: 16, background: '#fff', boxShadow: '0 2px 8px #eee', minHeight: 180 }}>
+                        <div style={{ position: 'absolute', top: 6, right: 8, width: 48, height: 48, zIndex: 2 }}>
+                          <CircularProgressbar
+                            value={percent}
+                            text={`${percent}%`}
+                            styles={buildStyles({
+                              textColor: color,
+                              pathColor: color,
+                              trailColor: '#e0e0e0',
+                              textSize: '26px',
+                              strokeLinecap: 'round',
+                            })}
                           />
-                        </figure>
-                        <h4 className="name">
-                          <Link href={`/candidates-single-v1/${applicant.userId}`}>
-                            {applicant.user?.fullName || applicant.user?.name || applicant.candidateProfile?.fullName || `User ID: ${applicant.userId}`}
-                          </Link>
-                        </h4>
+                        </div>
+                        <div className="content">
+                          <figure className="image">
+                            <Image
+                              width={90}
+                              height={90}
+                              src={getValidImageUrl(applicant.user?.image) || getValidImageUrl(applicant.candidateProfile?.avatar) || "/images/resource/candidate-1.png"}
+                              alt={applicant.user?.fullName || applicant.user?.name || applicant.candidateProfile?.fullName || `Applicant ${applicant.userId}`}
+                            />
+                          </figure>
+                          <h4 className="name">
+                            <Link href={`/candidates-single-v1/${applicant.userId}`}>
+                              {applicant.user?.fullName || applicant.user?.name || applicant.candidateProfile?.fullName || `User ID: ${applicant.userId}`}
+                            </Link>
+                          </h4>
 
-                        <ul className="candidate-info">
-                          <li className="designation">
-                            {applicant.candidateProfile?.jobTitle || applicant.user?.designation || `Job ID: ${applicant.jobId}`}
-                          </li>
-                          <li>
-                            <span className="icon la la-venus-mars"></span>{" "}
-                            {applicant.candidateProfile?.gender || 'N/A'}
-                          </li>
-                          <li>
-                            <span className="icon flaticon-map-locator"></span>{" "}
-                            { 
-                              [ 
-                                applicant.candidateProfile?.address,
-                                applicant.candidateProfile?.city,
-                                applicant.candidateProfile?.province
-                              ].filter(Boolean).join(', ') || 
-                              applicant.user?.location || 
-                              `Status: ${applicant.status}`
-                            }
-                          </li>
-                        </ul>
-
-                        <ul className="post-tags">
-                          {applicant.candidateProfile?.skills?.map((skill, i) => (
-                            <li key={i}>
-                              <a href="#">{skill.id || skill}</a>
+                          <ul className="candidate-info">
+                            <li className="designation">
+                              {applicant.candidateProfile?.jobTitle || applicant.user?.designation || `Job ID: ${applicant.jobId}`}
                             </li>
-                          ))}
-                        </ul>
-                      </div>
+                            <li>
+                              <span className="icon la la-venus-mars"></span>{" "}
+                              {applicant.candidateProfile?.gender || 'N/A'}
+                            </li>
+                            <li>
+                              <span className="icon flaticon-map-locator"></span>{" "}
+                              { 
+                                [ 
+                                  applicant.candidateProfile?.address,
+                                  applicant.candidateProfile?.city,
+                                  applicant.candidateProfile?.province
+                                ].filter(Boolean).join(', ') || 
+                                applicant.user?.location || 
+                                `Status: ${applicant.status}`
+                              }
+                            </li>
+                          </ul>
 
-                      <div className="option-box">
-                        <ul className="option-list">
-                          <li>
-                            <button
-                              data-text="View Applicant"
-                              onClick={() => { setSelectedApplicationId(applicant.applicationId); setShowModal(true); }}
-                            >
-                              <span className="la la-eye"></span>
-                            </button>
-                          </li>
-                          <li>
-                            <button
-                              data-text="Approve Applicant"
-                              className={applicant.status === 'Approved' ? 'approved' : (applicant.status === 1 ? 'approved' : '')}
-                            >
-                              <span className="la la-check"></span>
-                            </button>
-                          </li>
-                          <li>
-                            <button
-                              data-text="Reject Applicant"
-                              className={applicant.status === 'Rejected' ? 'rejected' : (applicant.status === 2 ? 'rejected' : '')}
-                            >
-                              <span className="la la-times-circle"></span>
-                            </button>
-                          </li>
-                          <li>
-                            <button data-text="Delete Applicant">
-                              <span className="la la-trash"></span>
-                            </button>
-                          </li>
-                        </ul>
+                          <ul className="post-tags">
+                            {applicant.candidateProfile?.skills?.map((skill, i) => (
+                              <li key={i}>
+                                <a href="#">{skill.id || skill}</a>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+
+                        <div className="option-box">
+                          <ul className="option-list">
+                            <li>
+                              <button
+                                data-text="View Applicant"
+                                onClick={() => { setSelectedApplicationId(applicant.applicationId); setShowModal(true); }}
+                              >
+                                <span className="la la-eye"></span>
+                              </button>
+                            </li>
+                            <li>
+                              <button
+                                data-text="Approve Applicant"
+                                className={applicant.status === 'Approved' ? 'approved' : (applicant.status === 1 ? 'approved' : '')}
+                              >
+                                <span className="la la-check"></span>
+                              </button>
+                            </li>
+                            <li>
+                              <button
+                                data-text="Reject Applicant"
+                                className={applicant.status === 'Rejected' ? 'rejected' : (applicant.status === 2 ? 'rejected' : '')}
+                              >
+                                <span className="la la-times-circle"></span>
+                              </button>
+                            </li>
+                          </ul>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </TabPanel>
 
             <TabPanel>
               <div className="row">
-                {applicants.filter(app => (app.status === 'Rejected' || app.status === 2) && app.candidateProfile).map((applicant) => (
-                  <div
-                    className="candidate-block-three col-lg-6 col-md-12 col-sm-12"
-                    key={applicant.applicationId}
-                  >
-                    <div className="inner-box">
-                      <div className="content">
-                        <figure className="image">
-                          <Image
-                            width={90}
-                            height={90}
-                            src={getValidImageUrl(applicant.user?.image) || getValidImageUrl(applicant.candidateProfile?.avatar) || "/images/resource/candidate-1.png"}
-                            alt={applicant.user?.fullName || applicant.user?.name || applicant.candidateProfile?.fullName || `Applicant ${applicant.userId}`}
+                {applicants.filter(app => (app.status === 'Rejected' || app.status === 2) && app.candidateProfile).map((applicant) => {
+                  const percent = applicant.similarityScore !== null && applicant.similarityScore !== undefined ? Math.round(applicant.similarityScore * 100) : 0;
+                  const color = percent > 50 ? '#1967d2' : '#e53935';
+                  return (
+                    <div
+                      className="candidate-block-three col-lg-6 col-md-12 col-sm-12"
+                      key={applicant.applicationId}
+                    >
+                      <div className="inner-box" style={{ position: 'relative', padding: 24, borderRadius: 16, background: '#fff', boxShadow: '0 2px 8px #eee', minHeight: 180 }}>
+                        <div style={{ position: 'absolute', top: 6, right: 8, width: 48, height: 48, zIndex: 2 }}>
+                          <CircularProgressbar
+                            value={percent}
+                            text={`${percent}%`}
+                            styles={buildStyles({
+                              textColor: color,
+                              pathColor: color,
+                              trailColor: '#e0e0e0',
+                              textSize: '26px',
+                              strokeLinecap: 'round',
+                            })}
                           />
-                        </figure>
-                        <h4 className="name">
-                          <Link href={`/candidates-single-v1/${applicant.userId}`}>
-                            {applicant.user?.fullName || applicant.user?.name || applicant.candidateProfile?.fullName || `User ID: ${applicant.userId}`}
-                          </Link>
-                        </h4>
+                        </div>
+                        <div className="content">
+                          <figure className="image">
+                            <Image
+                              width={90}
+                              height={90}
+                              src={getValidImageUrl(applicant.user?.image) || getValidImageUrl(applicant.candidateProfile?.avatar) || "/images/resource/candidate-1.png"}
+                              alt={applicant.user?.fullName || applicant.user?.name || applicant.candidateProfile?.fullName || `Applicant ${applicant.userId}`}
+                            />
+                          </figure>
+                          <h4 className="name">
+                            <Link href={`/candidates-single-v1/${applicant.userId}`}>
+                              {applicant.user?.fullName || applicant.user?.name || applicant.candidateProfile?.fullName || `User ID: ${applicant.userId}`}
+                            </Link>
+                          </h4>
 
-                        <ul className="candidate-info">
-                          <li className="designation">
-                            {applicant.candidateProfile?.jobTitle || applicant.user?.designation || `Job ID: ${applicant.jobId}`}
-                          </li>
-                          <li>
-                            <span className="icon la la-venus-mars"></span>{" "}
-                            {applicant.candidateProfile?.gender || 'N/A'}
-                          </li>
-                          <li>
-                            <span className="icon flaticon-map-locator"></span>{" "}
-                            { 
-                              [ 
-                                applicant.candidateProfile?.address,
-                                applicant.candidateProfile?.city,
-                                applicant.candidateProfile?.province
-                              ].filter(Boolean).join(', ') || 
-                              applicant.user?.location || 
-                              `Status: ${applicant.status}`
-                            }
-                          </li>
-                        </ul>
-
-                        <ul className="post-tags">
-                          {applicant.candidateProfile?.skills?.map((skill, i) => (
-                            <li key={i}>
-                              <a href="#">{skill.id || skill}</a>
+                          <ul className="candidate-info">
+                            <li className="designation">
+                              {applicant.candidateProfile?.jobTitle || applicant.user?.designation || `Job ID: ${applicant.jobId}`}
                             </li>
-                          ))}
-                        </ul>
-                      </div>
+                            <li>
+                              <span className="icon la la-venus-mars"></span>{" "}
+                              {applicant.candidateProfile?.gender || 'N/A'}
+                            </li>
+                            <li>
+                              <span className="icon flaticon-map-locator"></span>{" "}
+                              { 
+                                [ 
+                                  applicant.candidateProfile?.address,
+                                  applicant.candidateProfile?.city,
+                                  applicant.candidateProfile?.province
+                                ].filter(Boolean).join(', ') || 
+                                applicant.user?.location || 
+                                `Status: ${applicant.status}`
+                              }
+                            </li>
+                          </ul>
 
-                      <div className="option-box">
-                        <ul className="option-list">
-                          <li>
-                            <button
-                              data-text="View Applicant"
-                              onClick={() => { setSelectedApplicationId(applicant.applicationId); setShowModal(true); }}
-                            >
-                              <span className="la la-eye"></span>
-                            </button>
-                          </li>
-                          <li>
-                            <button
-                              data-text="Approve Applicant"
-                              className={applicant.status === 'Approved' ? 'approved' : (applicant.status === 1 ? 'approved' : '')}
-                            >
-                              <span className="la la-check"></span>
-                            </button>
-                          </li>
-                          <li>
-                            <button
-                              data-text="Reject Applicant"
-                              className={applicant.status === 'Rejected' ? 'rejected' : (applicant.status === 2 ? 'rejected' : '')}
-                            >
-                              <span className="la la-times-circle"></span>
-                            </button>
-                          </li>
-                          <li>
-                            <button data-text="Delete Applicant">
-                              <span className="la la-trash"></span>
-                            </button>
-                          </li>
-                        </ul>
+                          <ul className="post-tags">
+                            {applicant.candidateProfile?.skills?.map((skill, i) => (
+                              <li key={i}>
+                                <a href="#">{skill.id || skill}</a>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+
+                        <div className="option-box">
+                          <ul className="option-list">
+                            <li>
+                              <button
+                                data-text="View Applicant"
+                                onClick={() => { setSelectedApplicationId(applicant.applicationId); setShowModal(true); }}
+                              >
+                                <span className="la la-eye"></span>
+                              </button>
+                            </li>
+                            <li>
+                              <button
+                                data-text="Approve Applicant"
+                                className={applicant.status === 'Approved' ? 'approved' : (applicant.status === 1 ? 'approved' : '')}
+                              >
+                                <span className="la la-check"></span>
+                              </button>
+                            </li>
+                            <li>
+                              <button
+                                data-text="Reject Applicant"
+                                className={applicant.status === 'Rejected' ? 'rejected' : (applicant.status === 2 ? 'rejected' : '')}
+                              >
+                                <span className="la la-times-circle"></span>
+                              </button>
+                            </li>
+                          </ul>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </TabPanel>
           </div>
@@ -502,6 +637,11 @@ const WidgetContentBox = ({ jobId }) => {
         show={showModal}
         onClose={() => setShowModal(false)}
       />
+      <style jsx global>{`
+        .CircularProgressbar-text {
+          font-weight: 700 !important;
+        }
+      `}</style>
     </div>
   );
 };
