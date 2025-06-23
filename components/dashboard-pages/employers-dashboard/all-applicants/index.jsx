@@ -15,6 +15,7 @@ import { useSearchParams } from 'next/navigation';
 const Index = () => {
   const searchParams = useSearchParams();
   const [jobIdFromUrl, setJobIdFromUrl] = useState(null);
+  const [candidateName, setCandidateName] = useState("");
 
   useEffect(() => {
     const jobId = searchParams.get('jobId');
@@ -57,11 +58,14 @@ const Index = () => {
                 <div className="tabs-box">
                   <div className="widget-title">
                     <h4>Applicant</h4>
-                    <WidgetTopFilterBox />
+                    <WidgetTopFilterBox
+                      candidateName={candidateName}
+                      onCandidateNameChange={setCandidateName}
+                    />
                   </div>
                   {/* End top widget filter bar */}
 
-                  <WidgetContentBox jobId={jobIdFromUrl} />
+                  <WidgetContentBox jobId={jobIdFromUrl} candidateName={candidateName} />
                   {/* End widget-content */}
                 </div>
               </div>

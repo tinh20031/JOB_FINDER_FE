@@ -124,7 +124,7 @@ const ApplicantModal = ({ applicationId, show, onClose }) => {
   );
 };
 
-const WidgetContentBox = ({ jobId }) => {
+const WidgetContentBox = ({ jobId, candidateName }) => {
   const [applicants, setApplicants] = useState([]);
   const [loading, setLoading] = useState(true);
   const [jobTitle, setJobTitle] = useState("");
@@ -134,7 +134,6 @@ const WidgetContentBox = ({ jobId }) => {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
   const totalPages = Math.ceil(applicants.length / itemsPerPage);
-  const applicantsToShow = applicants.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
   useEffect(() => {
     console.log("WidgetContentBox: useEffect triggered for jobId:", jobId);
@@ -217,6 +216,17 @@ const WidgetContentBox = ({ jobId }) => {
   const approvedApplicants = applicants.filter(app => (app.status === 'Approved' || app.status === 1) && app.candidateProfile).length;
   const rejectedApplicants = applicants.filter(app => (app.status === 'Rejected' || app.status === 2) && app.candidateProfile).length;
 
+  // Thêm filter theo tên ứng viên
+  const filteredApplicants = candidateName
+    ? applicants.filter(app =>
+        (app.candidateProfile?.fullName || app.user?.fullName || "")
+          .toLowerCase()
+          .includes(candidateName.toLowerCase())
+      )
+    : applicants;
+
+  const applicantsToShow = filteredApplicants.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+
   if (loading) {
     return (
       <div className="row">
@@ -282,8 +292,8 @@ const WidgetContentBox = ({ jobId }) => {
 
             <TabList className="aplicantion-status tab-buttons clearfix">
               <Tab className="tab-btn totals"> Total(s): {totalApplicants}</Tab>
-              <Tab className="tab-btn approved"> Approved: {approvedApplicants}</Tab>
-              <Tab className="tab-btn rejected"> Rejected(s): {rejectedApplicants}</Tab>
+              {/* <Tab className="tab-btn approved"> Approved: {approvedApplicants}</Tab>
+              <Tab className="tab-btn rejected"> Rejected(s): {rejectedApplicants}</Tab> */}
             </TabList>
           </div>
 
