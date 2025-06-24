@@ -8,6 +8,8 @@ import Link from "next/link";
 import "./user-manager-animations.css";
 import ApiService from "../../../../services/api.service";
 import API_CONFIG from '../../../../config/api.config';
+import { useDispatch } from 'react-redux';
+import { setProfileUpdated } from '@/features/auth/authSlice';
 
 const defaultUser = { fullName: "", email: "", phone: "", roleId: "", password: "", status: "Active", skills: [], cvUrl: "", image: "" };
 
@@ -38,6 +40,7 @@ const UserManager = () => {
   const [selectedImageFile, setSelectedImageFile] = useState(null);
   const [editUser, setEditUser] = useState(null);
   const [editError, setEditError] = useState("");
+  const dispatch = useDispatch();
 
   // Tự động ẩn alert sau 2.5s
   useEffect(() => {
@@ -252,6 +255,7 @@ const UserManager = () => {
           setAlertMsg("User added successfully!");
           fetchUsers();
           setShowAddModal(false);
+          dispatch(setProfileUpdated(Date.now()));
         })
         .catch((err) => setFormError(err.message || "Failed to add user."));
     } else if (showEditModal) {
@@ -278,6 +282,7 @@ const UserManager = () => {
           setAlertMsg("User updated successfully!");
           fetchUsers();
           setShowEditModal(false);
+          dispatch(setProfileUpdated(Date.now()));
         })
         .catch((err) => setEditError(err.message || "Failed to update user."));
     }

@@ -13,6 +13,7 @@ import { getUserFavorites } from "../../services/favoriteJobService";
 import { useFavoriteJobs } from "../../contexts/FavoriteJobsContext";
 import { clearLoginState } from '@/features/auth/authSlice';
 import Cookies from 'js-cookie';
+import apiService from '@/services/api.service';
 
 // Helper function to validate image URLs
 const getValidImageUrl = (url) => {
@@ -36,10 +37,25 @@ const DashboardCandidatesHeader = () => {
     const [avatar, setAvatar] = useState("/images/resource/candidate-1.png");
     const userId = typeof window !== 'undefined' ? Number(localStorage.getItem('userId')) : null;
 
-    const { isLoggedIn, user, role } = useSelector((state) => state.auth);
+    const { isLoggedIn, user, role, profileUpdated } = useSelector((state) => state.auth);
     const { favoriteCount } = useFavoriteJobs() || {};
     const router = useRouter();
     const dispatch = useDispatch();
+
+    // Lấy avatar và tên realtime từ API
+    useEffect(() => {
+        const fetchProfile = async () => {
+            try {
+                const profile = await apiService.get('/CandidateProfile/me');
+                setFullName(profile.fullName || "My Account");
+                setAvatar(profile.image || "/images/resource/candidate-1.png");
+            } catch (e) {
+                setFullName("My Account");
+                setAvatar("/images/resource/candidate-1.png");
+            }
+        };
+        if (isLoggedIn) fetchProfile();
+    }, [isLoggedIn, profileUpdated]);
 
     const changeBackground = () => {
         if (typeof window !== 'undefined' && window.scrollY >= 0) {
@@ -52,26 +68,6 @@ const DashboardCandidatesHeader = () => {
     useEffect(() => {
         if (typeof window !== 'undefined') {
             window.addEventListener("scroll", changeBackground);
-            
-            const user = JSON.parse(localStorage.getItem('user') || '{}');
-            if (user.fullName) setFullName(user.fullName);
-            else if (user.name) setFullName(user.name);
-            else {
-                const userName = authService.getName();
-                if (userName) {
-                    setFullName(userName);
-                }
-            }
-            
-            // Handle avatar with validation
-            let userAvatar = null;
-            if (user.image) {
-                userAvatar = getValidImageUrl(user.image);
-            } else if (user.avatar) {
-                userAvatar = getValidImageUrl(user.avatar);
-            }
-            
-            setAvatar(userAvatar || "/images/resource/candidate-1.png");
         }
     }, []);
 
