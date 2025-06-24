@@ -9,7 +9,7 @@ import { Provider } from "react-redux";
 import { store } from "../store/store";
 import "react-toastify/dist/ReactToastify.css";
 import { ToastContainer } from "react-toastify";
-import Wrapper from "../layout/Wrapper";
+import { FavoriteJobsProvider } from "../contexts/FavoriteJobsContext";
 
 
 export default function RootLayout({ children }) {
@@ -45,7 +45,7 @@ export default function RootLayout({ children }) {
 
       <body>
         <Provider store={store}>
-          <Wrapper>
+          <FavoriteJobsProvider>
             <div className="page-wrapper">
               {children}
 
@@ -65,7 +65,7 @@ export default function RootLayout({ children }) {
               {/* <!-- Scroll To Top --> */}
               <ScrollToTop />
             </div>
-          </Wrapper>
+          </FavoriteJobsProvider>
         </Provider>
       </body>
     </html>

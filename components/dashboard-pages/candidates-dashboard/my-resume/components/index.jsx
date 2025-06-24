@@ -54,7 +54,101 @@ const index = () => {
     setProfileState(profile);
   }, [profile]);
 
-  if (loading) return <div>Loading...</div>;
+  if (loading) return (
+    <div className="row my-resume-page">
+      <div className="col-12 col-lg-8 mb-4 mb-lg-0">
+        <div className="default-form">
+          <div className="row">
+            <div className="form-group col-12">
+              {/* ProfileCard Skeleton */}
+              <div style={{ background: "#fff", borderRadius: 16, padding: 32, minHeight: 180, marginBottom: 24, boxShadow: "0 2px 8px #eee" }}>
+                <div className="skeleton-line" style={{ width: 80, height: 80, borderRadius: "50%", marginBottom: 16 }}></div>
+                <div className="skeleton-line" style={{ width: "40%", height: 28, marginBottom: 12 }}></div>
+                <div className="skeleton-line" style={{ width: "60%", height: 18, marginBottom: 8 }}></div>
+                <div className="skeleton-line" style={{ width: "30%", height: 16, marginBottom: 8 }}></div>
+                <div className="skeleton-line" style={{ width: "50%", height: 16, marginBottom: 8 }}></div>
+              </div>
+            </div>
+            <div className="form-group col-12">
+              {/* AboutMe Skeleton */}
+              <div style={{ background: "#fff", borderRadius: 16, padding: 32, minHeight: 120, marginBottom: 24, boxShadow: "0 2px 8px #eee" }}>
+                <div className="skeleton-line" style={{ width: "30%", height: 22, marginBottom: 12 }}></div>
+                <div className="skeleton-line" style={{ width: "90%", height: 16, marginBottom: 8 }}></div>
+                <div className="skeleton-line" style={{ width: "80%", height: 16, marginBottom: 8 }}></div>
+                <div className="skeleton-line" style={{ width: "70%", height: 16, marginBottom: 8 }}></div>
+              </div>
+            </div>
+            <div className="form-group col-12">
+              {/* Education & Experiences Skeleton */}
+              <div style={{ background: "#fff", borderRadius: 16, padding: 32, minHeight: 120, marginBottom: 24, boxShadow: "0 2px 8px #eee" }}>
+                <div className="skeleton-line" style={{ width: "30%", height: 22, marginBottom: 12 }}></div>
+                <div className="skeleton-line" style={{ width: "80%", height: 16, marginBottom: 8 }}></div>
+                <div className="skeleton-line" style={{ width: "60%", height: 16, marginBottom: 8 }}></div>
+                <div className="skeleton-line" style={{ width: "50%", height: 16, marginBottom: 8 }}></div>
+              </div>
+            </div>
+            <div className="form-group col-12">
+              {/* Skills Skeleton */}
+              <div style={{ background: "#fff", borderRadius: 16, padding: 32, minHeight: 80, marginBottom: 24, boxShadow: "0 2px 8px #eee" }}>
+                <div className="skeleton-line" style={{ width: "30%", height: 22, marginBottom: 12 }}></div>
+                <div className="skeleton-line" style={{ width: "60%", height: 16, marginBottom: 8 }}></div>
+                <div className="skeleton-line" style={{ width: "40%", height: 16, marginBottom: 8 }}></div>
+              </div>
+            </div>
+            <div className="form-group col-12">
+              {/* ForeignLanguague Skeleton */}
+              <div style={{ background: "#fff", borderRadius: 16, padding: 32, minHeight: 80, marginBottom: 24, boxShadow: "0 2px 8px #eee" }}>
+                <div className="skeleton-line" style={{ width: "30%", height: 22, marginBottom: 12 }}></div>
+                <div className="skeleton-line" style={{ width: "60%", height: 16, marginBottom: 8 }}></div>
+              </div>
+            </div>
+            <div className="form-group col-12">
+              {/* HighlightProject Skeleton */}
+              <div style={{ background: "#fff", borderRadius: 16, padding: 32, minHeight: 80, marginBottom: 24, boxShadow: "0 2px 8px #eee" }}>
+                <div className="skeleton-line" style={{ width: "30%", height: 22, marginBottom: 12 }}></div>
+                <div className="skeleton-line" style={{ width: "60%", height: 16, marginBottom: 8 }}></div>
+              </div>
+            </div>
+            <div className="form-group col-12">
+              {/* Certificate Skeleton */}
+              <div style={{ background: "#fff", borderRadius: 16, padding: 32, minHeight: 80, marginBottom: 24, boxShadow: "0 2px 8px #eee" }}>
+                <div className="skeleton-line" style={{ width: "30%", height: 22, marginBottom: 12 }}></div>
+                <div className="skeleton-line" style={{ width: "60%", height: 16, marginBottom: 8 }}></div>
+              </div>
+            </div>
+            <div className="form-group col-12">
+              {/* Awards Skeleton */}
+              <div style={{ background: "#fff", borderRadius: 16, padding: 32, minHeight: 80, marginBottom: 24, boxShadow: "0 2px 8px #eee" }}>
+                <div className="skeleton-line" style={{ width: "30%", height: 22, marginBottom: 12 }}></div>
+                <div className="skeleton-line" style={{ width: "60%", height: 16, marginBottom: 8 }}></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div className="col-12 col-lg-4">
+        {/* ProfileStrengthSidebar Skeleton */}
+        <div style={{ background: "#fff", borderRadius: 16, padding: 32, minHeight: 320, marginBottom: 24, boxShadow: "0 2px 8px #eee", textAlign: "center" }}>
+          <div className="skeleton-line" style={{ width: 120, height: 120, borderRadius: "50%", margin: "0 auto 16px auto" }}></div>
+          <div className="skeleton-line" style={{ width: "60%", height: 18, margin: "0 auto 8px auto" }}></div>
+          <div className="skeleton-line" style={{ width: "80%", height: 16, margin: "0 auto 8px auto" }}></div>
+        </div>
+      </div>
+      <style jsx>{`
+        .skeleton-line {
+          background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 37%, #f0f0f0 63%);
+          background-size: 400% 100%;
+          animation: skeleton-loading 1.4s ease infinite;
+          border-radius: 6px;
+        }
+        @keyframes skeleton-loading {
+          0% { background-position: 100% 50%; }
+          100% { background-position: 0 50%; }
+        }
+      `}</style>
+    </div>
+  );
+
   const handleSubmit = (event) => {
     event.preventDefault();
   };
@@ -77,14 +171,14 @@ const index = () => {
   };
 
   return (
-    <div className="my-resume-page" style={{ display: "flex", gap: 32 }}>
-      <div style={{ flex: 1 }}>
+    <div className="row my-resume-page">
+      <div className="col-12 col-lg-8 mb-4 mb-lg-0">
         <div className="default-form">
           <div className="row">
-            <div className="form-group col-lg-12 col-md-12">
+            <div className="form-group col-12">
               <ProfileCard profile={profileState} onEdit={handleEditProfile} />
             </div>
-            <div className="form-group col-lg-12 col-md-12">
+            <div className="form-group col-12">
               <AboutMe
                 aboutme={Array.isArray(aboutme) ? aboutme[0] : aboutme}
                 refetch={refetch}
@@ -93,7 +187,7 @@ const index = () => {
                 setOpenExternal={setOpenAboutMeModal}
               />
             </div>
-            <div className="form-group col-lg-12 col-md-12">
+            <div className="form-group col-12">
               <Education
                 education={education}
                 refetch={refetch}
@@ -107,7 +201,7 @@ const index = () => {
                 setOpenExternal={setOpenWorkExpModal}
               />
             </div>
-            <div className="form-group col-lg-12 col-md-12">
+            <div className="form-group col-12">
               <Skills
                 skills={skills}
                 refetch={refetch}
@@ -116,7 +210,7 @@ const index = () => {
                 forceCoreSkillModal={openSkillsModal}
               />
             </div>
-            <div className="form-group col-lg-12 col-md-12">
+            <div className="form-group col-12">
               <ForeignLanguague
                 foreignlanguage={foreignlanguage}
                 onEdit={() => setOpenFL(true)}
@@ -124,7 +218,7 @@ const index = () => {
                 setOpenExternal={setOpenForeignLangModal}
               />
             </div>
-            <div className="form-group col-lg-12 col-md-12">
+            <div className="form-group col-12">
               <HighlightProject
                 project={project}
                 refetch={refetch}
@@ -132,7 +226,7 @@ const index = () => {
                 setOpenExternal={setOpenHighlightProjectModal}
               />
             </div>
-            <div className="form-group col-lg-12 col-md-12">
+            <div className="form-group col-12">
               <Certificate
                 certificate={certificate}
                 refetch={refetch}
@@ -140,7 +234,7 @@ const index = () => {
                 setOpenExternal={setOpenCertificateModal}
               />
             </div>
-            <div className="form-group col-lg-12 col-md-12">
+            <div className="form-group col-12">
               <Awards
                 awards={awards}
                 refetch={refetch}
@@ -148,7 +242,7 @@ const index = () => {
                 setOpenExternal={setOpenAwardsModal}
               />
             </div>
-            <div className="form-group col-lg-12 col-md-12">
+            <div className="form-group col-12">
               <button type="submit" className="theme-btn btn-style-one">
                 Save
               </button>
@@ -173,7 +267,7 @@ const index = () => {
           />
         </div>
       </div>
-      <div style={{ width: 320 }}>
+      <div className="col-12 col-lg-4">
         <ProfileStrengthSidebar
           onClickEducation={() => setOpenEducationModal(true)}
           onClickSkills={() => setOpenSkillsModal(true)}

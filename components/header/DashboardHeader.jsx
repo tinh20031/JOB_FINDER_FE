@@ -132,10 +132,10 @@ const DashboardHeader = () => {
                     {/* End .nav-outer */}
 
                     <div className="outer-box">
-                        <button className="menu-btn">
+                        {/* <button className="menu-btn">
                             <span className="count">1</span>
                             <span className="icon la la-heart-o"></span>
-                        </button>
+                        </button> */}
                         {/* wishlisted menu */}
 
                         <button className="menu-btn">

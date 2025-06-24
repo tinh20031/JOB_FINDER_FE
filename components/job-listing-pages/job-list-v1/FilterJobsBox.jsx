@@ -81,9 +81,6 @@ const FilterJobsBox = () => {
   const { sort } = jobSort;
   const dispatch = useDispatch();
 
-  const [bookmarkedCompanies, setBookmarkedCompanies] = useState([]);
-  const [isLoadingBookmarks, setIsLoadingBookmarks] = useState(false);
-
   const searchParams = useSearchParams();
   const industryId = searchParams.get('industryId');
   const provinceName = searchParams.get('provinceName');
@@ -150,28 +147,11 @@ const FilterJobsBox = () => {
     fetchJobs();
   }, [keyword, location, destination, category, jobType, datePosted, experience, salary, tag, sort, currentPage, itemsPerPage, industryId, provinceName, levelId, jobTypeId, experienceLevelId, excludeJobId]);
 
-  // Thêm useEffect để lấy danh sách công ty đã bookmark
-  useEffect(() => {
-    const fetchFavoriteCompanies = async () => {
-      try {
-        setIsLoadingBookmarks(true);
-        const favorites = await jobService.getFavoriteCompanies();
-        // Ép kiểu userId về number để so sánh chính xác
-        setBookmarkedCompanies(favorites.map(company => Number(company.userId)));
-      } catch (error) {
-        console.error("Error fetching favorite companies:", error);
-      } finally {
-        setIsLoadingBookmarks(false);
-      }
-    };
-    fetchFavoriteCompanies();
-  }, []);
-
   useEffect(() => {
     if (userId) {
       getUserFavorites(userId)
         .then((res) => {
-          setFavoriteJobIds(res.data.map((item) => item.jobId));
+          updateFavoriteJobs(res.data.map((item) => item.jobId));
         })
         .catch((err) => console.error(err));
     }

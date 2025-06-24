@@ -5,6 +5,7 @@ import Breadcrumb from "../../components/common/Breadcrumb";
 import DefaulHeader2 from "../../components/header/DefaulHeader2";
 import MobileMenu from "../../components/header/MobileMenu";
 import FavoriteJobsBox from "../../components/job-listing-pages/favorite-jobs/FavoriteJobsBox";
+import FilterSidebar from "../../components/job-listing-pages/job-list-v1/FilterSidebar";
 
 const FavoriteJobsPage = () => {
   return (
@@ -16,7 +17,10 @@ const FavoriteJobsPage = () => {
       <section className="ls-section">
         <div className="auto-container">
           <div className="row">
-            <div className="content-column col-lg-12 col-md-12 col-sm-12">
+            <div className="col-lg-4 col-md-12 col-sm-12">
+              <FilterSidebar />
+            </div>
+            <div className="content-column col-lg-8 col-md-12 col-sm-12">
               <div className="ls-outer">
                 <FavoriteJobsBox />
               </div>
