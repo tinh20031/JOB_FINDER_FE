@@ -10,6 +10,8 @@ import { companyProfileService } from '@/services/companyProfileService';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useDispatch } from "react-redux";
 import { setProfileUpdated } from "@/features/auth/authSlice";
+import Modal from "@/components/common/Modal";
+import "@/styles/modal.css";
 
 const Index = () => {
     const router = useRouter();
@@ -445,6 +447,10 @@ const Index = () => {
         setShowSuccessModal(false);
     };
 
+    const handleEditProfile = () => {
+        setIsEditing(true);
+    };
+
     return (
         <>
             <ToastContainer position="top-right" autoClose={3000} />
@@ -453,39 +459,20 @@ const Index = () => {
                     <div>Loading profile...</div>
                 ) : (
                     <>
-                        <div className="form-group col-lg-12 col-md-12 text-right mb-3">
-                            {isEditing ? (
-                                <>
-                                    <button
-                                        className="theme-btn btn-style-one"
-                                        onClick={handleSaveClick}
-                                        disabled={isSaving || confirmLoading}
-                                    >
-                                        {isSaving ? "Saving..." : "Save Profile"}
+                        <div className="profile-card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
+                            <h2 style={{ margin: 0 }}>My Profile</h2>
+                            <div>
+                                {isEditing ? (
+                                    <div style={{ display: 'flex', gap: 12 }}>
+                                        <button className="btn-confirm" onClick={handleSaveClick}>Save</button>
+                                        <button className="btn-cancel" onClick={() => setIsEditing(false)}>Cancel</button>
+                                    </div>
+                                ) : (
+                                    <button className="btn-confirm" onClick={handleEditProfile}>
+                                        Edit Profile
                                     </button>
-                                    <button
-                                        className="theme-btn btn-style-two ms-2"
-                                        onClick={() => {
-                                            if (hasUnsavedChanges) {
-                                                setShowCustomConfirmationModal(true);
-                                                setIntendedPath(null);
-                                            } else {
-                                                setIsEditing(false);
-                                            }
-                                        }}
-                                        disabled={isSaving || confirmLoading}
-                                    >
-                                        Cancel
-                                    </button>
-                                </>
-                            ) : (
-                                <button
-                                    className="theme-btn btn-style-one"
-                                    onClick={() => setIsEditing(true)}
-                                >
-                                    Edit Profile
-                                </button>
-                            )}
+                                )}
+                            </div>
                         </div>
                         <LogoCoverUploader
                             onLogoChange={handleLogoChange}
@@ -523,88 +510,51 @@ const Index = () => {
                         )}
 
                         {/* Save Confirmation Modal */}
-                        <AnimatePresence>
-                            {showSaveConfirmationModal && (
-                                <motion.div 
-                                    className="modal show" 
-                                    style={{display: 'block', backgroundColor: 'rgba(0,0,0,0.5)'}}
-                                    variants={overlayVariants}
-                                    initial="hidden"
-                                    animate="visible"
-                                    exit="exit"
-                                >
-                                    <motion.div 
-                                        className="modal-dialog"
-                                        variants={modalVariants}
-                                        initial="hidden"
-                                        animate="visible"
-                                        exit="exit"
-                                    >
-                                        <div className="modal-content">
-                                            <div className="modal-header">
-                                                <h5 className="modal-title">Confirm storage</h5>
-                                                <button type="button" className="btn-close" onClick={handleCancelSave}></button>
-                                            </div>
-                                            <div className="modal-body">
-                                                <p>Are you sure you want to save this profile information?</p>
-                                            </div>
-                                            <div className="modal-footer">
-                                                <button type="button" className="btn btn-secondary" onClick={handleCancelSave}>No</button>
-                                                <button type="button" className="btn btn-primary" onClick={handleConfirmSave}>Yes</button>
-                                            </div>
-                                        </div>
-                                    </motion.div>
-                                </motion.div>
-                            )}
-                        </AnimatePresence>
+                        <Modal
+                            open={showSaveConfirmationModal}
+                            onClose={handleCancelSave}
+                            title="Confirm storage"
+                            footer={
+                                <>
+                                    <button className="btn-cancel" onClick={handleCancelSave}>No</button>
+                                    <button className="btn-confirm" onClick={handleConfirmSave}>Yes</button>
+                                </>
+                            }
+                        >
+                            <p>Are you sure you want to save this profile information?</p>
+                        </Modal>
 
                         {/* Success Modal */}
-                        <AnimatePresence>
-                            {showSuccessModal && (
-                                <motion.div 
-                                    className="modal show" 
-                                    style={{display: 'block', backgroundColor: 'rgba(0,0,0,0.5)'}}
-                                    variants={overlayVariants}
-                                    initial="hidden"
-                                    animate="visible"
-                                    exit="exit"
-                                >
-                                    <motion.div 
-                                        className="modal-dialog"
-                                        variants={modalVariants}
-                                        initial="hidden"
-                                        animate="visible"
-                                        exit="exit"
-                                    >
-                                        <div className="modal-content">
-                                            <div className="modal-header">
-                                                <h5 className="modal-title">Success</h5>
-                                                <button type="button" className="btn-close" onClick={handleCloseSuccessModal}></button>
-                                            </div>
-                                            <div className="modal-body">
-                                                <div className="text-center">
-                                                    <motion.i 
-                                                        className="fas fa-check-circle" 
-                                                        style={{color: '#28a745', fontSize: '48px', marginBottom: '15px'}}
-                                                        initial={{ scale: 0 }}
-                                                        animate={{ scale: 1 }}
-                                                        transition={{
-                                                            type: "spring",
-                                                            stiffness: 260,
-                                                            damping: 20
-                                                        }}
-                                                    ></motion.i>
-                                                    <p>Profile saved successfully!</p>
-                                                </div>
-                                            </div>
-                                            <div className="modal-footer">
-                                                <button type="button" className="btn btn-primary" onClick={handleCloseSuccessModal}>Close</button>
-                                            </div>
-                                        </div>
-                                    </motion.div>
-                                </motion.div>
-                            )}
-                        </AnimatePresence>
+                        <Modal
+                            open={showSuccessModal}
+                            onClose={handleCloseSuccessModal}
+                            title="Success"
+                            footer={
+                                <button className="btn-confirm" onClick={handleCloseSuccessModal}>Close</button>
+                            }
+                        >
+                            <div className="text-center">
+                                <span style={{color: '#28a745', fontSize: '48px', marginBottom: '15px', display: 'inline-block'}}>
+                                    <i className="fas fa-check-circle"></i>
+                                </span>
+                                <p>Profile saved successfully!</p>
+                            </div>
+                        </Modal>
+
+                        {/* Custom Confirmation Modal */}
+                        <Modal
+                            open={showCustomConfirmationModal}
+                            onClose={handleCancelConfirmation}
+                            title="Unsaved Changes"
+                            footer={
+                                <>
+                                    <button className="btn-cancel" onClick={handleDiscardAndLeave}>Discard Changes</button>
+                                    <button className="btn-confirm" onClick={handleSaveAndLeave}>Save</button>
+                                </>
+                            }
+                        >
+                            <p>You have unsaved changes. Would you like to save them before leaving?</p>
+                        </Modal>
 
                         {/* Progress Bar */}
                         <AnimatePresence>
@@ -638,57 +588,6 @@ const Index = () => {
                                             ease: "easeInOut"
                                         }}
                                     />
-                                </motion.div>
-                            )}
-                        </AnimatePresence>
-
-                        {/* Custom Confirmation Modal */}
-                        <AnimatePresence>
-                            {showCustomConfirmationModal && (
-                                <motion.div 
-                                    className="modal show" 
-                                    style={{
-                                        display: 'block', 
-                                        backgroundColor: 'rgba(0,0,0,0.5)',
-                                        position: 'fixed',
-                                        top: 0,
-                                        left: 0,
-                                        right: 0,
-                                        bottom: 0,
-                                        zIndex: 9999
-                                    }}
-                                    variants={overlayVariants}
-                                    initial="hidden"
-                                    animate="visible"
-                                    exit="exit"
-                                >
-                                    <motion.div 
-                                        className="modal-dialog"
-                                        variants={modalVariants}
-                                        initial="hidden"
-                                        animate="visible"
-                                        exit="exit"
-                                        style={{
-                                            position: 'relative',
-                                            margin: '1.75rem auto',
-                                            maxWidth: '500px'
-                                        }}
-                                    >
-                                        <div className="modal-content">
-                                            <div className="modal-header">
-                                                <h5 className="modal-title">Unsaved Changes</h5>
-                                                <button type="button" className="btn-close" onClick={handleCancelConfirmation}></button>
-                                            </div>
-                                            <div className="modal-body">
-                                                <p>You have unsaved changes. Would you like to save them before leaving?</p>
-                                            </div>
-                                            <div className="modal-footer">
-                                                <button type="button" className="btn btn-secondary" onClick={handleDiscardAndLeave}>Discard Changes</button>
-                                                <button type="button" className="btn btn-primary" onClick={handleSaveAndLeave}>Save Changes</button>
-                                                <button type="button" className="btn btn-secondary" onClick={handleCancelConfirmation}>Cancel</button>
-                                            </div>
-                                        </div>
-                                    </motion.div>
                                 </motion.div>
                             )}
                         </AnimatePresence>

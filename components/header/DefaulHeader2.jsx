@@ -13,6 +13,8 @@ import { isActiveLink } from "../../utils/linkActiveChecker";
 import candidatesMenuData from "../../data/candidatesHeaderMenuData";
 import adminMenuData from "../../data/adminHeadedrMenuData";
 import BecomeRecruiterModal from '../common/form/shared/BecomeRecruiterModal';
+import { useFavoriteJobs } from "../../contexts/FavoriteJobsContext";
+
 import apiService from '@/services/api.service';
 
 // Helper function to validate image URLs
@@ -43,6 +45,9 @@ const DefaulHeader2 = () => {
   const [displayUserName, setDisplayUserName] = useState("My Account");
   const [displayAvatar, setDisplayAvatar] = useState("/images/resource/candidate-1.png");
   const [currentUserId, setCurrentUserId] = useState(null);
+  const { favoriteCount } = useFavoriteJobs();
+  const [isFavoriteLoading, setIsFavoriteLoading] = useState(true);
+  const userId = typeof window !== 'undefined' ? Number(localStorage.getItem('userId')) : null;
 
   useEffect(() => {
     if (typeof window !== 'undefined' && isLoggedIn) {
@@ -203,6 +208,15 @@ const DefaulHeader2 = () => {
                     />
                   )}
                 </>
+              )}
+              {/* Icon trái tim */}
+              {isLoggedIn && (role === 'Candidate') && (
+                <Link href="/favorite-jobs">
+                  <button className="menu-btn">
+                    <span className="count">{favoriteCount}</span>
+                    <span className="icon la la-heart-o"></span>
+                  </button>
+                </Link>
               )}
               <div className="dropdown dashboard-option">
                 <a className="dropdown-toggle" role="button" data-bs-toggle="dropdown" aria-expanded="false">
