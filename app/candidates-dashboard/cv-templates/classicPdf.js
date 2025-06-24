@@ -2,7 +2,24 @@ import { jsPDF } from "jspdf";
 import { ArimoRegularNormal } from "@/utils/fonts/Arimo-Regular-normal";
 import { ArimoBoldNormal } from "@/utils/fonts/Arimo-Bold-normal";
 
-export default function generateClassicPDF(resume, accentColor) {
+// Helper: Load SVG as base64 PNG (for demo, bạn nên pre-convert ở production)
+async function svgUrlToBase64Png(svgUrl, size = 24) {
+  return new Promise((resolve) => {
+    const img = new window.Image();
+    img.crossOrigin = "anonymous";
+    img.onload = function () {
+      const canvas = document.createElement("canvas");
+      canvas.width = size;
+      canvas.height = size;
+      const ctx = canvas.getContext("2d");
+      ctx.drawImage(img, 0, 0, size, size);
+      resolve(canvas.toDataURL("image/png"));
+    };
+    img.src = svgUrl;
+  });
+}
+
+export default async function generateClassicPDF(resume, accentColor) {
   const pdf = new jsPDF("p", "mm", "a4");
   // Helper: Ensure Arimo font is always embedded
   const ensureArimoFont = (pdf) => {
@@ -20,6 +37,17 @@ export default function generateClassicPDF(resume, accentColor) {
   const pageWidth = pdf.internal.pageSize.getWidth();
   const margin = 15;
   let y = 20;
+
+  // Load icons as base64 PNG
+  const [phoneIcon, mailIcon, giftIcon, mapIcon, globeIcon] = await Promise.all(
+    [
+      svgUrlToBase64Png("/icons/phone2.svg", 24),
+      svgUrlToBase64Png("/icons/mail2.svg", 24),
+      svgUrlToBase64Png("/icons/gift2.svg", 24),
+      svgUrlToBase64Png("/icons/map2.svg", 24),
+      svgUrlToBase64Png("/icons/globe2.svg", 24),
+    ]
+  );
 
   const stripHtml = (html) =>
     html ? String(html).replace(/<[^>]*>?/gm, "") : "";
@@ -60,28 +88,82 @@ export default function generateClassicPDF(resume, accentColor) {
   }
 
   pdf.setFontSize(9);
-  const contactLine1 = [
-    resume.phone ? `Phone: ${resume.phone}` : null,
-    resume.email ? `Email: ${resume.email}` : null,
-    resume.dob ? `DOB: ${formatDateSimple(resume.dob)}` : null,
-  ]
-    .filter(Boolean)
-    .join("  |  ");
-  pdf.text(contactLine1, pageWidth / 2, y, { align: "center" });
-  y += 5;
+  let iconSize = 4.5; // mm
+  let iconTextGap = 2; // mm
+  let contactX = margin;
+  let contactY = y;
+  // Contact line 1: phone, mail, dob
+  let contactLine1 = [];
+  if (resume.phone) contactLine1.push({ icon: phoneIcon, text: resume.phone });
+  if (resume.email) contactLine1.push({ icon: mailIcon, text: resume.email });
+  if (resume.dob)
+    contactLine1.push({ icon: giftIcon, text: formatDateSimple(resume.dob) });
+  // Tính tổng chiều rộng để căn giữa
+  let totalWidth1 = contactLine1.reduce(
+    (sum, item, idx) =>
+      sum +
+      iconSize +
+      iconTextGap +
+      pdf.getTextWidth(item.text) +
+      (idx > 0 ? 8 : 0),
+    0
+  );
+  let startX1 = (pageWidth - totalWidth1) / 2;
+  contactX = startX1;
+  contactLine1.forEach((item, idx) => {
+    if (idx > 0) contactX += 8;
+    if (item.icon)
+      pdf.addImage(
+        item.icon,
+        "PNG",
+        contactX,
+        contactY - 3,
+        iconSize,
+        iconSize
+      );
+    contactX += iconSize + iconTextGap;
+    pdf.text(item.text, contactX, contactY);
+    contactX += pdf.getTextWidth(item.text);
+  });
+  y += 7;
 
-  const contactLine2 = [
-    resume.address
-      ? `Address: ${[resume.address, resume.province, resume.city]
-          .filter(Boolean)
-          .join(", ")}`
-      : null,
-    resume.personalLink ? `Link: ${resume.personalLink}` : null,
-  ]
-    .filter(Boolean)
-    .join("  |  ");
-  pdf.text(contactLine2, pageWidth / 2, y, { align: "center" });
-  y += 10;
+  // Contact line 2: address, personalLink
+  let contactLine2 = [];
+  if (resume.address || resume.province || resume.city) {
+    const location = [resume.address, resume.province, resume.city]
+      .filter(Boolean)
+      .join(", ");
+    contactLine2.push({ icon: mapIcon, text: location });
+  }
+  if (resume.personalLink)
+    contactLine2.push({ icon: globeIcon, text: resume.personalLink });
+  let totalWidth2 = contactLine2.reduce(
+    (sum, item, idx) =>
+      sum +
+      iconSize +
+      iconTextGap +
+      pdf.getTextWidth(item.text) +
+      (idx > 0 ? 8 : 0),
+    0
+  );
+  let startX2 = (pageWidth - totalWidth2) / 2;
+  contactX = startX2;
+  contactLine2.forEach((item, idx) => {
+    if (idx > 0) contactX += 8;
+    if (item.icon)
+      pdf.addImage(
+        item.icon,
+        "PNG",
+        contactX,
+        contactY + 4,
+        iconSize,
+        iconSize
+      );
+    contactX += iconSize + iconTextGap;
+    pdf.text(item.text, contactX, contactY + 7);
+    contactX += pdf.getTextWidth(item.text);
+  });
+  y += 12;
 
   // --- RENDER SECTION HELPER ---
   const renderSection = (title, contentFunc) => {

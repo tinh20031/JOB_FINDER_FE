@@ -2,10 +2,39 @@ import { jsPDF } from "jspdf";
 import { ArimoRegularNormal } from "@/utils/fonts/Arimo-Regular-normal";
 import { ArimoBoldNormal } from "@/utils/fonts/Arimo-Bold-normal";
 
-export default function generateElegantPDF(resume, accentColor) {
+// Helper: Load SVG as base64 PNG (for demo, you may want to pre-convert in production)
+async function svgUrlToBase64Png(svgUrl, size = 24) {
+  return new Promise((resolve) => {
+    const img = new window.Image();
+    img.crossOrigin = "anonymous";
+    img.onload = function () {
+      const canvas = document.createElement("canvas");
+      canvas.width = size;
+      canvas.height = size;
+
+      const ctx = canvas.getContext("2d");
+      ctx.drawImage(img, 0, 0, size, size);
+      resolve(canvas.toDataURL("image/png"));
+    };
+    img.src = svgUrl;
+  });
+}
+
+export default async function generateElegantPDF(resume, accentColor) {
   const pdf = new jsPDF("p", "mm", "a4");
   const pageWidth = pdf.internal.pageSize.getWidth();
   const pageHeight = pdf.internal.pageSize.getHeight();
+
+  // Load icons as base64 PNG
+  const [phoneIcon, mailIcon, giftIcon, mapIcon, globeIcon] = await Promise.all(
+    [
+      svgUrlToBase64Png("/icons/phone.svg", 24),
+      svgUrlToBase64Png("/icons/mail.svg", 24),
+      svgUrlToBase64Png("/icons/gift.svg", 24), // Nếu không có calendar.svg, sẽ là undefined
+      svgUrlToBase64Png("/icons/map.svg", 24),
+      svgUrlToBase64Png("/icons/globe.svg", 24),
+    ]
+  );
 
   // Font setup
   if (ArimoRegularNormal) {
@@ -36,9 +65,7 @@ export default function generateElegantPDF(resume, accentColor) {
   const formatDate = (dateStr) => {
     if (!dateStr) return "";
     const d = new Date(dateStr);
-    return `${String(d.getDate()).padStart(2, "0")}/${String(
-      d.getMonth() + 1
-    ).padStart(2, "0")}/${d.getFullYear()}`;
+    return `${String(d.getMonth() + 1).padStart(2, "0")}/${d.getFullYear()}`;
   };
 
   const formatDateRange = (start, end, isWorking) => {
@@ -62,69 +89,90 @@ export default function generateElegantPDF(resume, accentColor) {
   let y = 20;
 
   // --- HEADER --- (Dark background like the design)
-  const HEADER_HEIGHT = 50;
-  pdf.setFillColor("#555555"); // Dark gray background
+  const HEADER_HEIGHT = 70;
+  pdf.setFillColor(accentColor || "#555555"); // Use accentColor for header background
   pdf.rect(0, 0, pageWidth, HEADER_HEIGHT, "F");
 
-  // Avatar positioned on the left
+  // Avatar positioned on the left, căn giữa theo header
   let avatarImg = resume?.image || resume?.avatar || "/default-avatar.png";
   if (
     avatarImg &&
     (avatarImg.startsWith("data:image") || avatarImg.startsWith("http"))
   ) {
     try {
-      // White border around avatar
-      pdf.setFillColor("#ffffff");
-      pdf.rect(15, 15, 25, 25, "F");
-      pdf.addImage(avatarImg, "JPEG", 17, 17, 21, 21, undefined, "FAST");
+      pdf.addImage(avatarImg, "JPEG", 17, 17, 24, 24, undefined, "FAST");
     } catch (e) {
-      // Fallback: draw a placeholder rectangle
-      pdf.setFillColor("#ffffff");
-      pdf.rect(15, 15, 25, 25, "F");
+      // Fallback: do nothing if image fails
     }
-  } else {
-    // Draw placeholder avatar
-    pdf.setFillColor("#ffffff");
-    pdf.rect(15, 15, 25, 25, "F");
   }
 
   // Name and job title
   setFont("bold", FONT_XL, "#ffffff");
-  pdf.text(resume?.fullName || "", 50, 25);
+  pdf.text(resume?.fullName || "", 50, 28);
 
   setFont("normal", FONT_LG, "#cccccc");
-  pdf.text(resume?.jobTitle || "", 50, 32);
+  pdf.text(resume?.jobTitle || "", 50, 35);
 
   // Contact info in two columns layout
   setFont("normal", FONT_SM, "#ffffff");
-  let contactY = 40;
+  let contactY = 44; // thấp hơn cho cân header
+  let iconSize = 4.5; // mm
+  let iconTextGap = 2; // mm
 
   // Left column
   let leftColumnX = 50;
   if (resume?.phone) {
-    pdf.text(`📞 ${resume.phone}`, leftColumnX, contactY);
-    contactY += 4;
+    if (phoneIcon) {
+      let iconY = contactY - 1.2;
+      pdf.addImage(phoneIcon, "PNG", leftColumnX, iconY, iconSize, iconSize);
+    }
+    pdf.text(resume.phone, leftColumnX + iconSize + iconTextGap, contactY + 2);
+    contactY += 7;
   }
   if (resume?.email) {
-    pdf.text(`✉ ${resume.email}`, leftColumnX, contactY);
-    contactY += 4;
+    if (mailIcon) {
+      let iconY = contactY - 1.2;
+      pdf.addImage(mailIcon, "PNG", leftColumnX, iconY, iconSize, iconSize);
+    }
+    pdf.text(resume.email, leftColumnX + iconSize + iconTextGap, contactY + 2);
+    contactY += 7;
   }
   if (resume?.personalLink) {
-    pdf.text(`🌐 ${resume.personalLink}`, leftColumnX, contactY);
+    if (globeIcon) {
+      let iconY = contactY - 1.2;
+      pdf.addImage(globeIcon, "PNG", leftColumnX, iconY, iconSize, iconSize);
+    }
+    pdf.text(
+      resume.personalLink,
+      leftColumnX + iconSize + iconTextGap,
+      contactY + 2
+    );
   }
 
   // Right column
-  contactY = 40;
+  contactY = 44;
   let rightColumnX = 130;
   if (resume?.dob) {
-    pdf.text(`📅 ${formatDate(resume.dob)}`, rightColumnX, contactY);
-    contactY += 4;
+    if (giftIcon) {
+      let iconY = contactY - 1.2;
+      pdf.addImage(giftIcon, "PNG", rightColumnX, iconY, iconSize, iconSize);
+    }
+    pdf.text(
+      formatDate(resume.dob),
+      rightColumnX + iconSize + iconTextGap,
+      contactY + 2
+    );
+    contactY += 7;
   }
   if (resume?.address || resume?.province || resume?.city) {
     const location = [resume.address, resume.province, resume.city]
       .filter(Boolean)
       .join(", ");
-    pdf.text(`📍 ${location}`, rightColumnX, contactY);
+    if (mapIcon) {
+      let iconY = contactY - 1.2;
+      pdf.addImage(mapIcon, "PNG", rightColumnX, iconY, iconSize, iconSize);
+    }
+    pdf.text(location, rightColumnX + iconSize + iconTextGap, contactY + 2);
   }
 
   y = HEADER_HEIGHT + 15;
@@ -136,11 +184,11 @@ export default function generateElegantPDF(resume, accentColor) {
       y = 20;
     }
 
-    setFont("bold", FONT_LG, "#222222");
+    setFont("bold", FONT_LG, accentColor || "#222222");
     pdf.text(title, 20, y);
 
     // Add border line below title
-    pdf.setDrawColor("#e5e5e5");
+    pdf.setDrawColor(accentColor || "#e5e5e5");
     pdf.setLineWidth(0.5);
     pdf.line(20, y + 2, pageWidth - 20, y + 2);
     y += 12;

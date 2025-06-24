@@ -22,6 +22,12 @@ function formatDate(dateStr) {
   return `${day}/${month}/${year}`;
 }
 
+function formatMonthYear(dateStr) {
+  if (!dateStr) return "";
+  const d = new Date(dateStr);
+  return `${String(d.getMonth() + 1).padStart(2, "0")}/${d.getFullYear()}`;
+}
+
 export default function CVClassic({ resume, accentColor }) {
   // Phân loại kỹ năng
   const coreSkills = Array.isArray(resume?.skills)
@@ -171,7 +177,7 @@ export default function CVClassic({ resume, accentColor }) {
             }}
           />
         ) : (
-          <div>{resume?.about || "Chưa có mô tả bản thân."}</div>
+          <div>{resume?.about || "No personal description yet."}</div>
         )}
       </Section>
       {/* Section: Work Experience */}
@@ -202,7 +208,7 @@ export default function CVClassic({ resume, accentColor }) {
             </div>
           ))
         ) : (
-          <div>Chưa có kinh nghiệm làm việc.</div>
+          <div>No work experience.</div>
         )}
       </Section>
       {/* Section: Education */}
@@ -220,7 +226,7 @@ export default function CVClassic({ resume, accentColor }) {
             </div>
           ))
         ) : (
-          <div>Chưa có thông tin học vấn.</div>
+          <div>No education information available.</div>
         )}
       </Section>
       {/* Section: Skills */}
@@ -258,7 +264,7 @@ export default function CVClassic({ resume, accentColor }) {
             </div>
           ))
         ) : (
-          <div>Chưa có ngoại ngữ.</div>
+          <div>No foreign language yet.</div>
         )}
       </Section>
       {/* Section: Highlight Project */}
@@ -295,7 +301,7 @@ export default function CVClassic({ resume, accentColor }) {
             </div>
           ))
         ) : (
-          <div>Chưa có dự án nổi bật.</div>
+          <div>No featured projects yet.</div>
         )}
       </Section>
       {/* Section: Certificate */}
@@ -306,8 +312,14 @@ export default function CVClassic({ resume, accentColor }) {
             <div key={cert.certificateId} style={{ marginBottom: 16 }}>
               <b>{cert.certificateName}</b>
               {cert.organization && <> - {cert.organization}</>}
-              <span style={{ float: "right" }}>
-                {formatDateRange(cert.month, null, false)}
+              <span
+                style={{
+                  float: "right",
+                  color: accentColor || "#007bff",
+                  fontWeight: 500,
+                }}
+              >
+                {formatMonthYear(cert.month)}
               </span>
               {cert.certificateUrl && (
                 <div>
@@ -317,19 +329,21 @@ export default function CVClassic({ resume, accentColor }) {
                     style={{ color: "#111", textDecoration: "underline" }}
                     rel="noopener noreferrer"
                   >
-                    View certificate
+                    {cert.certificateUrl}
                   </a>
                 </div>
               )}
-              <div
-                dangerouslySetInnerHTML={{
-                  __html: cert.certificateDescription || "",
-                }}
-              />
+              {cert.certificateDescription && (
+                <div
+                  dangerouslySetInnerHTML={{
+                    __html: cert.certificateDescription,
+                  }}
+                />
+              )}
             </div>
           ))
         ) : (
-          <div>Chưa có chứng chỉ.</div>
+          <div>No certificate yet.</div>
         )}
       </Section>
       {/* Section: Award */}
@@ -339,18 +353,26 @@ export default function CVClassic({ resume, accentColor }) {
             <div key={award.awardId} style={{ marginBottom: 16 }}>
               <b>{award.awardName}</b>
               {award.awardOrganization && <> - {award.awardOrganization}</>}
-              <span style={{ float: "right" }}>
-                {formatDateRange(award.month, null, false)}
-              </span>
-              <div
-                dangerouslySetInnerHTML={{
-                  __html: award.awardDescription || "",
+              <span
+                style={{
+                  float: "right",
+                  color: accentColor || "#007bff",
+                  fontWeight: 500,
                 }}
-              />
+              >
+                {formatMonthYear(award.month)}
+              </span>
+              {award.awardDescription && (
+                <div
+                  dangerouslySetInnerHTML={{
+                    __html: award.awardDescription,
+                  }}
+                />
+              )}
             </div>
           ))
         ) : (
-          <div>Chưa có giải thưởng.</div>
+          <div>No awards yet.</div>
         )}
       </Section>
     </div>

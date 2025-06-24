@@ -3,11 +3,15 @@ import React, { useState, useRef } from "react";
 import { useSelector } from "react-redux";
 import CVClassic from "@/components/cv-templates/CVClassic";
 import CVElegant from "@/components/cv-templates/CVElegant";
+import CVCubic from "@/components/cv-templates/CVCubic";
+import CVMinimal from "@/components/cv-templates/CVMinimal";
 import useResumeData from "@/services/useResumeData";
 import { jsPDF } from "jspdf";
 import html2canvas from "html2canvas";
 import generateClassicPDF from "./classicPdf";
 import generateElegantPDF from "./elegantPdf";
+import generateCubicPDF from "./cubicPdf";
+import generateMinimalPDF from "./minimalPdf";
 
 // Mockup các template CV
 const templates = [
@@ -26,11 +30,18 @@ const templates = [
     colorOptions: ["#383d44", "#0e3850"], // gray, dark blue
   },
   {
-    id: "modern",
-    name: "Modern",
-    img: "https://itviec.com/assets/cv-templates/modern.png",
-    defaultColor: "#dc3545", // red
-    colorOptions: ["#dc3545", "#343a40"], // red, dark gray
+    id: "minimal",
+    name: "Minimal",
+    img: "/candidates-dashboard/images/minimal.png",
+    defaultColor: "#ed1b2f",
+    colorOptions: ["#ed1b2f", "#121212", "#0a3e7a"],
+  },
+  {
+    id: "cubic",
+    name: "Cubic",
+    img: "/candidates-dashboard/images/cubic.png",
+    defaultColor: "#9a173f", // red
+    colorOptions: ["#9a173f", "#065668", "#5f175c"], // red, dark gray
   },
 ];
 
@@ -41,6 +52,12 @@ function CVPreview({ template, resume, accentColor }) {
   }
   if (template.id === "elegant") {
     return <CVElegant resume={resume} accentColor={accentColor} />;
+  }
+  if (template.id === "cubic") {
+    return <CVCubic resume={resume} accentColor={accentColor} />;
+  }
+  if (template.id === "minimal") {
+    return <CVMinimal resume={resume} accentColor={accentColor} />;
   }
   return (
     <div
@@ -119,6 +136,10 @@ export default function CVTemplatesPage() {
       generateClassicPDF(resume, accentColor);
     } else if (selected === "elegant") {
       generateElegantPDF(resume, accentColor);
+    } else if (selected === "cubic") {
+      generateCubicPDF(resume, accentColor);
+    } else if (selected === "minimal") {
+      generateMinimalPDF(resume, accentColor);
     } else {
       // Fallback to image-based PDF for other templates
       if (cvPreviewRef.current) {
@@ -138,7 +159,7 @@ export default function CVTemplatesPage() {
   };
 
   if (loading)
-    return <div style={{ padding: 32 }}>Đang tải dữ liệu hồ sơ...</div>;
+    return <div style={{ padding: 32 }}>Loading profile data...</div>;
 
   return (
     <div
@@ -153,11 +174,20 @@ export default function CVTemplatesPage() {
         style={{
           width: "450px",
           padding: "24px",
-          background: "#f8f9fa",
+          background: "#414042",
           overflowY: "auto",
         }}
       >
-        <h3 style={{ marginBottom: 24 }}>Choose your CV template</h3>
+        <h3
+          style={{
+            marginBottom: 24,
+            textAlign: "center",
+            fontWeight: "bold",
+            color: "#FFFFFF",
+          }}
+        >
+          JobFinder CV template
+        </h3>
         <div
           style={{
             display: "grid",
@@ -278,7 +308,7 @@ export default function CVTemplatesPage() {
             alignItems: "center",
             justifyContent: "space-between",
             padding: "12px 24px",
-            background: "#495057",
+            background: "#414042",
             color: "white",
             boxShadow: "0 -2px 10px rgba(0,0,0,0.2)",
           }}
@@ -313,7 +343,7 @@ export default function CVTemplatesPage() {
           <button
             onClick={handleDownload}
             style={{
-              background: "#e63946",
+              background: "#0c55ba",
               color: "#fff",
               border: "none",
               borderRadius: 6,

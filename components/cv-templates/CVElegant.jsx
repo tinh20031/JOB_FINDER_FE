@@ -27,6 +27,12 @@ function formatDateRange(start, end, isWorking) {
   return `${startStr} - ${endStr}`;
 }
 
+function formatMonthYear(dateStr) {
+  if (!dateStr) return "";
+  const d = new Date(dateStr);
+  return `${String(d.getMonth() + 1).padStart(2, "0")}/${d.getFullYear()}`;
+}
+
 export default function CVElegant({ resume, accentColor }) {
   const coreSkills = Array.isArray(resume?.skills)
     ? resume.skills.filter((s) => s.groupName === "Core Skills")
@@ -67,8 +73,6 @@ export default function CVElegant({ resume, accentColor }) {
               height: 100,
               borderRadius: "8px",
               objectFit: "cover",
-              background: "#eee",
-              border: "3px solid #fff",
             }}
           />
         </div>
@@ -220,7 +224,7 @@ export default function CVElegant({ resume, accentColor }) {
               </div>
             ))
           ) : (
-            <div>Chưa có thông tin học vấn.</div>
+            <div>No education information.</div>
           )}
         </Section>
 
@@ -329,7 +333,7 @@ export default function CVElegant({ resume, accentColor }) {
               </div>
             ))
           ) : (
-            <div>Chưa có kinh nghiệm làm việc.</div>
+            <div>No work experience.</div>
           )}
         </Section>
 
@@ -348,7 +352,7 @@ export default function CVElegant({ resume, accentColor }) {
               </div>
             ))
           ) : (
-            <div>Chưa có ngoại ngữ.</div>
+            <div>No foreign language.</div>
           )}
         </Section>
 
@@ -407,7 +411,7 @@ export default function CVElegant({ resume, accentColor }) {
               </div>
             ))
           ) : (
-            <div>Chưa có dự án nổi bật.</div>
+            <div>No highlight project.</div>
           )}
         </Section>
 
@@ -425,34 +429,35 @@ export default function CVElegant({ resume, accentColor }) {
                   }}
                 >
                   {cert.certificateName}
-                </div>
-                <div
-                  style={{
-                    fontSize: 13,
-                    color: accentColor || "#007bff",
-                    fontWeight: "500",
-                    marginBottom: 4,
-                  }}
-                >
-                  {formatDate(cert.month)}
                   {cert.organization && (
-                    <span style={{ color: "#666", fontWeight: "normal" }}>
-                      {" "}
-                      | {cert.organization}
+                    <span
+                      style={{
+                        color: accentColor || "#007bff",
+                        fontWeight: 400,
+                      }}
+                    >
+                      {" - " + cert.organization}
                     </span>
                   )}
+                  <span
+                    style={{
+                      float: "right",
+                      color: accentColor || "#007bff",
+                      fontWeight: 500,
+                    }}
+                  >
+                    {formatMonthYear(cert.month)}
+                  </span>
                 </div>
                 {cert.certificateUrl && (
                   <div style={{ fontSize: 13, marginBottom: 4 }}>
-                    <span style={{ fontWeight: "bold", color: "#333" }}>
-                      Certificate URL:{" "}
-                    </span>
                     <a
                       href={cert.certificateUrl}
                       target="_blank"
                       style={{
                         color: accentColor || "#007bff",
                         textDecoration: "underline",
+                        wordBreak: "break-all",
                       }}
                       rel="noopener noreferrer"
                     >
@@ -471,7 +476,7 @@ export default function CVElegant({ resume, accentColor }) {
               </div>
             ))
           ) : (
-            <div>Chưa có chứng chỉ.</div>
+            <div>No certificate.</div>
           )}
         </Section>
 
@@ -488,22 +493,25 @@ export default function CVElegant({ resume, accentColor }) {
                   }}
                 >
                   {award.awardName}
-                </div>
-                <div
-                  style={{
-                    fontSize: 13,
-                    color: accentColor || "#007bff",
-                    fontWeight: "500",
-                    marginBottom: 4,
-                  }}
-                >
-                  {formatDate(award.month)}
                   {award.awardOrganization && (
-                    <span style={{ color: "#666", fontWeight: "normal" }}>
-                      {" "}
-                      | {award.awardOrganization}
+                    <span
+                      style={{
+                        color: accentColor || "#007bff",
+                        fontWeight: 400,
+                      }}
+                    >
+                      {" - " + award.awardOrganization}
                     </span>
                   )}
+                  <span
+                    style={{
+                      float: "right",
+                      color: accentColor || "#007bff",
+                      fontWeight: 500,
+                    }}
+                  >
+                    {formatMonthYear(award.month)}
+                  </span>
                 </div>
                 {award.awardDescription && (
                   <div
@@ -514,7 +522,7 @@ export default function CVElegant({ resume, accentColor }) {
               </div>
             ))
           ) : (
-            <div>Chưa có giải thưởng.</div>
+            <div>No award.</div>
           )}
         </Section>
       </div>
