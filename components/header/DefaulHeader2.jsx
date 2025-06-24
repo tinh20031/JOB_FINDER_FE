@@ -11,10 +11,11 @@ import Image from "next/image";
 import employerMenuData from "../../data/employerHeaderMenuData";
 import { isActiveLink } from "../../utils/linkActiveChecker";
 import candidatesMenuData from "../../data/candidatesHeaderMenuData";
-import adminMenuData from "../../data/adminMenuData";
+import adminMenuData from "../../data/adminHeadedrMenuData";
 import BecomeRecruiterModal from '../common/form/shared/BecomeRecruiterModal';
 import { useFavoriteJobs } from "../../contexts/FavoriteJobsContext";
 
+import apiService from '@/services/api.service';
 
 // Helper function to validate image URLs
 const getValidImageUrl = (url) => {
@@ -37,7 +38,7 @@ const DefaulHeader2 = () => {
   const pathname = usePathname();
   const [navbar, setNavbar] = useState(false);
 
-  const { isLoggedIn, user, role } = useSelector((state) => state.auth);
+  const { isLoggedIn, user, role, profileUpdated } = useSelector((state) => state.auth);
   const dispatch = useDispatch();
 
   const [openRecruiterModal, setOpenRecruiterModal] = useState(false);
@@ -56,21 +57,53 @@ const DefaulHeader2 = () => {
   }, [isLoggedIn]);
 
   useEffect(() => {
-    if (isLoggedIn) {
-      if (role === 'Company') {
-        setDisplayUserName(authService.getFullNameCompany() || "My Account");
-        setDisplayAvatar(authService.getProfileImageCompany() || "/images/resource/company-6.png");
-      } else if (role === 'Candidate' || role === 'Admin') {
-        const name = authService.getFullName();
-        const avatar = authService.getProfileImage();
-        setDisplayUserName(name || "My Account");
-        setDisplayAvatar(avatar || "/images/resource/candidate-1.png");
+    const fetchProfile = async () => {
+      if (role === 'Candidate' && isLoggedIn) {
+        try {
+          const profile = await apiService.get('/CandidateProfile/me');
+          setDisplayUserName(profile.fullName || "My Account");
+          setDisplayAvatar(profile.image || "/images/resource/candidate-1.png");
+        } catch (e) {
+          setDisplayUserName("My Account");
+          setDisplayAvatar("/images/resource/candidate-1.png");
+        }
+      } else if (role === 'Company' && isLoggedIn) {
+        let id = user?.userId || user?.id || (typeof window !== 'undefined' ? localStorage.getItem('userId') : null);
+        if (id) {
+          try {
+            const profile = await apiService.get(`/CompanyProfile/${id}`);
+            setDisplayUserName(profile.companyName || "My Account");
+            setDisplayAvatar(profile.urlCompanyLogo || "/images/resource/company-6.png");
+          } catch (e) {
+            setDisplayUserName("My Account");
+            setDisplayAvatar("/images/resource/company-6.png");
+          }
+        } else {
+          setDisplayUserName("My Account");
+          setDisplayAvatar("/images/resource/company-6.png");
+        }
+      } else if (role === 'Admin' && isLoggedIn) {
+        let id = user?.userId || user?.id || (typeof window !== 'undefined' ? localStorage.getItem('userId') : null);
+        if (id) {
+          try {
+            const profile = await apiService.get(`/User/${id}`);
+            setDisplayUserName(profile.fullName || profile.name || "My Account");
+            setDisplayAvatar(getValidImageUrl(profile.avatar || profile.image));
+          } catch (e) {
+            setDisplayUserName("My Account");
+            setDisplayAvatar("/images/resource/candidate-1.png");
+          }
+        } else {
+          setDisplayUserName("My Account");
+          setDisplayAvatar("/images/resource/candidate-1.png");
+        }
+      } else {
+        setDisplayUserName("My Account");
+        setDisplayAvatar("/images/resource/candidate-1.png");
       }
-    } else {
-      setDisplayUserName("My Account");
-      setDisplayAvatar("/images/resource/candidate-1.png");
-    }
-  }, [isLoggedIn, role, user]);
+    };
+    fetchProfile();
+  }, [isLoggedIn, role, profileUpdated, user]);
 
   const changeBackground = () => {
     if (typeof window !== 'undefined' && window.scrollY >= 10) {
@@ -191,8 +224,9 @@ const DefaulHeader2 = () => {
                     alt="avatar"
                     width={50}
                     height={50}
-                    src={displayAvatar}
+                    src={getValidImageUrl(displayAvatar)}
                     className="thumb"
+                    style={{ borderRadius: '50%', objectFit: 'cover', width: 50, height: 50 }}
                   />
                   <span className="name">{displayUserName}</span>
                 </a>

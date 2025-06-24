@@ -576,6 +576,9 @@ const PostBoxForm = () => {
     if (hasActualChanges()) {
       localStorage.setItem(DRAFT_KEY, JSON.stringify(formData));
       setHasUnsavedChanges(true);
+    } else {
+      localStorage.removeItem(DRAFT_KEY);
+      setHasUnsavedChanges(false);
     }
   }, [formData]);
 

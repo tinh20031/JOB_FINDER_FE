@@ -32,18 +32,23 @@ class ApiServiceClass {
   }
 
   static async updateUser(id, userData) {
-    const url = API_CONFIG.getUrl(`${API_CONFIG.ENDPOINTS.USER.BASE}/${id}`);
+    const url = API_CONFIG.getUrl(`${API_CONFIG.ENDPOINTS.USER.BASE}/full/${id}`);
     let options;
     if (userData instanceof FormData) {
       options = {
         method: 'PUT',
         body: userData
-        // KHÔNG set Content-Type, browser sẽ tự động set boundary cho multipart/form-data
       };
     } else {
       options = API_CONFIG.getRequestOptions('PUT', userData);
     }
-    return API_CONFIG.handleResponse(await fetch(url, options));
+    const response = await fetch(url, options);
+    const text = await response.text();
+    try {
+      return JSON.parse(text);
+    } catch (error) {
+      return text;
+    }
   }
 
   // Job APIs
@@ -174,9 +179,13 @@ class ApiServiceClass {
 // Sau đó tạo object từ class
 const ApiService = {
   get: (endpoint) => {
+    const token = localStorage.getItem('token');
     return fetch(`${BASE_URL}${endpoint}`, {
       method: 'GET',
-      headers: { 'Content-Type': 'application/json' }
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+      }
     }).then(async res => {
       if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
       const text = await res.text();
@@ -231,7 +240,12 @@ const ApiService = {
       const error = await response.json().catch(() => ({}));
       throw new Error(error.message || `HTTP error! status: ${response.status}`);
     }
-    return response.json();
+    const text = await response.text();
+    try {
+      return JSON.parse(text);
+    } catch (error) {
+      return text;
+    }
   },
   deleteUser: async (id) => {
     const url = API_CONFIG.getUrl(`${API_CONFIG.ENDPOINTS.USER.BASE}/${id}`);

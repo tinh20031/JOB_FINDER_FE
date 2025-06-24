@@ -8,9 +8,12 @@ import LogoCoverUploader from "./LogoCoverUploader";
 import { useRouter } from 'next/navigation';
 import { companyProfileService } from '@/services/companyProfileService';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useDispatch } from "react-redux";
+import { setProfileUpdated } from "@/features/auth/authSlice";
 
 const Index = () => {
     const router = useRouter();
+    const dispatch = useDispatch();
 
     const [companyProfileData, setCompanyProfileData] = useState({
         formData: {},
@@ -357,6 +360,7 @@ const Index = () => {
             setIsEditing(false);
             setHasUnsavedChanges(false);
             setInitialProfileData(response); // Update initial data with saved data
+            dispatch(setProfileUpdated(Date.now()));
         } catch (error) {
             console.error('Error saving profile:', error);
             if (error.response && error.response.data && error.response.data.errors) {
@@ -449,25 +453,7 @@ const Index = () => {
                     <div>Loading profile...</div>
                 ) : (
                     <>
-                        <LogoCoverUploader
-                            onLogoChange={handleLogoChange}
-                            onCoverChange={handleCoverChange}
-                            logoPreviewUrl={logoPreviewUrl}
-                            coverPreviewUrl={coverPreviewUrl}
-                            validationErrors={validationErrors}
-                            initialLogoUrl={initialProfileData?.urlCompanyLogo || null}
-                            initialCoverUrl={initialProfileData?.imageLogoLgr || null}
-                            isEditing={isEditing}
-                        />
-
-                        <FormInfoBox
-                            onFormChange={handleFormChange}
-                            validationErrors={validationErrors}
-                            initialData={companyProfileData.formData}
-                            isEditing={isEditing}
-                        />
-
-                        <div className="form-group col-lg-12 col-md-12 text-right">
+                        <div className="form-group col-lg-12 col-md-12 text-right mb-3">
                             {isEditing ? (
                                 <>
                                     <button
@@ -501,6 +487,23 @@ const Index = () => {
                                 </button>
                             )}
                         </div>
+                        <LogoCoverUploader
+                            onLogoChange={handleLogoChange}
+                            onCoverChange={handleCoverChange}
+                            logoPreviewUrl={logoPreviewUrl}
+                            coverPreviewUrl={coverPreviewUrl}
+                            validationErrors={validationErrors}
+                            initialLogoUrl={initialProfileData?.urlCompanyLogo || null}
+                            initialCoverUrl={initialProfileData?.imageLogoLgr || null}
+                            isEditing={isEditing}
+                        />
+
+                        <FormInfoBox
+                            onFormChange={handleFormChange}
+                            validationErrors={validationErrors}
+                            initialData={companyProfileData.formData}
+                            isEditing={isEditing}
+                        />
 
                         {/* Temporary Notification */}
                         {showNotification && (

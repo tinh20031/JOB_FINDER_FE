@@ -218,7 +218,7 @@ const JobPostManagement = () => {
                   ) : (
                     paginatedJobs.map((item) => (
                       <div className={`job-block ${item.isLocked ? 'locked-job' : ''}`} key={item.jobId}>
-                        <div className="inner-box">
+                        <div className="inner-box d-flex align-items-center justify-content-between">
                           <div className="content">
                             <span className="company-logo">
                               <Image width={50} height={49} src={item.company?.urlCompanyLogo || '/images/company-logo/default-logo.png'} alt={item.company?.companyName || 'N/A'} style={{ borderRadius: '50%' }} />
@@ -228,11 +228,22 @@ const JobPostManagement = () => {
                               <li><span className="icon flaticon-building"></span>{item.company?.companyName || "N/A"}</li>
                               <li><span className="icon fa fa-calendar"></span>{new Date(item.timeStart).toLocaleDateString()}</li>
                               <li><span className="icon fa fa-calendar"></span>{new Date(item.timeEnd).toLocaleDateString()}</li>
-                              <li><span className={`badge ${item.isLocked ? 'bg-danger' : 'bg-success'}`}>{item.isLocked ? "Locked" : "Active"}</span></li>
+                              <li>
+                                {item.isLocked ? (
+                                  <span className="badge bg-danger">Locked</span>
+                                ) : (
+                                  <span className={`badge ${
+                                    item.status === 0 ? 'bg-warning' :
+                                    item.status === 1 ? 'bg-success' :
+                                    item.status === 2 ? 'bg-danger' : 'bg-secondary'
+                                  }`}>
+                                    {item.status === 0 ? 'Pending' : item.status === 1 ? 'Approved' : item.status === 2 ? 'Rejected' : 'Unknown'}
+                                  </span>
+                                )}
+                              </li>
                             </ul>
                           </div>
-                          
-                          <div className="job-actions d-flex flex-column align-items-end gap-2">
+                          <div className="job-actions d-flex flex-row align-items-center gap-2 ms-3">
                             <select
                               className="form-select form-select-sm"
                               value={item.status}
@@ -244,17 +255,15 @@ const JobPostManagement = () => {
                                 <option key={index} value={index}>{status}</option>
                               ))}
                             </select>
-                            <div className="d-flex gap-2">
-                                <button
-                                    className={`btn btn-sm ${item.isLocked ? 'btn-outline-success' : 'btn-outline-warning'}`}
-                                    onClick={() => handleLockJob(item.jobId, item.isLocked)}
-                                >
-                                    {item.isLocked ? 'Unlock' : 'Lock'}
-                                </button>
-                                <button className="btn btn-sm btn-outline-danger" onClick={() => handleShowDelete(item)} disabled={item.isLocked}>
-                                    Delete
-                                </button>
-                            </div>
+                            <button
+                              className={`btn btn-sm ${item.isLocked ? 'btn-outline-success' : 'btn-outline-warning'}`}
+                              onClick={() => handleLockJob(item.jobId, item.isLocked)}
+                            >
+                              {item.isLocked ? 'Unlock' : 'Lock'}
+                            </button>
+                            <button className="btn btn-sm btn-outline-danger" onClick={() => handleShowDelete(item)} disabled={item.isLocked}>
+                              Delete
+                            </button>
                           </div>
                         </div>
                       </div>

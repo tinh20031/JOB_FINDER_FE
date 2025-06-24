@@ -6,12 +6,13 @@ import { useEffect, useState } from "react";
 import employerMenuData from "../../data/adminHeadedrMenuData";
 import { isActiveLink } from "../../utils/linkActiveChecker";
 import { usePathname, useRouter } from "next/navigation";
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { clearLoginState } from '@/features/auth/authSlice';
 import { authService } from "../../services/authService";
 import Cookies from 'js-cookie';
 import { getUserFavorites } from "../../services/favoriteJobService";
 import { useFavoriteJobs } from "../../contexts/FavoriteJobsContext";
+import apiService from '@/services/api.service';
 
 
 // Helper function to validate image URLs
@@ -39,7 +40,7 @@ const DashboardHeaderAdmin = () => {
     const router = useRouter();
     const dispatch = useDispatch();
     const { favoriteCount } = useFavoriteJobs() || {};
-    const userId = typeof window !== 'undefined' ? Number(localStorage.getItem('userId')) : null;
+    const { user, isLoggedIn, profileUpdated } = useSelector((state) => state.auth);
 
     const changeBackground = () => {
         if (window.scrollY >= 0) {
@@ -50,26 +51,24 @@ const DashboardHeaderAdmin = () => {
     };
 
     useEffect(() => {
-        window.addEventListener("scroll", changeBackground);
-        // Lấy thông tin user từ localStorage (nếu có)
-        if (typeof window !== 'undefined') {
-            const userString = localStorage.getItem('user');
-            console.log('User string from localStorage:', userString);
-            if (userString) {
-                const user = JSON.parse(userString);
-                console.log('Parsed user object:', user);
-                if (user.fullName) setFullName(user.fullName);
-                else if (user.name) setFullName(user.name);
-                
-                // Handle avatar with validation
-                const userAvatar = getValidImageUrl(user.avatar || user.image);
-                setAvatar(userAvatar);
+        const fetchAdminProfile = async () => {
+            let id = user?.userId || user?.id || (typeof window !== 'undefined' ? localStorage.getItem('userId') : null);
+            if (isLoggedIn && id) {
+                try {
+                    const profile = await apiService.get(`/User/${id}`);
+                    setFullName(profile.fullName || profile.name || "Admin");
+                    setAvatar(getValidImageUrl(profile.avatar || profile.image));
+                } catch (e) {
+                    setFullName("Admin");
+                    setAvatar("/images/resource/company-6.png");
+                }
             } else {
-                console.log('No user data found in localStorage.');
+                setFullName("Admin");
                 setAvatar("/images/resource/company-6.png");
             }
-        }
-    }, []);
+        };
+        fetchAdminProfile();
+    }, [user, profileUpdated, isLoggedIn]);
 
     const handleLogout = () => {
         // Xóa cookie với cả path '/' và domain 'localhost'
@@ -142,6 +141,7 @@ const DashboardHeaderAdmin = () => {
                                     src={avatar}
                                     width={50}
                                     height={50}
+                                    style={{ borderRadius: '50%', objectFit: 'cover', width: 50, height: 50 }}
                                 />
                                 <span className="name">{fullName}</span>
                             </a>
@@ -174,14 +174,6 @@ const DashboardHeaderAdmin = () => {
                                         )}
                                     </li>
                                 ))}
-                                <li>
-                                    <Link href="/favorite-jobs">
-                                        <button className="menu-btn">
-                                            <span className="count">{favoriteCount}</span>
-                                            <span className="icon la la-heart-o"></span>
-                                        </button>
-                                    </Link>
-                                </li>
                             </ul>
                         </div>
                         {/* End dropdown */}
