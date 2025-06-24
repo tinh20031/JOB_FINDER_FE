@@ -183,7 +183,11 @@ export const jobService = {
         updatedAt: job.updatedAt,
         status: job.status,
         addressDetail: job.addressDetail,
-        skills: job.skills || []
+        skills: job.skills || [],
+        descriptionWeight: job.descriptionWeight ?? null,
+        skillsWeight: job.skillsWeight ?? null,
+        experienceWeight: job.experienceWeight ?? null,
+        educationWeight: job.educationWeight ?? null,
       }));
 
       // Apply frontend filters
@@ -314,7 +318,11 @@ export const jobService = {
         createdAt: job.createdAt,
         updatedAt: job.updatedAt,
         status: job.status,
-        skills: job.skills || []
+        skills: job.skills || [],
+        descriptionWeight: job.descriptionWeight ?? null,
+        skillsWeight: job.skillsWeight ?? null,
+        experienceWeight: job.experienceWeight ?? null,
+        educationWeight: job.educationWeight ?? null,
       };
     } catch (error) {
       // Nếu là lỗi 403 hoặc 404 thì ném lại để page.jsx bắt được
@@ -351,7 +359,11 @@ export const jobService = {
         isSalaryNegotiable: jobData.isSalaryNegotiable,
         minSalary: jobData.isSalaryNegotiable ? null : jobData.minSalary,
         maxSalary: jobData.isSalaryNegotiable ? null : jobData.maxSalary,
-        skillInputs: jobData.skillInputs || []
+        skillInputs: jobData.skillInputs || [],
+        descriptionWeight: typeof jobData.descriptionWeight === 'number' ? jobData.descriptionWeight / 100 : null,
+        skillsWeight: typeof jobData.skillsWeight === 'number' ? jobData.skillsWeight / 100 : null,
+        experienceWeight: typeof jobData.experienceWeight === 'number' ? jobData.experienceWeight / 100 : null,
+        educationWeight: typeof jobData.educationWeight === 'number' ? jobData.educationWeight / 100 : null,
       };
 
       const response = await axios.post(`${API_URL}/Job/create`, payload, config);
@@ -384,9 +396,8 @@ export const jobService = {
         provinceName: jobData.provinceName,
         addressDetail: jobData.addressDetail,
         isSalaryNegotiable: jobData.isSalaryNegotiable,
-        minSalary: jobData.isSalaryNegotiable ? null : jobData.minSalary,
-        maxSalary: jobData.isSalaryNegotiable ? null : jobData.maxSalary,
-        skillInputs: jobData.skillInputs || []
+        minSalary: jobData.isSalaryNegotiable ? null : Number(jobData.minSalary) || null,
+        maxSalary: jobData.isSalaryNegotiable ? null : Number(jobData.maxSalary) || null,
       };
 
       const response = await axios.put(`${API_URL}/Job/${jobId}`, payload, config);
@@ -709,108 +720,6 @@ export const jobService = {
       return response.data;
     } catch (error) {
       console.error('Error rejecting job:', error);
-      throw error;
-    }
-  },
-
-  async deleteJob(jobId) {
-    try {
-      const token = getToken();
-      if (!token) {
-        throw new Error('No authentication token found');
-      }
-
-      const response = await axios.delete(
-        `${API_URL}/Job/${jobId}`,
-        {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        }
-      );
-      return response.data;
-    } catch (error) {
-      console.error('Error deleting job:', error);
-      throw error;
-    }
-  },
-
-  async updateJob(jobId, jobData) {
-    try {
-      const token = getToken();
-      if (!token) {
-        throw new Error('No authentication token found');
-      }
-
-      const response = await axios.put(
-        `${API_URL}/Job/${jobId}`,
-        jobData,
-        {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        }
-      );
-      return response.data;
-    } catch (error) {
-      console.error('Error updating job:', error);
-      throw error;
-    }
-  },
-
-  async createJob(jobData) {
-    try {
-      const token = getToken();
-      if (!token) {
-        throw new Error('No authentication token found');
-      }
-
-      const response = await axios.post(
-        `${API_URL}/Job/create`,
-        jobData,
-        {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        }
-      );
-      return response.data;
-    } catch (error) {
-      console.error('Error creating job:', error);
-      throw error;
-    }
-  },
-
-  async getFilteredJobs(filters = {}) {
-    try {
-      const token = getToken();
-      if (!token) {
-        throw new Error('No authentication token found');
-      }
-
-      // Convert filters to query string
-      const queryParams = new URLSearchParams();
-      Object.entries(filters).forEach(([key, value]) => {
-        if (value !== undefined && value !== null && value !== '') {
-          if (Array.isArray(value)) {
-            value.forEach(v => queryParams.append(key, v));
-          } else {
-            queryParams.append(key, value);
-          }
-        }
-      });
-
-      const queryString = queryParams.toString();
-      const url = `${API_URL}/Job/filter${queryString ? `?${queryString}` : ''}`;
-
-      const response = await axios.get(url, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-      return response.data;
-    } catch (error) {
-      console.error('Error fetching filtered jobs:', error);
       throw error;
     }
   },
