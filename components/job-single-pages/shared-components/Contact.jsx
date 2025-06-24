@@ -2,20 +2,18 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import axios from 'axios';
 import { authService } from '@/services/authService';
+<<<<<<< HEAD
 import messageService from '@/services/messageService';
+=======
+import { useSelector } from 'react-redux';
+>>>>>>> 4796df8946bec771d749e33b08a37cd267777454
 
 const Contact = ({ companyId, jobId, companyName, industry, urlCompanyLogo }) => {
   const router = useRouter();
-  const [currentUserId, setCurrentUserId] = useState(null);
+  const { user, token } = useSelector((state) => state.auth);
   const [isModalOpen, setModalOpen] = useState(false);
   const [messageText, setMessageText] = useState(''); // Start with an empty message
   const [error, setError] = useState('');
-
-  useEffect(() => {
-    // ID của người gửi (ứng viên) phải được lấy từ localStorage khi đăng nhập.
-    const userId = localStorage.getItem('userId');
-    setCurrentUserId(userId);
-  }, []);
 
   const openModal = (e) => {
     e.preventDefault();
@@ -35,20 +33,32 @@ const Contact = ({ companyId, jobId, companyName, industry, urlCompanyLogo }) =>
     }
     setError('');
 
+    // Get userId and token from Redux, fallback to authService
+    const userId = user?.id || user?.userId || authService.getStoredUser()?.id || authService.getStoredUser()?.userId;
+    const authToken = token || authService.getToken();
+    if (!userId || !authToken) {
+      setError("You must be loggin in");
+      return;
+    }
+
     const payload = {
-      senderId: Number(currentUserId),
+      senderId: Number(userId),
       receiverId: Number(companyId),
       relatedJobId: Number(jobId),
       messageText: messageText.trim(),
     };
 
-    if (!payload.senderId || !payload.receiverId) {
-      setError("You must be loggin in");
-      return;
-    }
-
     try {
+<<<<<<< HEAD
       await messageService.sendMessage(payload);
+=======
+      await axios.post('/api/Message/send', payload, {
+        headers: {
+          'Authorization': `Bearer ${authToken}`,
+          'Content-Type': 'application/json',
+        }
+      });
+>>>>>>> 4796df8946bec771d749e33b08a37cd267777454
       closeModal();
       router.push(`/candidates-dashboard/messages?companyId=${companyId}&jobId=${jobId}`);
     } catch (err) {

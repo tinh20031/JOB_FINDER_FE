@@ -5,6 +5,8 @@ const initialState = {
   isLoggedIn: false,
   user: null, // Có thể lưu thông tin user ở đây nếu API trả về
   role: null,
+  userId: null, // Add userId to the initial state
+  token: null, // Thêm token vào state
 };
 
 const authSlice = createSlice({
@@ -13,19 +15,26 @@ const authSlice = createSlice({
   reducers: {
     setLoginState: (state, action) => {
       state.isLoggedIn = action.payload.isLoggedIn;
-      const userObj = action.payload.userObject || {};
-      const userAvatar = userObj.image || userObj.avatar || "/images/resource/candidate-1.png";
+      const user = action.payload.user || {}; // Use 'user' for clarity
+      const userAvatar = user.image || user.avatar || "/images/resource/candidate-1.png";
+      
       state.user = {
-        ...userObj,
+        ...user,
         image: userAvatar,
         avatar: userAvatar,
       };
+
+      // Standardize userId extraction
+      state.userId = user.id || user.userId || null; 
       state.role = action.payload.role || null;
+      state.token = action.payload.token || null; // Lưu token vào Redux
     },
     clearLoginState: (state) => {
       state.isLoggedIn = false;
       state.user = null;
       state.role = null;
+      state.userId = null; // Clear userId on logout
+      state.token = null; // Xóa token khi logout
     },
   },
 });

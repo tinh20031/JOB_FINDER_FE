@@ -11,7 +11,7 @@ import Image from "next/image";
 import employerMenuData from "../../data/employerHeaderMenuData";
 import { isActiveLink } from "../../utils/linkActiveChecker";
 import candidatesMenuData from "../../data/candidatesHeaderMenuData";
-import adminMenuData from "../../data/adminMenuData";
+import adminMenuData from "../../data/adminHeadedrMenuData";
 import BecomeRecruiterModal from '../common/form/shared/BecomeRecruiterModal';
 
 // Helper function to validate image URLs
@@ -91,11 +91,7 @@ const DefaulHeader2 = () => {
     authService.logout();
     localStorage.removeItem('user');
     localStorage.removeItem('userId');
-    
-    // Cập nhật state
     dispatch(clearLoginState());
-
-    // Chuyển hướng về trang chủ
     window.location.href = '/';
   };
 
@@ -181,7 +177,7 @@ const DefaulHeader2 = () => {
                     alt="avatar"
                     width={50}
                     height={50}
-                    src={displayAvatar}
+                    src={getValidImageUrl(displayAvatar)}
                     className="thumb"
                   />
                   <span className="name">{displayUserName}</span>

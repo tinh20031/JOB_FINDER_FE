@@ -211,6 +211,10 @@ export const authService = {
     return null;
   },
 
+  getStoredUser() {
+    return this._getStoredUser();
+  },
+
   getFullNameCompany() {
     const cookieFullName = Cookies.get('fullName');
     if (cookieFullName) return cookieFullName;

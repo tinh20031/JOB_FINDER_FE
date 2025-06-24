@@ -1,13 +1,14 @@
 import React, { useState, useEffect } from "react";
 import { Modal, Form, Input, Button, message, Select } from "antd";
-import axios from "axios";
+import { useSelector } from "react-redux";
 import { industryService } from "@/services/industryService";
 import { userService } from "@/services/userService";
 import locationService from "@/services/locationService";
 import { CheckCircleOutlined } from '@ant-design/icons';
 import './styles/_becomeRecruiterModal.scss';
 
-const BecomeRecruiterModal = ({ open, onCancel, userId }) => {
+const BecomeRecruiterModal = ({ open, onCancel }) => {
+  const { userId } = useSelector((state) => state.auth);
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
   const [provinces, setProvinces] = useState([]);
@@ -22,6 +23,7 @@ const BecomeRecruiterModal = ({ open, onCancel, userId }) => {
         setProvinces(data);
       });
       fetchIndustries();
+      setRequestSent(false);
     }
   }, [open]);
 
@@ -39,16 +41,15 @@ const BecomeRecruiterModal = ({ open, onCancel, userId }) => {
     try {
       const values = await form.validateFields();
       setLoading(true);
-      const currentUserId = userId || localStorage.getItem('userId');
-
-      if (!currentUserId) {
+      
+      if (!userId) {
         message.error("You must be logged in to submit this request.");
         setLoading(false);
         return;
       }
       
       const payload = {
-        userId: Number(currentUserId),
+        userId: Number(userId),
         companyName: values.companyName,
         companyProfileDescription: values.companyProfileDescription,
         location: values.location,
@@ -57,22 +58,21 @@ const BecomeRecruiterModal = ({ open, onCancel, userId }) => {
         contact: values.contact,
         industryId: Number(values.industryId),
       };
-      console.log('Payload gửi lên API:', payload);
+      
       await userService.requestBecomeRecruiter(payload);
       message.success("Request sent successfully!");
       form.resetFields();
       setRequestSent(true);
       setStatusMessage("We have received your request, please wait...");
-      if (currentUserId) localStorage.setItem('recruiterRequestSent_' + currentUserId, '1');
+      if (userId) localStorage.setItem('recruiterRequestSent_' + userId, '1');
     } catch (err) {
       console.error("Error submitting request:", err);
-      const currentUserId = userId || localStorage.getItem('userId');
 
       if (err.response && typeof err.response.data === 'string' && err.response.data.includes("You have submitted a request before please wait")) {
         setRequestSent(true);
         setStatusMessage(err.response.data);
-        if (currentUserId) {
-          localStorage.setItem('recruiterRequestSent_' + currentUserId, '1');
+        if (userId) {
+          localStorage.setItem('recruiterRequestSent_' + userId, '1');
         }
       } else if (!err.errorFields) {
         message.error("Failed to submit request");
