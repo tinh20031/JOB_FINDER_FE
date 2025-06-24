@@ -8,9 +8,12 @@ import LogoCoverUploader from "./LogoCoverUploader";
 import { useRouter } from 'next/navigation';
 import { companyProfileService } from '@/services/companyProfileService';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useDispatch } from "react-redux";
+import { setProfileUpdated } from "@/features/auth/authSlice";
 
 const Index = () => {
     const router = useRouter();
+    const dispatch = useDispatch();
 
     const [companyProfileData, setCompanyProfileData] = useState({
         formData: {},
@@ -357,6 +360,7 @@ const Index = () => {
             setIsEditing(false);
             setHasUnsavedChanges(false);
             setInitialProfileData(response); // Update initial data with saved data
+            dispatch(setProfileUpdated(Date.now()));
         } catch (error) {
             console.error('Error saving profile:', error);
             if (error.response && error.response.data && error.response.data.errors) {
