@@ -159,7 +159,60 @@ export default function CVTemplatesPage() {
   };
 
   if (loading)
-    return <div style={{ padding: 32 }}>Loading profile data...</div>;
+    return (
+      <div style={{ display: "flex", height: "100vh", background: "#343a40" }}>
+        {/* Sidebar skeleton */}
+        <div
+          style={{
+            width: "450px",
+            padding: "24px",
+            background: "#414042",
+            overflowY: "auto",
+          }}
+        >
+          <div className="skeleton-line" style={{ width: "80%", height: 32, margin: "0 auto 32px auto", borderRadius: 8 }}></div>
+          <div style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(2, 1fr)",
+            gap: 24,
+          }}>
+            {[1,2,3,4].map(idx => (
+              <div key={idx} style={{ background: "#fff", borderRadius: 12, padding: 16, minHeight: 220, display: "flex", flexDirection: "column", alignItems: "center", border: "2px solid #eee" }}>
+                <div className="skeleton-line" style={{ width: 120, height: 160, borderRadius: 8, marginBottom: 16 }}></div>
+                <div className="skeleton-line" style={{ width: 60, height: 18, borderRadius: 6 }}></div>
+              </div>
+            ))}
+          </div>
+        </div>
+        {/* Preview skeleton */}
+        <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
+          <div style={{ flex: 1, overflowY: "auto", padding: "24px", background: "#e9ecef", display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <div style={{ background: "#fff", borderRadius: 12, width: 800, minHeight: 1000, boxShadow: "0 2px 16px rgba(0,0,0,0.08)", padding: 32 }}>
+              <div className="skeleton-line" style={{ width: "60%", height: 36, marginBottom: 32, borderRadius: 8 }}></div>
+              {[...Array(8)].map((_, idx) => (
+                <div key={idx} className="skeleton-line" style={{ width: `${80 - idx*5}%`, height: 20, marginBottom: 18, borderRadius: 6 }}></div>
+              ))}
+            </div>
+          </div>
+          {/* Bottom bar skeleton */}
+          <div style={{ height: 64, background: "#414042", display: "flex", alignItems: "center", justifyContent: "flex-end", padding: "0 32px" }}>
+            <div className="skeleton-line" style={{ width: 160, height: 36, borderRadius: 8 }}></div>
+          </div>
+        </div>
+        <style jsx>{`
+          .skeleton-line {
+            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 37%, #f0f0f0 63%);
+            background-size: 400% 100%;
+            animation: skeleton-loading 1.4s ease infinite;
+            border-radius: 6px;
+          }
+          @keyframes skeleton-loading {
+            0% { background-position: 100% 50%; }
+            100% { background-position: 0 50%; }
+          }
+        `}</style>
+      </div>
+    );
 
   return (
     <div
