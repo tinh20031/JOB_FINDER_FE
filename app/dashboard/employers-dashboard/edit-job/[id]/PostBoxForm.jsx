@@ -422,26 +422,28 @@ const PostBoxForm = ({ initialData, isEditing }) => {
             </div>
           </div>
         )}
-        <div className="form-group col-lg-3 col-md-6">
-          <label>Description Weight (%)</label>
-          <input type="number" step="1" min="0" max="100" name="descriptionWeight" value={formData.descriptionWeight} className="form-control" disabled readOnly />
-        </div>
-        <div className="form-group col-lg-3 col-md-6">
-          <label>Skills Weight (%)</label>
-          <input type="number" step="1" min="0" max="100" name="skillsWeight" value={formData.skillsWeight} className="form-control" disabled readOnly />
-        </div>
-        <div className="form-group col-lg-3 col-md-6">
-          <label>Experience Weight (%)</label>
-          <input type="number" step="1" min="0" max="100" name="experienceWeight" value={formData.experienceWeight} className="form-control" disabled readOnly />
-        </div>
-        <div className="form-group col-lg-3 col-md-6">
-          <label>Education Weight (%)</label>
-          <input type="number" step="1" min="0" max="100" name="educationWeight" value={formData.educationWeight} className="form-control" disabled readOnly />
+        {/* 4 ô input weight */}
+        <div className="row">
+          <div className="form-group col-12 col-md-6 col-lg-3">
+            <label>Description Weight (%)</label>
+            <input type="number" step="1" min="0" max="100" name="descriptionWeight" value={formData.descriptionWeight} className="form-control not-allowed-cursor" disabled readOnly />
+          </div>
+          <div className="form-group col-12 col-md-6 col-lg-3">
+            <label>Skills Weight (%)</label>
+            <input type="number" step="1" min="0" max="100" name="skillsWeight" value={formData.skillsWeight} className="form-control not-allowed-cursor" disabled readOnly />
+          </div>
+          <div className="form-group col-12 col-md-6 col-lg-3">
+            <label>Experience Weight (%)</label>
+            <input type="number" step="1" min="0" max="100" name="experienceWeight" value={formData.experienceWeight} className="form-control not-allowed-cursor" disabled readOnly />
+          </div>
+          <div className="form-group col-12 col-md-6 col-lg-3">
+            <label>Education Weight (%)</label>
+            <input type="number" step="1" min="0" max="100" name="educationWeight" value={formData.educationWeight} className="form-control not-allowed-cursor" disabled readOnly />
+          </div>
         </div>
         {errors.weight && <div className="error-message col-12">{errors.weight}</div>}
         <div className="form-group col-lg-12 col-md-12 text-right">
         <div className="form-group col-lg-12 col-md-12">    
-        <small className="form-text text-muted">You cannot change the matching percentage</small>
         {isEditing && (
           <div className="form-group col-lg-12 col-md-12">
             <div className="alert alert-info" role="alert">
