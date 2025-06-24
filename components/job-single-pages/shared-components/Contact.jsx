@@ -2,11 +2,7 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import axios from 'axios';
 import { authService } from '@/services/authService';
-<<<<<<< HEAD
-import messageService from '@/services/messageService';
-=======
 import { useSelector } from 'react-redux';
->>>>>>> 4796df8946bec771d749e33b08a37cd267777454
 
 const Contact = ({ companyId, jobId, companyName, industry, urlCompanyLogo }) => {
   const router = useRouter();
@@ -49,16 +45,12 @@ const Contact = ({ companyId, jobId, companyName, industry, urlCompanyLogo }) =>
     };
 
     try {
-<<<<<<< HEAD
-      await messageService.sendMessage(payload);
-=======
       await axios.post('/api/Message/send', payload, {
         headers: {
           'Authorization': `Bearer ${authToken}`,
           'Content-Type': 'application/json',
         }
       });
->>>>>>> 4796df8946bec771d749e33b08a37cd267777454
       closeModal();
       router.push(`/candidates-dashboard/messages?companyId=${companyId}&jobId=${jobId}`);
     } catch (err) {
