@@ -106,8 +106,7 @@ const CertificateModal = ({ open, onClose, onSubmit, certificate }) => {
     const newErrors = {};
     if (!form.certificateName.trim())
       newErrors.certificateName = "Certificate Name is required.";
-    if (!form.organization.trim())
-      newErrors.organization = "Organization is required.";
+
     if (!form.month) newErrors.month = "Month is required.";
     if (!form.year) newErrors.year = "Year is required.";
     return newErrors;
@@ -203,28 +202,13 @@ const CertificateModal = ({ open, onClose, onSubmit, certificate }) => {
               </div>
             </div>
             <div className="form-group">
-              <label className="cer-label">
-                Organization <span className="cer-required">*</span>
-              </label>
+              <label className="cer-label">Organization (Optional)</label>
               <input
                 name="organization"
-                className={`cer-input${
-                  errors.organization ||
-                  (touched.organization && !form.organization.trim())
-                    ? " error"
-                    : form.organization.trim()
-                    ? " valid"
-                    : ""
-                }`}
+                className="cer-input"
                 value={form.organization}
                 onChange={handleChange}
-                onBlur={handleBlur}
               />
-              <div className="cer-error">
-                {(errors.organization ||
-                  (touched.organization && !form.organization.trim())) &&
-                  "Organization is required."}
-              </div>
             </div>
 
             <div className="form-group">
@@ -280,7 +264,7 @@ const CertificateModal = ({ open, onClose, onSubmit, certificate }) => {
             </div>
 
             <div className="form-group">
-              <label className="cer-label">Certificate URL</label>
+              <label className="cer-label">Certificate URL (Optional)</label>
               <input
                 name="certificateUrl"
                 type="url"
@@ -290,7 +274,7 @@ const CertificateModal = ({ open, onClose, onSubmit, certificate }) => {
               />
             </div>
             <div className="form-group">
-              <label className="cer-label">Description</label>
+              <label className="cer-label">Description (Optional)</label>
               <ReactQuill
                 theme="snow"
                 value={form.certificateDescription}

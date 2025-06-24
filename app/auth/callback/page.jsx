@@ -21,8 +21,13 @@ export default function Callback() {
       Cookies.set("role", role);
       // Lấy user info từ token nếu có
       let user = null;
+      let userId = null;
       try {
         user = jwtDecode(token);
+        userId = user.id || user.userId || user.sub || user.nameid;
+        if (userId) {
+          localStorage.setItem("userId", userId);
+        }
       } catch (e) {}
       dispatch(
         setLoginState({

@@ -36,6 +36,10 @@ const HighlightProjectModal = ({
       ? highlightProject.yearEnd.slice(0, 4)
       : "",
     projectDescription: highlightProject?.projectDescription || "",
+    technologies: highlightProject?.technologies || "",
+    responsibilities: highlightProject?.responsibilities || "",
+    teamSize: highlightProject?.teamSize || "",
+    achievements: highlightProject?.achievements || "",
     projectLink: highlightProject?.projectLink || "",
     createdAt: highlightProject?.createdAt || new Date().toISOString(),
     updatedAt: new Date().toISOString(),
@@ -70,6 +74,10 @@ const HighlightProjectModal = ({
         ? highlightProject.yearEnd.slice(0, 4)
         : "",
       projectDescription: highlightProject?.projectDescription || "",
+      technologies: highlightProject?.technologies || "",
+      responsibilities: highlightProject?.responsibilities || "",
+      teamSize: highlightProject?.teamSize || "",
+      achievements: highlightProject?.achievements || "",
       projectLink: highlightProject?.projectLink || "",
       createdAt: highlightProject?.createdAt || new Date().toISOString(),
       updatedAt: new Date().toISOString(),
@@ -134,6 +142,15 @@ const HighlightProjectModal = ({
     const newErrors = {};
     if (!form.projectName.trim())
       newErrors.projectName = "Project Name is required.";
+    if (!form.projectDescription.trim())
+      newErrors.projectDescription = "Project Description is required.";
+    if (!form.technologies.trim())
+      newErrors.technologies = "Technologies is required.";
+    if (!form.responsibilities.trim())
+      newErrors.responsibilities = "Responsibilities is required.";
+    if (!form.teamSize.trim()) newErrors.teamSize = "Team Size is required.";
+    if (!form.achievements.trim())
+      newErrors.achievements = "Achievement is required.";
     if (!form.monthStart) newErrors.monthStart = "Month is required.";
     if (!form.yearStart) newErrors.yearStart = "Year is required.";
     if (!form.isWorking) {
@@ -156,6 +173,11 @@ const HighlightProjectModal = ({
     setErrors(validationErrors);
     setTouched({
       projectName: true,
+      projectDescription: true,
+      technologies: true,
+      responsibilities: true,
+      teamSize: true,
+      achievements: true,
       monthStart: true,
       yearStart: true,
       monthEnd: true,
@@ -228,6 +250,14 @@ const HighlightProjectModal = ({
         .char-counter { font-size: 12px; color: #888; text-align: right; margin-top: 4px; }
         .insert-template-btn { background: #f0f0f0; border: 1px solid #ccc; border-radius: 6px; padding: 4px 12px; font-size: 13px; font-weight: 600; cursor: pointer; transition: background 0.2s; }
         .insert-template-btn:hover { background: #e0e0e0; }
+        .quill-wrapper.error .ql-toolbar.ql-snow,
+        .quill-wrapper.error .ql-container.ql-snow {
+          border: 2px solid #e60023 !important;
+        }
+        .quill-wrapper.valid .ql-toolbar.ql-snow,
+        .quill-wrapper.valid .ql-container.ql-snow {
+          border: 2px solid #28a745 !important;
+        }
       `}</style>
       <div className="pro-modal-overlay">
         <div className="pro-modal-content">
@@ -439,7 +469,7 @@ const HighlightProjectModal = ({
                 }}
               >
                 <label className="pro-label" style={{ marginBottom: 0 }}>
-                  Description
+                  Description <span className="pro-required">*</span>
                 </label>
                 <button
                   type="button"
@@ -449,21 +479,182 @@ const HighlightProjectModal = ({
                   Insert template
                 </button>
               </div>
-              <ReactQuill
-                theme="snow"
-                value={form.projectDescription}
-                onChange={(value) =>
-                  handleQuillChange("projectDescription", value)
-                }
-                modules={quillModules}
-              />
+              <div
+                className={`quill-wrapper${
+                  errors.projectDescription ||
+                  (touched.projectDescription &&
+                    !form.projectDescription.trim())
+                    ? " error"
+                    : form.projectDescription.trim()
+                    ? " valid"
+                    : ""
+                }`}
+              >
+                <ReactQuill
+                  theme="snow"
+                  value={form.projectDescription}
+                  onChange={(value) =>
+                    handleQuillChange("projectDescription", value)
+                  }
+                  onBlur={() =>
+                    setTouched((prev) => ({
+                      ...prev,
+                      projectDescription: true,
+                    }))
+                  }
+                  modules={quillModules}
+                />
+              </div>
+              <div className="pro-error">
+                {(errors.projectDescription ||
+                  (touched.projectDescription &&
+                    !form.projectDescription.trim())) &&
+                  "Please enter your project description"}
+              </div>
               <div className="char-counter">
                 {form.projectDescription.length}/2500
               </div>
             </div>
 
             <div className="form-group">
-              <label className="pro-label">Project URL</label>
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  marginBottom: "8px",
+                }}
+              >
+                <label className="pro-label" style={{ marginBottom: 0 }}>
+                  Technologies Uses <span className="pro-required">*</span>
+                </label>
+              </div>
+              <div
+                className={`quill-wrapper${
+                  errors.technologies ||
+                  (touched.technologies && !form.technologies.trim())
+                    ? " error"
+                    : form.technologies.trim()
+                    ? " valid"
+                    : ""
+                }`}
+              >
+                <ReactQuill
+                  theme="snow"
+                  value={form.technologies}
+                  onChange={(value) => handleQuillChange("technologies", value)}
+                  onBlur={() =>
+                    setTouched((prev) => ({ ...prev, technologies: true }))
+                  }
+                  modules={quillModules}
+                />
+              </div>
+              <div className="pro-error">
+                {(errors.technologies ||
+                  (touched.technologies && !form.technologies.trim())) &&
+                  "Please enter technologies used"}
+              </div>
+              <div className="char-counter">
+                {form.technologies.length}/2500
+              </div>
+            </div>
+
+            <div className="form-group">
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  marginBottom: "8px",
+                }}
+              >
+                <label className="pro-label" style={{ marginBottom: 0 }}>
+                  Key Responsibilities <span className="pro-required">*</span>
+                </label>
+              </div>
+              <div
+                className={`quill-wrapper${
+                  errors.responsibilities ||
+                  (touched.responsibilities && !form.responsibilities.trim())
+                    ? " error"
+                    : form.responsibilities.trim()
+                    ? " valid"
+                    : ""
+                }`}
+              >
+                <ReactQuill
+                  theme="snow"
+                  value={form.responsibilities}
+                  onChange={(value) =>
+                    handleQuillChange("responsibilities", value)
+                  }
+                  onBlur={() =>
+                    setTouched((prev) => ({ ...prev, responsibilities: true }))
+                  }
+                  modules={quillModules}
+                />
+              </div>
+              <div className="pro-error">
+                {(errors.responsibilities ||
+                  (touched.responsibilities &&
+                    !form.responsibilities.trim())) &&
+                  "Please enter key responsibilities"}
+              </div>
+              <div className="char-counter">
+                {form.responsibilities.length}/2500
+              </div>
+            </div>
+
+            <div className="form-group">
+              <label className="pro-label">
+                Team Size <span className="pro-required">*</span>
+              </label>
+              <input
+                name="teamSize"
+                className={`pro-input${
+                  errors.teamSize || (touched.teamSize && !form.teamSize.trim())
+                    ? " error"
+                    : form.teamSize.trim()
+                    ? " valid"
+                    : ""
+                }`}
+                value={form.teamSize}
+                onChange={handleChange}
+                onBlur={handleBlur}
+              />
+              <div className="pro-error">
+                {(errors.teamSize ||
+                  (touched.teamSize && !form.teamSize.trim())) &&
+                  "Please enter your team size"}
+              </div>
+            </div>
+
+            <div className="form-group">
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  marginBottom: "8px",
+                }}
+              >
+                <label className="pro-label" style={{ marginBottom: 0 }}>
+                  Achievements/Results (Optional)
+                </label>
+              </div>
+              <ReactQuill
+                theme="snow"
+                value={form.achievements}
+                onChange={(value) => handleQuillChange("achievements", value)}
+                modules={quillModules}
+              />
+              <div className="char-counter">
+                {form.achievements.length}/2500
+              </div>
+            </div>
+
+            <div className="form-group">
+              <label className="pro-label">Project URL (Optional)</label>
               <input
                 name="projectLink"
                 type="url"

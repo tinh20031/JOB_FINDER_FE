@@ -1,4 +1,4 @@
-'use client'
+"use client";
 
 import { useState, useEffect } from "react";
 import CallToActions from "../components/CallToActions";
@@ -35,10 +35,12 @@ const FilterSidebar = () => {
   // Handler functions for filter changes
   const handleJobTypeChange = (jobTypeId) => {
     // Example handler: toggle job type selection
-    setSelectedJobTypes(prev =>
-      prev.includes(jobTypeId) ? prev.filter(id => id !== jobTypeId) : [...prev, jobTypeId]
+    setSelectedJobTypes((prev) =>
+      prev.includes(jobTypeId)
+        ? prev.filter((id) => id !== jobTypeId)
+        : [...prev, jobTypeId]
     );
-    console.log('Job Type selected:', jobTypeId);
+    console.log("Job Type selected:", jobTypeId);
   };
 
   const handleDatePostedChange = (dateValue) => {
@@ -47,8 +49,10 @@ const FilterSidebar = () => {
 
   const handleExperienceLevelChange = (expLevelId) => {
     // Example handler: toggle experience level selection
-    setSelectedExperienceLevels(prev =>
-      prev.includes(expLevelId) ? prev.filter(id => id !== expLevelId) : [...prev, expLevelId]
+    setSelectedExperienceLevels((prev) =>
+      prev.includes(expLevelId)
+        ? prev.filter((id) => id !== expLevelId)
+        : [...prev, expLevelId]
     );
   };
 
@@ -64,19 +68,19 @@ const FilterSidebar = () => {
   useEffect(() => {
     const fetchLookupData = async () => {
       try {
-        const [jobTypesRes, expLevelsRes, industriesRes, provincesRes] = await Promise.all([
-          jobService.getJobTypes(),
-          jobService.getExperienceLevels(),
-          jobService.getIndustries(),
-          locationService.getProvinces(),
-        ]);
+        const [jobTypesRes, expLevelsRes, industriesRes, provincesRes] =
+          await Promise.all([
+            jobService.getJobTypes(),
+            jobService.getExperienceLevels(),
+            jobService.getIndustries(),
+            locationService.getProvinces(),
+          ]);
         setJobTypesData(jobTypesRes);
         setExperienceLevels(expLevelsRes);
         setIndustries(industriesRes);
         setProvinces(provincesRes);
-        console.log('Lookup data fetched in FilterSidebar', { jobTypesRes, expLevelsRes, industriesRes, provincesRes });
       } catch (err) {
-        console.error('Failed to fetch lookup data in FilterSidebar', err);
+        console.error("Failed to fetch lookup data in FilterSidebar", err);
       } finally {
         setLoadingLookupData(false);
       }
@@ -107,7 +111,10 @@ const FilterSidebar = () => {
           <h4>Location</h4>
           <div className="form-group">
             {loadingLookupData ? (
-              <div className="skeleton" style={{ width: '100%', height: 32, borderRadius: 6 }} />
+              <div
+                className="skeleton"
+                style={{ width: "100%", height: 32, borderRadius: 6 }}
+              />
             ) : (
               <LocationBox provinces={provinces} disabled={loadingLookupData} />
             )}
@@ -119,9 +126,16 @@ const FilterSidebar = () => {
           <h4>Industry</h4>
           <div className="form-group">
             {loadingLookupData ? (
-              <div className="skeleton" style={{ width: '100%', height: 32, borderRadius: 6 }} />
+              <div
+                className="skeleton"
+                style={{ width: "100%", height: 32, borderRadius: 6 }}
+              />
             ) : (
-              <Categories industries={industries} onSelectIndustry={handleIndustryChange} disabled={loadingLookupData} />
+              <Categories
+                industries={industries}
+                onSelectIndustry={handleIndustryChange}
+                disabled={loadingLookupData}
+              />
             )}
           </div>
         </div>
@@ -130,9 +144,16 @@ const FilterSidebar = () => {
         <div className="switchbox-outer">
           <h4>Job type</h4>
           {loadingLookupData ? (
-            <div className="skeleton" style={{ width: '100%', height: 32, borderRadius: 6 }} />
+            <div
+              className="skeleton"
+              style={{ width: "100%", height: 32, borderRadius: 6 }}
+            />
           ) : (
-            <JobType jobTypes={jobTypesData} onSelectJobType={handleJobTypeChange} disabled={loadingLookupData} />
+            <JobType
+              jobTypes={jobTypesData}
+              onSelectJobType={handleJobTypeChange}
+              disabled={loadingLookupData}
+            />
           )}
         </div>
         {/* <!-- Switchbox Outer --> */}
@@ -140,9 +161,15 @@ const FilterSidebar = () => {
         <div className="checkbox-outer">
           <h4>Date Posted</h4>
           {loadingLookupData ? (
-            <div className="skeleton" style={{ width: '100%', height: 32, borderRadius: 6 }} />
+            <div
+              className="skeleton"
+              style={{ width: "100%", height: 32, borderRadius: 6 }}
+            />
           ) : (
-            <DatePosted onSelectDatePosted={handleDatePostedChange} disabled={loadingLookupData} />
+            <DatePosted
+              onSelectDatePosted={handleDatePostedChange}
+              disabled={loadingLookupData}
+            />
           )}
         </div>
         {/* <!-- Checkboxes Ouer --> */}
@@ -150,9 +177,16 @@ const FilterSidebar = () => {
         <div className="checkbox-outer">
           <h4>Experience Level</h4>
           {loadingLookupData ? (
-            <div className="skeleton" style={{ width: '100%', height: 32, borderRadius: 6 }} />
+            <div
+              className="skeleton"
+              style={{ width: "100%", height: 32, borderRadius: 6 }}
+            />
           ) : (
-            <ExperienceLevel experienceLevels={experienceLevels} onSelectExperienceLevel={handleExperienceLevelChange} disabled={loadingLookupData} />
+            <ExperienceLevel
+              experienceLevels={experienceLevels}
+              onSelectExperienceLevel={handleExperienceLevelChange}
+              disabled={loadingLookupData}
+            />
           )}
         </div>
         {/* <!-- Checkboxes Ouer --> */}
@@ -160,16 +194,20 @@ const FilterSidebar = () => {
         <div className="filter-block">
           <h4>Salary</h4>
           {loadingLookupData ? (
-            <div className="skeleton" style={{ width: '100%', height: 32, borderRadius: 6 }} />
+            <div
+              className="skeleton"
+              style={{ width: "100%", height: 32, borderRadius: 6 }}
+            />
           ) : (
-            <SalaryRangeSlider onChange={handleSalaryRangeChange} disabled={loadingLookupData} />
+            <SalaryRangeSlider
+              onChange={handleSalaryRangeChange}
+              disabled={loadingLookupData}
+            />
           )}
         </div>
         {/* <!-- Filter Block --> */}
 
-        <div className="filter-block">
-          
-        </div>
+        <div className="filter-block"></div>
         {/* <!-- Filter Block --> */}
       </div>
       {/* Filter Outer */}
@@ -178,13 +216,22 @@ const FilterSidebar = () => {
       {/* <!-- End Call To Action --> */}
       <style jsx>{`
         .skeleton {
-          background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 37%, #f0f0f0 63%);
+          background: linear-gradient(
+            90deg,
+            #f0f0f0 25%,
+            #e0e0e0 37%,
+            #f0f0f0 63%
+          );
           background-size: 400% 100%;
           animation: skeleton-loading 1.4s ease infinite;
         }
         @keyframes skeleton-loading {
-          0% { background-position: 100% 50%; }
-          100% { background-position: 0 50%; }
+          0% {
+            background-position: 100% 50%;
+          }
+          100% {
+            background-position: 0 50%;
+          }
         }
       `}</style>
     </div>
