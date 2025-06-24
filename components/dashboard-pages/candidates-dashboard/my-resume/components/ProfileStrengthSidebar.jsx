@@ -82,7 +82,8 @@ const ProfileStrengthSidebar = ({
         <h4
           style={{
             fontWeight: 500,
-            fontSize: 16,
+            fontSize: 20,
+            fontWeight: "bold",
             marginBottom: 20,
             color: "#202124",
           }}
@@ -128,6 +129,7 @@ const ProfileStrengthSidebar = ({
               position: "relative",
               zIndex: 2,
               textAlign: "left",
+              fontWeight: "bold",
             }}
           >
             {strength.percentage < 70 ? (
