@@ -15,6 +15,8 @@ import { updateCandidateProfile } from "@/services/useResumeData";
 import { useState, useEffect } from "react";
 import ForeignLanguageModal from "./ForeignLanguageModal";
 import ProfileStrengthSidebar from "./ProfileStrengthSidebar";
+import { useDispatch } from "react-redux";
+import { setProfileUpdated } from "@/features/auth/authSlice";
 
 const index = () => {
   const {
@@ -46,6 +48,8 @@ const index = () => {
   const [openAwardsModal, setOpenAwardsModal] = useState(false);
   const [openForeignLangModal, setOpenForeignLangModal] = useState(false);
 
+  const dispatch = useDispatch();
+
   useEffect(() => {
     setProfileState(profile);
   }, [profile]);
@@ -64,6 +68,7 @@ const index = () => {
       const updated = await updateCandidateProfile(form);
       setEditOpen(false);
       setProfileState((prev) => ({ ...prev, ...form, ...updated }));
+      dispatch(setProfileUpdated(Date.now()));
       if (typeof refetch === "function") await refetch();
     } catch (e) {
       alert("Cập nhật thất bại!");
