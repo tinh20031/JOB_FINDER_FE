@@ -179,9 +179,13 @@ class ApiServiceClass {
 // Sau đó tạo object từ class
 const ApiService = {
   get: (endpoint) => {
+    const token = localStorage.getItem('token');
     return fetch(`${BASE_URL}${endpoint}`, {
       method: 'GET',
-      headers: { 'Content-Type': 'application/json' }
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+      }
     }).then(async res => {
       if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
       const text = await res.text();

@@ -12,6 +12,7 @@ import { authService } from "../../services/authService";
 import { clearLoginState } from "../../features/auth/authSlice";
 import { useRouter } from "next/navigation";
 import { useDispatch } from "react-redux";
+import apiService from '@/services/api.service';
 
 
 const getValidAvatarPath = (user) => {
@@ -35,7 +36,7 @@ const DashboardHeader = () => {
     const [navbar, setNavbar] = useState(false);
 
     // Get user data from Redux store
-    const { user, isLoggedIn, role } = useSelector((state) => state.auth);
+    const { user, isLoggedIn, role, profileUpdated, userId } = useSelector((state) => state.auth);
     const dispatch = useDispatch();
     const router = useRouter();
 
@@ -45,32 +46,40 @@ const DashboardHeader = () => {
 
     // Update state when user data from Redux changes
     useEffect(() => {
-        if (role === 'Company') {
-            const companyName = authService.getFullNameCompany();
-            const companyLogo = authService.getProfileImageCompany();
-            setDisplayUserName(companyName || "My Account");
-            setDisplayAvatar(companyLogo || "/images/resource/company-6.png");
-        } else if (user) {
-            setDisplayUserName(user.fullName || "My Account");
-            setDisplayAvatar(user.avatar || "/images/resource/company-6.png");
-        } else {
-            // Fallback for non-company users if Redux is empty
-            const userString = localStorage.getItem('user');
-            if (userString) {
+        const fetchCompanyProfile = async () => {
+            let id = userId || (typeof window !== 'undefined' ? localStorage.getItem('userId') : null);
+            if (role === 'Company' && isLoggedIn && id) {
                 try {
-                    const userObj = JSON.parse(userString);
-                    setDisplayUserName(userObj.fullName || "My Account");
-                    setDisplayAvatar(userObj.avatar || "/images/resource/company-6.png");
+                    const profile = await apiService.get(`/CompanyProfile/${id}`);
+                    setDisplayUserName(profile.companyName || "My Account");
+                    setDisplayAvatar(profile.urlCompanyLogo || "/images/resource/company-6.png");
                 } catch (e) {
                     setDisplayUserName("My Account");
                     setDisplayAvatar("/images/resource/company-6.png");
                 }
+            } else if (user) {
+                setDisplayUserName(user.fullName || "My Account");
+                setDisplayAvatar(user.avatar || "/images/resource/company-6.png");
             } else {
-                 setDisplayUserName("My Account");
-                 setDisplayAvatar("/images/resource/company-6.png");
+                // Fallback for non-company users if Redux is empty
+                const userString = typeof window !== 'undefined' ? localStorage.getItem('user') : null;
+                if (userString) {
+                    try {
+                        const userObj = JSON.parse(userString);
+                        setDisplayUserName(userObj.fullName || "My Account");
+                        setDisplayAvatar(userObj.avatar || "/images/resource/company-6.png");
+                    } catch (e) {
+                        setDisplayUserName("My Account");
+                        setDisplayAvatar("/images/resource/company-6.png");
+                    }
+                } else {
+                    setDisplayUserName("My Account");
+                    setDisplayAvatar("/images/resource/company-6.png");
+                }
             }
-        }
-    }, [user, role]); 
+        };
+        fetchCompanyProfile();
+    }, [user, role, isLoggedIn, profileUpdated, userId]); 
 
     const changeBackground = () => {
         if (window.scrollY >= 0) {

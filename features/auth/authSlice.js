@@ -7,6 +7,7 @@ const initialState = {
   role: null,
   userId: null, // Add userId to the initial state
   token: null, // Thêm token vào state
+  profileUpdated: 0, // Thêm biến trigger cập nhật profile
 };
 
 const authSlice = createSlice({
@@ -36,8 +37,11 @@ const authSlice = createSlice({
       state.userId = null; // Clear userId on logout
       state.token = null; // Xóa token khi logout
     },
+    setProfileUpdated: (state, action) => {
+      state.profileUpdated = action.payload;
+    },
   },
 });
 
-export const { setLoginState, clearLoginState } = authSlice.actions;
+export const { setLoginState, clearLoginState, setProfileUpdated } = authSlice.actions;
 export default authSlice.reducer; 
