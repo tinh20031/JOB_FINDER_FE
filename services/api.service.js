@@ -1,8 +1,8 @@
 import API_CONFIG from '../config/api.config';
 
-const BASE_URL = 'https://job-finder-tm9i.onrender.com/api';
+const BASE_URL = API_CONFIG.BASE_URL;
 
-
+// const BASE_URL = 'http://localhost:5194/api/';
 // Định nghĩa class trước
 class ApiServiceClass {
   // Auth APIs
@@ -32,18 +32,23 @@ class ApiServiceClass {
   }
 
   static async updateUser(id, userData) {
-    const url = API_CONFIG.getUrl(`${API_CONFIG.ENDPOINTS.USER.BASE}/${id}`);
+    const url = API_CONFIG.getUrl(`${API_CONFIG.ENDPOINTS.USER.BASE}/full/${id}`);
     let options;
     if (userData instanceof FormData) {
       options = {
         method: 'PUT',
         body: userData
-        // KHÔNG set Content-Type, browser sẽ tự động set boundary cho multipart/form-data
       };
     } else {
       options = API_CONFIG.getRequestOptions('PUT', userData);
     }
-    return API_CONFIG.handleResponse(await fetch(url, options));
+    const response = await fetch(url, options);
+    const text = await response.text();
+    try {
+      return JSON.parse(text);
+    } catch (error) {
+      return text;
+    }
   }
 
   // Job APIs
@@ -78,9 +83,9 @@ class ApiServiceClass {
     try {
       const response = await fetch(url, options);
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        console.error('Job creation error:', errorData);
-        throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+        const errorData = await response.json().catch(() => ({ message: `Failed to parse error response from server (status: ${response.status})` }));
+        console.error('Job creation error details:', errorData);
+        throw new Error(errorData.message || errorData.title || `HTTP error! status: ${response.status}`);
       }
       return response.json();
     } catch (error) {
@@ -184,14 +189,29 @@ const ApiService = {
     });
   },
   post: (endpoint, data) => {
+    const token = localStorage.getItem('token');
     return fetch(`${BASE_URL}${endpoint}`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
       body: JSON.stringify(data)
     }).then(async res => {
-      if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+      if (!res.ok) {
+        // Cố gắng parse lỗi từ body
+        const errorData = await res.json().catch(() => ({ message: `HTTP error! status: ${res.status}` }));
+        throw new Error(errorData.message || `HTTP error! status: ${res.status}`);
+      }
+      
       const text = await res.text();
-      return text ? JSON.parse(text) : null;
+      try {
+        // Thử parse dưới dạng JSON trước
+        return JSON.parse(text);
+      } catch (error) {
+        // Nếu không phải JSON, trả về dạng text (cho các response như "OK")
+        return text;
+      }
     });
   },
   login: ApiServiceClass.login,
@@ -216,7 +236,12 @@ const ApiService = {
       const error = await response.json().catch(() => ({}));
       throw new Error(error.message || `HTTP error! status: ${response.status}`);
     }
-    return response.json();
+    const text = await response.text();
+    try {
+      return JSON.parse(text);
+    } catch (error) {
+      return text;
+    }
   },
   deleteUser: async (id) => {
     const url = API_CONFIG.getUrl(`${API_CONFIG.ENDPOINTS.USER.BASE}/${id}`);
@@ -225,7 +250,13 @@ const ApiService = {
   },
   getCompanyProfileById: ApiServiceClass.getCompanyProfileById,
   getCandidateProfileById: ApiServiceClass.getCandidateProfileById,
-  getSkillById: ApiServiceClass.getSkillById
+  getSkillById: ApiServiceClass.getSkillById,
+  changePassword: (payload) => {
+    return ApiService.post('/Auth/change-password', payload);
+  },
+  getJobList: (params) => {
+    return ApiService.get('/Job/list-job', { params });
+  }
 };
 
 export default ApiService; 

@@ -7,6 +7,7 @@ import FormInfoBox from "./FormInfoBox";
 import LogoCoverUploader from "./LogoCoverUploader";
 import { useRouter } from 'next/navigation';
 import { companyProfileService } from '@/services/companyProfileService';
+import { motion, AnimatePresence } from 'framer-motion';
 
 const Index = () => {
     const router = useRouter();
@@ -33,6 +34,51 @@ const Index = () => {
     const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
     const [showCustomConfirmationModal, setShowCustomConfirmationModal] = useState(false);
     const [intendedPath, setIntendedPath] = useState(null);
+
+    // New state for save confirmation
+    const [showSaveConfirmationModal, setShowSaveConfirmationModal] = useState(false);
+
+    const modalVariants = {
+        hidden: { 
+            opacity: 0,
+            scale: 0.8,
+            y: -20
+        },
+        visible: { 
+            opacity: 1,
+            scale: 1,
+            y: 0,
+            transition: {
+                duration: 0.3,
+                ease: "easeOut"
+            }
+        },
+        exit: {
+            opacity: 0,
+            scale: 0.8,
+            y: -20,
+            transition: {
+                duration: 0.2,
+                ease: "easeIn"
+            }
+        }
+    };
+
+    const overlayVariants = {
+        hidden: { opacity: 0 },
+        visible: { 
+            opacity: 1,
+            transition: {
+                duration: 0.3
+            }
+        },
+        exit: {
+            opacity: 0,
+            transition: {
+                duration: 0.2
+            }
+        }
+    };
 
     // Helper to compare form data (ignoring file objects for now as they are handled separately)
     const areFormDataEqual = (data1, data2) => {
@@ -145,36 +191,38 @@ const Index = () => {
         };
     }, [hasUnsavedChanges]);
 
-    // Effect to trap browser back/forward navigation when unsaved changes exist
+    // Effect to handle in-app navigation
     useEffect(() => {
-        const handlePopState = (event) => {
-            if (hasUnsavedChanges) {
-                // Get the path the browser was trying to navigate to.
-                // For a popstate event, this is the window.location.pathname *after* the pop.
-                const pathAttempted = window.location.pathname;
-
-                // Push the current component's path back onto the history stack.
-                // This effectively "cancels" the browser's automatic navigation from popstate.
-                window.history.pushState(null, '', router.asPath);
-
+        const handleClick = (e) => {
+            // Find the closest anchor tag
+            const anchor = e.target.closest('a');
+            if (anchor && anchor.href && !anchor.href.startsWith('javascript:') && hasUnsavedChanges) {
+                e.preventDefault();
+                e.stopPropagation();
                 setShowCustomConfirmationModal(true);
-                setIntendedPath(pathAttempted);
+                setIntendedPath(anchor.href);
+                return false;
             }
         };
 
-        // This ensures a history entry is added *once* when unsaved changes become true.
-        // This is the "trap" entry. When the user clicks back, this entry is popped,
-        // and if they still have unsaved changes, `handlePopState` will then run.
-        if (hasUnsavedChanges) {
-            window.history.pushState(null, '', router.asPath);
-        }
+        // Handle programmatic navigation
+        const handlePopState = (e) => {
+            if (hasUnsavedChanges) {
+                e.preventDefault();
+                window.history.pushState(null, '', window.location.href);
+                setShowCustomConfirmationModal(true);
+                setIntendedPath(window.location.href);
+            }
+        };
 
+        document.addEventListener('click', handleClick, true);
         window.addEventListener('popstate', handlePopState);
 
         return () => {
+            document.removeEventListener('click', handleClick, true);
             window.removeEventListener('popstate', handlePopState);
         };
-    }, [hasUnsavedChanges, router.asPath]);
+    }, [hasUnsavedChanges]);
 
     const handleFormChange = (data) => {
         setCompanyProfileData(prevState => ({
@@ -280,29 +328,28 @@ const Index = () => {
             return false;
         }
 
-        const apiFormData = new FormData();
-
-        apiFormData.append('UserId', userId);
-        apiFormData.append('CompanyName', companyProfileData.formData.companyName || '');
-        apiFormData.append('CompanyProfileDescription', companyProfileData.formData.aboutCompany || '');
-        apiFormData.append('Location', companyProfileData.formData.location || '');
-        apiFormData.append('TeamSize', companyProfileData.formData.teamSize || '');
-        apiFormData.append('Website', companyProfileData.formData.website || '');
-        apiFormData.append('Contact', companyProfileData.formData.phone || '');
-        apiFormData.append('IndustryId', parseInt(companyProfileData.formData.industryId) || 0);
-
-        if (companyProfileData.logoFile) {
-            apiFormData.append('logoFile', companyProfileData.logoFile);
-        }
-        if (companyProfileData.coverFile) {
-            apiFormData.append('logoLgrFile', companyProfileData.coverFile);
-        }
-
         try {
+            // Sử dụng FormData để gửi cả file và dữ liệu text
+            const formData = new FormData();
+            formData.append('CompanyName', companyProfileData.formData.companyName);
+            formData.append('Contact', companyProfileData.formData.phone);
+            formData.append('Website', companyProfileData.formData.website);
+            formData.append('Location', companyProfileData.formData.location);
+            formData.append('TeamSize', companyProfileData.formData.teamSize);
+            formData.append('IndustryId', parseInt(companyProfileData.formData.industryId));
+            formData.append('CompanyProfileDescription', companyProfileData.formData.aboutCompany);
+            if (companyProfileData.logoFile) {
+                formData.append('LogoFile', companyProfileData.logoFile);
+            }
+            if (companyProfileData.coverFile) {
+                formData.append('LogoLgrFile', companyProfileData.coverFile);
+            }
+
             setIsSaving(true);
             setConfirmLoading(true);
 
-            const response = await companyProfileService.updateCompanyProfile(userId, apiFormData);
+            // Gọi API với FormData
+            const response = await companyProfileService.updateCompanyProfile(userId, formData);
 
             console.log('Profile update response:', response);
             toast.success("Profile updated successfully!");
@@ -334,43 +381,15 @@ const Index = () => {
         setShowCustomConfirmationModal(false);
         const saved = await handleSave();
         if (saved && intendedPath) {
-            router.push(intendedPath);
+            window.location.href = intendedPath;
         }
     };
 
     const handleDiscardAndLeave = () => {
         setShowCustomConfirmationModal(false);
         setHasUnsavedChanges(false);
-        if (initialProfileData) {
-            setCompanyProfileData(prevState => ({
-                ...prevState,
-                formData: {
-                    companyName: initialProfileData.companyName || "",
-                    phone: initialProfileData.contact || "",
-                    website: initialProfileData.website || "",
-                    teamSize: initialProfileData.teamSize || "50 - 100",
-                    location: initialProfileData.location || "",
-                    industryId: initialProfileData.industryId || 0,
-                    aboutCompany: initialProfileData.companyProfileDescription || "",
-                },
-                logoFile: null,
-                coverFile: null,
-            }));
-            setLogoPreviewUrl(initialProfileData.urlCompanyLogo || null);
-            setCoverPreviewUrl(initialProfileData.imageLogoLgr || null);
-        } else {
-            setCompanyProfileData({
-                formData: {
-                    companyName: "", phone: "", website: "", teamSize: "50 - 100", location: "", industryId: 0, aboutCompany: "",
-                },
-                logoFile: null,
-                coverFile: null,
-            });
-            setLogoPreviewUrl(null);
-            setCoverPreviewUrl(null);
-        }
         if (intendedPath) {
-            router.push(intendedPath);
+            window.location.href = intendedPath;
         }
     };
 
@@ -402,6 +421,26 @@ const Index = () => {
         }
     }, [showNotification]);
 
+    const handleSaveClick = () => {
+        setShowSaveConfirmationModal(true);
+    };
+
+    const handleConfirmSave = async () => {
+        setShowSaveConfirmationModal(false);
+        const success = await handleSave();
+        if (success) {
+            setShowSuccessModal(true);
+        }
+    };
+
+    const handleCancelSave = () => {
+        setShowSaveConfirmationModal(false);
+    };
+
+    const handleCloseSuccessModal = () => {
+        setShowSuccessModal(false);
+    };
+
     return (
         <>
             <ToastContainer position="top-right" autoClose={3000} />
@@ -410,6 +449,40 @@ const Index = () => {
                     <div>Loading profile...</div>
                 ) : (
                     <>
+                        <div className="form-group col-lg-12 col-md-12 text-right mb-3">
+                            {isEditing ? (
+                                <>
+                                    <button
+                                        className="theme-btn btn-style-one"
+                                        onClick={handleSaveClick}
+                                        disabled={isSaving || confirmLoading}
+                                    >
+                                        {isSaving ? "Saving..." : "Save Profile"}
+                                    </button>
+                                    <button
+                                        className="theme-btn btn-style-two ms-2"
+                                        onClick={() => {
+                                            if (hasUnsavedChanges) {
+                                                setShowCustomConfirmationModal(true);
+                                                setIntendedPath(null);
+                                            } else {
+                                                setIsEditing(false);
+                                            }
+                                        }}
+                                        disabled={isSaving || confirmLoading}
+                                    >
+                                        Cancel
+                                    </button>
+                                </>
+                            ) : (
+                                <button
+                                    className="theme-btn btn-style-one"
+                                    onClick={() => setIsEditing(true)}
+                                >
+                                    Edit Profile
+                                </button>
+                            )}
+                        </div>
                         <LogoCoverUploader
                             onLogoChange={handleLogoChange}
                             onCoverChange={handleCoverChange}
@@ -428,36 +501,6 @@ const Index = () => {
                             isEditing={isEditing}
                         />
 
-                        <div className="form-group col-lg-12 col-md-12">
-                            {!isEditing && initialProfileData && (
-                               <button className="theme-btn btn-style-one" onClick={() => setIsEditing(true)}>
-                                   Edit Profile
-                               </button>
-                            )}
-                            {isEditing && (
-                               <>
-                                   <button className="theme-btn btn-style-one me-2" onClick={handleSave}>
-                                       Save Profile
-                                   </button>
-                                   <button className="theme-btn btn-style-three" onClick={() => {
-                                        if (hasUnsavedChanges) {
-                                            setShowCustomConfirmationModal(true);
-                                            setIntendedPath(null);
-                                        } else {
-                                            setIsEditing(false);
-                                        }
-                                   }}>
-                                       Cancel
-                                   </button>
-                               </>
-                            )}
-                            {!initialProfileData && !isEditing && (
-                                <button className="theme-btn btn-style-one" onClick={() => setIsEditing(true)}>
-                                    Create Profile
-                                </button>
-                            )}
-                        </div>
-
                         {/* Temporary Notification */}
                         {showNotification && (
                             <div
@@ -475,106 +518,176 @@ const Index = () => {
                             </div>
                         )}
 
-                        {/* Success Modal */}
-                        {showSuccessModal && (
-                            <div className="modal-overlay">
-                                <div className="modal-content" style={{ textAlign: 'center', padding: 32, width: '100%', maxWidth: '350px', minWidth: '0' }}>
-                                    <h2 style={{ color: 'green' }}>Success!</h2>
-                                    <p>Company profile updated successfully!</p>
-                                    <button
-                                        style={{
-                                            background: '#0d47a1',
-                                            color: '#fff',
-                                            border: 'none',
-                                            borderRadius: 6,
-                                            padding: '12px 32px',
-                                            fontSize: 18,
-                                            marginTop: 16,
-                                            cursor: 'pointer'
-                                        }}
-                                        onClick={() => setShowSuccessModal(false)}
+                        {/* Save Confirmation Modal */}
+                        <AnimatePresence>
+                            {showSaveConfirmationModal && (
+                                <motion.div 
+                                    className="modal show" 
+                                    style={{display: 'block', backgroundColor: 'rgba(0,0,0,0.5)'}}
+                                    variants={overlayVariants}
+                                    initial="hidden"
+                                    animate="visible"
+                                    exit="exit"
+                                >
+                                    <motion.div 
+                                        className="modal-dialog"
+                                        variants={modalVariants}
+                                        initial="hidden"
+                                        animate="visible"
+                                        exit="exit"
                                     >
-                                        Close
-                                    </button>
-                                </div>
-                            </div>
-                        )}
+                                        <div className="modal-content">
+                                            <div className="modal-header">
+                                                <h5 className="modal-title">Confirm storage</h5>
+                                                <button type="button" className="btn-close" onClick={handleCancelSave}></button>
+                                            </div>
+                                            <div className="modal-body">
+                                                <p>Are you sure you want to save this profile information?</p>
+                                            </div>
+                                            <div className="modal-footer">
+                                                <button type="button" className="btn btn-secondary" onClick={handleCancelSave}>No</button>
+                                                <button type="button" className="btn btn-primary" onClick={handleConfirmSave}>Yes</button>
+                                            </div>
+                                        </div>
+                                    </motion.div>
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
+
+                        {/* Success Modal */}
+                        <AnimatePresence>
+                            {showSuccessModal && (
+                                <motion.div 
+                                    className="modal show" 
+                                    style={{display: 'block', backgroundColor: 'rgba(0,0,0,0.5)'}}
+                                    variants={overlayVariants}
+                                    initial="hidden"
+                                    animate="visible"
+                                    exit="exit"
+                                >
+                                    <motion.div 
+                                        className="modal-dialog"
+                                        variants={modalVariants}
+                                        initial="hidden"
+                                        animate="visible"
+                                        exit="exit"
+                                    >
+                                        <div className="modal-content">
+                                            <div className="modal-header">
+                                                <h5 className="modal-title">Success</h5>
+                                                <button type="button" className="btn-close" onClick={handleCloseSuccessModal}></button>
+                                            </div>
+                                            <div className="modal-body">
+                                                <div className="text-center">
+                                                    <motion.i 
+                                                        className="fas fa-check-circle" 
+                                                        style={{color: '#28a745', fontSize: '48px', marginBottom: '15px'}}
+                                                        initial={{ scale: 0 }}
+                                                        animate={{ scale: 1 }}
+                                                        transition={{
+                                                            type: "spring",
+                                                            stiffness: 260,
+                                                            damping: 20
+                                                        }}
+                                                    ></motion.i>
+                                                    <p>Profile saved successfully!</p>
+                                                </div>
+                                            </div>
+                                            <div className="modal-footer">
+                                                <button type="button" className="btn btn-primary" onClick={handleCloseSuccessModal}>Close</button>
+                                            </div>
+                                        </div>
+                                    </motion.div>
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
+
+                        {/* Progress Bar */}
+                        <AnimatePresence>
+                            {isSaving && (
+                                <motion.div 
+                                    className="progress-overlay"
+                                    style={{
+                                        position: 'fixed',
+                                        top: 0,
+                                        left: 0,
+                                        right: 0,
+                                        height: '4px',
+                                        backgroundColor: '#f0f0f0',
+                                        zIndex: 9999
+                                    }}
+                                    initial={{ opacity: 0 }}
+                                    animate={{ opacity: 1 }}
+                                    exit={{ opacity: 0 }}
+                                >
+                                    <motion.div 
+                                        className="progress-bar"
+                                        style={{
+                                            height: '100%',
+                                            backgroundColor: '#0d47a1',
+                                            width: '100%'
+                                        }}
+                                        initial={{ width: '0%' }}
+                                        animate={{ width: '100%' }}
+                                        transition={{
+                                            duration: 2,
+                                            ease: "easeInOut"
+                                        }}
+                                    />
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
 
                         {/* Custom Confirmation Modal */}
-                        {showCustomConfirmationModal && (
-                            <div className="modal-overlay" style={{
-                                position: 'fixed',
-                                top: 0,
-                                left: 0,
-                                width: '100%',
-                                height: '100%',
-                                backgroundColor: 'rgba(0, 0, 0, 0.5)',
-                                display: 'flex',
-                                justifyContent: 'center',
-                                alignItems: 'center',
-                                zIndex: 1000
-                            }}>
-                                <div className="modal-content" style={{
-                                    backgroundColor: 'white',
-                                    padding: '30px',
-                                    borderRadius: '8px',
-                                    boxShadow: '0 4px 10px rgba(0, 0, 0, 0.2)',
-                                    maxWidth: '450px',
-                                    width: '100%',
-                                    textAlign: 'center'
-                                }}>
-                                    <h2 style={{ color: '#ffc107', marginBottom: '15px' }}>Unsaved Changes!</h2>
-                                    <p style={{ marginBottom: '25px' }}>You have unsaved changes. Do you want to save them before leaving?</p>
-                                    <div style={{ display: 'flex', justifyContent: 'space-around', gap: '10px' }}>
-                                        <button
-                                            style={{
-                                                background: '#0d47a1',
-                                                color: '#fff',
-                                                border: 'none',
-                                                borderRadius: '6px',
-                                                padding: '10px 20px',
-                                                fontSize: '16px',
-                                                cursor: 'pointer',
-                                                flex: 1
-                                            }}
-                                            onClick={handleSaveAndLeave}
-                                        >
-                                            Save & Leave
-                                        </button>
-                                        <button
-                                            style={{
-                                                background: '#dc3545',
-                                                color: '#fff',
-                                                border: 'none',
-                                                borderRadius: '6px',
-                                                padding: '10px 20px',
-                                                fontSize: '16px',
-                                                cursor: 'pointer',
-                                                flex: 1
-                                            }}
-                                            onClick={handleDiscardAndLeave}
-                                        >
-                                            Discard & Leave
-                                        </button>
-                                        <button
-                                            style={{
-                                                background: '#6c757d',
-                                                color: '#fff',
-                                                border: 'none',
-                                                borderRadius: '6px',
-                                                padding: '10px 20px',
-                                                fontSize: '16px',
-                                                cursor: 'pointer',
-                                                flex: 1
-                                            }}
-                                            onClick={handleCancelConfirmation}
-                                        >
-                                            Cancel
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                        )}
+                        <AnimatePresence>
+                            {showCustomConfirmationModal && (
+                                <motion.div 
+                                    className="modal show" 
+                                    style={{
+                                        display: 'block', 
+                                        backgroundColor: 'rgba(0,0,0,0.5)',
+                                        position: 'fixed',
+                                        top: 0,
+                                        left: 0,
+                                        right: 0,
+                                        bottom: 0,
+                                        zIndex: 9999
+                                    }}
+                                    variants={overlayVariants}
+                                    initial="hidden"
+                                    animate="visible"
+                                    exit="exit"
+                                >
+                                    <motion.div 
+                                        className="modal-dialog"
+                                        variants={modalVariants}
+                                        initial="hidden"
+                                        animate="visible"
+                                        exit="exit"
+                                        style={{
+                                            position: 'relative',
+                                            margin: '1.75rem auto',
+                                            maxWidth: '500px'
+                                        }}
+                                    >
+                                        <div className="modal-content">
+                                            <div className="modal-header">
+                                                <h5 className="modal-title">Unsaved Changes</h5>
+                                                <button type="button" className="btn-close" onClick={handleCancelConfirmation}></button>
+                                            </div>
+                                            <div className="modal-body">
+                                                <p>You have unsaved changes. Would you like to save them before leaving?</p>
+                                            </div>
+                                            <div className="modal-footer">
+                                                <button type="button" className="btn btn-secondary" onClick={handleDiscardAndLeave}>Discard Changes</button>
+                                                <button type="button" className="btn btn-primary" onClick={handleSaveAndLeave}>Save Changes</button>
+                                                <button type="button" className="btn btn-secondary" onClick={handleCancelConfirmation}>Cancel</button>
+                                            </div>
+                                        </div>
+                                    </motion.div>
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
                     </>
                 )}
             </div>

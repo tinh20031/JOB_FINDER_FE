@@ -1,7 +1,10 @@
 import axios from 'axios';
 import Cookies from 'js-cookie';
+import API_CONFIG from '../config/api.config';
 
-const API_URL = "/api";
+const API_URL = API_CONFIG.BASE_URL;
+// const API_URL = "http://localhost:5194/api/";
+
 
 // Helper function to get token
 const getToken = () => {
@@ -46,7 +49,7 @@ export const userService = {
         throw new Error('No authentication token found');   
       }
 
-      const response = await axios.put(
+      const response = await axios.post(
         `${API_URL}/CandidateToCompany/verify/${userId}`,
         {},
         {

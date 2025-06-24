@@ -6,17 +6,17 @@ module.exports = [
     routePath: "/candidates-dashboard/dashboard",
     active: "active",
   },
-  {
-    id: 2,
-    name: "My Profile",
-    icon: "la-user-tie",
-    routePath: "/candidates-dashboard/my-profile",
-    active: "",
-  },
+  // {
+  //   id: 2,
+  //   name: "My Profile",
+  //   icon: "la-user-tie",
+  //   routePath: "/candidates-dashboard/my-profile",
+  //   active: "",
+  // },
   {
     id: 3,
-    name: "My Resume",
-    icon: "la la-file-invoice",
+    name: "My Profile",
+    icon: "la-user-tie",
     routePath: "/candidates-dashboard/my-resume",
     active: "",
   },
@@ -78,13 +78,7 @@ module.exports = [
     isLogout: true,
   },
 
-  {
-    id: 12,
-    name: "Delete Profile",
-    icon: "la-trash",
-    routePath: "/",
-    active: "",
-  },
+ 
   {
     id: 13,
     name: "Favorite Companies",

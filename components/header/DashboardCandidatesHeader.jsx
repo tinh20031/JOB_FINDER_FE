@@ -3,19 +3,43 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import candidatesMenuData from "../../data/candidatesMenuData";
+import candidatesMenuData from "../../data/candidatesHeaderMenuData";
 import HeaderNavContent from "./HeaderNavContent";
 import { isActiveLink } from "../../utils/linkActiveChecker";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { authService } from "../../services/authService";
-import { useSelector } from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
+import { getUserFavorites } from "../../services/favoriteJobService";
+import { useFavoriteJobs } from "../../contexts/FavoriteJobsContext";
+import { clearLoginState } from '@/features/auth/authSlice';
+import Cookies from 'js-cookie';
+
+// Helper function to validate image URLs
+const getValidImageUrl = (url) => {
+  if (!url || typeof url !== 'string') {
+    return null;
+  }
+  // Check if it's "string" literal or invalid
+  if (url === "string") {
+    return null;
+  }
+  // Check if it's an absolute URL or a relative path starting with /
+  if (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('/')) {
+    return url;
+  }
+  return null; // Invalid URL
+};
 
 const DashboardCandidatesHeader = () => {
     const [navbar, setNavbar] = useState(false);
-    const [fullName, setFullName] = useState("Tài khoản của tôi");
+    const [fullName, setFullName] = useState("My Account");
     const [avatar, setAvatar] = useState("/images/resource/candidate-1.png");
+    const userId = typeof window !== 'undefined' ? Number(localStorage.getItem('userId')) : null;
 
-    const { isLoggedIn, user, role } = useSelector((state) => state.auth); // Added useSelector
+    const { isLoggedIn, user, role } = useSelector((state) => state.auth);
+    const { favoriteCount } = useFavoriteJobs() || {};
+    const router = useRouter();
+    const dispatch = useDispatch();
 
     const changeBackground = () => {
         if (typeof window !== 'undefined' && window.scrollY >= 0) {
@@ -38,15 +62,42 @@ const DashboardCandidatesHeader = () => {
                     setFullName(userName);
                 }
             }
+            
+            // Handle avatar with validation
+            let userAvatar = null;
             if (user.image) {
-                setAvatar(user.image);
+                userAvatar = getValidImageUrl(user.image);
             } else if (user.avatar) {
-                setAvatar(user.avatar);
-            } else {
-                setAvatar("/images/resource/candidate-1.png");
+                userAvatar = getValidImageUrl(user.avatar);
             }
+            
+            setAvatar(userAvatar || "/images/resource/candidate-1.png");
         }
     }, []);
+
+    // Hàm xử lý logout
+    const handleLogout = (e) => {
+        e.preventDefault();
+        // Xóa cookie với cả path '/' và domain 'localhost'
+        if (typeof window !== "undefined") {
+            Cookies.remove('token', { path: '/' });
+            Cookies.remove('role', { path: '/' });
+            Cookies.remove('name', { path: '/' });
+            Cookies.remove('token', { path: '/', domain: 'localhost' });
+            Cookies.remove('role', { path: '/', domain: 'localhost' });
+            Cookies.remove('name', { path: '/', domain: 'localhost' });
+            localStorage.removeItem('token');
+            localStorage.removeItem('role');
+            localStorage.removeItem('name');
+            localStorage.removeItem('user');
+            localStorage.removeItem('userId');
+        }
+        if (authService.logout) {
+            authService.logout();
+        }
+        dispatch(clearLoginState());
+        router.push('/');
+    };
 
     return (
         // <!-- Main Header-->
@@ -81,10 +132,14 @@ const DashboardCandidatesHeader = () => {
                     {/* End .nav-outer */}
 
                     <div className="outer-box">
-                        <button className="menu-btn">
-                            <span className="count">1</span>
-                            <span className="icon la la-heart-o"></span>
-                        </button>
+                        {isLoggedIn && (
+                            <Link href="/favorite-jobs">
+                                <button className="menu-btn">
+                                    <span className="count">{favoriteCount}</span>
+                                    <span className="icon la la-heart-o"></span>
+                                </button>
+                            </Link>
+                        )}
                         {/* Danh sách yêu thích */}
 
                         <button className="menu-btn">
@@ -112,24 +167,31 @@ const DashboardCandidatesHeader = () => {
 
                             <ul className="dropdown-menu">
                                 {candidatesMenuData.map((item) => (
-                                    <li
-                                        className={`${
-                                            isActiveLink(
-                                                item.routePath,
-                                                usePathname()
-                                            )
-                                                ? "active"
-                                                : ""
-                                        } mb-1`}
-                                        key={item.id}
-                                    >
-                                        <Link href={item.routePath}>
-                                            <i
-                                                className={`la ${item.icon}`}
-                                            ></i>{" "}
-                                            {item.name}
-                                        </Link>
-                                    </li>
+                                    item.isLogout ? (
+                                        <li className="mb-1" key={item.id}>
+                                            <a href="/login" onClick={handleLogout}>
+                                                <i className={`la ${item.icon}`}></i>{" "}
+                                                {item.name}
+                                            </a>
+                                        </li>
+                                    ) : (
+                                        <li
+                                            className={`${
+                                                isActiveLink(
+                                                    item.routePath,
+                                                    usePathname()
+                                                )
+                                                    ? "active"
+                                                    : ""
+                                            } mb-1`}
+                                            key={item.id}
+                                        >
+                                            <Link href={item.routePath}>
+                                                <i className={`la ${item.icon}`}></i>{" "}
+                                                {item.name}
+                                            </Link>
+                                        </li>
+                                    )
                                 ))}
                             </ul>
                         </div>

@@ -1,3 +1,5 @@
+'use client';
+
 import MobileMenu from "../../../header/MobileMenu";
 import DashboardHeader from "../../../header/DashboardHeader";
 import LoginPopup from "../../../common/form/login/LoginPopup";
@@ -7,8 +9,22 @@ import CopyrightFooter from "../../CopyrightFooter";
 import WidgetContentBox from "./components/WidgetContentBox";
 import WidgetTopFilterBox from "./components/WidgetTopFilterBox";
 import MenuToggler from "../../MenuToggler";
+import { useState, useEffect } from "react";
+import { useSearchParams } from 'next/navigation';
 
-const index = () => {
+const Index = () => {
+  const searchParams = useSearchParams();
+  const [jobIdFromUrl, setJobIdFromUrl] = useState(null);
+  const [candidateName, setCandidateName] = useState("");
+
+  useEffect(() => {
+    const jobId = searchParams.get('jobId');
+    // Chuyển jobId sang kiểu number nếu cần, vì API có thể mong đợi number
+    if (jobId) {
+      setJobIdFromUrl(jobId);
+    }
+  }, [searchParams]);
+
   return (
     <div className="page-wrapper dashboard">
       <span className="header-span"></span>
@@ -42,11 +58,14 @@ const index = () => {
                 <div className="tabs-box">
                   <div className="widget-title">
                     <h4>Applicant</h4>
-                    <WidgetTopFilterBox />
+                    <WidgetTopFilterBox
+                      candidateName={candidateName}
+                      onCandidateNameChange={setCandidateName}
+                    />
                   </div>
                   {/* End top widget filter bar */}
 
-                  <WidgetContentBox />
+                  <WidgetContentBox jobId={jobIdFromUrl} candidateName={candidateName} />
                   {/* End widget-content */}
                 </div>
               </div>
@@ -65,4 +84,4 @@ const index = () => {
   );
 };
 
-export default index;
+export default Index;

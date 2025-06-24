@@ -6,6 +6,7 @@ import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useDispatch } from 'react-redux';
 import { setLoginState } from '@/features/auth/authSlice';
+import { jwtDecode } from 'jwt-decode';
 
 const FormContent = ({ isPopup = false }) => {
   const router = useRouter();
@@ -33,11 +34,25 @@ const FormContent = ({ isPopup = false }) => {
 
     try {
       const responseData = await authService.login(formData.email, formData.password);
-      const user = responseData.user || {};
+      let user = responseData.user || {};
+      let userId = user.id || user.userId;
+      if (!userId && responseData.token) {
+        try {
+          const decoded = jwtDecode(responseData.token);
+          userId = decoded.sub;
+        } catch (e) {}
+      }
+      if (userId) {
+        user.id = userId;
+      }
+
+      // Lưu token vào localStorage
+      if (responseData.token) {
+        localStorage.setItem('token', responseData.token);
+      }
 
       // Lưu thông tin user vào localStorage trước
       const userInfo = {
-        
         fullName: user.fullName || '',
         avatar: user.image || '/images/resource/company-6.png',
         email: user.email || formData.email
@@ -47,7 +62,7 @@ const FormContent = ({ isPopup = false }) => {
       await Promise.all([
         // Lưu localStorage
         new Promise(resolve => {
-          localStorage.setItem('user', JSON.stringify(userInfo));
+          localStorage.setItem('user', JSON.stringify(user));
           if (user.id) {
             localStorage.setItem('userId', user.id);
           }
@@ -57,8 +72,9 @@ const FormContent = ({ isPopup = false }) => {
         new Promise(resolve => {
           dispatch(setLoginState({ 
             isLoggedIn: true, 
-            userObject: user,
-            role: responseData.role 
+            user: user,
+            role: responseData.role,
+            token: responseData.token
           }));
           resolve();
         })

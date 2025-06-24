@@ -4,14 +4,20 @@ import { useState } from 'react';
 import { authService } from '@/services/authService';
 import { useRouter } from 'next/navigation';
 import { toast } from 'react-toastify';
+import { useDispatch } from 'react-redux';
+import { setLoginState } from '@/features/auth/authSlice';
+import { jwtDecode } from 'jwt-decode';
+import Cookies from 'js-cookie';
 
 const FormContent = ({ onRegistrationSuccess }) => {
   const router = useRouter();
+  const dispatch = useDispatch();
   const [formData, setFormData] = useState({
     fullName: '',
     email: '',
     phone: '',
-    password: ''
+    password: '',
+    confirmPassword: ''
   });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -27,6 +33,12 @@ const FormContent = ({ onRegistrationSuccess }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
+
+    if (formData.password !== formData.confirmPassword) {
+      setError('Passwords do not match.');
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -37,14 +49,57 @@ const FormContent = ({ onRegistrationSuccess }) => {
         formData.password
       );
 
-      console.log('Registration successful in FormContent.');
-      toast.success('Registration successful!');
+      toast.success('Registration successful! Logging you in...');
 
+      // Automatically log in the user after successful registration
+      const loginData = await authService.login(formData.email, formData.password);
+      
+      // Explicitly save user data to localStorage and cookies to ensure persistence
+      if (loginData && loginData.token) {
+        const cookieOptions = {
+            expires: 7, // 7 days
+            path: '/',
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'Lax'
+        };
+
+        const decodedToken = jwtDecode(loginData.token);
+
+        // Save to localStorage
+        localStorage.setItem('token', loginData.token);
+        localStorage.setItem('role', loginData.role);
+        if (loginData.name) localStorage.setItem('name', loginData.name);
+        if (decodedToken.fullName) localStorage.setItem('fullName', decodedToken.fullName);
+        if (decodedToken.profileImage) localStorage.setItem('profileImage', decodedToken.profileImage);
+        if (decodedToken.sub) localStorage.setItem('userId', decodedToken.sub);
+        if (loginData.companyId) localStorage.setItem('companyId', loginData.companyId);
+        if (loginData.user) localStorage.setItem('user', JSON.stringify(loginData.user));
+        
+        // Save to Cookies
+        Cookies.set('token', loginData.token, cookieOptions);
+        Cookies.set('role', loginData.role, cookieOptions);
+        if (loginData.name) Cookies.set('name', loginData.name, cookieOptions);
+        if (decodedToken.fullName) Cookies.set('fullName', decodedToken.fullName, cookieOptions);
+        if (decodedToken.profileImage) Cookies.set('profileImage', decodedToken.profileImage, cookieOptions);
+        if (decodedToken.sub) Cookies.set('userId', decodedToken.sub, cookieOptions);
+        if (loginData.companyId) Cookies.set('companyId', loginData.companyId, cookieOptions);
+      }
+
+      dispatch(setLoginState({
+        isLoggedIn: true,
+        user: loginData.user, // Assuming loginData contains user object
+        role: loginData.role,
+        token: loginData.token, // Truyền token vào Redux
+      }));
+
+      // If onRegistrationSuccess is provided (popup context), call it to reload the page.
       if (onRegistrationSuccess) {
         onRegistrationSuccess();
       } else {
-        router.push('/login');
+        // Fallback for non-popup registration, e.g., redirect to home page
+        router.push('/');
       }
+
     } catch (error) {
       console.log('Registration error:', error);
       if (error.message && (error.message.includes('already exists') || error.message.includes('Conflict'))) {
@@ -64,7 +119,7 @@ const FormContent = ({ onRegistrationSuccess }) => {
   };
 
   return (
-    <form onSubmit={handleSubmit}>
+    <form onSubmit={handleSubmit} className="login-from">
       {error && <div className="alert alert-danger">{error}</div>}
       
       <div className="form-group">
@@ -76,6 +131,7 @@ const FormContent = ({ onRegistrationSuccess }) => {
           required 
           value={formData.fullName}
           onChange={handleChange}
+          className="form-control" 
         />
       </div>
       {/* fullName */}
@@ -89,12 +145,13 @@ const FormContent = ({ onRegistrationSuccess }) => {
           required 
           value={formData.email}
           onChange={handleChange}
+          className="form-control" 
         />
       </div>
       {/* email */}
 
       <div className="form-group">
-        <label>Phone Number</label>
+        <label style={{ display: 'block', width: '100%' }}>Phone Number</label>
         <input 
           type="tel" 
           name="phone" 
@@ -102,7 +159,7 @@ const FormContent = ({ onRegistrationSuccess }) => {
           required 
           value={formData.phone}
           onChange={handleChange}
-          className="form-control" 
+          style={{ display: 'block', width: '100%' }} 
         />
       </div>
       {/* phone */}
@@ -117,9 +174,25 @@ const FormContent = ({ onRegistrationSuccess }) => {
           required
           value={formData.password}
           onChange={handleChange}
+          className="form-control" 
         />
       </div>
       {/* password */}
+
+      <div className="form-group">
+        <label>Confirm Password</label>
+        <input
+          id="confirm-password-field"
+          type="password"
+          name="confirmPassword"
+          placeholder="Confirm your password"
+          required
+          value={formData.confirmPassword}
+          onChange={handleChange}
+          className="form-control"
+        />
+      </div>
+      {/* confirm password */}
 
       <div className="form-group">
         <button 

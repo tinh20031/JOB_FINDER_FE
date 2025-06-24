@@ -1,4 +1,3 @@
-
 'use client'
 import MobileMenu from "../../../header/MobileMenu";
 import DashboardHeader from "../../../header/DashboardHeader";
@@ -6,11 +5,12 @@ import LoginPopup from "../../../common/form/login/LoginPopup";
 import DashboardEmployerSidebar from "../../../header/DashboardEmployerSidebar";
 import BreadCrumb from "../../BreadCrumb";
 import CopyrightFooter from "../../CopyrightFooter";
-import ChatBox from "./components";
+import ChatBox from "./components/index.jsx";
 import MenuToggler from "../../MenuToggler";
 import { useSelector } from "react-redux";
+import React, { useState } from 'react';
 
-const Index = () => {
+const MessagesPage = () => {
   const { chatSidebar } = useSelector((state) => state.toggle);
   return (
     <div className="page-wrapper dashboard">
@@ -38,14 +38,10 @@ const Index = () => {
           <MenuToggler />
           {/* Collapsible sidebar button */}
 
-          <div className="row">
-            <div
-              className={`col-lg-12 ${
-                chatSidebar ? "active-chat-contacts" : ""
-              }`}
-            >
-              <div className="chat-widget">
-                <div className="widget-content">
+          <div className="row" style={{ height: "100%", position: "relative", zIndex: 3 }}>
+            <div className="col-lg-12" style={{ height: "100%", position: "relative", zIndex: 4 }}>
+              <div className="chat-widget" style={{ height: "100%", position: "relative", zIndex: 5 }}>
+                <div className="widget-content" style={{ height: "100%", position: "relative", zIndex: 6 }}>
                   <ChatBox />
                 </div>
               </div>
@@ -65,4 +61,4 @@ const Index = () => {
   );
 };
 
-export default Index;
+export default MessagesPage;

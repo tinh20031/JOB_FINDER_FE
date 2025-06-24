@@ -11,6 +11,13 @@ import API_CONFIG from '../../../../config/api.config';
 
 const defaultUser = { fullName: "", email: "", phone: "", roleId: "", password: "", status: "Active", skills: [], cvUrl: "", image: "" };
 
+// Mapping roleId cố định
+const ROLE_MAP = [
+  { id: 1, name: "Candidate" },
+ 
+  { id: 3, name: "Admin" }
+];
+
 const UserManager = () => {
   const [users, setUsers] = useState([]);
   const [roles, setRoles] = useState([]);
@@ -112,7 +119,7 @@ const UserManager = () => {
       user.fullName?.toLowerCase().includes(search.toLowerCase()) ||
       user.email?.toLowerCase().includes(search.toLowerCase()) ||
       user.phone?.toLowerCase().includes(search.toLowerCase());
-    const matchRole = filterRole === 'all' || user.roleId === Number(filterRole);
+    const matchRole = filterRole === 'all' ? true : user.role === filterRole;
     const matchLock = filterLock === 'all' || (filterLock === 'locked' ? user.isActive === false : user.isActive !== false);
     return matchSearch && matchRole && matchLock;
   });
@@ -140,28 +147,23 @@ const UserManager = () => {
     console.log('User Role Name (from user data): ', user.role); // Log user.role name
     console.log('Available Roles for lookup:', roles); // Log available roles
 
-    // Find the role ID from the fetched roles based on the user's role name
-    const foundRole = roles.find(role => role.name === user.role);
-    const roleIdToSet = foundRole ? foundRole.id : ""; // Use the found role's ID or empty string if not found
-
+    // Map role name sang roleId cố định
+    const foundRole = ROLE_MAP.find(role => role.name === user.role);
+    const roleIdToSet = foundRole ? foundRole.id : "";
     const userForForm = {
       ...user,
-      // Use the found numeric roleId for the form
+      role: user.role,
       roleId: roleIdToSet
     };
-
     setEditUser(userForForm);
     setFormUser(userForForm); 
-
-    console.log('Form User Role ID (after setting formUser): ', userForForm.roleId, typeof userForForm.roleId); // Log formUser.roleId after setting
-
     setEditError("");
     setShowEditModal(true);
     setFormError("");
     setSelectedImageFile(null);
   };
   const handleShowAdd = () => {
-    setFormUser(defaultUser);
+    setFormUser({ ...defaultUser, role: "" });
     setShowAddModal(true);
     setFormError("");
     setSelectedImageFile(null);
@@ -204,10 +206,18 @@ const UserManager = () => {
         ...formUser,
         image: URL.createObjectURL(files[0])
       });
+    } else if (name === "role") {
+      // Map role name sang roleId cố định
+      const selectedRole = ROLE_MAP.find(r => r.name === value);
+      setFormUser({
+        ...formUser,
+        role: value,
+        roleId: selectedRole ? selectedRole.id : ""
+      });
     } else {
       setFormUser({
         ...formUser,
-        [name]: name === "roleId" ? (value ? parseInt(value) : "") : value
+        [name]: value
       });
     }
   };
@@ -231,19 +241,10 @@ const UserManager = () => {
       formData.append('fullName', formUser.fullName);
       formData.append('email', formUser.email);
       formData.append('phone', formUser.phone);
-      formData.append('roleId', formUser.roleId);
+      formData.append('roleId', Number(formUser.roleId));
       formData.append('password', formUser.password);
-
-      // Include Candidate-specific fields if needed by backend on add
-      if (formUser.roleId === 1) { // Assuming 1 is the ID for Candidate
-        formData.append('skills', JSON.stringify(formUser.skills || [])); // Assuming skills is an array
-        formData.append('cvUrl', formUser.cvUrl || '');
-      }
-
       if (selectedImageFile) {
         formData.append('imageFile', selectedImageFile);
-      } else if (formUser.image && showEditModal) {
-        formData.append('image', formUser.image);
       }
 
       ApiService.addUser(formData)
@@ -258,12 +259,11 @@ const UserManager = () => {
       formData.append('fullName', formUser.fullName);
       formData.append('email', formUser.email);
       formData.append('phone', formUser.phone);
-
       if (selectedImageFile) {
         formData.append('imageFile', selectedImageFile);
       }
-
-      formData.append('roleId', formUser.roleId); // Send the selected roleId
+      formData.append('roleId', Number(formUser.roleId)); // Gửi roleId (số)
+      // Không gửi trường role (chuỗi) lên API
       console.log('Submitting Edit Form:', { // Log data before appending to FormData
         fullName: formUser.fullName,
         email: formUser.email,
@@ -273,8 +273,6 @@ const UserManager = () => {
       });
       console.log('FormData roleId value (should match above): ', formData.get('roleId'), typeof formData.get('roleId')); // Log value and type from FormData
 
-
-
       ApiService.updateUser(editUser.id, formData)
         .then(() => {
           setAlertMsg("User updated successfully!");
@@ -283,6 +281,12 @@ const UserManager = () => {
         })
         .catch((err) => setEditError(err.message || "Failed to update user."));
     }
+  };
+
+  // Hàm lấy tên role từ roleId
+  const getRoleName = (roleId) => {
+    const found = ROLE_MAP.find(r => r.id === Number(roleId));
+    return found ? found.name : '';
   };
 
   return (
@@ -317,8 +321,8 @@ const UserManager = () => {
                       <option key="all" value="all">All Roles</option>
                       {Array.isArray(roles) && roles.length > 0 ? (
                         roles.map(role => (
-                          <option key={`filter-role-${role.id}`} value={role.id}>
-                            {role.name || `Role ${role.id}`}
+                          <option key={`filter-role-${role.name}`} value={role.name}>
+                            {role.name || `Role`}
                           </option>
                         ))
                       ) : (
@@ -372,7 +376,7 @@ const UserManager = () => {
                                 <td>{user.email}</td>
                                 <td>{user.phone}</td>
                                 {/* Display the actual role name from user data */}
-                                <td>{user.role || 'Unknown Role'}</td>
+                                <td>{getRoleName(user.roleId) || user.role || 'Unknown Role'}</td>
                                 <td>
                                   <button className="btn btn-sm me-1" onClick={() => handleShowDetail(user)} style={{display:'none'}}>View</button>
                                   <Link href={`/admin-dashboard/user-manager/${user.id}`} className="btn btn-sm me-1">View</Link>
@@ -460,16 +464,13 @@ const UserManager = () => {
                   </div>
                   <div className="mb-2">
                     <label>Role</label>
-                    <select className="form-control" name="roleId" value={formUser.roleId || ""} onChange={handleFormChange}>
-                      {Array.isArray(roles) && roles.length > 0 ? (
-                        roles.map(role => (
-                          <option key={`edit-role-${role.id}`} value={role.id}>
-                            {role.name || `Role ${role.id}`}
-                          </option>
-                        ))
-                      ) : (
-                        <option value="" disabled>No roles available</option>
-                      )}
+                    <select className="form-control" name="role" value={formUser.role || ""} onChange={handleFormChange} required>
+                      <option value="">Select Role</option>
+                      {ROLE_MAP.map(role => (
+                        <option key={`edit-role-${role.id}`} value={role.name}>
+                          {role.name}
+                        </option>
+                      ))}
                     </select>
                   </div>
                 </div>
@@ -525,16 +526,13 @@ const UserManager = () => {
                   </div>
                   <div className="mb-2">
                     <label>Role</label>
-                    <select className="form-control" name="roleId" value={formUser.roleId || ""} onChange={handleFormChange}>
-                      {Array.isArray(roles) && roles.length > 0 ? (
-                        roles.map(role => (
-                          <option key={`add-role-${role.id}`} value={role.id}>
-                            {role.name || `Role ${role.id}`}
-                          </option>
-                        ))
-                      ) : (
-                        <option value="" disabled>No roles available</option>
-                      )}
+                    <select className="form-control" name="role" value={formUser.role || ""} onChange={handleFormChange} required>
+                      <option value="">Select Role</option>
+                      {ROLE_MAP.map(role => (
+                        <option key={`add-role-${role.id}`} value={role.name}>
+                          {role.name}
+                        </option>
+                      ))}
                     </select>
                   </div>
                   <div className="mb-2">

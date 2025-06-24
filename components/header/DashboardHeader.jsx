@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import employerMenuData from "../../data/employerMenuData";
+import employerMenuData from "../../data/employerHeaderMenuData";
 import HeaderNavContent from "./HeaderNavContent";
 import { isActiveLink } from "../../utils/linkActiveChecker";
 import { usePathname } from "next/navigation";
@@ -12,6 +12,23 @@ import { authService } from "../../services/authService";
 import { clearLoginState } from "../../features/auth/authSlice";
 import { useRouter } from "next/navigation";
 import { useDispatch } from "react-redux";
+
+
+const getValidAvatarPath = (user) => {
+    const avatar = user?.avatar || user?.image;
+    if (!avatar || typeof avatar !== 'string') {
+        return "/images/resource/company-6.png";
+    }
+    // Check if it's "string" literal or invalid
+    if (avatar === "string") {
+        return "/images/resource/company-6.png";
+    }
+    // Check if it's an absolute URL or a relative path starting with /
+    if (avatar.startsWith('/') || avatar.startsWith('http://') || avatar.startsWith('https://')) {
+        return avatar;
+    }
+    return "/images/resource/company-6.png";
+};
 
 
 const DashboardHeader = () => {
@@ -28,31 +45,32 @@ const DashboardHeader = () => {
 
     // Update state when user data from Redux changes
     useEffect(() => {
-        // First, try to get user from Redux
-        if (user) {
-            console.log('DashboardHeader: Using user from Redux', user);
-            setDisplayUserName(user.fullName || user.name || "My Account");
-            setDisplayAvatar(user.avatar || user.image || "/images/resource/company-6.png");
-        } else if (typeof window !== 'undefined') { // If not in Redux, try localStorage
+        if (role === 'Company') {
+            const companyName = authService.getFullNameCompany();
+            const companyLogo = authService.getProfileImageCompany();
+            setDisplayUserName(companyName || "My Account");
+            setDisplayAvatar(companyLogo || "/images/resource/company-6.png");
+        } else if (user) {
+            setDisplayUserName(user.fullName || "My Account");
+            setDisplayAvatar(user.avatar || "/images/resource/company-6.png");
+        } else {
+            // Fallback for non-company users if Redux is empty
             const userString = localStorage.getItem('user');
             if (userString) {
                 try {
                     const userObj = JSON.parse(userString);
-                    console.log('DashboardHeader: Using user from localStorage', userObj);
-                    setDisplayUserName(userObj.fullName || userObj.name || "My Account");
-                    setDisplayAvatar(userObj.avatar || userObj.image || "/images/resource/company-6.png");
+                    setDisplayUserName(userObj.fullName || "My Account");
+                    setDisplayAvatar(userObj.avatar || "/images/resource/company-6.png");
                 } catch (e) {
-                    console.error('DashboardHeader: Failed to parse user from localStorage', e);
                     setDisplayUserName("My Account");
                     setDisplayAvatar("/images/resource/company-6.png");
                 }
             } else {
-                 console.log('DashboardHeader: No user found in Redux or localStorage');
                  setDisplayUserName("My Account");
                  setDisplayAvatar("/images/resource/company-6.png");
             }
         }
-    }, [user]); // Depend on user from Redux
+    }, [user, role]); 
 
     const changeBackground = () => {
         if (window.scrollY >= 0) {
@@ -69,7 +87,7 @@ const DashboardHeader = () => {
     const handleLogout = () => {
         authService.logout(); // Clear localStorage
         dispatch(clearLoginState()); // Clear Redux state
-        router.push("/login"); // Redirect to login page
+        window.location.href = '/'; // Redirect to home page
     };
 
     return (

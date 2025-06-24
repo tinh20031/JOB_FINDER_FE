@@ -80,7 +80,7 @@ const JobFeatured1 = () => {
                 })()}
               </span>
               <h4>
-                <Link href={`/job-single-v1/${item.id}`}>{item.jobTitle}</Link>
+                <Link href={`/job-single-v3/${item.id}`}>{item.jobTitle}</Link>
               </h4>
 
               <ul className="job-info">

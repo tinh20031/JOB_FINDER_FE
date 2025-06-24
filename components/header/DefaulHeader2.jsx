@@ -8,27 +8,64 @@ import { clearLoginState, setLoginState } from '@/features/auth/authSlice';
 import { authService } from "@/services/authService";
 import HeaderNavContent from "./HeaderNavContent";
 import Image from "next/image";
-import employerMenuData from "../../data/employerMenuData";
+import employerMenuData from "../../data/employerHeaderMenuData";
 import { isActiveLink } from "../../utils/linkActiveChecker";
-import candidatesMenuData from "../../data/candidatesMenuData";
-import adminMenuData from "../../data/adminMenuData";
+import candidatesMenuData from "../../data/candidatesHeaderMenuData";
+import adminMenuData from "../../data/adminHeadedrMenuData";
 import BecomeRecruiterModal from '../common/form/shared/BecomeRecruiterModal';
 
-
+// Helper function to validate image URLs
+const getValidImageUrl = (url) => {
+  if (!url || typeof url !== 'string') {
+    return "/images/resource/candidate-1.png";
+  }
+  // Check if it's "string" literal or invalid
+  if (url === "string") {
+    return "/images/resource/candidate-1.png";
+  }
+  // Check if it's an absolute URL or a relative path starting with /
+  if (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('/')) {
+    return url;
+  }
+  return "/images/resource/candidate-1.png"; // Invalid URL
+};
 
 const DefaulHeader2 = () => {
   const router = useRouter();
   const pathname = usePathname();
   const [navbar, setNavbar] = useState(false);
-  // const [userInfo, setUserInfo] = useState({
-  //   name: 'My Account',
-  //   avatar: "/images/resource/candidate-1.png"
-  // });
 
   const { isLoggedIn, user, role } = useSelector((state) => state.auth);
   const dispatch = useDispatch();
 
   const [openRecruiterModal, setOpenRecruiterModal] = useState(false);
+  const [displayUserName, setDisplayUserName] = useState("My Account");
+  const [displayAvatar, setDisplayAvatar] = useState("/images/resource/candidate-1.png");
+  const [currentUserId, setCurrentUserId] = useState(null);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined' && isLoggedIn) {
+      const id = localStorage.getItem('userId');
+      setCurrentUserId(id);
+    }
+  }, [isLoggedIn]);
+
+  useEffect(() => {
+    if (isLoggedIn) {
+      if (role === 'Company') {
+        setDisplayUserName(authService.getFullNameCompany() || "My Account");
+        setDisplayAvatar(authService.getProfileImageCompany() || "/images/resource/company-6.png");
+      } else if (role === 'Candidate' || role === 'Admin') {
+        const name = authService.getFullName();
+        const avatar = authService.getProfileImage();
+        setDisplayUserName(name || "My Account");
+        setDisplayAvatar(avatar || "/images/resource/candidate-1.png");
+      }
+    } else {
+      setDisplayUserName("My Account");
+      setDisplayAvatar("/images/resource/candidate-1.png");
+    }
+  }, [isLoggedIn, role, user]);
 
   const changeBackground = () => {
     if (typeof window !== 'undefined' && window.scrollY >= 10) {
@@ -38,76 +75,23 @@ const DefaulHeader2 = () => {
     }
   };
 
-  // Chỉ chạy một lần khi component mount
   useEffect(() => {
     if (typeof window !== 'undefined') {
       window.addEventListener("scroll", changeBackground);
     }
-
-    // Kiểm tra và cập nhật trạng thái đăng nhập từ localStorage nếu Redux state chưa được thiết lập
-    if (!isLoggedIn && typeof window !== 'undefined') {
-      const token = authService.getToken();
-      const userRole = authService.getRole();
-      const userString = localStorage.getItem('user');
-
-      if (token && userRole && userString) {
-        try {
-          const userObj = JSON.parse(userString);
-          // Đảm bảo userObj.image hoặc userObj.avatar là ưu tiên
-          const userAvatar = userObj.image || userObj.avatar || "/images/resource/candidate-1.png";
-
-          dispatch(setLoginState({ 
-            isLoggedIn: true, 
-            userObject: { 
-              ...userObj, 
-              image: userAvatar, // Ensure the image field is consistent
-              avatar: userAvatar // Ensure the avatar field is consistent
-            }, 
-            role: userRole 
-          }));
-        } catch (error) {
-          console.error('Error parsing user data from localStorage in DefaulHeader2:', error);
-        }
-      }
-    }
-
     return () => {
       if (typeof window !== 'undefined') {
         window.removeEventListener("scroll", changeBackground);
       }
     };
-  }, [isLoggedIn, dispatch]); // Depend on isLoggedIn to prevent unnecessary re-runs
-
-  // Cập nhật UI khi có thay đổi từ Redux state - THIS IS NOW REDUNDANT AND COMMENTED OUT PREVIOUSLY
-  // useEffect(() => {
-  //   if (isLoggedIn && user) { // `user` is now the full user object from Redux
-  //     setUserInfo(prev => ({
-  //       ...prev,
-  //       name: user.fullName || user.name, // Access fullName from the user object
-  //       avatar: user.image || user.avatar || "/images/resource/candidate-1.png" // Access image/avatar from user object
-  //     }));  
-  //   } else if (!isLoggedIn) {
-  //     setUserInfo({
-  //       name: 'My Account',
-  //       avatar: "/images/resource/candidate-1.png"
-  //     });
-  //   }
-  // }, [isLoggedIn, user]); // Depend on isLoggedIn and the full user object
+  }, []);
 
   const handleLogout = () => {
     // Xóa tất cả dữ liệu authentication
     authService.logout();
     localStorage.removeItem('user');
     localStorage.removeItem('userId');
-    
-    // Cập nhật state
     dispatch(clearLoginState());
-    // setUserInfo({
-    //   name: 'My Account',
-    //   avatar: "/images/resource/candidate-1.png"
-    // });
-
-    // Chuyển hướng về trang chủ
     window.location.href = '/';
   };
 
@@ -131,7 +115,7 @@ const DefaulHeader2 = () => {
                 <Image
                   width={154}
                   height={50}
-                  src={require("@/public/images/jobfinder-logo.png").default || "/images/jobfinder-logo.png"}
+                  src="/images/jobfinder-logo.png"
                   alt="JobFinder logo"
                   title="JobFinder"
                   onError={(e) => { e.target.onerror = null; e.target.src = "/images/logo.svg"; }}
@@ -178,127 +162,81 @@ const DefaulHeader2 = () => {
                   >
                     Become Recruiter
                   </button>
-                  <BecomeRecruiterModal
-                    open={openRecruiterModal}
-                    onCancel={() => setOpenRecruiterModal(false)}
-                    userId={user?.id || user?.userId || user?._id || user.uid || user}
-                  />
+                  {openRecruiterModal && (
+                    <BecomeRecruiterModal
+                      open={openRecruiterModal}
+                      onCancel={() => setOpenRecruiterModal(false)}
+                      userId={currentUserId}
+                    />
+                  )}
                 </>
               )}
-              {role === 'Company' && (
-                <div className="dropdown dashboard-option">
-                  <a className="dropdown-toggle" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                    <Image
-                      alt="avatar"
-                      width={50}
-                      height={50}
-                      src={user?.image || user?.avatar || "/images/resource/candidate-1.png"}
-                      className="thumb"
-                    />
-                    <span className="name">{user?.fullName || user?.name || 'My Account'}</span>
-                  </a>
-                  <ul className="dropdown-menu">
-                    {employerMenuData.map((item) => (
-                      <li
-                        className={`${
-                          isActiveLink(item.routePath, pathname)
-                            ? "active"
-                            : ""
-                        } mb-1`}
-                        key={item.id}
-                      >
-                        {item.isLogout ? (
-                          <a href="#" onClick={(e) => { e.preventDefault(); handleMenuClick(item); }}>
-                            <i className={`la ${item.icon}`}></i>{" "}
-                            {item.name}
-                          </a>
-                        ) : (
-                          <Link href={item.routePath}>
-                            <i className={`la ${item.icon}`}></i>{" "}
-                            {item.name}
-                          </Link>
-                        )}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-              {role === 'Candidate' && (
-                <div className="dropdown dashboard-option">
-                  <a className="dropdown-toggle" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                    <Image
-                      alt="avatar"
-                      width={50}
-                      height={50}
-                      src={user?.image || user?.avatar || "/images/resource/candidate-1.png"}
-                      className="thumb"
-                    />
-                    <span className="name">{user?.fullName || user?.name || 'My Account'}</span>
-                  </a>
-                  <ul className="dropdown-menu">
-                    {candidatesMenuData.map((item) => (
-                      <li
-                        className={`${
-                          isActiveLink(item.routePath, pathname)
-                            ? "active"
-                            : ""
-                        } mb-1`}
-                        key={item.id}
-                      >
-                        {item.isLogout ? (
-                          <a href="#" onClick={(e) => { e.preventDefault(); handleMenuClick(item); }}>
-                            <i className={`la ${item.icon}`}></i>{" "}
-                            {item.name}
-                          </a>
-                        ) : (
-                          <Link href={item.routePath}>
-                            <i className={`la ${item.icon}`}></i>{" "}
-                            {item.name}
-                          </Link>
-                        )}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-              {role === 'Admin' && (
-                <div className="dropdown dashboard-option">
-                  <a className="dropdown-toggle" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                    <Image
-                      alt="avatar"
-                      width={50}
-                      height={50}
-                      src={user?.image || user?.avatar || "/images/resource/candidate-1.png"}
-                      className="thumb"
-                    />
-                    <span className="name">{user?.fullName || user?.name || 'My Account'}</span>
-                  </a>
-                  <ul className="dropdown-menu">
-                    {adminMenuData.map((item) => (
-                      <li
-                        className={`${
-                          isActiveLink(item.routePath, pathname)
-                            ? "active"
-                            : ""
-                        } mb-1`}
-                        key={item.id}
-                      >
-                        {item.isLogout ? (
-                          <a href="#" onClick={(e) => { e.preventDefault(); handleMenuClick(item); }}>
-                            <i className={`la ${item.icon}`}></i>{" "}
-                            {item.name}
-                          </a>
-                        ) : (
-                          <Link href={item.routePath}>
-                            <i className={`la ${item.icon}`}></i>{" "}
-                            {item.name}
-                          </Link>
-                        )}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
+              <div className="dropdown dashboard-option">
+                <a className="dropdown-toggle" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                  <Image
+                    alt="avatar"
+                    width={50}
+                    height={50}
+                    src={getValidImageUrl(displayAvatar)}
+                    className="thumb"
+                  />
+                  <span className="name">{displayUserName}</span>
+                </a>
+                <ul className="dropdown-menu">
+                  {role === 'Company' && employerMenuData.map((item) => (
+                    <li
+                      className={`${isActiveLink(item.routePath, pathname) ? "active" : ""} mb-1`}
+                      key={item.id}
+                      onClick={() => handleMenuClick(item)}
+                    >
+                      {item.isLogout ? (
+                        <a style={{ cursor: 'pointer' }}>
+                          <i className={`la ${item.icon}`}></i> {item.name}
+                        </a>
+                      ) : (
+                        <Link href={item.routePath}>
+                          <i className={`la ${item.icon}`}></i> {item.name}
+                        </Link>
+                      )}
+                    </li>
+                  ))}
+                  {role === 'Candidate' && candidatesMenuData.map((item) => (
+                    <li
+                      className={`${isActiveLink(item.routePath, pathname) ? "active" : ""} mb-1`}
+                      key={item.id}
+                      onClick={() => handleMenuClick(item)}
+                    >
+                       {item.isLogout ? (
+                        <a style={{ cursor: 'pointer' }}>
+                          <i className={`la ${item.icon}`}></i> {item.name}
+                        </a>
+                      ) : (
+                        <Link href={item.routePath}>
+                          <i className={`la ${item.icon}`}></i> {item.name}
+                        </Link>
+                      )}
+                    </li>
+                  ))}
+                   {role === 'Admin' && adminMenuData.map((item) => (
+                    <li
+                      className={`${isActiveLink(item.routePath, pathname) ? "active" : ""} mb-1`}
+                      key={item.id}
+                      onClick={() => handleMenuClick(item)}
+                    >
+                       {item.isLogout ? (
+                        <a style={{ cursor: 'pointer' }}>
+                          <i className={`la ${item.icon}`}></i> {item.name}
+                        </a>
+                      ) : (
+                        <Link href={item.routePath}>
+                          <i className={`la ${item.icon}`}></i> {item.name}
+                        </Link>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
             </div>
           ) : (
             <>

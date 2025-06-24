@@ -1,7 +1,7 @@
 import axios from 'axios';
 import Cookies from 'js-cookie';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://job-finder-tm9i.onrender.com/api';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://job-finder-kjt2.onrender.com/api';
 
 // Helper function to get token
 const getToken = () => {
@@ -47,7 +47,7 @@ export const applicationService = {
       }
 
       const response = await axios.get(
-        `${API_URL}/Application/my-applied-jobs-with-cvs`,
+        `${API_URL}/Application/my-applications`,
         {
           headers: {
             'Authorization': `Bearer ${token}`,
