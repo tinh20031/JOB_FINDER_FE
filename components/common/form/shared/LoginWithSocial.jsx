@@ -7,7 +7,10 @@ const LoginWithSocial = () => {
         </a>
       </div>
       <div className="col-lg-6 col-md-12">
-        <a href="#" className="theme-btn social-btn-two google-btn">
+        <a
+          href="http://localhost:5194/api/auth/login-google"
+          className="theme-btn social-btn-two google-btn"
+        >
           <i className="fab fa-google"></i> Log In via Gmail
         </a>
       </div>
@@ -15,4 +18,4 @@ const LoginWithSocial = () => {
   );
 };
 
-export default LoginWithSocial; 
+export default LoginWithSocial;
