@@ -92,109 +92,92 @@ const EmployersSingleV1 = ({ params }) => {
       {/* <!-- Job Detail Section --> */}
       <section className="job-detail-section">
         {/* <!-- Upper Box --> */}
-        <div className="upper-box">
-          <div className="auto-container">
-            <div className="job-block-seven">
-              <div className="inner-box">
-                <div className="content">
-                  <span className="company-logo">
-                    <Image
-                      width={100}
-                      height={100}
-                      src={company.urlCompanyLogo || "/no-logo.png"}
-                      alt="logo"
-                    />
-                  </span>
-                  <h4>{company.companyName}</h4>
-
-                  <ul className="job-info">
-                    <li>
-                      <span className="icon flaticon-map-locator"></span>
-                      {company.location}
-                    </li>
-                    {/* compnay info */}
-                    <li>
-                      <span className="icon flaticon-briefcase"></span>
-                      {company.teamSize}
-                    </li>
-                    {/* location info */}
-                    <li>
-                      <span className="icon flaticon-mail"></span>
-                      {company.website}
-                    </li>
-                    {/* salary info */}
-                  </ul>
-                  {/* End .job-info */}
-
-                  <ul className="job-other-info">
-                    <li className="time">{company.industryName}</li>
-                  </ul>
-                  {/* End .job-other-info */}
-                </div>
-                {/* End .content */}
-
-                <div className="btn-box">
-                  <button
-                    className="theme-btn btn-style-one"
-                    data-bs-toggle="modal"
-                    data-bs-target="#privateMessage"
-                  >
-                    Private Message
-                  </button>
-                  <button
-                    className={`bookmark-btn${isFavorite ? " active" : ""}`}
-                    title={isFavorite ? "Bỏ yêu thích" : "Lưu công ty"}
-                    onClick={handleBookmark}
-                    disabled={isLoadingFavorite}
+        <div className="upper-box" style={{ background: 'none', paddingTop: 0, marginTop: 0 }}>
+          {/* Cover Image - full width, sát header, logo lấn xuống, info bên phải như Facebook */}
+          {company.imageLogoLgr && (
+            <div
+              style={{
+                width: '100vw',
+                height: 340,
+                position: 'relative',
+                left: '50%',
+                right: '50%',
+                marginLeft: '-50vw',
+                marginRight: '-50vw',
+                overflow: 'visible',
+                zIndex: 1,
+                background: '#f5f6fa',
+              }}
+            >
+              <img
+                src={company.imageLogoLgr}
+                alt="cover"
+                style={{
+                  width: '100%',
+                  height: '100%',
+                  objectFit: 'cover',
+                  display: 'block',
+                }}
+              />
+              {/* Flex row: logo bên trái, info bên phải */}
+              <div
+                style={{
+                  position: 'absolute',
+                  left: 150,
+                  bottom: -120,
+                  width: 'auto',
+                  display: 'flex',
+                  flexDirection: 'row',
+                  alignItems: 'flex-end',
+                  gap: 32,
+                }}
+              >
+                <span className="company-logo" style={{zIndex: 2}}>
+                  <Image
+                    width={180}
+                    height={180}
+                    src={company.urlCompanyLogo || "/no-logo.png"}
+                    alt="logo"
                     style={{
-                      background: "none",
-                      border: "none",
-                      cursor: "pointer",
-                      color: isFavorite ? "#ffc107" : "#666",
-                      fontSize: 20,
-                      marginLeft: 16,
-                      opacity: 1,
-                      visibility: "visible",
+                      borderRadius: 20,
+                      border: '1px solid #e5e7eb',
+                      objectFit: 'cover',
+                      background: '#fff',
+                      boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
+                      display: 'block',
                     }}
-                  >
-                    <i className="flaticon-bookmark"></i>
-                  </button>
-                </div>
-                {/* End btn-box */}
-
-                {/* <!-- Modal --> */}
-                <div
-                  className="modal fade"
-                  id="privateMessage"
-                  tabIndex="-1"
-                  aria-hidden="true"
-                >
-                  <div className="modal-dialog modal-dialog-centered modal-dialog-scrollable">
-                    <div className="apply-modal-content modal-content">
-                      <div className="text-center">
-                        <h3 className="title">
-                          Send message to {company.companyName}
-                        </h3>
-                        <button
-                          type="button"
-                          className="closed-modal"
-                          data-bs-dismiss="modal"
-                          aria-label="Close"
-                        ></button>
-                      </div>
-                      {/* End modal-header */}
-
-                      <PrivateMessageBox />
-                      {/* End PrivateMessageBox */}
-                    </div>
-                    {/* End .send-private-message-wrapper */}
+                  />
+                </span>
+                <div style={{display: 'flex', flexDirection: 'column', justifyContent: 'center', minWidth: 320}}>
+                  <h4 style={{marginBottom: 20, fontWeight: 1000}}>{company.companyName}</h4>
+                  <div style={{display: 'flex', alignItems: 'center', gap: 12}}>
+                    {/* <button
+                      className={`bookmark-btn${isFavorite ? " active" : ""}`}
+                      title={isFavorite ? "Bỏ yêu thích" : "Lưu công ty"}
+                      onClick={handleBookmark}
+                      disabled={isLoadingFavorite}
+                      style={{
+                        background: "none",
+                        border: "none",
+                        cursor: "pointer",
+                        color: isFavorite ? "#ffc107" : "#666",
+                        fontSize: 15,
+                        marginLeft: 0,
+                        opacity: 1,
+                        visibility: "visible",
+                      }}
+                    >
+                      <i className="flaticon-bookmark"></i>
+                    </button> */}
                   </div>
+                  <ul className="job-other-info" style={{display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 4, margin: 0, padding: 0, listStyle: 'none'}}>
+                    <li className="time" style={{fontWeight: 700}}>{company.industryName}</li>
+                  </ul>
                 </div>
-                {/* End .modal */}
               </div>
             </div>
-            {/* <!-- Job Block --> */}
-          </div>
+          )}
+          <div className="upper-box" style={{ background: 'none', paddingTop: 0, marginTop: 0 }}></div>
         </div>
         {/* <!-- Upper Box --> */}
 
@@ -209,16 +192,7 @@ const EmployersSingleV1 = ({ params }) => {
 
                 {/* <!-- Related Jobs --> */}
                 <div className="related-jobs">
-                  <div className="title-box">
-                    <h3>3 Others jobs available</h3>
-                    <div className="text">
-                      2020 jobs live - 293 added today.
-                    </div>
-                  </div>
-                  {/* End .title-box */}
-
-                  <RelatedJobs />
-                  {/* End RelatedJobs */}
+                  {/* <RelatedJobs companyId={company.userId} /> */}
                 </div>
                 {/* <!-- Related Jobs --> */}
               </div>

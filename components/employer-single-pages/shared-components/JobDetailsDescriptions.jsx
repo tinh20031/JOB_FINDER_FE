@@ -11,9 +11,9 @@ const JobDetailsDescriptions = ({ description }) => {
       ) : (
         <div><i>No description available for this job.</i></div>
       )}
-      <div className="row images-outer">
+      {/* <div className="row images-outer">
         <GalleryBox />
-      </div>
+      </div> */}
     </div>
   );
 };
