@@ -1,19 +1,19 @@
-import Cookies from 'js-cookie';
-import ApiService from './api.service';
-import { jwtDecode } from 'jwt-decode';
+import Cookies from "js-cookie";
+import ApiService from "./api.service";
+import { jwtDecode } from "jwt-decode";
 
 export const authService = {
   async login(email, password) {
     try {
       const data = await ApiService.login(email, password);
-      console.log('authService.login: Raw data from ApiService.login:', data);
-      
+      console.log("authService.login: Raw data from ApiService.login:", data);
+
       // Đặt cookieOptions ở đầu hàm login
       const cookieOptions = {
         expires: 7, // 7 days
-        path: '/',
-        secure: process.env.NODE_ENV === 'production', // Sử dụng secure chỉ trong môi trường production (HTTPS)
-        sameSite: 'Lax' // Bảo vệ CSRF ở mức độ cơ bản
+        path: "/",
+        secure: process.env.NODE_ENV === "production", // Sử dụng secure chỉ trong môi trường production (HTTPS)
+        sameSite: "Lax", // Bảo vệ CSRF ở mức độ cơ bản
       };
 
       let decodedToken = null;
@@ -23,52 +23,56 @@ export const authService = {
       }
 
       // Lưu token và role (và tên nếu có) vào localStorage
-      localStorage.setItem('token', data.token);
-      localStorage.setItem('role', data.role);
+      localStorage.setItem("token", data.token);
+      localStorage.setItem("role", data.role);
       if (data.name) {
-        localStorage.setItem('name', data.name);
+        localStorage.setItem("name", data.name);
       }
       if (decodedToken && decodedToken.fullName) {
-        localStorage.setItem('fullName', decodedToken.fullName);
+        localStorage.setItem("fullName", decodedToken.fullName);
       }
       if (decodedToken && decodedToken.profileImage) {
-        localStorage.setItem('profileImage', decodedToken.profileImage);
+        localStorage.setItem("profileImage", decodedToken.profileImage);
       }
       if (decodedToken && decodedToken.sub) {
-        localStorage.setItem('userId', decodedToken.sub);
+        localStorage.setItem("userId", decodedToken.sub);
       }
       if (data.companyId) {
-        localStorage.setItem('companyId', data.companyId);
+        localStorage.setItem("companyId", data.companyId);
       }
       if (data.user) {
-        localStorage.setItem('user', JSON.stringify(data.user));
+        localStorage.setItem("user", JSON.stringify(data.user));
       }
       if (data.user && data.user.companyName) {
-        localStorage.setItem('fullNameCompany', data.user.companyName);
-        Cookies.set('fullNameCompany', data.user.companyName, cookieOptions);
+        localStorage.setItem("fullNameCompany", data.user.companyName);
+        Cookies.set("fullNameCompany", data.user.companyName, cookieOptions);
       }
       if (data.user && data.user.urlCompanyLogo) {
-        localStorage.setItem('profileImageCompany', data.user.urlCompanyLogo);
-        Cookies.set('profileImageCompany', data.user.urlCompanyLogo, cookieOptions);
+        localStorage.setItem("profileImageCompany", data.user.urlCompanyLogo);
+        Cookies.set(
+          "profileImageCompany",
+          data.user.urlCompanyLogo,
+          cookieOptions
+        );
       }
 
       // Lưu token và role (và tên nếu có) vào cookies
-      Cookies.set('token', data.token, cookieOptions);
-      Cookies.set('role', data.role, cookieOptions);
+      Cookies.set("token", data.token, cookieOptions);
+      Cookies.set("role", data.role, cookieOptions);
       if (data.name) {
-        Cookies.set('name', data.name, cookieOptions);
+        Cookies.set("name", data.name, cookieOptions);
       }
       if (decodedToken && decodedToken.fullName) {
-        Cookies.set('fullName', decodedToken.fullName, cookieOptions);
+        Cookies.set("fullName", decodedToken.fullName, cookieOptions);
       }
       if (decodedToken && decodedToken.profileImage) {
-        Cookies.set('profileImage', decodedToken.profileImage, cookieOptions);
+        Cookies.set("profileImage", decodedToken.profileImage, cookieOptions);
       }
       if (decodedToken && decodedToken.sub) {
-        Cookies.set('userId', decodedToken.sub, cookieOptions);
+        Cookies.set("userId", decodedToken.sub, cookieOptions);
       }
       if (data.companyId) {
-        Cookies.set('companyId', data.companyId, cookieOptions);
+        Cookies.set("companyId", data.companyId, cookieOptions);
       }
 
       return data;
@@ -84,10 +88,10 @@ export const authService = {
         email,
         phone,
         password,
-        role: '1' // Set default role as user
+        role: "1", // Set default role as user
       };
       const data = await ApiService.register(userData);
-      console.log('Registration successful:', data);
+      console.log("Registration successful:", data);
       return data;
     } catch (error) {
       throw error;
@@ -96,59 +100,59 @@ export const authService = {
 
   logout() {
     // Xóa token và các thông tin khác từ localStorage
-    localStorage.removeItem('token');
-    localStorage.removeItem('role');
-    localStorage.removeItem('name');
-    localStorage.removeItem('companyId');
-    localStorage.removeItem('fullName'); // Remove fullName
-    localStorage.removeItem('profileImage'); // Remove profileImage
-    localStorage.removeItem('userId');
+    localStorage.removeItem("token");
+    localStorage.removeItem("role");
+    localStorage.removeItem("name");
+    localStorage.removeItem("companyId");
+    localStorage.removeItem("fullName"); // Remove fullName
+    localStorage.removeItem("profileImage"); // Remove profileImage
+    localStorage.removeItem("userId");
 
     // Xóa token và các thông tin khác từ Cookies
-    Cookies.remove('token', { path: '/' });
-    Cookies.remove('role', { path: '/' });
-    Cookies.remove('name', { path: '/' });
-    Cookies.remove('companyId', { path: '/' });
-    Cookies.remove('fullName', { path: '/' }); // Remove fullName
-    Cookies.remove('profileImage', { path: '/' }); // Remove profileImage
-    Cookies.remove('userId', { path: '/' });
+    Cookies.remove("token", { path: "/" });
+    Cookies.remove("role", { path: "/" });
+    Cookies.remove("name", { path: "/" });
+    Cookies.remove("companyId", { path: "/" });
+    Cookies.remove("fullName", { path: "/" }); // Remove fullName
+    Cookies.remove("profileImage", { path: "/" }); // Remove profileImage
+    Cookies.remove("userId", { path: "/" });
     // Nếu bạn có các domain cụ thể, cũng cần xóa
-    Cookies.remove('token', { path: '/', domain: 'localhost' });
-    Cookies.remove('role', { path: '/', domain: 'localhost' });
-    Cookies.remove('name', { path: '/', domain: 'localhost' });
-    Cookies.remove('companyId', { path: '/', domain: 'localhost' });
-    Cookies.remove('fullName', { path: '/', domain: 'localhost' }); // Remove fullName
-    Cookies.remove('profileImage', { path: '/', domain: 'localhost' }); // Remove profileImage
-    Cookies.remove('userId', { path: '/', domain: 'localhost' });
+    Cookies.remove("token", { path: "/", domain: "localhost" });
+    Cookies.remove("role", { path: "/", domain: "localhost" });
+    Cookies.remove("name", { path: "/", domain: "localhost" });
+    Cookies.remove("companyId", { path: "/", domain: "localhost" });
+    Cookies.remove("fullName", { path: "/", domain: "localhost" }); // Remove fullName
+    Cookies.remove("profileImage", { path: "/", domain: "localhost" }); // Remove profileImage
+    Cookies.remove("userId", { path: "/", domain: "localhost" });
   },
 
   getToken() {
     // Ưu tiên lấy từ Cookies (nếu là HttpOnly thì an toàn hơn), sau đó là localStorage
-    const cookieToken = Cookies.get('token');
+    const cookieToken = Cookies.get("token");
     if (cookieToken) {
       return cookieToken;
     }
-    return localStorage.getItem('token');
+    return localStorage.getItem("token");
   },
 
   getRole() {
-    const cookieRole = Cookies.get('role');
+    const cookieRole = Cookies.get("role");
     if (cookieRole) {
       return cookieRole;
     }
-    return localStorage.getItem('role');
+    return localStorage.getItem("role");
   },
 
   getName() {
-    const cookieName = Cookies.get('name');
+    const cookieName = Cookies.get("name");
     if (cookieName) {
       return cookieName;
     }
-    return localStorage.getItem('name');
+    return localStorage.getItem("name");
   },
 
   getFullName() {
-    const cookieFullName = Cookies.get('fullName');
+    const cookieFullName = Cookies.get("fullName");
     if (cookieFullName) {
       return cookieFullName;
     }
@@ -156,11 +160,11 @@ export const authService = {
     if (storedUser && storedUser.fullName) {
       return storedUser.fullName;
     }
-    return localStorage.getItem('fullName');
+    return localStorage.getItem("fullName");
   },
 
   getProfileImage() {
-    const cookieProfileImage = Cookies.get('profileImage');
+    const cookieProfileImage = Cookies.get("profileImage");
     if (cookieProfileImage) {
       return cookieProfileImage;
     }
@@ -168,24 +172,24 @@ export const authService = {
     if (storedUser && (storedUser.avatar || storedUser.image)) {
       return storedUser.avatar || storedUser.image;
     }
-    return localStorage.getItem('profileImage');
+    return localStorage.getItem("profileImage");
   },
 
   getCompanyId() {
-    const cookieCompanyId = Cookies.get('companyId');
+    const cookieCompanyId = Cookies.get("companyId");
     if (cookieCompanyId) {
       return cookieCompanyId;
     }
-    const localCompanyId = localStorage.getItem('companyId');
+    const localCompanyId = localStorage.getItem("companyId");
     if (localCompanyId) {
       return localCompanyId;
     }
     // Fallback: lấy userId nếu không có companyId
-    const cookieUserId = Cookies.get('userId');
+    const cookieUserId = Cookies.get("userId");
     if (cookieUserId) {
       return cookieUserId;
     }
-    const localUserId = localStorage.getItem('userId');
+    const localUserId = localStorage.getItem("userId");
     if (localUserId) {
       return localUserId;
     }
@@ -198,8 +202,8 @@ export const authService = {
 
   // New helper to get parsed user info from localStorage
   _getStoredUser() {
-    if (typeof window === 'undefined') return null; // Only run on client side
-    const userString = localStorage.getItem('user');
+    if (typeof window === "undefined") return null; // Only run on client side
+    const userString = localStorage.getItem("user");
     if (userString) {
       try {
         return JSON.parse(userString);
@@ -216,15 +220,15 @@ export const authService = {
   },
 
   getFullNameCompany() {
-    const cookieFullName = Cookies.get('fullName');
+    const cookieFullName = Cookies.get("fullName");
     if (cookieFullName) return cookieFullName;
-    return localStorage.getItem('fullNameCompany');
+    return localStorage.getItem("fullNameCompany");
   },
 
   getProfileImageCompany() {
-    const cookieProfileImage = Cookies.get('profileImage');
+    const cookieProfileImage = Cookies.get("profileImage");
     if (cookieProfileImage) return cookieProfileImage;
-    return localStorage.getItem('profileImageCompany');
+    return localStorage.getItem("profileImageCompany");
   },
 
   async changePassword(currentPassword, newPassword) {
@@ -235,5 +239,13 @@ export const authService = {
     } catch (error) {
       throw error;
     }
-  }
+  },
+
+  async verifyEmail(email, verificationCode) {
+    return await ApiService.verifyEmail(email, verificationCode);
+  },
+
+  async resendVerification(email) {
+    return await ApiService.resendVerification(email);
+  },
 };

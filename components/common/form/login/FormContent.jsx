@@ -18,7 +18,12 @@ const FormContent = ({ isPopup = false }) => {
   });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const closeBtnRef = useRef(null); // Ref cho nút đóng modal
+  const [showVerification, setShowVerification] = useState(false);
+  const [verificationCode, setVerificationCode] = useState("");
+  const [pendingEmail, setPendingEmail] = useState("");
+  const [pendingUserId, setPendingUserId] = useState(null);
+  const [verificationMessage, setVerificationMessage] = useState("");
+  const closeBtnRef = useRef(null);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -49,22 +54,15 @@ const FormContent = ({ isPopup = false }) => {
       if (userId) {
         user.id = userId;
       }
-
-      // Lưu token vào localStorage
       if (responseData.token) {
         localStorage.setItem("token", responseData.token);
       }
-
-      // Lưu thông tin user vào localStorage trước
       const userInfo = {
         fullName: user.fullName || "",
         avatar: user.image || "/images/resource/company-6.png",
         email: user.email || formData.email,
       };
-
-      // Đảm bảo tất cả dữ liệu được lưu trước khi chuyển hướng
       await Promise.all([
-        // Lưu localStorage
         new Promise((resolve) => {
           localStorage.setItem("user", JSON.stringify(user));
           if (user.id) {
@@ -72,7 +70,6 @@ const FormContent = ({ isPopup = false }) => {
           }
           resolve();
         }),
-        // Cập nhật Redux state
         new Promise((resolve) => {
           dispatch(
             setLoginState({
@@ -85,21 +82,47 @@ const FormContent = ({ isPopup = false }) => {
           resolve();
         }),
       ]);
-
-      // Kích hoạt nút đóng modal nếu là popup
       if (isPopup && closeBtnRef.current) {
         closeBtnRef.current.click();
       }
-
-      // Chuyển hướng dựa trên role
       const userRole = responseData.role || user.role;
       const redirectPath =
         userRole === "Admin" ? "/admin-dashboard/dashboard" : "/";
-
-      // Sử dụng window.location.href để tải lại trang đầy đủ
       window.location.href = redirectPath;
     } catch (error) {
+      // Handle unverified email
       if (
+        error.response &&
+        error.response.data &&
+        error.response.data.requiresVerification
+      ) {
+        setShowVerification(true);
+        setPendingEmail(error.response.data.email || formData.email);
+        setPendingUserId(error.response.data.userId);
+        setVerificationMessage(
+          error.response.data.message ||
+            "Email chưa được xác thực. Vui lòng kiểm tra hộp thư để xác thực tài khoản trước khi đăng nhập."
+        );
+      } else if (
+        error.message &&
+        error.message.includes("requiresVerification")
+      ) {
+        // fallback for thrown error with requiresVerification
+        try {
+          const errObj = JSON.parse(error.message);
+          if (errObj.requiresVerification) {
+            setShowVerification(true);
+            setPendingEmail(errObj.email || formData.email);
+            setPendingUserId(errObj.userId);
+            setVerificationMessage(
+              errObj.message ||
+                "Email chưa được xác thực. Vui lòng kiểm tra hộp thư để xác thực tài khoản trước khi đăng nhập."
+            );
+          }
+        } catch {
+          setError(error.message);
+        }
+      } else if (
         error.message &&
         (error.message.includes("401") ||
           error.message.includes("Invalid credentials"))
@@ -115,98 +138,138 @@ const FormContent = ({ isPopup = false }) => {
     }
   };
 
+  const handleVerify = async (e) => {
+    e.preventDefault();
+    setError("");
+    setLoading(true);
+    try {
+      const res = await authService.verifyEmail(pendingEmail, verificationCode);
+      setVerificationMessage(
+        res || "Xác thực email thành công. Bạn có thể đăng nhập ngay bây giờ."
+      );
+      setShowVerification(false);
+      setError("");
+      // Optionally, auto-fill the email for login
+      setFormData((prev) => ({ ...prev, email: pendingEmail }));
+      // Optionally, show a toast or message
+    } catch (error) {
+      setError(error.message || "Mã xác thực không hợp lệ hoặc đã hết hạn.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleResend = async () => {
+    setError("");
+    setLoading(true);
+    try {
+      const res = await authService.resendVerification(pendingEmail);
+      setVerificationMessage(
+        res || "Mã xác thực đã được gửi lại đến email của bạn."
+      );
+    } catch (error) {
+      setError(error.message || "Không thể gửi lại mã xác thực.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="form-inner">
       <h3>Login to JobFinder</h3>
-
       {error && <div className="alert alert-danger">{error}</div>}
-
-      {/* <!--Login Form--> */}
-      <form onSubmit={handleSubmit}>
-        <div className="form-group">
-          <label>Email Address</label>
-          <input
-            type="email"
-            name="email"
-            placeholder="Email"
-            required
-            value={formData.email}
-            onChange={handleChange}
-          />
-        </div>
-        {/* email */}
-
-        <div className="form-group">
-          <label>Password</label>
-          <input
-            type="password"
-            name="password"
-            placeholder="Password"
-            required
-            value={formData.password}
-            onChange={handleChange}
-          />
-        </div>
-        {/* password */}
-
-        <div className="form-group">
-          <div className="field-outer">
-            <div className="input-group checkboxes square">
-              <input type="checkbox" name="remember-me" id="remember" />
-              <label htmlFor="remember" className="remember">
-                <span className="custom-checkbox"></span> Remember me
-              </label>
-            </div>
-            <a href="#" className="pwd">
-              Forgot password?
-            </a>
+      {!showVerification ? (
+        <form onSubmit={handleSubmit}>
+          <div className="form-group">
+            <label>Email Address</label>
+            <input
+              type="email"
+              name="email"
+              placeholder="Email"
+              required
+              value={formData.email}
+              onChange={handleChange}
+            />
           </div>
-        </div>
-        {/* forgot password */}
-
-        <div className="form-group">
+          <div className="form-group">
+            <label>Password</label>
+            <input
+              type="password"
+              name="password"
+              placeholder="Password"
+              required
+              value={formData.password}
+              onChange={handleChange}
+            />
+          </div>
+          <div className="form-group">
+            <div className="field-outer">
+              <div className="input-group checkboxes square">
+                <input type="checkbox" name="remember-me" id="remember" />
+                <label htmlFor="remember" className="remember">
+                  <span className="custom-checkbox"></span> Remember me
+                </label>
+              </div>
+              <a href="#" className="pwd">
+                Forgot password?
+              </a>
+            </div>
+          </div>
+          <div className="form-group">
+            <button
+              className="theme-btn btn-style-one"
+              type="submit"
+              name="log-in"
+              disabled={loading}
+            >
+              {loading ? "Logging in..." : "Log In"}
+            </button>
+          </div>
+          {isPopup && (
+            <button
+              ref={closeBtnRef}
+              data-bs-dismiss="modal"
+              style={{ display: "none" }}
+            ></button>
+          )}
+        </form>
+      ) : (
+        <div className="verification-section">
+          {verificationMessage && (
+            <div className="alert alert-success">{verificationMessage}</div>
+          )}
+          {error && <div className="alert alert-danger">{error}</div>}
+          <form onSubmit={handleVerify}>
+            <div className="form-group">
+              <label>Nhập mã xác thực đã gửi đến email của bạn</label>
+              <input
+                type="text"
+                value={verificationCode}
+                onChange={(e) => setVerificationCode(e.target.value)}
+                required
+                className="form-control"
+                placeholder="Verification code"
+              />
+            </div>
+            <div className="form-group">
+              <button
+                className="theme-btn btn-style-one"
+                type="submit"
+                disabled={loading}
+              >
+                {loading ? "Đang xác thực..." : "Xác thực email"}
+              </button>
+            </div>
+          </form>
           <button
-            className="theme-btn btn-style-one"
-            type="submit"
-            name="log-in"
+            className="btn btn-link"
+            onClick={handleResend}
             disabled={loading}
           >
-            {loading ? "Logging in..." : "Log In"}
+            Gửi lại mã xác thực
           </button>
         </div>
-        {/* login */}
-
-        {/* Nút ẩn để đóng modal */}
-        {isPopup && (
-          <button
-            ref={closeBtnRef}
-            data-bs-dismiss="modal"
-            style={{ display: "none" }}
-          ></button>
-        )}
-
-        {/* Simple Loading Overlay */}
-        {loading && (
-          <div
-            style={{
-              position: "absolute",
-              top: 0,
-              left: 0,
-              right: 0,
-              bottom: 0,
-              backgroundColor: "rgba(255, 255, 255, 0.8)",
-              display: "flex",
-              justifyContent: "center",
-              alignItems: "center",
-              zIndex: 1000,
-            }}
-          >
-            <p>Loading...</p>
-          </div>
-        )}
-      </form>
-      {/* End form */}
-
+      )}
       <div className="bottom-box">
         <div className="text">
           Don&apos;t have an account?{" "}
@@ -228,7 +291,6 @@ const FormContent = ({ isPopup = false }) => {
 
         <LoginWithSocial />
       </div>
-      {/* End bottom-box LoginWithSocial */}
     </div>
   );
 };
