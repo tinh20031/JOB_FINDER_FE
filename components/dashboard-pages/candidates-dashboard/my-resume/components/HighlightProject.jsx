@@ -178,20 +178,51 @@ const HighlightProject = ({
             position: "relative",
           }}
         >
-          <div style={{ fontWeight: 700, fontSize: 20, marginBottom: 4 }}>
-            {proj.projectName}
+          <div style={{ fontWeight: 650, fontSize: 20, marginBottom: 4 }}>
+            <strong>Project Name:</strong> {proj.projectName}
           </div>
           <div style={{ color: "#888", marginBottom: 8, fontSize: 15 }}>
-            {formatMonthYear(proj.yearStart)} -{" "}
+           {formatMonthYear(proj.yearStart)} -{" "}
             {proj.isWorking ? "NOW" : formatMonthYear(proj.yearEnd)}
           </div>
           <div
             className="text"
             style={{ margin: "0 0 12px 0", color: "#222", fontSize: 16 }}
-            dangerouslySetInnerHTML={{ __html: proj.projectDescription }}
+            dangerouslySetInnerHTML={{
+              __html: `<strong>Description:</strong> ${proj.projectDescription}`,
+            }}
+          ></div>
+          <div
+            className="text"
+            style={{ margin: "0 0 12px 0", color: "#222", fontSize: 16 }}
+            dangerouslySetInnerHTML={{
+              __html: `<strong>Technologies Uses:</strong> ${proj.technologies}`,
+            }}
+          ></div>
+          <div
+            className="text"
+            style={{ margin: "0 0 12px 0", color: "#222", fontSize: 16 }}
+            dangerouslySetInnerHTML={{
+              __html: `<strong>Key Responsibilities:</strong> ${proj.responsibilities}`,
+            }}
+          ></div>
+          <div
+            className="text"
+            style={{ margin: "0 0 12px 0", color: "#222", fontSize: 16 }}
+            dangerouslySetInnerHTML={{
+              __html: `<strong>Team Size:</strong> ${proj.teamSize}`,
+            }}
+          ></div>
+          <div
+            className="text"
+            style={{ margin: "0 0 12px 0", color: "#222", fontSize: 16 }}
+            dangerouslySetInnerHTML={{
+              __html: `<strong>Achievements/Results:</strong> ${proj.achievements}`,
+            }}
           ></div>
           {proj.projectLink && (
             <div style={{ marginBottom: 0 }}>
+              <strong>Project URL: </strong>
               <a
                 href={proj.projectLink}
                 target="_blank"

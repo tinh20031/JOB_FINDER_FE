@@ -75,7 +75,7 @@ const ProfileCard = ({ profile, onEdit }) => {
               marginBottom: 18,
             }}
           >
-            {profile.jobTitle || "Update your title"}
+            {profile.jobTitle || "Update your job title"}
             {!profile.jobTitle && (
               <span
                 style={{ marginLeft: 8, fontSize: 16, color: "#e60023" }}

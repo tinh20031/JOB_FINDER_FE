@@ -386,16 +386,50 @@ export default function CVMinimal({ resume, accentColor }) {
                       dangerouslySetInnerHTML={{ __html: exp.workDescription }}
                     />
                   )}
-                  {exp.proJects && (
-                    <div style={{ fontSize: 13 }}>
-                      <span style={{ fontWeight: "bold", color: "#333" }}>
-                        PROJECT:{" "}
-                      </span>
-                      <span
-                        style={{ color: "#0066cc" }}
-                        dangerouslySetInnerHTML={{ __html: exp.proJects }}
-                      />
-                    </div>
+
+                  {exp.responsibilities && (
+                    <div
+                      style={{
+                        fontSize: 13,
+                        color: "#444",
+                        lineHeight: "1.5",
+                        marginBottom: 8,
+                      }}
+                      dangerouslySetInnerHTML={{ __html: exp.responsibilities }}
+                    />
+                  )}
+                  {exp.achievements && (
+                    <div
+                      style={{
+                        fontSize: 13,
+                        color: "#444",
+                        lineHeight: "1.5",
+                        marginBottom: 8,
+                      }}
+                      dangerouslySetInnerHTML={{ __html: exp.achievements }}
+                    />
+                  )}
+                  {exp.technologies && (
+                    <div
+                      style={{
+                        fontSize: 13,
+                        color: "#444",
+                        lineHeight: "1.5",
+                        marginBottom: 8,
+                      }}
+                      dangerouslySetInnerHTML={{ __html: exp.technologies }}
+                    />
+                  )}
+                  {exp.projectName && (
+                    <div
+                      style={{
+                        fontSize: 13,
+                        color: "#444",
+                        lineHeight: "1.5",
+                        marginBottom: 8,
+                      }}
+                      dangerouslySetInnerHTML={{ __html: exp.projectName }}
+                    />
                   )}
                 </div>
               ))
@@ -454,6 +488,58 @@ export default function CVMinimal({ resume, accentColor }) {
                       }}
                       dangerouslySetInnerHTML={{
                         __html: proj.projectDescription,
+                      }}
+                    />
+                  )}
+                  {proj.technologies && (
+                    <div
+                      style={{
+                        fontSize: 13,
+                        color: "#444",
+                        lineHeight: "1.5",
+                        marginBottom: 8,
+                      }}
+                      dangerouslySetInnerHTML={{
+                        __html: proj.technologies,
+                      }}
+                    />
+                  )}
+                  {proj.responsibilities && (
+                    <div
+                      style={{
+                        fontSize: 13,
+                        color: "#444",
+                        lineHeight: "1.5",
+                        marginBottom: 8,
+                      }}
+                      dangerouslySetInnerHTML={{
+                        __html: proj.responsibilities,
+                      }}
+                    />
+                  )}
+                  {proj.teamSize && (
+                    <div
+                      style={{
+                        fontSize: 13,
+                        color: "#444",
+                        lineHeight: "1.5",
+                        marginBottom: 8,
+                      }}
+                      dangerouslySetInnerHTML={{
+                        __html: proj.teamSize,
+                      }}
+                    />
+                  )}
+                  {proj.achievements && (
+                    <div
+                      style={{
+                        fontSize: 13,
+                        color: "#444",
+                        lineHeight: "1.5",
+                        marginBottom: 8,
+                      }}
+                      dangerouslySetInnerHTML={{
+                        __html: proj.achievements,
                       }}
                     />
                   )}

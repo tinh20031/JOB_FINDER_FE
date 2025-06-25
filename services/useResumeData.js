@@ -108,6 +108,7 @@ export async function updateCandidateProfile({
   Dob,
   imageFile,
   FullName,
+  Phone,
   PersonalLink,
   JobTitle,
 }) {
@@ -121,6 +122,7 @@ export async function updateCandidateProfile({
   if (Dob) formData.append("Dob", Dob);
   if (imageFile) formData.append("imageFile", imageFile);
   if (FullName) formData.append("FullName", FullName);
+  if (Phone) formData.append("Phone", Phone);
   if (PersonalLink) formData.append("PersonalLink", PersonalLink);
   if (JobTitle) formData.append("JobTitle", JobTitle);
 

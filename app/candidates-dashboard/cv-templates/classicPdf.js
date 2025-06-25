@@ -250,11 +250,18 @@ export default async function generateClassicPDF(resume, accentColor) {
           { align: "right" }
         );
         y += 5;
-        renderSplitText(stripHtml(exp.workDescription));
-        if (exp.proJects) {
-          pdf.setFont("Arimo", "bold");
-          renderSplitText("Projects: " + stripHtml(exp.proJects));
-          pdf.setFont("Arimo", "normal");
+        if (exp.workDescription)
+          renderSplitText(stripHtml(exp.workDescription));
+        if (exp.responsibilities)
+          renderSplitText(stripHtml(exp.responsibilities));
+        if (exp.achievements) renderSplitText(stripHtml(exp.achievements));
+        if (exp.technologies) renderSplitText(stripHtml(exp.technologies));
+        if (exp.projectName) renderSplitText(stripHtml(exp.projectName));
+        if (exp.projectLink) {
+          pdf.textWithLink("Link: " + exp.projectLink, margin, y, {
+            url: exp.projectLink,
+          });
+          y += 5;
         }
         if (index < resume.workExperiences.length - 1) y += 4;
       });
@@ -344,7 +351,13 @@ export default async function generateClassicPDF(resume, accentColor) {
           { align: "right" }
         );
         y += 5;
-        renderSplitText(stripHtml(proj.projectDescription));
+        if (proj.projectDescription)
+          renderSplitText(stripHtml(proj.projectDescription));
+        if (proj.technologies) renderSplitText(stripHtml(proj.technologies));
+        if (proj.responsibilities)
+          renderSplitText(stripHtml(proj.responsibilities));
+        if (proj.teamSize) renderSplitText(stripHtml(proj.teamSize));
+        if (proj.achievements) renderSplitText(stripHtml(proj.achievements));
         if (proj.projectLink) {
           pdf.textWithLink("Link: " + proj.projectLink, margin, y, {
             url: proj.projectLink,

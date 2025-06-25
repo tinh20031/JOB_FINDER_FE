@@ -293,22 +293,49 @@ export default function CVCubic({ resume, accentColor }) {
                       dangerouslySetInnerHTML={{ __html: exp.workDescription }}
                     />
                   )}
-                  {exp.proJects && (
-                    <div>
-                      <span
-                        style={{
-                          fontWeight: "bold",
-                          fontSize: 13,
-                          color: "#333",
-                        }}
-                      >
-                        Project:{" "}
-                      </span>
-                      <span
-                        style={{ fontSize: 13, color: "#444" }}
-                        dangerouslySetInnerHTML={{ __html: exp.proJects }}
-                      />
-                    </div>
+                  {exp.responsibilities && (
+                    <div
+                      style={{
+                        fontSize: 13,
+                        color: "#444",
+                        lineHeight: "1.5",
+                        marginBottom: 8,
+                      }}
+                      dangerouslySetInnerHTML={{ __html: exp.responsibilities }}
+                    />
+                  )}
+                  {exp.achievements && (
+                    <div
+                      style={{
+                        fontSize: 13,
+                        color: "#444",
+                        lineHeight: "1.5",
+                        marginBottom: 8,
+                      }}
+                      dangerouslySetInnerHTML={{ __html: exp.achievements }}
+                    />
+                  )}
+                  {exp.technologies && (
+                    <div
+                      style={{
+                        fontSize: 13,
+                        color: "#444",
+                        lineHeight: "1.5",
+                        marginBottom: 8,
+                      }}
+                      dangerouslySetInnerHTML={{ __html: exp.technologies }}
+                    />
+                  )}
+                  {exp.projectName && (
+                    <div
+                      style={{
+                        fontSize: 13,
+                        color: "#444",
+                        lineHeight: "1.5",
+                        marginBottom: 8,
+                      }}
+                      dangerouslySetInnerHTML={{ __html: exp.projectName }}
+                    />
                   )}
                 </div>
               </div>
@@ -436,6 +463,58 @@ export default function CVCubic({ resume, accentColor }) {
                       }}
                       dangerouslySetInnerHTML={{
                         __html: proj.projectDescription,
+                      }}
+                    />
+                  )}
+                  {proj.technologies && (
+                    <div
+                      style={{
+                        fontSize: 13,
+                        color: "#444",
+                        lineHeight: "1.5",
+                        marginBottom: 8,
+                      }}
+                      dangerouslySetInnerHTML={{
+                        __html: proj.technologies,
+                      }}
+                    />
+                  )}
+                  {proj.responsibilities && (
+                    <div
+                      style={{
+                        fontSize: 13,
+                        color: "#444",
+                        lineHeight: "1.5",
+                        marginBottom: 8,
+                      }}
+                      dangerouslySetInnerHTML={{
+                        __html: proj.responsibilities,
+                      }}
+                    />
+                  )}
+                  {proj.teamSize && (
+                    <div
+                      style={{
+                        fontSize: 13,
+                        color: "#444",
+                        lineHeight: "1.5",
+                        marginBottom: 8,
+                      }}
+                      dangerouslySetInnerHTML={{
+                        __html: proj.teamSize,
+                      }}
+                    />
+                  )}
+                  {proj.achievements && (
+                    <div
+                      style={{
+                        fontSize: 13,
+                        color: "#444",
+                        lineHeight: "1.5",
+                        marginBottom: 8,
+                      }}
+                      dangerouslySetInnerHTML={{
+                        __html: proj.achievements,
                       }}
                     />
                   )}

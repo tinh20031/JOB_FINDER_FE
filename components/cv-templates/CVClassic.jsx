@@ -199,12 +199,18 @@ export default function CVClassic({ resume, accentColor }) {
               <div
                 dangerouslySetInnerHTML={{ __html: exp.workDescription || "" }}
               />
-              {exp.proJects && (
-                <div
-                  style={{ fontStyle: "italic" }}
-                  dangerouslySetInnerHTML={{ __html: exp.proJects }}
-                />
-              )}
+              <div
+                dangerouslySetInnerHTML={{ __html: exp.responsibilities || "" }}
+              />
+              <div
+                dangerouslySetInnerHTML={{ __html: exp.achievements || "" }}
+              />
+              <div
+                dangerouslySetInnerHTML={{ __html: exp.technologies || "" }}
+              />
+              <div
+                dangerouslySetInnerHTML={{ __html: exp.projectName || "" }}
+              />
             </div>
           ))
         ) : (
@@ -286,6 +292,27 @@ export default function CVClassic({ resume, accentColor }) {
                   __html: proj.projectDescription || "",
                 }}
               />
+               <div
+                dangerouslySetInnerHTML={{
+                  __html: proj.technologies || "",
+                }}
+              />
+               <div
+                dangerouslySetInnerHTML={{
+                  __html: proj.responsibilities || "",
+                }}
+              />
+               <div
+                dangerouslySetInnerHTML={{
+                  __html: proj.teamSize || "",
+                }}
+              />
+               <div
+                dangerouslySetInnerHTML={{
+                  __html: proj.achievements || "",
+                }}
+              />
+
               {proj.projectLink && (
                 <div>
                   <a
