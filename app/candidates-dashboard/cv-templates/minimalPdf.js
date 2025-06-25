@@ -925,6 +925,51 @@ export default async function generateMinimalPDF(resume, accentColor) {
           y += 1.5; // Reduced from 2
         }
 
+        // Additional fields
+        if (exp.responsibilities) {
+          setFont("normal", FONT_XS, "#444444");
+          const lines = splitTextRight(stripHtml(exp.responsibilities));
+          for (let j = 0; j < lines.length; j++) {
+            pdf.text(lines[j], rightColumnX, y);
+            y += 3.5;
+          }
+          y += 1.5;
+        }
+        if (exp.achievements) {
+          setFont("normal", FONT_XS, "#444444");
+          const lines = splitTextRight(stripHtml(exp.achievements));
+          for (let j = 0; j < lines.length; j++) {
+            pdf.text(lines[j], rightColumnX, y);
+            y += 3.5;
+          }
+          y += 1.5;
+        }
+        if (exp.technologies) {
+          setFont("normal", FONT_XS, "#444444");
+          const lines = splitTextRight(stripHtml(exp.technologies));
+          for (let j = 0; j < lines.length; j++) {
+            pdf.text(lines[j], rightColumnX, y);
+            y += 3.5;
+          }
+          y += 1.5;
+        }
+        if (exp.projectName) {
+          setFont("normal", FONT_XS, "#444444");
+          const lines = splitTextRight(stripHtml(exp.projectName));
+          for (let j = 0; j < lines.length; j++) {
+            pdf.text(lines[j], rightColumnX, y);
+            y += 3.5;
+          }
+          y += 1.5;
+        }
+        if (exp.projectLink) {
+          setFont("normal", FONT_XS, "#0066cc");
+          pdf.textWithLink(stripHtml(exp.projectLink), rightColumnX, y, {
+            url: exp.projectLink,
+          });
+          y += 4;
+        }
+
         // Project
         if (exp.proJects) {
           if (y + projectHeight > maxContentY) {
@@ -1055,21 +1100,49 @@ export default async function generateMinimalPDF(resume, accentColor) {
           y += 1.5; // Reduced from 2
         }
 
-        // Link
-        if (linkLines.length > 0) {
-          if (y + linkLines.length * 4 > maxContentY) {
-            // Reduced from 5
-            addNewPage();
-            y = rightY;
+        // Additional fields
+        if (proj.technologies) {
+          setFont("normal", FONT_XS, "#444444");
+          const lines = splitTextRight(stripHtml(proj.technologies));
+          for (let j = 0; j < lines.length; j++) {
+            pdf.text(lines[j], rightColumnX, y);
+            y += 3.5;
           }
-
+          y += 1.5;
+        }
+        if (proj.responsibilities) {
+          setFont("normal", FONT_XS, "#444444");
+          const lines = splitTextRight(stripHtml(proj.responsibilities));
+          for (let j = 0; j < lines.length; j++) {
+            pdf.text(lines[j], rightColumnX, y);
+            y += 3.5;
+          }
+          y += 1.5;
+        }
+        if (proj.teamSize) {
+          setFont("normal", FONT_XS, "#444444");
+          const lines = splitTextRight(stripHtml(proj.teamSize));
+          for (let j = 0; j < lines.length; j++) {
+            pdf.text(lines[j], rightColumnX, y);
+            y += 3.5;
+          }
+          y += 1.5;
+        }
+        if (proj.achievements) {
+          setFont("normal", FONT_XS, "#444444");
+          const lines = splitTextRight(stripHtml(proj.achievements));
+          for (let j = 0; j < lines.length; j++) {
+            pdf.text(lines[j], rightColumnX, y);
+            y += 3.5;
+          }
+          y += 1.5;
+        }
+        if (proj.projectLink) {
           setFont("normal", FONT_XS, "#0066cc");
-
-          for (let j = 0; j < linkLines.length; j++) {
-            pdf.text(linkLines[j], rightColumnX, y + j * 4); // Reduced from 5
-          }
-
-          y += 4 * linkLines.length; // Adjusted
+          pdf.textWithLink(stripHtml(proj.projectLink), rightColumnX, y, {
+            url: proj.projectLink,
+          });
+          y += 4;
         }
 
         y += 5; // Reduced from 6

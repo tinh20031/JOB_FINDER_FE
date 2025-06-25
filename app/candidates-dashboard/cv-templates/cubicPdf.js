@@ -288,17 +288,43 @@ export default async function generateCubicPDF(resume, accentColor) {
           y += 3;
         });
       }
-
-      // Project
-      if (exp.proJects) {
-        setFont("bold", FONT_XS, "#333333");
-        pdf.text("Project: ", 45, y + 4);
+      if (exp.responsibilities) {
         setFont("normal", FONT_XS, "#444444");
-        pdf.text(
-          stripHtml(exp.proJects),
-          45 + pdf.getTextWidth("Project: "),
-          y + 4
-        );
+        const lines = splitText(stripHtml(exp.responsibilities));
+        lines.forEach((line) => {
+          pdf.text(line, 45, y + 4);
+          y += 3;
+        });
+      }
+      if (exp.achievements) {
+        setFont("normal", FONT_XS, "#444444");
+        const lines = splitText(stripHtml(exp.achievements));
+        lines.forEach((line) => {
+          pdf.text(line, 45, y + 4);
+          y += 3;
+        });
+      }
+      if (exp.technologies) {
+        setFont("normal", FONT_XS, "#444444");
+        const lines = splitText(stripHtml(exp.technologies));
+        lines.forEach((line) => {
+          pdf.text(line, 45, y + 4);
+          y += 3;
+        });
+      }
+      if (exp.projectName) {
+        setFont("normal", FONT_XS, "#444444");
+        const lines = splitText(stripHtml(exp.projectName));
+        lines.forEach((line) => {
+          pdf.text(line, 45, y + 4);
+          y += 3;
+        });
+      }
+      if (exp.projectLink) {
+        setFont("normal", FONT_XS, accentColor || "#c4185c");
+        pdf.textWithLink(stripHtml(exp.projectLink), 45, y + 4, {
+          url: exp.projectLink,
+        });
         y += 4;
       }
       y += 12;
@@ -413,11 +439,47 @@ export default async function generateCubicPDF(resume, accentColor) {
         });
         y += 2;
       }
-
-      // Project link
+      if (proj.technologies) {
+        setFont("normal", FONT_XS, "#444444");
+        const lines = splitText(stripHtml(proj.technologies));
+        lines.forEach((line) => {
+          pdf.text(line, 45, y);
+          y += 3;
+        });
+        y += 2;
+      }
+      if (proj.responsibilities) {
+        setFont("normal", FONT_XS, "#444444");
+        const lines = splitText(stripHtml(proj.responsibilities));
+        lines.forEach((line) => {
+          pdf.text(line, 45, y);
+          y += 3;
+        });
+        y += 2;
+      }
+      if (proj.teamSize) {
+        setFont("normal", FONT_XS, "#444444");
+        const lines = splitText(stripHtml(proj.teamSize));
+        lines.forEach((line) => {
+          pdf.text(line, 45, y);
+          y += 3;
+        });
+        y += 2;
+      }
+      if (proj.achievements) {
+        setFont("normal", FONT_XS, "#444444");
+        const lines = splitText(stripHtml(proj.achievements));
+        lines.forEach((line) => {
+          pdf.text(line, 45, y);
+          y += 3;
+        });
+        y += 2;
+      }
       if (proj.projectLink) {
         setFont("normal", FONT_XS, accentColor || "#c4185c");
-        pdf.text(stripHtml(proj.projectLink), 45, y);
+        pdf.textWithLink(stripHtml(proj.projectLink), 45, y, {
+          url: proj.projectLink,
+        });
         y += 4;
       }
       y += 8;

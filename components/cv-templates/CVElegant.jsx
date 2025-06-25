@@ -319,16 +319,49 @@ export default function CVElegant({ resume, accentColor }) {
                     dangerouslySetInnerHTML={{ __html: exp.workDescription }}
                   />
                 )}
-                {exp.proJects && (
-                  <div style={{ fontSize: 13 }}>
-                    <span style={{ fontWeight: "bold", color: "#333" }}>
-                      PROJECT:{" "}
-                    </span>
-                    <div
-                      style={{ color: accentColor || "#007bff", marginTop: 2 }}
-                      dangerouslySetInnerHTML={{ __html: exp.proJects }}
-                    />
-                  </div>
+                {exp.responsibilities && (
+                  <div
+                    style={{
+                      color: "#333",
+                      fontSize: 13,
+                      lineHeight: "1.6",
+                      marginBottom: 8,
+                    }}
+                    dangerouslySetInnerHTML={{ __html: exp.responsibilities }}
+                  />
+                )}
+                {exp.achievements && (
+                  <div
+                    style={{
+                      color: "#333",
+                      fontSize: 13,
+                      lineHeight: "1.6",
+                      marginBottom: 8,
+                    }}
+                    dangerouslySetInnerHTML={{ __html: exp.achievements }}
+                  />
+                )}
+                {exp.technologies && (
+                  <div
+                    style={{
+                      color: "#333",
+                      fontSize: 13,
+                      lineHeight: "1.6",
+                      marginBottom: 8,
+                    }}
+                    dangerouslySetInnerHTML={{ __html: exp.technologies }}
+                  />
+                )}
+                {exp.projectName && (
+                  <div
+                    style={{
+                      color: "#333",
+                      fontSize: 13,
+                      lineHeight: "1.6",
+                      marginBottom: 8,
+                    }}
+                    dangerouslySetInnerHTML={{ __html: exp.projectName }}
+                  />
                 )}
               </div>
             ))
@@ -393,6 +426,39 @@ export default function CVElegant({ resume, accentColor }) {
                     }}
                   />
                 )}
+                {proj.technologies && (
+                  <div
+                    style={{ color: "#333", fontSize: 13, lineHeight: "1.6" }}
+                    dangerouslySetInnerHTML={{
+                      __html: proj.technologies,
+                    }}
+                  />
+                )}
+                {proj.responsibilities && (
+                  <div
+                    style={{ color: "#333", fontSize: 13, lineHeight: "1.6" }}
+                    dangerouslySetInnerHTML={{
+                      __html: proj.responsibilities,
+                    }}
+                  />
+                )}
+                {proj.teamSize && (
+                  <div
+                    style={{ color: "#333", fontSize: 13, lineHeight: "1.6" }}
+                    dangerouslySetInnerHTML={{
+                      __html: proj.teamSize,
+                    }}
+                  />
+                )}
+                {proj.achievements && (
+                  <div
+                    style={{ color: "#333", fontSize: 13, lineHeight: "1.6" }}
+                    dangerouslySetInnerHTML={{
+                      __html: proj.achievements,
+                    }}
+                  />
+                )}
+
                 {proj.projectLink && (
                   <div style={{ fontSize: 13, marginTop: 4 }}>
                     <a
