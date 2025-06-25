@@ -25,8 +25,30 @@ export default function Callback() {
       try {
         user = jwtDecode(token);
         userId = user.id || user.userId || user.sub || user.nameid;
+        // Đảm bảo user object luôn có trường id
+        if (!user.id && (user.sub || user.nameid)) {
+          user.id = user.sub || user.nameid;
+        }
         if (userId) {
           localStorage.setItem("userId", userId);
+          Cookies.set("userId", userId);
+        }
+        // Lưu user object vào localStorage/cookies
+        if (user) {
+          localStorage.setItem("user", JSON.stringify(user));
+          if (user.fullName) {
+            localStorage.setItem("fullName", user.fullName);
+            Cookies.set("fullName", user.fullName);
+          }
+          if (user.email) {
+            localStorage.setItem("email", user.email);
+            Cookies.set("email", user.email);
+          }
+          if (user.image || user.avatar) {
+            const avatar = user.image || user.avatar;
+            localStorage.setItem("profileImage", avatar);
+            Cookies.set("profileImage", avatar);
+          }
         }
       } catch (e) {}
       dispatch(
@@ -37,11 +59,11 @@ export default function Callback() {
           token,
         })
       );
-      // Redirect: Admin về dashboard, còn lại về home
+      // Reload lại trang để đồng bộ Redux state đăng nhập
       if (role === "Admin") {
-        router.replace("/admin-dashboard/dashboard");
+        window.location.href = "/admin-dashboard/dashboard";
       } else {
-        router.replace("/");
+        window.location.href = "/";
       }
     }
   }, [router, searchParams, dispatch]);
