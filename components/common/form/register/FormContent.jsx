@@ -8,6 +8,7 @@ import { useDispatch } from "react-redux";
 import { setLoginState } from "@/features/auth/authSlice";
 import { jwtDecode } from "jwt-decode";
 import Cookies from "js-cookie";
+import VerifyEmailForm from "../shared/VerifyEmailForm";
 
 const FormContent = ({ onRegistrationSuccess }) => {
   const router = useRouter();
@@ -28,6 +29,7 @@ const FormContent = ({ onRegistrationSuccess }) => {
   const [verificationMessage, setVerificationMessage] = useState("");
   const [phoneError, setPhoneError] = useState("");
   const [passwordError, setPasswordError] = useState("");
+  const [showVerifyEmailForm, setShowVerifyEmailForm] = useState(false);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -199,7 +201,18 @@ const FormContent = ({ onRegistrationSuccess }) => {
 
   return (
     <div>
-      {!showVerification ? (
+      {showVerifyEmailForm ? (
+        <VerifyEmailForm
+          initialEmail={formData.email}
+          onVerified={(email) => {
+            setShowVerifyEmailForm(false);
+            setShowVerification(false);
+            setRegisteredEmail(email);
+            setError("");
+          }}
+          onCancel={() => setShowVerifyEmailForm(false)}
+        />
+      ) : !showVerification ? (
         <form onSubmit={handleSubmit} className="login-from">
           {error && <div className="alert alert-danger">{error}</div>}
           <div className="form-group">

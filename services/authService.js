@@ -248,4 +248,11 @@ export const authService = {
   async resendVerification(email) {
     return await ApiService.resendVerification(email);
   },
+
+  getGoogleLoginUrl() {
+    return (
+      process.env.NEXT_PUBLIC_GOOGLE_LOGIN_URL ||
+      "https://job-finder-kjt2.onrender.com/api/auth/login-google"
+    );
+  },
 };
