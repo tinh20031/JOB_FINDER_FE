@@ -213,6 +213,7 @@ const FormInfoBox = ({ onFormChange, validationErrors, initialData, isEditing })
                         theme="snow"
                         value={formData.aboutCompany}
                         onChange={handleAboutCompanyChange}
+                        readOnly={!isEditing}
                         modules={{
                             toolbar: [
                                 [{ 'header': [1, 2, false] }],

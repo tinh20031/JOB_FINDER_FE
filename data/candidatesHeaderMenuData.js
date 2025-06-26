@@ -13,7 +13,13 @@ module.exports = [
     routePath: "/candidates-dashboard/my-resume",
     active: "",
   },
- 
+  {
+    id: 10,
+    name: "Change Password",
+    icon: "la-lock",
+    routePath: "/candidates-dashboard/change-password",
+    active: "",
+  },
   {
     id: 11,
     name: "Logout",

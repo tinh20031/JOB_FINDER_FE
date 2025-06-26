@@ -181,6 +181,17 @@ const EmployersSingleV1 = ({ params }) => {
         </div>
         {/* <!-- Upper Box --> */}
 
+        {/* Đường line ngăn cách trước About Company */}
+        {/* <div style={{height: 1, background: '#000000', width: '80%', borderRadius: 1}}></div> */}
+        <div
+  style={{
+    height: 1,
+    background: '#000000',
+    width: '80%',
+    borderRadius: 1,
+    margin: '20px auto 14px auto'
+  }}
+></div>
         {/* <!-- job-detail-outer--> */}
         <div className="job-detail-outer">
           <div className="auto-container">

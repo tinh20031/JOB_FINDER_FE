@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 
-const API_URL = "https://job-finder-kjt2.onrender.com/api";
+const API_URL = "http://localhost:5194/api";
 const getToken = () =>
   typeof window !== "undefined" ? localStorage.getItem("token") : "";
 

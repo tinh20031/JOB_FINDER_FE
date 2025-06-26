@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_URL = "https://job-finder-kjt2.onrender.com/api";
+const API_URL = "http://localhost:5194/api";
 
 export const industryService = {
     // Get all industries

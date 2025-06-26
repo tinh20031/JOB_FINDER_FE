@@ -62,20 +62,6 @@ module.exports = [
     routePath: "/employers-dashboard/resume-alerts",
     active: "",
   },
-  {
-    id: 10,
-    name: "Change Password",
-    icon: "la-lock",
-    routePath: "/employers-dashboard/change-password",
-    active: "",
-  },
-  {
-    id: 11,
-    name: "Logout",
-    icon: "la-sign-out",
-    routePath: "#",
-    isLogout: true,
-    active: "",
-  },
+ 
   
 ];
