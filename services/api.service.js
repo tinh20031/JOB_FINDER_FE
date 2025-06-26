@@ -1,9 +1,9 @@
 import API_CONFIG from "../config/api.config";
 
+// const BASE_URL = "http://localhost:5194/api";
+const BASE_URL = "https://job-finder-kjt2.onrender.com/api";
 
 
-
-const BASE_URL = 'http://localhost:5194/api';
 // Định nghĩa class trước
 class ApiServiceClass {
   // Auth APIs
@@ -92,11 +92,9 @@ class ApiServiceClass {
     try {
       const response = await fetch(url, options);
       if (!response.ok) {
-        const errorData = await response
-          .json()
-          .catch(() => ({
-            message: `Failed to parse error response from server (status: ${response.status})`,
-          }));
+        const errorData = await response.json().catch(() => ({
+          message: `Failed to parse error response from server (status: ${response.status})`,
+        }));
         console.error("Job creation error details:", errorData);
         throw new Error(
           errorData.message ||

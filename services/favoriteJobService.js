@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const API_URL = "/api/UserFavoriteJob"; // Đổi port nếu BE khác
+const API_URL = "https://job-finder-kjt2.onrender.com/api/UserFavoriteJob"; // Đổi port nếu BE khác
 
 export const getUserFavorites = (userId) =>
   axios.get(`${API_URL}/user/${userId}`);

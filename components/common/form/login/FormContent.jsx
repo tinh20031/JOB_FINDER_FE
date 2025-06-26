@@ -8,6 +8,7 @@ import { useDispatch } from "react-redux";
 import { setLoginState } from "@/features/auth/authSlice";
 import { jwtDecode } from "jwt-decode";
 import LoginWithSocial from "../shared/LoginWithSocial";
+import VerifyEmailForm from "../shared/VerifyEmailForm";
 
 const FormContent = ({ isPopup = false }) => {
   const router = useRouter();
@@ -18,12 +19,9 @@ const FormContent = ({ isPopup = false }) => {
   });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const [showVerification, setShowVerification] = useState(false);
-  const [verificationCode, setVerificationCode] = useState("");
-  const [pendingEmail, setPendingEmail] = useState("");
-  const [pendingUserId, setPendingUserId] = useState(null);
-  const [verificationMessage, setVerificationMessage] = useState("");
+  const [showVerifyEmailForm, setShowVerifyEmailForm] = useState(false);
   const closeBtnRef = useRef(null);
+  const [verifyEmailAlert, setVerifyEmailAlert] = useState("");
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -37,7 +35,6 @@ const FormContent = ({ isPopup = false }) => {
     e.preventDefault();
     setError("");
     setLoading(true);
-
     try {
       const responseData = await authService.login(
         formData.email,
@@ -57,11 +54,6 @@ const FormContent = ({ isPopup = false }) => {
       if (responseData.token) {
         localStorage.setItem("token", responseData.token);
       }
-      const userInfo = {
-        fullName: user.fullName || "",
-        avatar: user.image || "/images/resource/company-6.png",
-        email: user.email || formData.email,
-      };
       await Promise.all([
         new Promise((resolve) => {
           localStorage.setItem("user", JSON.stringify(user));
@@ -96,31 +88,59 @@ const FormContent = ({ isPopup = false }) => {
         error.response.data &&
         error.response.data.requiresVerification
       ) {
-        setShowVerification(true);
-        setPendingEmail(error.response.data.email || formData.email);
-        setPendingUserId(error.response.data.userId);
-        setVerificationMessage(
+        setShowVerifyEmailForm(true);
+        setFormData((prev) => ({
+          ...prev,
+          email: error.response.data.email || formData.email,
+        }));
+        setVerifyEmailAlert(
           error.response.data.message ||
-            "Email chưa được xác thực. Vui lòng kiểm tra hộp thư để xác thực tài khoản trước khi đăng nhập."
+            "Your email is not verified. Please check your email for the confirmation code."
         );
+        setError("");
+      } else if (error.data && error.data.requiresVerification) {
+        setShowVerifyEmailForm(true);
+        setFormData((prev) => ({
+          ...prev,
+          email: error.data.email || formData.email,
+        }));
+        setVerifyEmailAlert(
+          error.data.message ||
+            "Your email is not verified. Please check your email for the confirmation code."
+        );
+        setError("");
       } else if (
         error.message &&
-        error.message.includes("requiresVerification")
+        (error.message.includes("requiresVerification") ||
+          error.message.toLowerCase().includes("not verified"))
       ) {
-        // fallback for thrown error with requiresVerification
+        // fallback for thrown error with requiresVerification or message
         try {
           const errObj = JSON.parse(error.message);
           if (errObj.requiresVerification) {
-            setShowVerification(true);
-            setPendingEmail(errObj.email || formData.email);
-            setPendingUserId(errObj.userId);
-            setVerificationMessage(
+            setShowVerifyEmailForm(true);
+            setFormData((prev) => ({
+              ...prev,
+              email: errObj.email || formData.email,
+            }));
+            setVerifyEmailAlert(
               errObj.message ||
-                "Email chưa được xác thực. Vui lòng kiểm tra hộp thư để xác thực tài khoản trước khi đăng nhập."
+                "Your email is not verified. Please check your email for the confirmation code."
             );
+            setError("");
+          } else {
+            setShowVerifyEmailForm(true);
+            setVerifyEmailAlert(
+              "Your email is not verified. Please check your email for the confirmation code."
+            );
+            setError("");
           }
         } catch {
-          setError(error.message);
+          setShowVerifyEmailForm(true);
+          setVerifyEmailAlert(
+            "Your email is not verified. Please check your email for the confirmation code."
+          );
+          setError("");
         }
       } else if (
         error.message &&
@@ -138,47 +158,32 @@ const FormContent = ({ isPopup = false }) => {
     }
   };
 
-  const handleVerify = async (e) => {
-    e.preventDefault();
-    setError("");
-    setLoading(true);
-    try {
-      const res = await authService.verifyEmail(pendingEmail, verificationCode);
-      setVerificationMessage(
-        res || "Xác thực email thành công. Bạn có thể đăng nhập ngay bây giờ."
-      );
-      setShowVerification(false);
-      setError("");
-      // Optionally, auto-fill the email for login
-      setFormData((prev) => ({ ...prev, email: pendingEmail }));
-      // Optionally, show a toast or message
-    } catch (error) {
-      setError(error.message || "Mã xác thực không hợp lệ hoặc đã hết hạn.");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleResend = async () => {
-    setError("");
-    setLoading(true);
-    try {
-      const res = await authService.resendVerification(pendingEmail);
-      setVerificationMessage(
-        res || "Mã xác thực đã được gửi lại đến email của bạn."
-      );
-    } catch (error) {
-      setError(error.message || "Không thể gửi lại mã xác thực.");
-    } finally {
-      setLoading(false);
-    }
-  };
-
   return (
     <div className="form-inner">
       <h3>Login to JobFinder</h3>
       {error && <div className="alert alert-danger">{error}</div>}
-      {!showVerification ? (
+      {showVerifyEmailForm ? (
+        <>
+          {verifyEmailAlert && (
+            <div className="alert alert-warning" style={{ fontWeight: 500 }}>
+              {verifyEmailAlert}
+            </div>
+          )}
+          <VerifyEmailForm
+            initialEmail={formData.email}
+            onVerified={(email) => {
+              setShowVerifyEmailForm(false);
+              setFormData((prev) => ({ ...prev, email }));
+              setVerifyEmailAlert("");
+              setError("");
+            }}
+            onCancel={() => {
+              setShowVerifyEmailForm(false);
+              setVerifyEmailAlert("");
+            }}
+          />
+        </>
+      ) : (
         <form onSubmit={handleSubmit}>
           <div className="form-group">
             <label>Email Address</label>
@@ -233,42 +238,6 @@ const FormContent = ({ isPopup = false }) => {
             ></button>
           )}
         </form>
-      ) : (
-        <div className="verification-section">
-          {verificationMessage && (
-            <div className="alert alert-success">{verificationMessage}</div>
-          )}
-          {error && <div className="alert alert-danger">{error}</div>}
-          <form onSubmit={handleVerify}>
-            <div className="form-group">
-              <label>Nhập mã xác thực đã gửi đến email của bạn</label>
-              <input
-                type="text"
-                value={verificationCode}
-                onChange={(e) => setVerificationCode(e.target.value)}
-                required
-                className="form-control"
-                placeholder="Verification code"
-              />
-            </div>
-            <div className="form-group">
-              <button
-                className="theme-btn btn-style-one"
-                type="submit"
-                disabled={loading}
-              >
-                {loading ? "Đang xác thực..." : "Xác thực email"}
-              </button>
-            </div>
-          </form>
-          <button
-            className="btn btn-link"
-            onClick={handleResend}
-            disabled={loading}
-          >
-            Gửi lại mã xác thực
-          </button>
-        </div>
       )}
       <div className="bottom-box">
         <div className="text">
@@ -286,7 +255,6 @@ const FormContent = ({ isPopup = false }) => {
             <Link href="/register">Signup</Link>
           )}
         </div>
-
         <div className="divider"></div>
 
         <LoginWithSocial />
