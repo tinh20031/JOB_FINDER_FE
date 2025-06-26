@@ -294,7 +294,7 @@ const FormContent = ({ onRegistrationSuccess }) => {
           {error && <div className="alert alert-danger">{error}</div>}
           <form onSubmit={handleVerify}>
             <div className="form-group">
-              <label>Nhập mã xác thực đã gửi đến email của bạn</label>
+              <label>Enter the verification code sent to your email</label>
               <input
                 type="text"
                 value={verificationCode}
