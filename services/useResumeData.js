@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import API_CONFIG from '../config/api.config';
 
-const API_URL = API_CONFIG.BASE_URL;
+const API_URL = "https://job-finder-kjt2.onrender.com/api";
 const getToken = () =>
   typeof window !== "undefined" ? localStorage.getItem("token") : "";
 
@@ -109,6 +109,7 @@ export async function updateCandidateProfile({
   Dob,
   imageFile,
   FullName,
+  Phone,
   PersonalLink,
   JobTitle,
 }) {
@@ -122,6 +123,7 @@ export async function updateCandidateProfile({
   if (Dob) formData.append("Dob", Dob);
   if (imageFile) formData.append("imageFile", imageFile);
   if (FullName) formData.append("FullName", FullName);
+  if (Phone) formData.append("Phone", Phone);
   if (PersonalLink) formData.append("PersonalLink", PersonalLink);
   if (JobTitle) formData.append("JobTitle", JobTitle);
 

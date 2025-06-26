@@ -27,6 +27,10 @@ const WorkExperienceModal = ({ open, onClose, onSubmit, workExperience }) => {
       : "",
     yearEnd: workExperience?.yearEnd ? workExperience.yearEnd.slice(0, 4) : "",
     workDescription: workExperience?.workDescription || "",
+    responsibilities: workExperience?.responsibilities || "",
+    achievements: workExperience?.achievements || "",
+    technologies: workExperience?.technologies || "",
+    projectName: workExperience?.projectName || "",
     proJects: workExperience?.proJects || "",
     createdAt: workExperience?.createdAt || new Date().toISOString(),
     updatedAt: new Date().toISOString(),
@@ -40,23 +44,6 @@ const WorkExperienceModal = ({ open, onClose, onSubmit, workExperience }) => {
       ["bold", "italic", "underline"],
       [{ list: "ordered" }, { list: "bullet" }],
     ],
-  };
-
-  const projectTemplate =
-    "<p><strong>Project name | 01/2025 - 05/2025</strong></p><p><strong>Description:</strong> Write a short description of your project</p><p><strong>Role:</strong> Your role in this project</p><p><strong>Responsibilities:</strong></p><ul><li>First responsibility</li><li>Second responsibility</li></ul><p><strong>Tech stack:</strong> List technologies used</p><p><strong>Team size:</strong> x members</p>";
-
-  const handleInsertTemplate = () => {
-    const currentContent = form.proJects;
-    const isEditorEmpty =
-      !currentContent ||
-      currentContent.trim() === "" ||
-      currentContent === "<p><br></p>";
-
-    const newContent = isEditorEmpty
-      ? projectTemplate
-      : `${currentContent}<p><br></p>${projectTemplate}`;
-
-    handleQuillChange("proJects", newContent);
   };
 
   useEffect(() => {
@@ -79,6 +66,10 @@ const WorkExperienceModal = ({ open, onClose, onSubmit, workExperience }) => {
         ? workExperience.yearEnd.slice(0, 4)
         : "",
       workDescription: workExperience?.workDescription || "",
+      responsibilities: workExperience?.responsibilities || "",
+      achievements: workExperience?.achievements || "",
+      technologies: workExperience?.technologies || "",
+      projectName: workExperience?.projectName || "",
       proJects: workExperience?.proJects || "",
       createdAt: workExperience?.createdAt || new Date().toISOString(),
       updatedAt: new Date().toISOString(),
@@ -126,6 +117,12 @@ const WorkExperienceModal = ({ open, onClose, onSubmit, workExperience }) => {
     if (!form.jobTitle.trim()) newErrors.jobTitle = "Job Title is required.";
     if (!form.companyName.trim())
       newErrors.companyName = "Company Name is required.";
+    if (!form.workDescription.trim())
+      newErrors.workDescription = "Work Description is required.";
+    if (!form.responsibilities.trim())
+      newErrors.responsibilities = "Responsibilities is required.";
+    if (!form.achievements.trim())
+      newErrors.achievements = "Achievements is required.";
     if (!form.monthStart) newErrors.monthStart = "Month is required.";
     if (!form.yearStart) newErrors.yearStart = "Year is required.";
     if (!form.isWorking) {
@@ -158,6 +155,8 @@ const WorkExperienceModal = ({ open, onClose, onSubmit, workExperience }) => {
     setTouched({
       jobTitle: true,
       companyName: true,
+      responsibilities: true,
+      achievements: true,
       monthStart: true,
       yearStart: true,
       monthEnd: true,
@@ -260,6 +259,14 @@ const WorkExperienceModal = ({ open, onClose, onSubmit, workExperience }) => {
         }
         .insert-template-btn:hover {
           background: #e0e0e0;
+        }
+        .quill-wrapper.error .ql-toolbar.ql-snow,
+        .quill-wrapper.error .ql-container.ql-snow {
+          border: 2px solid #e60023 !important;
+        }
+        .quill-wrapper.valid .ql-toolbar.ql-snow,
+        .quill-wrapper.valid .ql-container.ql-snow {
+          border: 2px solid #28a745 !important;
         }
       `}</style>
       <div className="work-modal-overlay">
@@ -485,7 +492,9 @@ const WorkExperienceModal = ({ open, onClose, onSubmit, workExperience }) => {
               </div>
             </div>
             <div className="form-group" style={{ marginTop: 24 }}>
-              <label className="work-label">Description</label>
+              <label className="work-label">
+                Description <span className="work-required">*</span>
+              </label>
               <div style={{ marginBottom: 12, fontWeight: 600 }}>
                 <span role="img" aria-label="tips">
                   📝
@@ -497,54 +506,135 @@ const WorkExperienceModal = ({ open, onClose, onSubmit, workExperience }) => {
                   "Project" field below.
                 </span>
               </div>
-              <ReactQuill
-                theme="snow"
-                value={form.workDescription}
-                onChange={(value) =>
-                  handleQuillChange("workDescription", value)
-                }
-                modules={quillModules}
-              />
+              <div
+                className={`quill-wrapper${
+                  errors.workDescription ||
+                  (touched.workDescription && !form.workDescription.trim())
+                    ? " error"
+                    : form.workDescription.trim()
+                    ? " valid"
+                    : ""
+                }`}
+              >
+                <ReactQuill
+                  theme="snow"
+                  value={form.workDescription}
+                  onChange={(value) =>
+                    handleQuillChange("workDescription", value)
+                  }
+                  onBlur={() =>
+                    setTouched((prev) => ({ ...prev, workDescription: true }))
+                  }
+                  modules={quillModules}
+                />
+              </div>
+              <div className="work-error">
+                {(errors.workDescription ||
+                  (touched.workDescription && !form.workDescription.trim())) &&
+                  "Please enter your work description"}
+              </div>
               <div className="char-counter">
                 {form.workDescription.length}/2500
               </div>
             </div>
-            <div className="form-group">
+
+            <div className="form-group" style={{ marginTop: 24 }}>
+              <label className="work-label">
+                Key Responsibilities <span className="work-required">*</span>
+              </label>
+              <div style={{ marginBottom: 12, fontWeight: 600 }}></div>
               <div
-                style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                }}
+                className={`quill-wrapper${
+                  errors.responsibilities ||
+                  (touched.responsibilities && !form.responsibilities.trim())
+                    ? " error"
+                    : form.responsibilities.trim()
+                    ? " valid"
+                    : ""
+                }`}
               >
-                <label className="work-label" style={{ marginBottom: 0 }}>
-                  Project
-                </label>
-                <button
-                  type="button"
-                  className="insert-template-btn"
-                  onClick={handleInsertTemplate}
-                >
-                  Insert template
-                </button>
+                <ReactQuill
+                  theme="snow"
+                  value={form.responsibilities}
+                  onChange={(value) =>
+                    handleQuillChange("responsibilities", value)
+                  }
+                  onBlur={() =>
+                    setTouched((prev) => ({ ...prev, responsibilities: true }))
+                  }
+                  modules={quillModules}
+                />
               </div>
-              <div style={{ marginTop: 8, marginBottom: 12, fontWeight: 600 }}>
-                <span role="img" aria-label="tips">
-                  📝
-                </span>{" "}
-                <span style={{ color: "#ff9800" }}>Tips:</span>{" "}
-                <span style={{ color: "#000000" }}>
-                  Include project details, your role, technologies and team
-                  size.
-                </span>
+              <div className="work-error">
+                {(errors.responsibilities ||
+                  (touched.responsibilities &&
+                    !form.responsibilities.trim())) &&
+                  "Please enter your key responsibilities"}
               </div>
+              <div className="char-counter">
+                {form.responsibilities.length}/2500
+              </div>
+            </div>
+
+            <div className="form-group" style={{ marginTop: 24 }}>
+              <label className="work-label">
+                Key Achievements <span className="work-required">*</span>
+              </label>
+              <div style={{ marginBottom: 12, fontWeight: 600 }}></div>
+              <div
+                className={`quill-wrapper${
+                  errors.achievements ||
+                  (touched.achievements && !form.achievements.trim())
+                    ? " error"
+                    : form.achievements.trim()
+                    ? " valid"
+                    : ""
+                }`}
+              >
+                <ReactQuill
+                  theme="snow"
+                  value={form.achievements}
+                  onChange={(value) => handleQuillChange("achievements", value)}
+                  onBlur={() =>
+                    setTouched((prev) => ({ ...prev, achievements: true }))
+                  }
+                  modules={quillModules}
+                />
+              </div>
+              <div className="work-error">
+                {(errors.achievements ||
+                  (touched.achievements && !form.achievements.trim())) &&
+                  "Please enter your key achievements"}
+              </div>
+              <div className="char-counter">
+                {form.achievements.length}/2500
+              </div>
+            </div>
+
+            <div className="form-group" style={{ marginTop: 24 }}>
+              <label className="work-label">Technologies Used (Optional)</label>
+              <div style={{ marginBottom: 12, fontWeight: 600 }}></div>
               <ReactQuill
                 theme="snow"
-                value={form.proJects}
-                onChange={(value) => handleQuillChange("proJects", value)}
+                value={form.technologies}
+                onChange={(value) => handleQuillChange("technologies", value)}
                 modules={quillModules}
               />
-              <div className="char-counter">{form.proJects.length}/2500</div>
+              <div className="char-counter">
+                {form.technologies.length}/2500
+              </div>
+            </div>
+
+            <div className="form-group" style={{ marginTop: 24 }}>
+              <label className="work-label">Project Name (Optional)</label>
+              <div style={{ marginBottom: 12, fontWeight: 600 }}></div>
+              <ReactQuill
+                theme="snow"
+                value={form.projectName}
+                onChange={(value) => handleQuillChange("projectName", value)}
+                modules={quillModules}
+              />
+              <div className="char-counter">{form.projectName.length}/2500</div>
             </div>
 
             <div className="work-modal-actions">

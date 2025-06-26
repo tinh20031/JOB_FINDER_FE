@@ -77,8 +77,7 @@ const AwardModal = ({ open, onClose, onSubmit, award }) => {
   const validate = () => {
     const newErrors = {};
     if (!form.awardName.trim()) newErrors.awardName = "Award Name is required.";
-    if (!form.awardOrganization.trim())
-      newErrors.awardOrganization = "Organization is required.";
+
     if (!form.month) newErrors.month = "Month is required.";
     if (!form.year) newErrors.year = "Year is required.";
     return newErrors;
@@ -202,31 +201,14 @@ const AwardModal = ({ open, onClose, onSubmit, award }) => {
                   "Please enter your award name"}
               </div>
             </div>
-
             <div className="form-group">
-              <label className="pro-label">
-                Award Organization <span className="pro-required">*</span>
-              </label>
+              <label className="pro-label">Award Organization (Optional)</label>
               <input
-                name="awardOrganization"
-                className={`pro-input${
-                  errors.awardOrganization ||
-                  (touched.awardOrganization && !form.awardOrganization.trim())
-                    ? " error"
-                    : form.awardOrganization.trim()
-                    ? " valid"
-                    : ""
-                }`}
-                value={form.awardOrganization}
+                name="award"
+                className="pro-input"
+                value={form.award}
                 onChange={handleChange}
-                onBlur={handleBlur}
               />
-              <div className="pro-error">
-                {(errors.awardOrganization ||
-                  (touched.awardOrganization &&
-                    !form.awardOrganization.trim())) &&
-                  "Please enter the organization name"}
-              </div>
             </div>
 
             <div className="pro-modal-grid">
@@ -285,7 +267,7 @@ const AwardModal = ({ open, onClose, onSubmit, award }) => {
             </div>
 
             <div className="form-group">
-              <label className="pro-label">Award Description</label>
+              <label className="pro-label">Award Description (Optional)</label>
               <ReactQuill
                 theme="snow"
                 value={form.awardDescription}

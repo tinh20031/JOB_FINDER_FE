@@ -87,7 +87,11 @@ const Skills = ({
 
   const handleOpenModal = (type, groupKey = null) => {
     let group = null;
-    if (groupKey) {
+    if (type === "core") {
+      // Always use the first core group if it exists
+      group = groups.find((g) => g.type === 0);
+      groupKey = group ? group.groupKey : null;
+    } else if (groupKey) {
       group = groups.find((g) => g.groupKey === groupKey);
     }
     setModalType(type);
@@ -220,6 +224,7 @@ const Skills = ({
               width: "100%",
               textAlign: "left",
               cursor: "pointer",
+              color: "inherit",
             }}
           >
             + Core skills

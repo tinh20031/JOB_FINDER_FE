@@ -128,7 +128,8 @@ const EditProfileModal = ({ open, onClose, onSubmit, profile }) => {
   const validate = () => {
     const newErrors = {};
     if (!form.FullName.trim()) newErrors.FullName = "Full name is required.";
-    if (!form.JobTitle.trim()) newErrors.JobTitle = "Title is required.";
+    if (!form.JobTitle.trim()) newErrors.JobTitle = "Job title is required.";
+    if (!form.Phone.trim()) newErrors.Phone = "Phone is required.";
     if (!form.Dob) newErrors.Dob = "Date of birth is required.";
     if (!form.Province.trim()) newErrors.Province = "Province is required.";
     if (!form.City.trim()) newErrors.City = "City is required.";
@@ -143,6 +144,7 @@ const EditProfileModal = ({ open, onClose, onSubmit, profile }) => {
     const submitData = {
       FullName: form.FullName,
       JobTitle: form.JobTitle,
+      Phone: form.Phone,
       Gender: form.Gender,
       City: form.City,
       Province: form.Province,
@@ -409,7 +411,7 @@ const EditProfileModal = ({ open, onClose, onSubmit, profile }) => {
                 </div>
                 <div className="form-group">
                   <label>
-                    Title <span style={{ color: "#e60023" }}>*</span>
+                    Job Title <span style={{ color: "#e60023" }}>*</span>
                   </label>
                   <input
                     name="JobTitle"
@@ -447,8 +449,36 @@ const EditProfileModal = ({ open, onClose, onSubmit, profile }) => {
                   <input name="Email" value={form.Email} disabled />
                 </div>
                 <div className="form-group">
-                  <label>Phone number</label>
-                  <input name="Phone" value={form.Phone} disabled />
+                  <label>
+                    Phone <span style={{ color: "#e60023" }}>*</span>
+                  </label>
+                  <input
+                    name="Phone"
+                    value={form.Phone}
+                    onChange={handleChange}
+                    onBlur={handleBlur}
+                    required
+                    style={{
+                      border:
+                        errors.Phone || (touched.Phone && !form.Phone.trim())
+                          ? "2px solid #e60023"
+                          : form.Phone.trim()
+                          ? "2px solid #28a745"
+                          : "1px solid #ddd",
+                      outline:
+                        errors.Phone || (touched.Phone && !form.Phone.trim())
+                          ? "1px solid #e60023"
+                          : undefined,
+                      background: "#fff",
+                    }}
+                  />
+                  {(errors.Phone || (touched.Phone && !form.Phone.trim())) && (
+                    <div
+                      style={{ color: "#e60023", fontSize: 13, marginTop: 2 }}
+                    >
+                      Please enter your phone
+                    </div>
+                  )}
                 </div>
                 <div className="form-group">
                   <label>

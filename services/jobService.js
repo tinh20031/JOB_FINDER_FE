@@ -1,22 +1,20 @@
 "use client";
 
 import axios from "axios";
-import Cookies from 'js-cookie';
+import Cookies from "js-cookie";
 
 const API_URL = "https://job-finder-kjt2.onrender.com/api";
 
 // Cấu hình axios
-axios.defaults.headers.common['Content-Type'] = 'application/json';
-
+axios.defaults.headers.common["Content-Type"] = "application/json";
 
 // Map job types
 const JOB_TYPES = {
   1: "Full-time",
   2: "Part-time",
   3: "Contract",
-  4: "Internship"
+  4: "Internship",
 };
-
 
 // Map experience levels
 const EXPERIENCE_LEVELS = {
@@ -24,9 +22,8 @@ const EXPERIENCE_LEVELS = {
   2: "Junior",
   3: "Mid Level",
   4: "Senior",
-  5: "Lead"
+  5: "Lead",
 };
-
 
 // Map industries
 const INDUSTRIES = {
@@ -34,9 +31,8 @@ const INDUSTRIES = {
   2: "Finance",
   3: "Healthcare",
   4: "Education",
-  5: "Marketing"
+  5: "Marketing",
 };
-
 
 // Map job levels
 const JOB_LEVELS = {
@@ -45,9 +41,8 @@ const JOB_LEVELS = {
   3: "Middle",
   4: "Senior",
   5: "Lead",
-  6: "Manager"
+  6: "Manager",
 };
-
 
 // Danh sách categories mẫu
 const CATEGORIES = [
@@ -58,9 +53,8 @@ const CATEGORIES = [
   "Technology",
   "Finance",
   "Healthcare",
-  "Education"
+  "Education",
 ];
-
 
 // Danh sách job titles mẫu
 const JOB_TITLES = [
@@ -73,9 +67,8 @@ const JOB_TITLES = [
   "Data Scientist",
   "DevOps Engineer",
   "Mobile Developer",
-  "QA Engineer"
+  "QA Engineer",
 ];
-
 
 // Danh sách companies mẫu
 const COMPANIES = [
@@ -88,21 +81,22 @@ const COMPANIES = [
   "Tech Pioneers",
   "Digital Dynamics",
   "Future Technologies",
-  "Smart Solutions"
+  "Smart Solutions",
 ];
 
 function getToken() {
-  let token = localStorage.getItem('token');
+  let token = localStorage.getItem("token");
   if (!token) {
-    token = Cookies.get('token');
+    token = Cookies.get("token");
   }
   return token;
 }
 
 function getValidToken() {
-  let token = localStorage.getItem('token');
-  if (!token || token === 'null' || token === 'undefined') token = Cookies.get('token');
-  if (!token || token === 'null' || token === 'undefined') return null;
+  let token = localStorage.getItem("token");
+  if (!token || token === "null" || token === "undefined")
+    token = Cookies.get("token");
+  if (!token || token === "null" || token === "undefined") return null;
   return token;
 }
 
@@ -111,15 +105,15 @@ function getAuthConfig() {
   const token = getToken();
   return {
     headers: {
-      'Authorization': `Bearer ${token}`,
-      'Content-Type': 'application/json'
-    }
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
   };
 }
 
 export const jobService = {
   // ==================== CRUD OPERATIONS ====================
-  
+
   // GET: Lấy danh sách tất cả jobs
   async getJobs(filters = {}) {
     try {
@@ -128,52 +122,66 @@ export const jobService = {
       const apiJobs = response.data;
 
       // Ánh xạ dữ liệu từ API sang cấu trúc frontend
-      const jobs = apiJobs.map(job => ({
+      const jobs = apiJobs.map((job) => ({
         id: job.jobId,
         jobTitle: job.title,
         description: job.description,
         education: job.education,
         yourSkill: job.yourSkill,
         yourExperience: job.yourExperience,
-        location: `${job.addressDetail || ''}${job.addressDetail && job.provinceName ? ', ' : ''}${job.provinceName || ''}`.trim(),
+        location: `${job.addressDetail || ""}${
+          job.addressDetail && job.provinceName ? ", " : ""
+        }${job.provinceName || ""}`.trim(),
         provinceName: job.provinceName,
         isSalaryNegotiable: job.isSalaryNegotiable,
         minSalary: job.minSalary,
         maxSalary: job.maxSalary,
-        logo: job.company?.urlCompanyLogo || '/images/company-logo/default-logo.png',
+        logo:
+          job.company?.urlCompanyLogo ||
+          "/images/company-logo/default-logo.png",
 
         // Company info
         companyId: job.companyId,
-        company: job.company ? {
-          id: job.company.id,
-          fullName: job.company.fullName,
-          email: job.company.email,
-          companyName: job.company.companyName,
-          location: job.company.location,
-          urlCompanyLogo: job.company.urlCompanyLogo
-        } : null,
+        company: job.company
+          ? {
+              id: job.company.id,
+              fullName: job.company.fullName,
+              email: job.company.email,
+              companyName: job.company.companyName,
+              location: job.company.location,
+              urlCompanyLogo: job.company.urlCompanyLogo,
+            }
+          : null,
 
         // Other IDs
         industryId: job.industryId,
-        industry: job.industry ? {
-          industryId: job.industry.industryId,
-          industryName: job.industry.industryName
-        } : null,
+        industry: job.industry
+          ? {
+              industryId: job.industry.industryId,
+              industryName: job.industry.industryName,
+            }
+          : null,
         jobTypeId: job.jobTypeId,
-        jobType: job.jobType ? {
-          id: job.jobType.id,
-          jobTypeName: job.jobType.jobTypeName
-        } : null,
+        jobType: job.jobType
+          ? {
+              id: job.jobType.id,
+              jobTypeName: job.jobType.jobTypeName,
+            }
+          : null,
         levelId: job.levelId,
-        level: job.level ? {
-          id: job.level.id,
-          levelName: job.level.levelName
-        } : null,
+        level: job.level
+          ? {
+              id: job.level.id,
+              levelName: job.level.levelName,
+            }
+          : null,
         experienceLevelId: job.experienceLevelId,
-        experienceLevel: job.experienceLevel ? {
-          id: job.experienceLevel.id,
-          name: job.experienceLevel.name
-        } : null,
+        experienceLevel: job.experienceLevel
+          ? {
+              id: job.experienceLevel.id,
+              name: job.experienceLevel.name,
+            }
+          : null,
 
         // Time fields
         expiryDate: job.expiryDate,
@@ -183,64 +191,75 @@ export const jobService = {
         updatedAt: job.updatedAt,
         status: job.status,
         addressDetail: job.addressDetail,
-        skills: job.skills || []
+        skills: job.skills || [],
+        descriptionWeight: job.descriptionWeight ?? null,
+        skillsWeight: job.skillsWeight ?? null,
+        experienceWeight: job.experienceWeight ?? null,
+        educationWeight: job.educationWeight ?? null,
       }));
 
       // Apply frontend filters
       let filteredJobs = [...jobs];
 
       if (filters.keyword) {
-        filteredJobs = filteredJobs.filter(job =>
-          job.jobTitle?.toLowerCase().includes(filters.keyword.toLowerCase()) ||
-          job.description?.toLowerCase().includes(filters.keyword.toLowerCase())
+        filteredJobs = filteredJobs.filter(
+          (job) =>
+            job.jobTitle
+              ?.toLowerCase()
+              .includes(filters.keyword.toLowerCase()) ||
+            job.description
+              ?.toLowerCase()
+              .includes(filters.keyword.toLowerCase())
         );
       }
 
       if (filters.location) {
-        filteredJobs = filteredJobs.filter(job =>
+        filteredJobs = filteredJobs.filter((job) =>
           job.location?.toLowerCase().includes(filters.location.toLowerCase())
         );
       }
 
-       if (filters.jobType?.length) {
-         filteredJobs = filteredJobs.filter(job =>
-           filters.jobType.includes(job.jobTypeId)
-         );
-       }
+      if (filters.jobType?.length) {
+        filteredJobs = filteredJobs.filter((job) =>
+          filters.jobType.includes(job.jobTypeId)
+        );
+      }
 
       if (filters.category) {
-          filteredJobs = filteredJobs.filter(job =>
-          job.industryId === parseInt(filters.category)
-          );
-        }
+        filteredJobs = filteredJobs.filter(
+          (job) => job.industryId === parseInt(filters.category)
+        );
+      }
 
       if (filters.salary?.min !== undefined) {
-         filteredJobs = filteredJobs.filter(job =>
-          job.minSalary >= filters.salary.min
-         );
-       }
+        filteredJobs = filteredJobs.filter(
+          (job) => job.minSalary >= filters.salary.min
+        );
+      }
 
       if (filters.salary?.max !== undefined) {
-         filteredJobs = filteredJobs.filter(job =>
-          job.maxSalary <= filters.salary.max
-         );
-       }
+        filteredJobs = filteredJobs.filter(
+          (job) => job.maxSalary <= filters.salary.max
+        );
+      }
 
       if (filters.experience?.length) {
-         filteredJobs = filteredJobs.filter(job =>
+        filteredJobs = filteredJobs.filter((job) =>
           filters.experience.includes(job.experienceLevelId)
         );
       }
 
       // Pagination
       const total = filteredJobs.length;
-      const start = filters.page ? (filters.page - 1) * (filters.limit || 10) : 0;
+      const start = filters.page
+        ? (filters.page - 1) * (filters.limit || 10)
+        : 0;
       const end = filters.limit ? start + filters.limit : filteredJobs.length;
       const paginatedJobs = filteredJobs.slice(start, end);
 
       return {
         data: paginatedJobs,
-        total: total
+        total: total,
       };
     } catch (error) {
       console.error("Error fetching jobs:", error);
@@ -267,45 +286,59 @@ export const jobService = {
         yourSkill: job.yourSkill,
         yourExperience: job.yourExperience,
         addressDetail: job.addressDetail,
-        location: `${job.addressDetail || ''}${job.addressDetail && job.provinceName ? ', ' : ''}${job.provinceName || ''}`.trim(),
+        location: `${job.addressDetail || ""}${
+          job.addressDetail && job.provinceName ? ", " : ""
+        }${job.provinceName || ""}`.trim(),
         provinceName: job.provinceName,
         isSalaryNegotiable: job.isSalaryNegotiable,
         minSalary: job.minSalary,
         maxSalary: job.maxSalary,
-        logo: job.company?.urlCompanyLogo || '/images/company-logo/default-logo.png',
+        logo:
+          job.company?.urlCompanyLogo ||
+          "/images/company-logo/default-logo.png",
 
         // Company info
         companyId: job.companyId,
-        company: job.company ? {
-          id: job.company.id,
-          fullName: job.company.fullName,
-          email: job.company.email,
-          companyName: job.company.companyName,
-          location: job.company.location,
-          urlCompanyLogo: job.company.urlCompanyLogo
-        } : null,
+        company: job.company
+          ? {
+              id: job.company.id,
+              fullName: job.company.fullName,
+              email: job.company.email,
+              companyName: job.company.companyName,
+              location: job.company.location,
+              urlCompanyLogo: job.company.urlCompanyLogo,
+            }
+          : null,
 
         // Other IDs
         industryId: job.industryId,
-        industry: job.industry ? {
-          industryId: job.industry.industryId,
-          industryName: job.industry.industryName
-        } : null,
+        industry: job.industry
+          ? {
+              industryId: job.industry.industryId,
+              industryName: job.industry.industryName,
+            }
+          : null,
         jobTypeId: job.jobTypeId,
-        jobType: job.jobType ? {
-          id: job.jobType.id,
-          jobTypeName: job.jobType.jobTypeName
-        } : null,
+        jobType: job.jobType
+          ? {
+              id: job.jobType.id,
+              jobTypeName: job.jobType.jobTypeName,
+            }
+          : null,
         levelId: job.levelId,
-        level: job.level ? {
-          id: job.level.id,
-          levelName: job.level.levelName
-        } : null,
+        level: job.level
+          ? {
+              id: job.level.id,
+              levelName: job.level.levelName,
+            }
+          : null,
         experienceLevelId: job.experienceLevelId,
-        experienceLevel: job.experienceLevel ? {
-          id: job.experienceLevel.id,
-          name: job.experienceLevel.name
-        } : null,
+        experienceLevel: job.experienceLevel
+          ? {
+              id: job.experienceLevel.id,
+              name: job.experienceLevel.name,
+            }
+          : null,
 
         // Time fields
         expiryDate: job.expiryDate,
@@ -314,7 +347,11 @@ export const jobService = {
         createdAt: job.createdAt,
         updatedAt: job.updatedAt,
         status: job.status,
-        skills: job.skills || []
+        skills: job.skills || [],
+        descriptionWeight: job.descriptionWeight ?? null,
+        skillsWeight: job.skillsWeight ?? null,
+        experienceWeight: job.experienceWeight ?? null,
+        educationWeight: job.educationWeight ?? null,
       };
     } catch (error) {
       // Nếu là lỗi 403 hoặc 404 thì ném lại để page.jsx bắt được
@@ -331,7 +368,7 @@ export const jobService = {
   async createJob(jobData) {
     try {
       const config = getAuthConfig();
-      
+
       const payload = {
         title: jobData.title,
         description: jobData.description,
@@ -351,10 +388,30 @@ export const jobService = {
         isSalaryNegotiable: jobData.isSalaryNegotiable,
         minSalary: jobData.isSalaryNegotiable ? null : jobData.minSalary,
         maxSalary: jobData.isSalaryNegotiable ? null : jobData.maxSalary,
-        skillInputs: jobData.skillInputs || []
+        skillInputs: jobData.skillInputs || [],
+        descriptionWeight:
+          typeof jobData.descriptionWeight === "number"
+            ? jobData.descriptionWeight / 100
+            : null,
+        skillsWeight:
+          typeof jobData.skillsWeight === "number"
+            ? jobData.skillsWeight / 100
+            : null,
+        experienceWeight:
+          typeof jobData.experienceWeight === "number"
+            ? jobData.experienceWeight / 100
+            : null,
+        educationWeight:
+          typeof jobData.educationWeight === "number"
+            ? jobData.educationWeight / 100
+            : null,
       };
 
-      const response = await axios.post(`${API_URL}/Job/create`, payload, config);
+      const response = await axios.post(
+        `${API_URL}/Job/create`,
+        payload,
+        config
+      );
       return response.data;
     } catch (error) {
       console.error("Error creating job:", error);
@@ -366,7 +423,7 @@ export const jobService = {
   async updateJob(jobId, jobData) {
     try {
       const config = getAuthConfig();
-      
+
       const payload = {
         title: jobData.title,
         description: jobData.description,
@@ -384,12 +441,19 @@ export const jobService = {
         provinceName: jobData.provinceName,
         addressDetail: jobData.addressDetail,
         isSalaryNegotiable: jobData.isSalaryNegotiable,
-        minSalary: jobData.isSalaryNegotiable ? null : jobData.minSalary,
-        maxSalary: jobData.isSalaryNegotiable ? null : jobData.maxSalary,
-        skillInputs: jobData.skillInputs || []
+        minSalary: jobData.isSalaryNegotiable
+          ? null
+          : Number(jobData.minSalary) || null,
+        maxSalary: jobData.isSalaryNegotiable
+          ? null
+          : Number(jobData.maxSalary) || null,
       };
 
-      const response = await axios.put(`${API_URL}/Job/${jobId}`, payload, config);
+      const response = await axios.put(
+        `${API_URL}/Job/${jobId}`,
+        payload,
+        config
+      );
       return response.data;
     } catch (error) {
       console.error("Error updating job:", error);
@@ -410,7 +474,7 @@ export const jobService = {
   },
 
   // ==================== STATUS MANAGEMENT ====================
-  
+
   // PUT: Cập nhật trạng thái job
   async updateJobStatus(jobId, newStatus) {
     try {
@@ -444,30 +508,46 @@ export const jobService = {
   },
 
   // ==================== FILTERING ====================
-  
+
   // GET: Lọc jobs với backend filter
   async filterJobs(filterParams) {
     try {
       const queryParams = new URLSearchParams();
-      
-      if (filterParams.title) queryParams.append('Title', filterParams.title);
-      if (filterParams.industryId) queryParams.append('IndustryId', filterParams.industryId);
-      if (filterParams.levelId) queryParams.append('LevelId', filterParams.levelId);
-      if (filterParams.jobTypeId) queryParams.append('JobTypeId', filterParams.jobTypeId);
-      if (filterParams.experienceLevelId) queryParams.append('ExperienceLevelId', filterParams.experienceLevelId);
-      if (filterParams.minSalary) queryParams.append('MinSalary', filterParams.minSalary);
-      if (filterParams.maxSalary) queryParams.append('MaxSalary', filterParams.maxSalary);
-      if (filterParams.provinceName) queryParams.append('ProvinceName', filterParams.provinceName);
-      if (filterParams.status) queryParams.append('Status', filterParams.status);
-      if (filterParams.companyId) queryParams.append('CompanyId', filterParams.companyId);
-      if (filterParams.timeStart) queryParams.append('TimeStart', filterParams.timeStart);
-      if (filterParams.timeEnd) queryParams.append('TimeEnd', filterParams.timeEnd);
-      if (filterParams.skillIds) {
-        filterParams.skillIds.forEach(id => queryParams.append('SkillIds', id));
-      }
-      if (filterParams.skillName) queryParams.append('SkillName', filterParams.skillName);
 
-      const response = await axios.get(`${API_URL}/Job/filter?${queryParams.toString()}`);
+      if (filterParams.title) queryParams.append("Title", filterParams.title);
+      if (filterParams.industryId)
+        queryParams.append("IndustryId", filterParams.industryId);
+      if (filterParams.levelId)
+        queryParams.append("LevelId", filterParams.levelId);
+      if (filterParams.jobTypeId)
+        queryParams.append("JobTypeId", filterParams.jobTypeId);
+      if (filterParams.experienceLevelId)
+        queryParams.append("ExperienceLevelId", filterParams.experienceLevelId);
+      if (filterParams.minSalary)
+        queryParams.append("MinSalary", filterParams.minSalary);
+      if (filterParams.maxSalary)
+        queryParams.append("MaxSalary", filterParams.maxSalary);
+      if (filterParams.provinceName)
+        queryParams.append("ProvinceName", filterParams.provinceName);
+      if (filterParams.status)
+        queryParams.append("Status", filterParams.status);
+      if (filterParams.companyId)
+        queryParams.append("CompanyId", filterParams.companyId);
+      if (filterParams.timeStart)
+        queryParams.append("TimeStart", filterParams.timeStart);
+      if (filterParams.timeEnd)
+        queryParams.append("TimeEnd", filterParams.timeEnd);
+      if (filterParams.skillIds) {
+        filterParams.skillIds.forEach((id) =>
+          queryParams.append("SkillIds", id)
+        );
+      }
+      if (filterParams.skillName)
+        queryParams.append("SkillName", filterParams.skillName);
+
+      const response = await axios.get(
+        `${API_URL}/Job/filter?${queryParams.toString()}`
+      );
       return response.data;
     } catch (error) {
       console.error("Error filtering jobs:", error);
@@ -476,7 +556,7 @@ export const jobService = {
   },
 
   // ==================== LOOKUP DATA ====================
-  
+
   // GET: Lấy job types
   async getJobTypes() {
     try {
@@ -533,22 +613,22 @@ export const jobService = {
   },
 
   // ==================== UTILITY FUNCTIONS ====================
-  
+
   // GET: Lấy job categories (mapping từ industries)
   async getJobCategories() {
     try {
       const industries = await this.getIndustries();
       return industries.map((industry, index) => ({
         id: industry.industryId,
-        title: industry.industryName
+        title: industry.industryName,
       }));
     } catch (error) {
       console.error("Error fetching job categories:", error);
       // Fallback to static categories
-     return CATEGORIES.map((category, index) => ({
-       id: index + 1,
-       title: category
-     }));
+      return CATEGORIES.map((category, index) => ({
+        id: index + 1,
+        title: category,
+      }));
     }
   },
 
@@ -556,12 +636,12 @@ export const jobService = {
   async getCompanies() {
     try {
       const response = await axios.get(`${API_URL}/CompanyProfile`);
-      return response.data.map(company => ({
+      return response.data.map((company) => ({
         id: company.userId,
         name: company.companyName,
         description: company.companyProfileDescription,
         location: company.location,
-        logo: company.urlCompanyLogo || '/images/company-logo/default-logo.png',
+        logo: company.urlCompanyLogo || "/images/company-logo/default-logo.png",
         logoLgr: company.imageLogoLgr,
         teamSize: company.teamSize,
         website: company.website,
@@ -580,9 +660,9 @@ export const jobService = {
   async getProvinces() {
     try {
       const response = await axios.get(`https://provinces.open-api.vn/api/p/`);
-      return response.data.map(province => ({
+      return response.data.map((province) => ({
         id: province.code,
-        name: province.name
+        name: province.name,
       }));
     } catch (error) {
       console.error("Error fetching provinces:", error);
@@ -591,12 +671,15 @@ export const jobService = {
   },
 
   // ==================== APPLICATION RELATED ====================
-  
+
   // GET: Lấy jobs đã apply
   async getAppliedJobs() {
     try {
       const config = getAuthConfig();
-      const response = await axios.get(`${API_URL}/Application/my-applied-jobs-with-cvs`, config);
+      const response = await axios.get(
+        `${API_URL}/Application/my-applied-jobs-with-cvs`,
+        config
+      );
       return response.data;
     } catch (error) {
       console.error("Error fetching applied jobs:", error);
@@ -608,7 +691,10 @@ export const jobService = {
   async getJobApplicants(jobId) {
     try {
       const config = getAuthConfig();
-      const response = await axios.get(`${API_URL}/Application/job/${jobId}`, config);
+      const response = await axios.get(
+        `${API_URL}/Application/job/${jobId}`,
+        config
+      );
       return response.data;
     } catch (error) {
       console.error(`Error fetching applicants for job ID ${jobId}:`, error);
@@ -617,12 +703,15 @@ export const jobService = {
   },
 
   // ==================== FAVORITE COMPANIES ====================
-  
+
   // GET: Lấy favorite companies
   async getFavoriteCompanies() {
     try {
       const config = getAuthConfig();
-      const response = await axios.get(`${API_URL}/Application/my-favorite-companies`, config);
+      const response = await axios.get(
+        `${API_URL}/Application/my-favorite-companies`,
+        config
+      );
       return response.data;
     } catch (error) {
       console.error("Error getting favorite companies:", error);
@@ -634,7 +723,11 @@ export const jobService = {
   async favoriteCompany(companyId) {
     try {
       const config = getAuthConfig();
-      const response = await axios.post(`${API_URL}/Application/favorite-company/${companyId}`, {}, config);
+      const response = await axios.post(
+        `${API_URL}/Application/favorite-company/${companyId}`,
+        {},
+        config
+      );
       return response.data;
     } catch (error) {
       console.error("Error favoriting company:", error);
@@ -646,7 +739,10 @@ export const jobService = {
   async unfavoriteCompany(companyId) {
     try {
       const config = getAuthConfig();
-      const response = await axios.delete(`${API_URL}/Application/favorite-company/${companyId}`, config);
+      const response = await axios.delete(
+        `${API_URL}/Application/favorite-company/${companyId}`,
+        config
+      );
       return response.data;
     } catch (error) {
       console.error("Error unfavoriting company:", error);
@@ -655,13 +751,13 @@ export const jobService = {
   },
 
   // ==================== HELPER FUNCTIONS ====================
-  
+
   // Helper: Map job status to display text
   getJobStatusText(status) {
     const statusMap = {
-      'pending': 'Chờ duyệt',
-      'active': 'Đang hoạt động',
-      'inactive': 'Tạm dừng'
+      pending: "Chờ duyệt",
+      active: "Đang hoạt động",
+      inactive: "Tạm dừng",
     };
     return statusMap[status] || status;
   },
@@ -671,7 +767,7 @@ export const jobService = {
     try {
       const token = getToken();
       if (!token) {
-        throw new Error('No authentication token found');
+        throw new Error("No authentication token found");
       }
 
       const response = await axios.put(
@@ -679,13 +775,13 @@ export const jobService = {
         {},
         {
           headers: {
-            'Authorization': `Bearer ${token}`
-          }
+            Authorization: `Bearer ${token}`,
+          },
         }
       );
       return response.data;
     } catch (error) {
-      console.error('Error approving job:', error);
+      console.error("Error approving job:", error);
       throw error;
     }
   },
@@ -694,7 +790,7 @@ export const jobService = {
     try {
       const token = getToken();
       if (!token) {
-        throw new Error('No authentication token found');
+        throw new Error("No authentication token found");
       }
 
       const response = await axios.put(
@@ -702,115 +798,13 @@ export const jobService = {
         {},
         {
           headers: {
-            'Authorization': `Bearer ${token}`
-          }
+            Authorization: `Bearer ${token}`,
+          },
         }
       );
       return response.data;
     } catch (error) {
-      console.error('Error rejecting job:', error);
-      throw error;
-    }
-  },
-
-  async deleteJob(jobId) {
-    try {
-      const token = getToken();
-      if (!token) {
-        throw new Error('No authentication token found');
-      }
-
-      const response = await axios.delete(
-        `${API_URL}/Job/${jobId}`,
-        {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        }
-      );
-      return response.data;
-    } catch (error) {
-      console.error('Error deleting job:', error);
-      throw error;
-    }
-  },
-
-  async updateJob(jobId, jobData) {
-    try {
-      const token = getToken();
-      if (!token) {
-        throw new Error('No authentication token found');
-      }
-
-      const response = await axios.put(
-        `${API_URL}/Job/${jobId}`,
-        jobData,
-        {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        }
-      );
-      return response.data;
-    } catch (error) {
-      console.error('Error updating job:', error);
-      throw error;
-    }
-  },
-
-  async createJob(jobData) {
-    try {
-      const token = getToken();
-      if (!token) {
-        throw new Error('No authentication token found');
-      }
-
-      const response = await axios.post(
-        `${API_URL}/Job/create`,
-        jobData,
-        {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        }
-      );
-      return response.data;
-    } catch (error) {
-      console.error('Error creating job:', error);
-      throw error;
-    }
-  },
-
-  async getFilteredJobs(filters = {}) {
-    try {
-      const token = getToken();
-      if (!token) {
-        throw new Error('No authentication token found');
-      }
-
-      // Convert filters to query string
-      const queryParams = new URLSearchParams();
-      Object.entries(filters).forEach(([key, value]) => {
-        if (value !== undefined && value !== null && value !== '') {
-          if (Array.isArray(value)) {
-            value.forEach(v => queryParams.append(key, v));
-          } else {
-            queryParams.append(key, value);
-          }
-        }
-      });
-
-      const queryString = queryParams.toString();
-      const url = `${API_URL}/Job/filter${queryString ? `?${queryString}` : ''}`;
-
-      const response = await axios.get(url, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-      return response.data;
-    } catch (error) {
-      console.error('Error fetching filtered jobs:', error);
+      console.error("Error rejecting job:", error);
       throw error;
     }
   },
@@ -818,49 +812,46 @@ export const jobService = {
   // Helper: Check if job can be edited by company
   canCompanyEditJob(job) {
     if (!job) return false;
-    
+
     // Job must not be expired
     if (new Date(job.timeEnd) < new Date()) return false;
-    
+
     // Job must not be locked by admin
     if (job.deactivatedByAdmin) return false;
-    
+
     return true;
   },
 
   // Helper: Check if job can be deleted
   canDeleteJob(job) {
     if (!job) return false;
-    
+
     // Cannot delete active jobs
-    if (job.status === 'active') return false;
-    
+    if (job.status === "active") return false;
+
     return true;
   },
 
   // Helper: Format salary display
   formatSalary(minSalary, maxSalary, isNegotiable) {
-    if (isNegotiable) return 'Thỏa thuận';
+    if (isNegotiable) return "Thỏa thuận";
     if (minSalary && maxSalary) {
       return `${minSalary.toLocaleString()} - ${maxSalary.toLocaleString()} VNĐ`;
     }
     if (minSalary) return `Từ ${minSalary.toLocaleString()} VNĐ`;
     if (maxSalary) return `Đến ${maxSalary.toLocaleString()} VNĐ`;
-    return 'Không công bố';
+    return "Không công bố";
   },
 
   // Helper: Get job status color for UI
   getJobStatusColor(status) {
     const colorMap = {
-      'pending': 'warning',
-      'active': 'success',
-      'inactive': 'secondary'
+      pending: "warning",
+      active: "success",
+      inactive: "secondary",
     };
-    return colorMap[status] || 'default';
-
+    return colorMap[status] || "default";
   },
-
-
 
   async getAppliedCount(jobId) {
     try {
@@ -872,7 +863,7 @@ export const jobService = {
         return 0;
       }
       // Các lỗi khác mới log
-      console.error('Error fetching applied count:', error);
+      console.error("Error fetching applied count:", error);
       return 0;
     }
   },
@@ -880,10 +871,8 @@ export const jobService = {
   // Hàm lấy tất cả job active (status === 1)
   async getActiveJobs(filters = {}) {
     const { data: jobs } = await this.getJobs(filters);
-    return jobs.filter(job => job.status === 1);
+    return jobs.filter((job) => job.status === 1);
   },
-
 };
 
 export default jobService;
-

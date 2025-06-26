@@ -36,7 +36,7 @@ const ProfileCard = ({ profile, onEdit }) => {
       </button>
       <div style={{ display: "flex", alignItems: "center", gap: 32 }}>
         <img
-          src={profile.image}
+          src={profile.image || profile.avatar || "/default-avatar.png"}
           alt="avatar"
           style={{
             width: 72,
@@ -75,7 +75,7 @@ const ProfileCard = ({ profile, onEdit }) => {
               marginBottom: 18,
             }}
           >
-            {profile.jobTitle || "Update your title"}
+            {profile.jobTitle || "Update your job title"}
             {!profile.jobTitle && (
               <span
                 style={{ marginLeft: 8, fontSize: 16, color: "#e60023" }}

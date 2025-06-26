@@ -6,16 +6,14 @@ import ContactList from "./ContactList";
 import ContentField from "./ContentField";
 import { useDispatch, useSelector } from "react-redux";
 import { chatSidebarToggle } from "../../../../../features/toggle/toggleSlice";
-import { authService } from "../../../../../services/authService";
 import messageService from '../../../../../services/messageService';
 import signalRService from '../../../../../services/signalRService';
 import { useSearchParams } from 'next/navigation';
-import { HubConnectionBuilder, HttpTransportType } from '@microsoft/signalr';
-import chatService from '../../../../../services/chatService';
+import apiService from '../../../../../services/api.service';
 
 const ChatBox = () => {
     const dispatch = useDispatch();
-    const { user, token } = useSelector((state) => state.auth);
+    const { user, token, profileUpdated } = useSelector((state) => state.auth);
     const searchParams = useSearchParams();
     const urlCompanyId = searchParams.get('companyId');
     const [messages, setMessages] = useState([]);
@@ -31,11 +29,24 @@ const ChatBox = () => {
     const [partnerOnline, setPartnerOnline] = useState(false);
 
     useEffect(() => {
-        const id = user?.id || user?.userId || authService.getStoredUser()?.id || authService.getStoredUser()?.userId;
+        const id = user?.id || user?.userId;
         setCurrentUserId(id);
-        setCurrentUserFullName(authService.getFullName() || '');
-        setCurrentUserProfileImage(authService.getProfileImage() || '');
-    }, [user]);
+
+        const fetchUserProfile = async () => {
+            if (id) {
+                try {
+                    const profile = await apiService.get('/CandidateProfile/me');
+                    setCurrentUserFullName(profile.fullName || '');
+                    setCurrentUserProfileImage(profile.image || '');
+                } catch (error) {
+                    console.error("Failed to fetch user profile", error);
+                }
+            }
+        }
+
+        fetchUserProfile();
+
+    }, [user, profileUpdated]);
 
     const fetchChatContacts = useCallback(async () => {
         if (!currentUserId) return;

@@ -444,7 +444,9 @@ const EducationModal = ({ open, onClose, onSubmit, education }) => {
                 </div>
               </div>
               <div style={{ gridColumn: "1/3" }}>
-                <label className="edu-label">Additional details</label>
+                <label className="edu-label">
+                  Additional details (Optional)
+                </label>
                 <input
                   name="detail"
                   className="edu-input"
