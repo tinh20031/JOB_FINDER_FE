@@ -1,5 +1,5 @@
 "use client";
-import { useEffect } from "react";
+import { useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Cookies from "js-cookie";
 import { useDispatch } from "react-redux";
@@ -7,6 +7,14 @@ import { setLoginState } from "@/features/auth/authSlice";
 import { jwtDecode } from "jwt-decode";
 
 export default function Callback() {
+  return (
+    <Suspense>
+      <CallbackContent />
+    </Suspense>
+  );
+}
+
+function CallbackContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const dispatch = useDispatch();
