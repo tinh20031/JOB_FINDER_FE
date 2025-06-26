@@ -193,21 +193,50 @@ const Experiences = ({
                 {formatMonthYear(work.yearStart)} -{" "}
                 {work.isWorking ? "NOW" : formatMonthYear(work.yearEnd)}
               </div>
-              <div
-                className="text"
-                style={{ marginTop: 6 }}
-                dangerouslySetInnerHTML={{ __html: work.workDescription }}
-              ></div>
-              {work.proJects && (
-                <div style={{ marginTop: 10 }}>
-                  <div style={{ fontWeight: 700, marginBottom: 2 }}>
-                    Project
-                  </div>
-                  <div
-                    className="text"
-                    dangerouslySetInnerHTML={{ __html: work.proJects }}
-                  ></div>
-                </div>
+              {work.workDescription && (
+                <div
+                  className="text"
+                  style={{ marginTop: 6 }}
+                  dangerouslySetInnerHTML={{
+                    __html: `<strong>Description:</strong> ${work.workDescription}`,
+                  }}
+                ></div>
+              )}
+              {work.responsibilities && (
+                <div
+                  className="text"
+                  style={{ marginTop: 6 }}
+                  dangerouslySetInnerHTML={{
+                    __html: `<strong>Responsibilities:</strong> ${work.responsibilities}`,
+                  }}
+                ></div>
+              )}
+              {work.achievements && (
+                <div
+                  className="text"
+                  style={{ marginTop: 6 }}
+                  dangerouslySetInnerHTML={{
+                    __html: `<strong>Achievements:</strong> ${work.achievements}`,
+                  }}
+                ></div>
+              )}
+              {work.technologies && (
+                <div
+                  className="text"
+                  style={{ marginTop: 6 }}
+                  dangerouslySetInnerHTML={{
+                    __html: `<strong>Technologies Used:</strong> ${work.technologies}`,
+                  }}
+                ></div>
+              )}
+              {work.projectName && (
+                <div
+                  className="text"
+                  style={{ marginTop: 6 }}
+                  dangerouslySetInnerHTML={{
+                    __html: `<strong>Project Name:</strong> ${work.projectName}`,
+                  }}
+                ></div>
               )}
             </div>
             <div

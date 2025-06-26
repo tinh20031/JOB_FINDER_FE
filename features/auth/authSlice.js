@@ -1,5 +1,5 @@
-import { createSlice } from '@reduxjs/toolkit';
-import Cookies from 'js-cookie';
+import { createSlice } from "@reduxjs/toolkit";
+import Cookies from "js-cookie";
 
 const initialState = {
   isLoggedIn: false,
@@ -11,14 +11,15 @@ const initialState = {
 };
 
 const authSlice = createSlice({
-  name: 'auth',
+  name: "auth",
   initialState,
   reducers: {
     setLoginState: (state, action) => {
       state.isLoggedIn = action.payload.isLoggedIn;
       const user = action.payload.user || {}; // Use 'user' for clarity
-      const userAvatar = user.image || user.avatar || "/images/resource/candidate-1.png";
-      
+      const userAvatar =
+        user.image || user.avatar || "/images/resource/candidate-1.png";
+
       state.user = {
         ...user,
         image: userAvatar,
@@ -26,7 +27,7 @@ const authSlice = createSlice({
       };
 
       // Standardize userId extraction
-      state.userId = user.id || user.userId || null; 
+      state.userId = user.id || user.userId || user.sub || user.nameid || null;
       state.role = action.payload.role || null;
       state.token = action.payload.token || null; // Lưu token vào Redux
     },
@@ -43,5 +44,6 @@ const authSlice = createSlice({
   },
 });
 
-export const { setLoginState, clearLoginState, setProfileUpdated } = authSlice.actions;
-export default authSlice.reducer; 
+export const { setLoginState, clearLoginState, setProfileUpdated } =
+  authSlice.actions;
+export default authSlice.reducer;

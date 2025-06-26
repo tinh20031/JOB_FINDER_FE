@@ -1,5 +1,3 @@
-
-
 'use client'
 
 import { Gallery, Item } from "react-photoswipe-gallery";

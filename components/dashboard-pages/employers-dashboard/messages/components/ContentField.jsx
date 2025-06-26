@@ -72,8 +72,7 @@ const ChatBoxContentField = ({ messages, sendMessage, currentChatPartner, curren
           const parsedTimestamp = msg.sentAt ? new Date(msg.sentAt) : null;
           const timeToDisplay = parsedTimestamp && isValid(parsedTimestamp) ? format(parsedTimestamp, 'HH:mm') : '';
           const isMyMessage = msg.senderId == currentUserId;
-          const companyAvatar = authService.getProfileImageCompany() || '/images/resource/company-6.png';
-          const companyName = authService.getFullNameCompany() || 'Company';
+          
           return (
             <div key={index} className={`d-flex ${isMyMessage ? 'justify-content-end reply' : 'justify-content-start'} mb-1`} style={{marginBottom: '4px'}}>
               <div className="img_cont_msg">
@@ -83,7 +82,7 @@ const ChatBoxContentField = ({ messages, sendMessage, currentChatPartner, curren
                   style={{ width: 32, height: 32, minWidth: 32, minHeight: 32, maxWidth: 32, maxHeight: 32 }}
                   src={
                     isMyMessage
-                      ? companyAvatar
+                      ? (currentUserProfileImage || '/images/resource/company-6.png')
                       : (currentChatPartner.avatar || '/images/resource/default-avatar.png')
                   }
                   alt="avatar"
@@ -91,7 +90,7 @@ const ChatBoxContentField = ({ messages, sendMessage, currentChatPartner, curren
                 />
                 <div className="name small-name">
                   {isMyMessage
-                    ? companyName
+                    ? (currentUserFullName || 'Me')
                     : (currentChatPartner.name)}
                   <span className="msg_time small-time">{timeToDisplay}</span>
                 </div>

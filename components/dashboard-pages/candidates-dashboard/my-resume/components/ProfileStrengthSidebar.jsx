@@ -82,7 +82,8 @@ const ProfileStrengthSidebar = ({
         <h4
           style={{
             fontWeight: 500,
-            fontSize: 16,
+            fontSize: 20,
+            fontWeight: "bold",
             marginBottom: 20,
             color: "#202124",
           }}
@@ -128,6 +129,7 @@ const ProfileStrengthSidebar = ({
               position: "relative",
               zIndex: 2,
               textAlign: "left",
+              fontWeight: "bold",
             }}
           >
             {strength.percentage < 70 ? (
@@ -317,8 +319,10 @@ const ProfileStrengthSidebar = ({
         )}
         {/* Nút Preview & Download CV */}
         {strength.percentage >= 70 && (
-          <button
-            onClick={handlePreviewDownloadCV}
+          <a
+            href="/candidates-dashboard/cv-templates"
+            target="_blank"
+            rel="noopener noreferrer"
             style={{
               width: "100%",
               margin: "8px auto 0 auto",
@@ -333,12 +337,14 @@ const ProfileStrengthSidebar = ({
               cursor: "pointer",
               boxShadow: "0 2px 8px rgba(115,103,240,0.08)",
               transition: "background 0.2s",
+              textAlign: "center",
+              textDecoration: "none"
             }}
-            onMouseOver={(e) => (e.currentTarget.style.background = "#5e50ee")}
-            onMouseOut={(e) => (e.currentTarget.style.background = "#7367F0")}
+            onMouseOver={e => e.currentTarget.style.background = "#5e50ee"}
+            onMouseOut={e => e.currentTarget.style.background = "#7367F0"}
           >
             Preview & Download CV
-          </button>
+          </a>
         )}
       </div>
     </div>

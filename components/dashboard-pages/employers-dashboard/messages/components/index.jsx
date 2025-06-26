@@ -6,13 +6,13 @@ import ContactList from "./ContactList";
 import ContentField from "./ContentField";
 import { useDispatch, useSelector } from "react-redux";
 import { chatSidebarToggle } from "../../../../../features/toggle/toggleSlice";
-import { authService } from "../../../../../services/authService";
 import messageService from '../../../../../services/messageService';
 import signalRService from '../../../../../services/signalRService';
+import apiService from '../../../../../services/api.service';
 
 const ChatBox = () => {
     const dispatch = useDispatch();
-    const { user, token } = useSelector((state) => state.auth);
+    const { user, token, profileUpdated } = useSelector((state) => state.auth);
     const [messages, setMessages] = useState([]);
     const [currentChatPartnerId, setCurrentChatPartnerId] = useState(null);
     const [chatContacts, setChatContacts] = useState([]);
@@ -26,11 +26,22 @@ const ChatBox = () => {
     const [onlineUserIds, setOnlineUserIds] = useState([]);
 
     useEffect(() => {
-        const id = user?.id || user?.userId || authService.getCompanyId();
+        const id = user?.id || user?.userId;
         setCurrentUserId(id);
-        setCurrentUserFullName(authService.getFullNameCompany() || '');
-        setCurrentUserProfileImage(authService.getProfileImageCompany() || '');
-    }, [user]);
+
+        const fetchCompanyProfile = async () => {
+            if (id) {
+                try {
+                    const profile = await apiService.get(`/CompanyProfile/${id}`);
+                    setCurrentUserFullName(profile.companyName || 'My Company');
+                    setCurrentUserProfileImage(profile.urlCompanyLogo || '');
+                } catch (error) {
+                    console.error("Failed to fetch company profile", error);
+                }
+            }
+        }
+        fetchCompanyProfile();
+    }, [user, profileUpdated]);
 
     const fetchChatContacts = useCallback(async () => {
         if (!currentUserId) return;
