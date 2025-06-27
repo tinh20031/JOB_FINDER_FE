@@ -1,8 +1,31 @@
 import Link from "next/link";
-import jobs from "../../../data/job-featured";
 import Image from "next/image";
+import { useEffect, useState } from "react";
+import { jobService } from "@/services/jobService";
 
-const RelatedJobs = () => {
+const RelatedJobs = ({ companyId }) => {
+  const [jobs, setJobs] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!companyId) return;
+    setLoading(true);
+    jobService
+      .getJobs({ companyId })
+      .then((res) => {
+        setJobs(res.data || []);
+        setLoading(false);
+      })
+      .catch(() => {
+        setJobs([]);
+        setLoading(false);
+      });
+  }, [companyId]);
+
+  if (!companyId) return null;
+  if (loading) return <div>Loading related jobs...</div>;
+  if (!jobs.length) return <div>No related jobs found.</div>;
+
   return (
     <>
       {jobs.slice(0, 3).map((item) => (
@@ -19,33 +42,25 @@ const RelatedJobs = () => {
               <ul className="job-info">
                 <li>
                   <span className="icon flaticon-briefcase"></span>
-                  {item.company}
+                  {item.company?.companyName || ""}
                 </li>
-                {/* compnay info */}
                 <li>
                   <span className="icon flaticon-map-locator"></span>
                   {item.location}
                 </li>
-                {/* location info */}
                 <li>
-                  <span className="icon flaticon-clock-3"></span> {item.time}
+                  <span className="icon flaticon-clock-3"></span> {item.timeStart ? new Date(item.timeStart).toLocaleDateString() : ""}
                 </li>
-                {/* time info */}
                 <li>
-                  <span className="icon flaticon-money"></span> {item.salary}
+                  <span className="icon flaticon-money"></span> {item.isSalaryNegotiable ? "Negotiable" : `${item.minSalary} - ${item.maxSalary}`}
                 </li>
-                {/* salary info */}
               </ul>
-              {/* End .job-info */}
 
               <ul className="job-other-info">
-                {item.jobType.map((val, i) => (
-                  <li key={i} className={`${val.styleClass}`}>
-                    {val.type}
-                  </li>
-                ))}
+                {item.jobType && item.jobType.jobTypeName && (
+                  <li className="default-tag">{item.jobType.jobTypeName}</li>
+                )}
               </ul>
-              {/* End .job-other-info */}
               <button className="bookmark-btn">
                 <span className="flaticon-bookmark"></span>
               </button>

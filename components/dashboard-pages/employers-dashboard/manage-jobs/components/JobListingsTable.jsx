@@ -263,11 +263,13 @@ const JobListingsTable = () => {
                       </td>
                       <td className="applied">
                         <Link href={`/employers-dashboard/all-applicants?jobId=${job.id}`}>
-                          {appliedCounts[job.id] === 0
-                            ? 'No Applied'
-                            : appliedCounts[job.id] > 9
-                              ? '9+ Applied'
-                              : `${appliedCounts[job.id]} Applied`}
+                          {appliedCounts[job.id] === undefined
+                            ? <span className="skeleton skeleton-applied" style={{ width: 30, height: 16, display: 'inline-block', verticalAlign: 'middle' }} />
+                            : appliedCounts[job.id] === 0
+                              ? 'No Applied'
+                              : appliedCounts[job.id] > 9
+                                ? '9+ Applied'
+                                : `${appliedCounts[job.id]} Applied`}
                         </Link>
                       </td>
                       <td>
@@ -385,6 +387,23 @@ const JobListingsTable = () => {
           Are you sure you want to <b>{pendingNewStatus === 'active' ? 'activate' : 'deactivate'}</b> the job <b>{pendingStatusJob?.jobTitle}</b>?
         </p>
       </Modal>
+
+      <style jsx>{`
+        .skeleton-applied {
+          background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 37%, #f0f0f0 63%);
+          background-size: 400% 100%;
+          animation: skeleton-loading 1.4s ease infinite;
+          border-radius: 6px;
+          height: 16px;
+          width: 30px;
+          display: inline-block;
+          vertical-align: middle;
+        }
+        @keyframes skeleton-loading {
+          0% { background-position: 100% 50%; }
+          100% { background-position: 0 50%; }
+        }
+      `}</style>
     </>
   );
 };

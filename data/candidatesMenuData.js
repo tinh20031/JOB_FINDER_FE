@@ -63,23 +63,6 @@ module.exports = [
     active: "",
   },
   {
-    id: 10,
-    name: "Change Password",
-    icon: "la-lock",
-    routePath: "/candidates-dashboard/change-password",
-    active: "",
-  },
-  {
-    id: 11,
-    name: "Logout",
-    icon: "la-sign-out",
-    routePath: "/login",
-    active: "",
-    isLogout: true,
-  },
-
- 
-  {
     id: 13,
     name: "Favorite Companies",
     icon: "la-star",

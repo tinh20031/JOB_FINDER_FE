@@ -1,31 +1,69 @@
+"use client";
+import { useEffect, useState } from "react";
+import jobService from "../../../../../services/jobService";
+import { applicationService } from "../../../../../services/applicationService";
+import messageService from "../../../../../services/messageService";
+
 const TopCardBlock = () => {
+  const [postedJobs, setPostedJobs] = useState(0);
+  const [applicants, setApplicants] = useState(0);
+  const [candidates, setCandidates] = useState(0);
+  const [messages, setMessages] = useState(0);
+
+  useEffect(() => {
+    // Gọi API lấy danh sách jobs và đếm số lượng
+    jobService.getJobs().then((res) => {
+      setPostedJobs(res.total || 0);
+    });
+    applicationService.getAllApplications().then((res) => {
+      setApplicants(Array.isArray(res) ? res.length : 0);
+    });
+    // Lấy companyId từ localStorage (hoặc từ redux nếu có)
+    const userStr = localStorage.getItem('user');
+    let companyId = null;
+    if (userStr) {
+      try {
+        const user = JSON.parse(userStr);
+        companyId = user.companyId || user.id || user.userId;
+      } catch {}
+    }
+    if (companyId) {
+      applicationService.getUniqueCandidatesByCompany(companyId).then((count) => {
+        setCandidates(count || 0);
+      });
+      messageService.getUniqueMessageUsersByCompany(companyId).then((count) => {
+        setMessages(count || 0);
+      });
+    }
+  }, []);
+
   const cardContent = [
     {
       id: 1,
       icon: "flaticon-briefcase",
-      countNumber: "22",
+      countNumber: postedJobs,
       metaName: "Posted Jobs",
       uiClass: "ui-blue",
     },
     {
       id: 2,
       icon: "la-file-invoice",
-      countNumber: "9382",
-      metaName: "Application",
+      countNumber: applicants,
+      metaName: "Applicants",
       uiClass: "ui-red",
     },
     {
       id: 3,
       icon: "la-comment-o",
-      countNumber: "74",
+      countNumber: messages,
       metaName: "Messages",
       uiClass: "ui-yellow",
     },
     {
       id: 4,
       icon: "la-bookmark-o",
-      countNumber: "32",
-      metaName: "Shortlist",
+      countNumber: candidates,
+      metaName: "Candidates",
       uiClass: "ui-green",
     },
   ];

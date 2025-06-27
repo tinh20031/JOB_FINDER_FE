@@ -1,5 +1,5 @@
 import dynamic from "next/dynamic";
-import MyProfile from "@/components/dashboard-pages/candidates-dashboard/my-profile";
+import MyProfile from "@/components/dashboard-pages/candidates-dashboard/my-resume";
 
 export const metadata = {
   title: "My Profile || Superio - Job Borad React NextJS Template",

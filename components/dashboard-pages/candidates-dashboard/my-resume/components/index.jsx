@@ -243,9 +243,7 @@ const index = () => {
               />
             </div>
             <div className="form-group col-12">
-              <button type="submit" className="theme-btn btn-style-one">
-                Save
-              </button>
+              {/* Removed Save button here */}
             </div>
             {/* <!-- Input --> */}
           </div>
