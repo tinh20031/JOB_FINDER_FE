@@ -206,5 +206,17 @@ export const applicationService = {
       console.error('Error fetching applications by job:', error);
       throw error;
     }
+  },
+
+  // Lấy tất cả application (tất cả applicant trong hệ thống)
+  getAllApplications: async () => {
+    const response = await axios.get(`${API_URL}/Application`);
+    return response.data;
+  },
+
+  // Lấy số lượng candidate đã apply vào company (không trùng lặp)
+  getUniqueCandidatesByCompany: async (companyId) => {
+    const response = await axios.get(`${API_URL}/Application/company/${companyId}/unique-candidates`);
+    return response.data.count;
   }
 }; 

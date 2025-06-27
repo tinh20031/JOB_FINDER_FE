@@ -35,6 +35,12 @@ const messageService = {
   joinGroup: () => {
     return axios.post(`${API_URL}/join-group`, {}, { headers: getHeaders() });
   },
+
+  getUniqueMessageUsersByCompany: async (companyId) => {
+    const response = await axios.get(`${API_URL}/candidates-messaged/${companyId}`);
+    // API trả về mảng các candidate đã nhắn tin, chỉ cần lấy length
+    return Array.isArray(response.data) ? response.data.length : 0;
+  }
 };
 
 export default messageService; 
