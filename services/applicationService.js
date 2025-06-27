@@ -218,5 +218,14 @@ export const applicationService = {
   getUniqueCandidatesByCompany: async (companyId) => {
     const response = await axios.get(`${API_URL}/Application/company/${companyId}/unique-candidates`);
     return response.data.count;
+  },
+
+  // Lấy danh sách recent applicants của công ty
+  getRecentApplicantsByCompany: async (companyId, take = 10) => {
+    const response = await axios.get(
+      `${API_URL}/Application/company/${companyId}/recent-applicants`,
+      { params: { take } }
+    );
+    return response.data;
   }
 }; 
