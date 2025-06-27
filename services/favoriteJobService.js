@@ -12,4 +12,4 @@ export const addFavoriteJob = (userId, jobId) =>
   axios.post(API_URL, { UserId: userId, JobId: jobId });
 
 export const removeFavoriteJob = (userId, jobId) =>
-  axios.delete(`${API_URL}/${userId}/${jobId}`); 
+  axios.delete(`${API_URL}/${userId}/${jobId}`);
