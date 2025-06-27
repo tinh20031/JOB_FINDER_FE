@@ -12,6 +12,7 @@ import { useDispatch } from "react-redux";
 import { setProfileUpdated } from "@/features/auth/authSlice";
 import Modal from "@/components/common/Modal";
 import "@/styles/modal.css";
+import { authService } from '@/services/authService';
 
 const Index = () => {
     const router = useRouter();
@@ -180,21 +181,23 @@ const Index = () => {
         fetchCompanyProfile();
     }, []);
 
+    // Đưa handleBeforeUnload ra ngoài useEffect để có thể remove đúng instance
+    // const handleBeforeUnload = (event) => {
+    //     if (window.hasUnsavedChangesGlobal) {
+    //         event.preventDefault();
+    //         event.returnValue = '';
+    //     }
+    // };
+
     // Effect to handle browser refresh/close (uses native browser confirmation)
-    useEffect(() => {
-        const handleBeforeUnload = (event) => {
-            if (hasUnsavedChanges) {
-                event.preventDefault();
-                event.returnValue = ''; // Standard way to trigger browser confirmation dialog
-            }
-        };
+    // useEffect(() => {
+    //     window.hasUnsavedChangesGlobal = hasUnsavedChanges;
+    //     window.addEventListener('beforeunload', handleBeforeUnload);
 
-        window.addEventListener('beforeunload', handleBeforeUnload);
-
-        return () => {
-            window.removeEventListener('beforeunload', handleBeforeUnload);
-        };
-    }, [hasUnsavedChanges]);
+    //     return () => {
+    //         window.removeEventListener('beforeunload', handleBeforeUnload);
+    //     };
+    // }, [hasUnsavedChanges]);
 
     // Effect to handle in-app navigation
     useEffect(() => {
@@ -362,6 +365,11 @@ const Index = () => {
             setIsEditing(false);
             setHasUnsavedChanges(false);
             setInitialProfileData(response); // Update initial data with saved data
+            setCompanyProfileData(prev => ({
+                ...prev,
+                logoFile: null,
+                coverFile: null,
+            }));
             dispatch(setProfileUpdated(Date.now()));
         } catch (error) {
             console.error('Error saving profile:', error);
@@ -394,6 +402,7 @@ const Index = () => {
     const handleDiscardAndLeave = () => {
         setShowCustomConfirmationModal(false);
         setHasUnsavedChanges(false);
+        // window.removeEventListener('beforeunload', handleBeforeUnload);
         if (intendedPath) {
             window.location.href = intendedPath;
         }
@@ -451,6 +460,27 @@ const Index = () => {
         setIsEditing(true);
     };
 
+    const PreviewProfileButton = () => {
+        const [companyId, setCompanyId] = useState(null);
+        useEffect(() => {
+            setCompanyId(authService.getCompanyId());
+        }, []);
+        const handlePreview = () => {
+            if (companyId) {
+                window.open(`/employers-single-v1/${companyId}`, '_blank');
+            }
+        };
+        return (
+            <button
+                className="btn-confirm"
+                onClick={handlePreview}
+                disabled={!companyId}
+            >
+                Preview Profile
+            </button>
+        );
+    };
+
     return (
         <>
             <ToastContainer position="top-right" autoClose={3000} />
@@ -461,16 +491,19 @@ const Index = () => {
                     <>
                         <div className="profile-card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
                             <h2 style={{ margin: 0 }}>My Profile</h2>
-                            <div>
+                            <div style={{ display: 'flex', gap: 12 }}>
                                 {isEditing ? (
-                                    <div style={{ display: 'flex', gap: 12 }}>
+                                    <>
                                         <button className="btn-confirm" onClick={handleSaveClick}>Save</button>
                                         <button className="btn-cancel" onClick={() => setIsEditing(false)}>Cancel</button>
-                                    </div>
+                                    </>
                                 ) : (
-                                    <button className="btn-confirm" onClick={handleEditProfile}>
-                                        Edit Profile
-                                    </button>
+                                    <>
+                                        <button className="btn-confirm" onClick={handleEditProfile}>
+                                            Edit Profile
+                                        </button>
+                                        <PreviewProfileButton />
+                                    </>
                                 )}
                             </div>
                         </div>

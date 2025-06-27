@@ -1,3 +1,5 @@
+"use client";
+
 import MobileMenu from "../../../header/MobileMenu";
 import LoginPopup from "../../../common/form/login/LoginPopup";
 import DashboardCandidatesSidebar from "../../../header/DashboardCandidatesSidebar";
@@ -6,8 +8,12 @@ import CopyrightFooter from "../../CopyrightFooter";
 import Resume from "./components";
 import DashboardCandidatesHeader from "../../../header/DashboardCandidatesHeader";
 import MenuToggler from "../../MenuToggler";
+import Link from "next/link";
+import useResumeData from "@/services/useResumeData";
 
 const index = () => {
+  const { profile } = useResumeData();
+
   return (
     <div className="page-wrapper dashboard">
       <span className="header-span"></span>
@@ -39,7 +45,32 @@ const index = () => {
               <div className="ls-widget">
                 <div className="tabs-box">
                   <div className="widget-title">
-                    <h4>My Profile</h4>
+                    {profile?.candidateProfileId ? (
+                      <Link href={`/candidates-single-v1/${profile.candidateProfileId}`} legacyBehavior>
+                        <a style={{
+                          display: 'inline-block',
+                          padding: '6px 18px',
+                          background: '#7367F0',
+                          color: '#fff',
+                          borderRadius: 8,
+                          fontWeight: 700,
+                          fontSize: 20,
+                          textDecoration: 'none',
+                          boxShadow: '0 2px 8px rgba(115,103,240,0.08)',
+                          transition: 'background 0.2s',
+                          marginBottom: 0,
+                          marginTop: 0,
+                          cursor: 'pointer',
+                        }}
+                        onMouseOver={e => e.currentTarget.style.background = '#5e50ee'}
+                        onMouseOut={e => e.currentTarget.style.background = '#7367F0'}
+                      >
+                        My Profile
+                      </a>
+                    </Link>
+                    ) : (
+                      <h4>My Profile</h4>
+                    )}
                   </div>
                   {/* End widget-title */}
 

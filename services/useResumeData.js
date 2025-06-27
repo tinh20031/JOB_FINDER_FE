@@ -563,3 +563,10 @@ export async function fetchProfileStrength(token) {
   }
   return await response.json();
 }
+
+export async function getAboutMeByUserId(userId) {
+  if (!userId) return null;
+  const res = await fetch(`${API_URL}/AboutMe/${userId}`);
+  if (!res.ok) return null;
+  return await res.json();
+}

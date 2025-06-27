@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from "react";
-import { Modal, Form, Input, Button, message, Select } from "antd";
 import { useSelector } from "react-redux";
 import { industryService } from "@/services/industryService";
 import { userService } from "@/services/userService";
@@ -9,21 +8,42 @@ import './styles/_becomeRecruiterModal.scss';
 
 const BecomeRecruiterModal = ({ open, onCancel }) => {
   const { userId } = useSelector((state) => state.auth);
-  const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
   const [provinces, setProvinces] = useState([]);
   const [industries, setIndustries] = useState([]);
   const [requestSent, setRequestSent] = useState(false);
   const [statusMessage, setStatusMessage] = useState('');
   const [error, setError] = useState(null);
+  const [form, setForm] = useState({
+    companyName: '',
+    companyProfileDescription: '',
+    location: '',
+    teamSize: '',
+    website: '',
+    contact: '',
+    industryId: '',
+  });
+  const [formErrors, setFormErrors] = useState({});
 
-  useEffect(() => { 
+  useEffect(() => {
     if (open) {
       locationService.getProvinces().then(data => {
         setProvinces(data);
       });
       fetchIndustries();
       setRequestSent(false);
+      setForm({
+        companyName: '',
+        companyProfileDescription: '',
+        location: '',
+        teamSize: '',
+        website: '',
+        contact: '',
+        industryId: '',
+      });
+      setFormErrors({});
+      setStatusMessage('');
+      setError(null);
     }
   }, [open]);
 
@@ -32,138 +52,161 @@ const BecomeRecruiterModal = ({ open, onCancel }) => {
       const data = await industryService.getAll();
       setIndustries(data);
     } catch (err) {
-      console.error("Error fetching industries:", err);
       setError("Failed to load industries");
     }
   };
 
-  const handleOk = async () => {
+  const validate = () => {
+    const errors = {};
+    if (!form.companyName) errors.companyName = 'Please enter company name';
+    if (!form.companyProfileDescription) errors.companyProfileDescription = 'Please enter description';
+    if (!form.location) errors.location = 'Please select location';
+    if (!form.teamSize) errors.teamSize = 'Please enter team size';
+    if (!form.contact) errors.contact = 'Please enter contact';
+    if (!form.industryId) errors.industryId = 'Please select industry';
+    return errors;
+  };
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setForm({ ...form, [name]: value });
+  };
+
+  const handleSelectChange = (e) => {
+    const { name, value } = e.target;
+    setForm({ ...form, [name]: value });
+  };
+
+  const handleOk = async (e) => {
+    e.preventDefault();
+    const errors = validate();
+    setFormErrors(errors);
+    if (Object.keys(errors).length > 0) return;
+    setLoading(true);
     try {
-      const values = await form.validateFields();
-      setLoading(true);
-      
       if (!userId) {
-        message.error("You must be logged in to submit this request.");
+        setFormErrors({ general: "You must be logged in to submit this request." });
         setLoading(false);
         return;
       }
-      
       const payload = {
         userId: Number(userId),
-        companyName: values.companyName,
-        companyProfileDescription: values.companyProfileDescription,
-        location: values.location,
-        teamSize: values.teamSize,
-        website: values.website,
-        contact: values.contact,
-        industryId: Number(values.industryId),
+        companyName: form.companyName,
+        companyProfileDescription: form.companyProfileDescription,
+        location: form.location,
+        teamSize: form.teamSize,
+        website: form.website,
+        contact: form.contact,
+        industryId: Number(form.industryId),
       };
-      
       await userService.requestBecomeRecruiter(payload);
-      message.success("Request sent successfully!");
-      form.resetFields();
       setRequestSent(true);
       setStatusMessage("We have received your request, please wait...");
       if (userId) localStorage.setItem('recruiterRequestSent_' + userId, '1');
     } catch (err) {
-      console.error("Error submitting request:", err);
-
       if (err.response && typeof err.response.data === 'string' && err.response.data.includes("You have submitted a request before please wait")) {
         setRequestSent(true);
         setStatusMessage(err.response.data);
         if (userId) {
           localStorage.setItem('recruiterRequestSent_' + userId, '1');
         }
-      } else if (!err.errorFields) {
-        message.error("Failed to submit request");
+      } else {
+        setFormErrors({ general: "Failed to submit request" });
       }
     } finally {
       setLoading(false);
     }
   };
 
-  if (error) return <div>{error}</div>;
+  if (error) return <div className="alert alert-danger">{error}</div>;
 
   return (
-    <Modal
-      open={open}
-      onCancel={onCancel}
-      onOk={handleOk}
-      title="Become a Recruiter"
-      okText="Submit"
-      confirmLoading={loading}
-      destroyOnHidden
-      width={520}
-      style={{ top: 10 }}
-      styles={{ body: { overflowY: 'auto', maxHeight: '70vh' } }}
-      footer={requestSent ? [
-        <Button key="close" onClick={onCancel}>
-          Close
-        </Button>,
-      ] : undefined}
-      className="become-recruiter-modal"
-    >
-      {requestSent ? (
-        <div className="success-message">
-          <CheckCircleOutlined style={{ fontSize: 48, marginBottom: 20, color: '#52c41a' }} />
-          {statusMessage}
+    <div className={`modal fade${open ? ' show d-block' : ''}`} tabIndex="-1" style={{ background: open ? 'rgba(0,0,0,0.5)' : 'none' }}>
+      <div className="modal-dialog modal-lg modal-dialog-centered login-modal modal-dialog-scrollable">
+        <div className="modal-content p-0" style={{ borderRadius: 20, overflow: 'hidden' }}>
+          {/* Modal Header with Title */}
+          <div className="modal-header bg-light" style={{ borderBottom: '1px solid #eee', borderTopLeftRadius: 20, borderTopRightRadius: 20 }}>
+            <h5 className="modal-title fw-bold" style={{ letterSpacing: 1 }}>Become Recruiter</h5>
+            <button type="button" className="btn-close" aria-label="Close" onClick={onCancel}></button>
+          </div>
+          <div className="modal-body" style={{ padding: '2rem' }}>
+            <div id="become-recruiter-modal">
+              <div className="login-form default-form">
+                {requestSent ? (
+                  <div className="success-message text-center p-4">
+                    <CheckCircleOutlined style={{ fontSize: 48, marginBottom: 20, color: '#52c41a' }} />
+                    <div>{statusMessage}</div>
+                    <button className="btn btn-primary mt-3" onClick={onCancel}>Close</button>
+                  </div>
+                ) : (
+                  <form onSubmit={handleOk} className="become-recruiter-form">
+                    {formErrors.general && <div className="alert alert-danger">{formErrors.general}</div>}
+                    <div className="mb-3">
+                      <label className="form-label fw-semibold">Company Name<span className="text-danger">*</span></label>
+                      <input type="text" className={`form-control rounded-pill py-2${formErrors.companyName ? ' is-invalid' : ''}`} name="companyName" value={form.companyName} onChange={handleChange} style={{ minHeight: 40 }} />
+                      {formErrors.companyName && <div className="invalid-feedback">{formErrors.companyName}</div>}
+                    </div>
+                    <div className="mb-3">
+                      <label className="form-label fw-semibold">Description<span className="text-danger">*</span></label>
+                      <textarea className={`form-control rounded-4 py-2${formErrors.companyProfileDescription ? ' is-invalid' : ''}`} name="companyProfileDescription" rows={4} value={form.companyProfileDescription} onChange={handleChange} style={{ minHeight: 80, resize: 'vertical' }}></textarea>
+                      {formErrors.companyProfileDescription && <div className="invalid-feedback">{formErrors.companyProfileDescription}</div>}
+                    </div>
+                    <div className="mb-3">
+                      <label className="form-label fw-semibold">Location<span className="text-danger">*</span></label>
+                      <select className={`form-select rounded-pill py-2${formErrors.location ? ' is-invalid' : ''}`} name="location" value={form.location} onChange={handleSelectChange} style={{ minHeight: 40 }}>
+                        <option value="">Select a province/city</option>
+                        {provinces.map((item) => (
+                          <option key={item.code} value={item.name}>{item.name}</option>
+                        ))}
+                      </select>
+                      {formErrors.location && <div className="invalid-feedback">{formErrors.location}</div>}
+                    </div>
+                    <div className="mb-3">
+                      <label className="form-label fw-semibold">Team Size<span className="text-danger">*</span></label>
+                      <select className={`form-select rounded-pill py-2${formErrors.teamSize ? ' is-invalid' : ''}`} name="teamSize" value={form.teamSize} onChange={handleSelectChange} style={{ minHeight: 40 }}>
+                        <option value="">Select team size</option>
+                        <option value="50 - 100">50 - 100</option>
+                        <option value="100 - 150">100 - 150</option>
+                        <option value="200 - 250">200 - 250</option>
+                        <option value="300 - 350">300 - 350</option>
+                        <option value="500 - 1000">500 - 1000</option>
+                      </select>
+                      {formErrors.teamSize && <div className="invalid-feedback">{formErrors.teamSize}</div>}
+                    </div>
+                    <div className="mb-3">
+                      <label className="form-label fw-semibold">Website</label>
+                      <input type="text" className="form-control rounded-pill py-2" name="website" value={form.website} onChange={handleChange} style={{ minHeight: 40 }} />
+                    </div>
+                    <div className="mb-3">
+                      <label className="form-label fw-semibold">Contact<span className="text-danger">*</span></label>
+                      <input type="text" className={`form-control rounded-pill py-2${formErrors.contact ? ' is-invalid' : ''}`} name="contact" value={form.contact} onChange={handleChange} style={{ minHeight: 40 }} />
+                      {formErrors.contact && <div className="invalid-feedback">{formErrors.contact}</div>}
+                    </div>
+                    <div className="mb-4">
+                      <label className="form-label fw-semibold">Industry<span className="text-danger">*</span></label>
+                      <select className={`form-select rounded-pill py-2${formErrors.industryId ? ' is-invalid' : ''}`} name="industryId" value={form.industryId} onChange={handleSelectChange} style={{ minHeight: 40 }}>
+                        <option value="">Select industry</option>
+                        {industries.map((item) => (
+                          <option key={item.industryId} value={item.industryId}>{item.industryName}</option>
+                        ))}
+                      </select>
+                      {formErrors.industryId && <div className="invalid-feedback">{formErrors.industryId}</div>}
+                    </div>
+                    <div className="d-flex justify-content-end gap-2">
+                      <button type="button" className="btn btn-outline-secondary rounded-pill px-4" onClick={onCancel} disabled={loading}>Cancel</button>
+                      <button type="submit" className="btn btn-primary rounded-pill px-4" disabled={loading}>
+                        {loading ? <span className="spinner-border spinner-border-sm me-2"></span> : null}
+                        Submit
+                      </button>
+                    </div>
+                  </form>
+                )}
+              </div>
+            </div>
+          </div>
         </div>
-      ) : (
-        <Form
-          form={form}
-          layout="horizontal"
-          labelCol={{ span: 7 }}
-          wrapperCol={{ span: 17 }}
-          className="become-recruiter-form"
-        >
-          <Form.Item label="Company Name" name="companyName" rules={[{ required: true, message: 'Please enter company name' }]}>
-            <Input />
-          </Form.Item>
-          <Form.Item label="Description" name="companyProfileDescription" rules={[{ required: true, message: 'Please enter description' }]}>
-            <Input.TextArea rows={6} />
-          </Form.Item>
-          <Form.Item label="Location" name="location" rules={[{ required: true, message: 'Please select location' }]}>
-            <Select
-              showSearch
-              placeholder="Select a province/city"
-              optionFilterProp="children"
-              filterOption={(input, option) => (option?.children ?? '').toLowerCase().includes(input.toLowerCase())}
-            >
-              {provinces.map((item) => (
-                <Select.Option key={item.code} value={item.name}>{item.name}</Select.Option>
-              ))}
-            </Select>
-          </Form.Item>
-          <Form.Item label="Team Size" name="teamSize" rules={[{ required: true, message: 'Please enter team size' }]}>
-            <Select placeholder="Select team size">
-              <Select.Option value="50 - 100">50 - 100</Select.Option>
-              <Select.Option value="100 - 150">100 - 150</Select.Option>
-              <Select.Option value="200 - 250">200 - 250</Select.Option>
-              <Select.Option value="300 - 350">300 - 350</Select.Option>
-              <Select.Option value="500 - 1000">500 - 1000</Select.Option>
-            </Select>
-          </Form.Item>
-          <Form.Item label="Website" name="website" style={{marginBottom: 20}}>
-            <Input />
-          </Form.Item>
-          <Form.Item label="Contact" name="contact" rules={[{ required: true, message: 'Please enter contact' }]} style={{marginBottom: 20}}>
-            <Input />
-          </Form.Item>
-          <Form.Item label="Industry" name="industryId" rules={[{ required: true, message: 'Please select industry' }]} style={{marginBottom: 20}}>
-            <Select
-              showSearch
-              placeholder="Select industry"
-              optionFilterProp="children"
-              filterOption={(input, option) => (option?.children ?? '').toLowerCase().includes(input.toLowerCase())}
-            >
-              {industries.map((item) => (
-                <Select.Option key={item.industryId} value={item.industryId}>{item.industryName}</Select.Option>
-              ))}
-            </Select>
-          </Form.Item>
-        </Form>
-      )}
-    </Modal>
+      </div>
+    </div>
   );
 };
 
