@@ -1,12 +1,46 @@
-import Applicants from "./Applicants";
+"use client"
+
+import { useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import CandidateAppliedJobsTable from "./CandidateAppliedJobsTable";
+import { applicationService } from "@/services/applicationService";
 
 const WidgetContentBox = () => {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const userId = searchParams.get("userId");
+  const companyId = searchParams.get("companyId");
+
+  const [jobs, setJobs] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    const fetchJobs = async () => {
+      if (!userId || !companyId) return;
+      setLoading(true);
+      try {
+        const jobs = await applicationService.getJobsAppliedByUserInCompany(userId, companyId);
+        setJobs(jobs);
+        setError("");
+      } catch (err) {
+        setError("Failed to fetch jobs");
+        setJobs([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchJobs();
+  }, [userId, companyId]);
+
+  const handleJobClick = (jobId) => {
+    router.push(`/job-single-v3/${jobId}`);
+  };
+
   return (
     <div className="widget-content">
-      <div className="row">
-        <Applicants />
-      </div>
-      {/* <!-- Pagination --> */}
+      <CandidateAppliedJobsTable jobs={jobs} loading={loading} error={error} onJobClick={handleJobClick} />
+      {/* Pagination giữ nguyên nếu muốn */}
       <nav className="ls-pagination mb-5">
         <ul>
           <li className="prev">

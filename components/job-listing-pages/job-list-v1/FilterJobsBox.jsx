@@ -32,6 +32,7 @@ import {
   removeFavoriteJob,
 } from "../../../services/favoriteJobService";
 import { useFavoriteJobs } from "../../../contexts/FavoriteJobsContext";
+import ClickableBox from "../../common/ClickableBox";
 
 // Thêm CSS styles
 const styles = {
@@ -52,6 +53,18 @@ const styles = {
     fontSize: "20px",
   },
 };
+
+// Hook kiểm tra responsive
+function useIsMobile() {
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 1024);
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, []);
+  return isMobile;
+}
 
 const FilterJobsBox = () => {
   const [jobs, setJobs] = useState([]);
@@ -98,6 +111,8 @@ const FilterJobsBox = () => {
     typeof window !== "undefined"
       ? Number(localStorage.getItem("userId"))
       : null;
+
+  const isMobile = useIsMobile();
 
   // Fetch jobs khi filters hoặc pagination thay đổi
   useEffect(() => {
@@ -483,9 +498,16 @@ const FilterJobsBox = () => {
         </div>
       ) : (
         <div className="row">
-          {jobsToShow.map((item, index) => (
-            <div key={item.id || index} className="job-block">
-              <div className="inner-box">
+          {jobsToShow.map((item, index) => {
+            // Handler chuyển trang khi click JobBox
+            const handleJobBoxClick = () => {
+              window.location.href = `/job-single-v3/${item.id}`;
+            };
+            return (
+              <ClickableBox
+                key={item.id || index}
+                onClick={handleJobBoxClick}
+              >
                 <div className="content">
                   <span
                     className="company-logo"
@@ -585,6 +607,7 @@ const FilterJobsBox = () => {
                           fontWeight: 500,
                           fontSize: 14,
                         }}
+                        onClick={e => e.stopPropagation()}
                       >
                         {item.jobType.jobTypeName}
                       </span>
@@ -600,6 +623,7 @@ const FilterJobsBox = () => {
                           fontWeight: 500,
                           fontSize: 14,
                         }}
+                        onClick={e => e.stopPropagation()}
                       >
                         {item.industry.industryName}
                       </span>
@@ -615,6 +639,7 @@ const FilterJobsBox = () => {
                           fontWeight: 500,
                           fontSize: 14,
                         }}
+                        onClick={e => e.stopPropagation()}
                       >
                         {item.level.levelName}
                       </span>
@@ -624,7 +649,10 @@ const FilterJobsBox = () => {
                     className={`bookmark-btn ${
                       (favoriteJobIds || []).includes(item.id) ? "active" : ""
                     }`}
-                    onClick={() => handleToggleFavorite(item.id)}
+                    onClick={e => {
+                      e.stopPropagation();
+                      handleToggleFavorite(item.id);
+                    }}
                     style={{
                       position: "absolute",
                       right: "20px",
@@ -665,9 +693,9 @@ const FilterJobsBox = () => {
                     )}
                   </button>
                 </div>
-              </div>
-            </div>
-          ))}
+              </ClickableBox>
+            );
+          })}
         </div>
       )}
 
@@ -735,3 +763,16 @@ const FilterJobsBox = () => {
 };
 
 export default FilterJobsBox;
+
+<style jsx global>{`
+  .job-block-hover .inner-box {
+    transition: box-shadow 0.2s, border-color 0.2s;
+  }
+  .job-block-hover:hover .inner-box {
+    box-shadow: 0 4px 24px rgba(37,99,235,0.10), 0 1.5px 8px rgba(0,0,0,0.06);
+  }
+  .job-block-hover:hover h4 a {
+    color: #2563eb;
+    text-decoration: underline;
+  }
+`}</style>

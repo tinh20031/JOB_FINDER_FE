@@ -4,6 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useEffect, useState } from "react";
 import { jobService } from "../../services/jobService";
+import ClickableBox from "../common/ClickableBox";
 
 const JobFeatured1 = () => {
   const [jobs, setJobs] = useState([]);
@@ -61,8 +62,8 @@ const JobFeatured1 = () => {
   return (
     <>
       {jobs.map((item) => (
-        <div className="job-block col-lg-6 col-md-12 col-sm-12" key={item.id}>
-          <div className="inner-box">
+        <div className="col-lg-6 col-md-12 col-sm-12" key={item.id}>
+          <ClickableBox onClick={() => window.location.href = `/job-single-v3/${item.id}` }>
             <div className="content">
               <span className="company-logo">
                 {(() => {
@@ -110,11 +111,11 @@ const JobFeatured1 = () => {
                 )}
               </ul>
 
-              <button className="bookmark-btn">
+              <button className="bookmark-btn" onClick={e => e.stopPropagation()}>
                 <span className="flaticon-bookmark"></span>
               </button>
             </div>
-          </div>
+          </ClickableBox>
         </div>
       ))}
     </>

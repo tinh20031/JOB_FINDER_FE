@@ -135,5 +135,76 @@ export const applicationService = {
       console.error('Error withdrawing application:', error);
       throw error;
     }
+  },
+
+  // Get distinct job count by user in company
+  getDistinctJobCountByUserInCompany: async (userId, companyId) => {
+    try {
+      const token = getToken();
+      if (!token) {
+        throw new Error('No authentication token found');
+      }
+      const response = await axios.get(
+        `${API_URL}/Application/distinct-job-count-by-user-in-company`,
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          params: { userId, companyId }
+        }
+      );
+      return response.data.distinctJobCount;
+    } catch (error) {
+      console.error('Error fetching distinct job count:', error);
+      throw error;
+    }
+  },
+
+  // Get jobs applied by user in company
+  getJobsAppliedByUserInCompany: async (userId, companyId) => {
+    try {
+      const token = getToken();
+      if (!token) {
+        throw new Error('No authentication token found');
+      }
+      const response = await axios.get(
+        `${API_URL}/Application/jobs-applied-by-user-in-company`,
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          params: { userId, companyId }
+        }
+      );
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching jobs applied by user in company:', error);
+      throw error;
+    }
+  },
+
+  // Get all applications for a specific job (for employer)
+  getApplicationsByJob: async (jobId) => {
+    try {
+      const token = getToken();
+      if (!token) {
+        throw new Error('No authentication token found');
+      }
+      const response = await axios.get(
+        `${API_URL}/Application/job/${jobId}`,
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching applications by job:', error);
+      throw error;
+    }
   }
 }; 
