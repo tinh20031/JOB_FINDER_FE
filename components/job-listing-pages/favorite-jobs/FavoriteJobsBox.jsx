@@ -169,7 +169,7 @@ const FavoriteJobsBox = () => {
                   transition: 'all 0.3s ease',
                   color: (favoriteJobIds || []).includes(item.id) ? '#2563eb' : '#666',
                 }}
-                title="Bỏ yêu thích"
+                title="Remove from favorites"
               >
                 {(favoriteJobIds || []).includes(item.id) ? (
                   <svg

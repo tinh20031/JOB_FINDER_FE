@@ -44,8 +44,8 @@ const RelatedJobs2 = ({ job }) => {
     fetchRelatedJobs();
   }, [job]);
 
-  if (loading) return <div>Đang tải job liên quan...</div>;
-  if (!relatedJobs.length) return <div>Không có job liên quan.</div>;
+  if (loading) return <div>Loading related jobs...</div>;
+  if (!relatedJobs.length) return <div>No related jobs found.</div>;
 
   return (
     <>

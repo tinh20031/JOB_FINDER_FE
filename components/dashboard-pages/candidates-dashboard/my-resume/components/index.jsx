@@ -165,7 +165,7 @@ const index = () => {
       dispatch(setProfileUpdated(Date.now()));
       if (typeof refetch === "function") await refetch();
     } catch (e) {
-      alert("Cập nhật thất bại!");
+      alert("Update failed!");
     }
     setSaving(false);
   };

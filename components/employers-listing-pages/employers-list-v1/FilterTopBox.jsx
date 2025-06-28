@@ -222,25 +222,25 @@ const FilterTopBox = () => {
     try {
       const token = getToken();
       if (!token) {
-        toast.error("Vui lòng đăng nhập để sử dụng tính năng này");
+        toast.error("Please login to use this feature");
         return;
       }
       const id = Number(companyId);
       if (bookmarkedCompanies.includes(id)) {
         await jobService.unfavoriteCompany(id);
         setBookmarkedCompanies(prev => prev.filter(cid => cid !== id));
-        toast.success("Đã xóa khỏi danh sách yêu thích");
+        toast.success("Removed from favorites");
       } else {
         await jobService.favoriteCompany(id);
         setBookmarkedCompanies(prev => [...prev, id]);
-        toast.success("Đã thêm vào danh sách yêu thích");
+        toast.success("Added to favorites");
       }
     } catch (error) {
       console.error("Error handling bookmark:", error);
       if (error.response?.status === 401) {
-        toast.error("Phiên đăng nhập đã hết hạn, vui lòng đăng nhập lại");
+        toast.error("Login session expired, please login again");
       } else {
-        toast.error("Có lỗi xảy ra khi xử lý yêu thích");
+        toast.error("An error occurred while processing favorites");
       }
     }
   };
@@ -320,7 +320,7 @@ const FilterTopBox = () => {
         </div>
         <button
           className={`bookmark-btn ${bookmarkedCompanies.includes(Number(company.userId)) ? 'active' : ''}`}
-          title="Lưu công ty"
+          title="Save company"
           onClick={e => {
             e.stopPropagation();
             handleBookmark(company.userId);

@@ -29,7 +29,7 @@ const AboutMe = ({ aboutme, refetch, openExternal, setOpenExternal }) => {
         // Nếu không có nội dung, gọi API xóa nếu có aboutMeId
         if (aboutme?.aboutMeId) {
           await deleteAboutMe(aboutme.aboutMeId);
-          toast.success("Đã xóa About Me");
+          toast.success("About Me deleted");
         }
         setOpen(false);
         if (setOpenExternal) setOpenExternal(false);
@@ -57,7 +57,7 @@ const AboutMe = ({ aboutme, refetch, openExternal, setOpenExternal }) => {
       }
       toast.success("Updated successfully");
     } catch (e) {
-      toast.error("Cập nhật thất bại!");
+      toast.error("Update failed!");
     }
   };
 
