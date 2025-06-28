@@ -9,8 +9,7 @@ import Image from "next/image";
 import { useEffect, useState } from "react";
 import ApiService from "@/services/api.service";
 import { getToken } from "@/services/authService";
-import useResumeData from "@/services/useResumeData";
-import { getAboutMeByUserId } from "@/services/useResumeData";
+import useResumeData, { getAboutMeByUserId, getWorkExperienceByUserId, getHighlightProjectByUserId, getAwardByUserId, getSkillByUserId, getForeignLanguageByUserId, getEducationByUserId, getCandidateProfileByUserId } from "@/services/useResumeData";
 
 const CandidateSingleDynamicV1 = ({ params }) => {
   const id = params.id;
@@ -19,7 +18,14 @@ const CandidateSingleDynamicV1 = ({ params }) => {
   const [aboutMe, setAboutMe] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const { profile, foreignlanguage, education, skills, project, awards, loading: resumeLoading, experiences } = useResumeData();
+  const { profile, project, loading: resumeLoading } = useResumeData();
+  const [experiences, setExperiences] = useState([]);
+  const [highlightProjects, setHighlightProjects] = useState([]);
+  const [awards, setAwards] = useState([]);
+  const [skills, setSkills] = useState([]);
+  const [foreignlanguage, setForeignLanguage] = useState([]);
+  const [education, setEducation] = useState([]);
+  const [candidateProfile, setCandidateProfile] = useState(null);
 
   const skillColors = [
     { bg: "#eaf2fe", color: "#2563eb" },
@@ -48,12 +54,37 @@ const CandidateSingleDynamicV1 = ({ params }) => {
     Promise.all([
       ApiService.getCandidateProfileById(id),
       ApiService.getUserById(id),
-      getAboutMeByUserId(id)
+      getAboutMeByUserId(id),
+      getWorkExperienceByUserId(id),
+      getHighlightProjectByUserId(id),
+      getAwardByUserId(id),
+      getSkillByUserId(id),
+      getForeignLanguageByUserId(id),
+      getEducationByUserId(id),
+      getCandidateProfileByUserId(id)
     ])
-      .then(([candidateData, userData, aboutMeData]) => {
+      .then(([
+        candidateData,
+        userData,
+        aboutMeData,
+        experiencesData,
+        highlightProjectsData,
+        awardsData,
+        skillsData,
+        foreignLanguageData,
+        educationData,
+        candidateProfileData
+      ]) => {
         setCandidate(candidateData);
         setUser(userData);
         setAboutMe(aboutMeData);
+        setExperiences(Array.isArray(experiencesData) ? experiencesData : []);
+        setHighlightProjects(Array.isArray(highlightProjectsData) ? highlightProjectsData : []);
+        setAwards(Array.isArray(awardsData) ? awardsData : []);
+        setSkills(Array.isArray(skillsData) ? skillsData : []);
+        setForeignLanguage(Array.isArray(foreignLanguageData) ? foreignLanguageData : []);
+        setEducation(Array.isArray(educationData) ? educationData : []);
+        setCandidateProfile(candidateProfileData);
         setLoading(false);
       })
       .catch((err) => {
@@ -213,10 +244,10 @@ const CandidateSingleDynamicV1 = ({ params }) => {
                   {/* Highlight Project Timeline */}
                   <div style={{ marginBottom: 32 }}>
                     <h4 style={{ fontWeight: 600, fontSize: '1.25rem', marginBottom: 20, fontFamily: 'inherit', color: '#222' }}>Highlight Project</h4>
-                    {project && project.length > 0 ? (
+                    {highlightProjects && highlightProjects.length > 0 ? (
                       <div>
-                        {project.map((item, idx) => {
-                          const isLast = idx === project.length - 1;
+                        {highlightProjects.map((item, idx) => {
+                          const isLast = idx === highlightProjects.length - 1;
                           const start = formatMonthYear(item.yearStart);
                           const end = item.yearEnd ? formatMonthYear(item.yearEnd) : 'NOW';
                           return (
@@ -313,12 +344,12 @@ const CandidateSingleDynamicV1 = ({ params }) => {
                         <li>
                           <i className="icon icon-expiry"></i>
                           <h5>Age:</h5>
-                          <span>{profile?.dob ? getAge(profile.dob) + " Years" : "No info"}</span>
+                          <span>{candidateProfile?.dob ? getAge(candidateProfile.dob) + " Years" : "No info"}</span>
                         </li>
                         <li>
                           <i className="icon icon-user-2"></i>
                           <h5>Gender:</h5>
-                          <span>{profile?.gender || "No info"}</span>
+                          <span>{candidateProfile?.gender || "No info"}</span>
                         </li>
                         <li>
                           <i className="icon icon-language"></i>
