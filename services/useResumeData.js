@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
+import API_CONFIG from "../config/api.config";
 
 const API_URL = "https://job-finder-kjt2.onrender.com/api";
+// const API_URL = "http://localhost:5194/api";
 const getToken = () =>
   typeof window !== "undefined" ? localStorage.getItem("token") : "";
 
@@ -560,4 +562,11 @@ export async function fetchProfileStrength(token) {
     throw new Error("Không lấy được profile strength");
   }
   return await response.json();
+}
+
+export async function getAboutMeByUserId(userId) {
+  if (!userId) return null;
+  const res = await fetch(`${API_URL}/AboutMe/${userId}`);
+  if (!res.ok) return null;
+  return await res.json();
 }

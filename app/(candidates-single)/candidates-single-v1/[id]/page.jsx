@@ -1,26 +1,83 @@
+'use client';
 import dynamic from "next/dynamic";
-import candidates from "@/data/candidates";
 import candidateResume from "@/data/candidateResume";
 import LoginPopup from "@/components/common/form/login/LoginPopup";
 import FooterDefault from "@/components/footer/common-footer";
-import DefaulHeader from "@/components/header/DefaulHeader";
+import DefaulHeader2 from "@/components/header/DefaulHeader2";
 import MobileMenu from "@/components/header/MobileMenu";
-import Contact from "@/components/candidates-single-pages/shared-components/Contact";
-import GalleryBox from "@/components/candidates-single-pages/shared-components/GalleryBox";
-import Social from "@/components/candidates-single-pages/social/Social";
-import JobSkills from "@/components/candidates-single-pages/shared-components/JobSkills";
-import AboutVideo from "@/components/candidates-single-pages/shared-components/AboutVideo";
 import Image from "next/image";
-
-export const metadata = {
-  title:
-    "Candidate Single Dyanmic V1 || Superio - Job Borad React NextJS Template",
-  description: "Superio - Job Borad React NextJS Template",
-};
+import { useEffect, useState } from "react";
+import ApiService from "@/services/api.service";
+import { getToken } from "@/services/authService";
+import useResumeData from "@/services/useResumeData";
+import { getAboutMeByUserId } from "@/services/useResumeData";
 
 const CandidateSingleDynamicV1 = ({ params }) => {
   const id = params.id;
-  const candidate = candidates.find((item) => item.id == id) || candidate[0];
+  const [candidate, setCandidate] = useState(null);
+  const [user, setUser] = useState(null);
+  const [aboutMe, setAboutMe] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const { profile, foreignlanguage, education, skills, project, awards, loading: resumeLoading, experiences } = useResumeData();
+
+  const skillColors = [
+    { bg: "#eaf2fe", color: "#2563eb" },
+    { bg: "#e6f4ea", color: "#22c55e" },
+    { bg: "#fff7ed", color: "#f59e42" },
+    { bg: "#fef9c3", color: "#eab308" },
+    { bg: "#fce7f3", color: "#db2777" },
+    { bg: "#ede9fe", color: "#7c3aed" },
+    { bg: "#f1f5f9", color: "#334155" },
+    { bg: "#f3e8ff", color: "#a21caf" },
+  ];
+  function getRandomColor(idx) {
+    return skillColors[idx % skillColors.length];
+  }
+
+  function formatMonthYear(dateStr) {
+    if (!dateStr) return '';
+    const d = new Date(dateStr);
+    const month = (d.getMonth() + 1).toString().padStart(2, '0');
+    const year = d.getFullYear();
+    return `${month}-${year}`;
+  }
+
+  useEffect(() => {
+    setLoading(true);
+    Promise.all([
+      ApiService.getCandidateProfileById(id),
+      ApiService.getUserById(id),
+      getAboutMeByUserId(id)
+    ])
+      .then(([candidateData, userData, aboutMeData]) => {
+        setCandidate(candidateData);
+        setUser(userData);
+        setAboutMe(aboutMeData);
+        setLoading(false);
+      })
+      .catch((err) => {
+        setError(err.message || "Lỗi khi tải dữ liệu ứng viên");
+        setLoading(false);
+      });
+  }, [id]);
+
+  // Hàm tính tuổi từ ngày sinh
+  function getAge(dob) {
+    if (!dob) return "No info";
+    const birthDate = new Date(dob);
+    const today = new Date();
+    let age = today.getFullYear() - birthDate.getFullYear();
+    const m = today.getMonth() - birthDate.getMonth();
+    if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+      age--;
+    }
+    return age;
+  }
+
+  if (loading || resumeLoading) return <div>Đang tải dữ liệu...</div>;
+  if (error) return <div>{error}</div>;
+  if (!candidate || !user) return <div>Không tìm thấy ứng viên</div>;
 
   return (
     <>
@@ -30,7 +87,7 @@ const CandidateSingleDynamicV1 = ({ params }) => {
       <LoginPopup />
       {/* End Login Popup Modal */}
 
-      <DefaulHeader />
+      <DefaulHeader2 />
       {/* <!--End Main Header --> */}
 
       <MobileMenu />
@@ -47,27 +104,23 @@ const CandidateSingleDynamicV1 = ({ params }) => {
                     <Image
                       width={100}
                       height={100}
-                      src={candidate?.avatar}
+                      src={user.image || "/images/resource/default-avatar.png"}
                       alt="avatar"
                     />
                   </figure>
-                  <h4 className="name">{candidate?.name}</h4>
+                  <h4 className="name">{user.fullName}</h4>
 
-                  <ul className="candidate-info">
-                    <li className="designation">{candidate?.designation}</li>
-                    <li>
-                      <span className="icon flaticon-map-locator"></span>
-                      {candidate?.location}
-                    </li>
-                    <li>
-                      <span className="icon flaticon-money"></span> $
-                      {candidate?.hourlyRate} / hour
-                    </li>
-                    <li>
-                      <span className="icon flaticon-clock"></span> Member
-                      Since,Aug 19, 2020
-                    </li>
-                  </ul>
+                  {/* Tag cho Province và JobTitle */}
+                  <div style={{ display: 'flex', gap: '8px', margin: '8px 0' }}>
+                    <span style={{ display: 'flex', alignItems: 'center', background: '#eaf2fe', color: '#2563eb', borderRadius: '16px', padding: '4px 12px', fontWeight: 600, fontSize: 13 }}>
+                      <span className="icon flaticon-map-locator" style={{ marginRight: 6, fontSize: 15 }}></span>
+                      {candidate?.province || candidate?.provine || candidate?.location}
+                    </span>
+                    <span style={{ display: 'flex', alignItems: 'center', background: '#e6f4ea', color: '#22c55e', borderRadius: '16px', padding: '4px 12px', fontWeight: 600, fontSize: 13 }}>
+                      <span className="icon flaticon-briefcase" style={{ marginRight: 6, fontSize: 15 }}></span>
+                      {candidate?.jobTitle || candidate?.designation}
+                    </span>
+                  </div>
 
                   <ul className="post-tags">
                     {candidate?.tags?.map((val, i) => (
@@ -84,9 +137,7 @@ const CandidateSingleDynamicV1 = ({ params }) => {
                   >
                     Download CV
                   </a>
-                  <button className="bookmark-btn">
-                    <i className="flaticon-bookmark"></i>
-                  </button>
+                
                 </div>
               </div>
             </div>
@@ -102,69 +153,154 @@ const CandidateSingleDynamicV1 = ({ params }) => {
                 <div className="job-detail">
                   <div className="video-outer">
                     <h4>Candidates About</h4>
-                    <AboutVideo />
-                  </div>
-                  {/* <!-- About Video Box --> */}
-                  <p>
-                    Hello my name is Nicole Wells and web developer from
-                    Portland. In pharetra orci dignissim, blandit mi semper,
-                    ultricies diam. Suspendisse malesuada suscipit nunc non
-                    volutpat. Sed porta nulla id orci laoreet tempor non
-                    consequat enim. Sed vitae aliquam velit. Aliquam ante erat,
-                    blandit at pretium et, accumsan ac est. Integer vehicula
-                    rhoncus molestie. Morbi ornare ipsum sed sem condimentum, et
-                    pulvinar tortor luctus. Suspendisse condimentum lorem ut
-                    elementum aliquam.
-                  </p>
-                  <p>
-                    Mauris nec erat ut libero vulputate pulvinar. Aliquam ante
-                    erat, blandit at pretium et, accumsan ac est. Integer
-                    vehicula rhoncus molestie. Morbi ornare ipsum sed sem
-                    condimentum, et pulvinar tortor luctus. Suspendisse
-                    condimentum lorem ut elementum aliquam. Mauris nec erat ut
-                    libero vulputate pulvinar.
-                  </p>
-
-                  {/* <!-- Portfolio --> */}
-                  <div className="portfolio-outer">
-                    <div className="row">
-                      <GalleryBox />
-                    </div>
+                    {aboutMe && aboutMe.aboutMeDescription ? (
+                      <div dangerouslySetInnerHTML={{ __html: aboutMe.aboutMeDescription }} />
+                    ) : (
+                      <p>No information</p>
+                    )}
                   </div>
 
-                  {/* <!-- Candidate Resume Start --> */}
-                  {candidateResume.map((resume) => (
-                    <div
-                      className={`resume-outer ${resume.themeColor}`}
-                      key={resume.id}
-                    >
-                      <div className="upper-title">
-                        <h4>{resume?.title}</h4>
-                      </div>
-
-                      {/* <!-- Start Resume BLock --> */}
-                      {resume?.blockList?.map((item) => (
-                        <div className="resume-block" key={item.id}>
-                          <div className="inner">
-                            <span className="name">{item.meta}</span>
-                            <div className="title-box">
-                              <div className="info-box">
-                                <h3>{item.name}</h3>
-                                <span>{item.industry}</span>
+                  {/* Work Experience Timeline */}
+                  {experiences && experiences.length > 0 && (
+                    <div style={{ marginBottom: 32 }}>
+                      <h4 style={{ fontWeight: 600, fontSize: '1.25rem', marginBottom: 20, fontFamily: 'inherit', color: '#222' }}>Work Experience</h4>
+                      <div>
+                        {experiences.map((item, idx) => {
+                          const isLast = idx === experiences.length - 1;
+                          const start = formatMonthYear(item.yearStart);
+                          const end = item.yearEnd ? formatMonthYear(item.yearEnd) : 'NOW';
+                          return (
+                            <div key={idx} style={{ marginBottom: 32, position: 'relative', paddingLeft: 38 }}>
+                              {/* Đường kẻ dọc timeline */}
+                              {!isLast && (
+                                <div
+                                  style={{
+                                    position: 'absolute',
+                                    left: 16,
+                                    top: 32,
+                                    bottom: 0,
+                                    width: 2,
+                                    borderLeft: '2px dashed #2563eb',
+                                    zIndex: 0,
+                                  }}
+                                />
+                              )}
+                              {/* Icon tròn */}
+                              <span style={{
+                                position: 'absolute', left: 0, top: 0, width: 32, height: 32, borderRadius: '50%', background: '#eaf2fe', color: '#2563eb', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: 18, border: '2px solid #eaf2fe', zIndex: 1
+                              }}>{item.companyName?.[0] || 'W'}</span>
+                              <div style={{ fontSize: 16, fontWeight: 600, color: '#363636', marginBottom: 0 }}>
+                                {item.companyName}
+                                {item.jobTitle && <span> — {item.jobTitle}</span>}
                               </div>
-                              <div className="edit-box">
-                                <span className="year">{item.year}</span>
+                              <div style={{ color: '#2563eb', background: '#eaf2fe', display: 'inline-block', borderRadius: 16, padding: '2px 16px', fontWeight: 600, fontSize: 15, margin: '8px 0', fontSize: '1rem', lineHeight: 1.7, fontWeight: 400 }}>
+                                {start} -- {end}
+                              </div>
+                              <div style={{ fontSize: '1rem', lineHeight: 1.7, fontWeight: 400, color: '#555', marginBottom: 6 }}>
+                                {item.workDescription && item.workDescription.includes('<') ? (
+                                  <span dangerouslySetInnerHTML={{ __html: item.workDescription }} />
+                                ) : (
+                                  item.workDescription
+                                )}
                               </div>
                             </div>
-                            <div className="text">{item.text}</div>
-                          </div>
-                        </div>
-                      ))}
-
-                      {/* <!-- End Resume BLock --> */}
+                          );
+                        })}
+                      </div>
                     </div>
-                  ))}
-                  {/* <!-- Candidate Resume End --> */}
+                  )}
+
+                  {/* Highlight Project Timeline */}
+                  <div style={{ marginBottom: 32 }}>
+                    <h4 style={{ fontWeight: 600, fontSize: '1.25rem', marginBottom: 20, fontFamily: 'inherit', color: '#222' }}>Highlight Project</h4>
+                    {project && project.length > 0 ? (
+                      <div>
+                        {project.map((item, idx) => {
+                          const isLast = idx === project.length - 1;
+                          const start = formatMonthYear(item.yearStart);
+                          const end = item.yearEnd ? formatMonthYear(item.yearEnd) : 'NOW';
+                          return (
+                            <div key={idx} style={{ marginBottom: 32, position: 'relative', paddingLeft: 38 }}>
+                              {/* Đường kẻ dọc timeline */}
+                              {!isLast && (
+                                <div
+                                  style={{
+                                    position: 'absolute',
+                                    left: 16,
+                                    top: 32,
+                                    bottom: 0,
+                                    width: 2,
+                                    borderLeft: '2px dashed #f59e42',
+                                    zIndex: 0,
+                                  }}
+                                />
+                              )}
+                              {/* Icon tròn */}
+                              <span style={{
+                                position: 'absolute', left: 0, top: 0, width: 32, height: 32, borderRadius: '50%', background: '#fef9c3', color: '#eab308', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: 18, border: '2px solid #fef9c3', zIndex: 1
+                              }}>{item.projectName?.[0] || 'P'}</span>
+                              <div style={{ fontWeight: 500, fontSize: '1rem' }}>{item.projectName}</div>
+                              <div style={{ color: '#f59e42', background: '#fff7ed', display: 'inline-block', borderRadius: 16, padding: '2px 16px', fontWeight: 600, fontSize: 15, margin: '8px 0', fontSize: '1rem', lineHeight: 1.7, fontWeight: 400, color: '#555' }}>
+                                {start} -- {end}
+                              </div>
+                              <div style={{ fontSize: '1rem', lineHeight: 1.7, fontWeight: 400, color: '#555', marginBottom: 6 }}>
+                                {item.projectDescription && item.projectDescription.includes('<') ? (
+                                  <span dangerouslySetInnerHTML={{ __html: item.projectDescription }} />
+                                ) : (
+                                  item.projectDescription
+                                )}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    ) : <div>No Highlight Project</div>}
+                  </div>
+
+                  {/* Awards Timeline */}
+                  <div style={{ marginBottom: 32 }}>
+                    <h4 style={{ fontWeight: 600, fontSize: '1.25rem', marginBottom: 20, fontFamily: 'inherit', color: '#222' }}>Awards</h4>
+                    {awards && awards.length > 0 ? (
+                      <div>
+                        {awards.map((item, idx) => {
+                          const isLast = idx === awards.length - 1;
+                          return (
+                            <div key={idx} style={{ marginBottom: 32, position: 'relative', paddingLeft: 38 }}>
+                              {/* Đường kẻ dọc timeline */}
+                              {!isLast && (
+                                <div
+                                  style={{
+                                    position: 'absolute',
+                                    left: 16,
+                                    top: 32,
+                                    bottom: 0,
+                                    width: 2,
+                                    borderLeft: '2px dashed #db2777',
+                                    zIndex: 0,
+                                  }}
+                                />
+                              )}
+                              {/* Icon tròn */}
+                              <span style={{
+                                position: 'absolute', left: 0, top: 0, width: 32, height: 32, borderRadius: '50%', background: '#fce7f3', color: '#db2777', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: 18, border: '2px solid #fce7f3', zIndex: 1
+                              }}>{item.awardName?.[0] || 'A'}</span>
+                              <div style={{ fontWeight: 500, fontSize: '1rem' }}>{item.awardName}</div>
+                              <div style={{ color: '#db2777', background: '#fce7f3', display: 'inline-block', borderRadius: 16, padding: '2px 16px', fontWeight: 600, fontSize: 15, margin: '8px 0', fontSize: '1rem', lineHeight: 1.7, fontWeight: 400, color: '#555' }}>
+                                {formatMonthYear(item.year)}
+                              </div>
+                              <div style={{ fontSize: '1rem', lineHeight: 1.7, fontWeight: 400, color: '#555', marginBottom: 6 }}>
+                                {item.awardDescription && item.awardDescription.includes('<') ? (
+                                  <span dangerouslySetInnerHTML={{ __html: item.awardDescription }} />
+                                ) : (
+                                  item.awardDescription
+                                )}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    ) : <div>No Awards</div>}
+                  </div>
                 </div>
               </div>
               {/* End .content-column */}
@@ -175,80 +311,65 @@ const CandidateSingleDynamicV1 = ({ params }) => {
                     <div className="widget-content">
                       <ul className="job-overview">
                         <li>
-                          <i className="icon icon-calendar"></i>
-                          <h5>Experience:</h5>
-                          <span>0-2 Years</span>
-                        </li>
-
-                        <li>
                           <i className="icon icon-expiry"></i>
                           <h5>Age:</h5>
-                          <span>28-33 Years</span>
+                          <span>{profile?.dob ? getAge(profile.dob) + " Years" : "No info"}</span>
                         </li>
-
-                        <li>
-                          <i className="icon icon-rate"></i>
-                          <h5>Current Salary:</h5>
-                          <span>11K - 15K</span>
-                        </li>
-
-                        <li>
-                          <i className="icon icon-salary"></i>
-                          <h5>Expected Salary:</h5>
-                          <span>26K - 30K</span>
-                        </li>
-
                         <li>
                           <i className="icon icon-user-2"></i>
                           <h5>Gender:</h5>
-                          <span>Female</span>
+                          <span>{profile?.gender || "No info"}</span>
                         </li>
-
                         <li>
                           <i className="icon icon-language"></i>
                           <h5>Language:</h5>
-                          <span>English, German, Spanish</span>
+                          <span>{foreignlanguage && foreignlanguage.length > 0 ? foreignlanguage.map(l => l.languageName).join(", ") : "No info"}</span>
                         </li>
-
                         <li>
                           <i className="icon icon-degree"></i>
                           <h5>Education Level:</h5>
-                          <span>Master Degree</span>
+                          <span>{education && education.length > 0 ? (education[0].degree || education[0].degreeName || "No info") : "No info"}</span>
                         </li>
                       </ul>
                     </div>
                   </div>
                   {/* End .sidebar-widget conadidate overview */}
 
-                  <div className="sidebar-widget social-media-widget">
-                    <h4 className="widget-title">Social media</h4>
-                    <div className="widget-content">
-                      <div className="social-links">
-                        <Social />
-                      </div>
-                    </div>
-                  </div>
-                  {/* End .sidebar-widget social-media-widget */}
 
                   <div className="sidebar-widget">
                     <h4 className="widget-title">Professional Skills</h4>
                     <div className="widget-content">
-                      <ul className="job-skills">
-                        <JobSkills />
-                      </ul>
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                        {skills && skills.length > 0 ? (
+                          skills.map((skill, idx) => {
+                            const color = getRandomColor(idx);
+                            return (
+                              <span
+                                key={idx}
+                                style={{
+                                  background: color.bg,
+                                  color: color.color,
+                                  borderRadius: '16px',
+                                  padding: '4px 14px',
+                                  fontWeight: 600,
+                                  fontSize: 13,
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                }}
+                              >
+                                {skill.skillName}
+                              </span>
+                            );
+                          })
+                        ) : (
+                          <span>No info</span>
+                        )}
+                      </div>
                     </div>
                   </div>
                   {/* End .sidebar-widget skill widget */}
 
-                  <div className="sidebar-widget contact-widget">
-                    <h4 className="widget-title">Contact Us</h4>
-                    <div className="widget-content">
-                      <div className="default-form">
-                        <Contact />
-                      </div>
-                    </div>
-                  </div>
-                  {/* End .sidebar-widget contact-widget */}
+                
                 </aside>
                 {/* End .sidebar */}
               </div>

@@ -22,12 +22,14 @@
     border-top: none; /* Remove duplicate border */
     background-color: #ffffff; /* Typically white for the editable area */
     min-height: 200px; /* Adjust as needed */
+    max-height: none !important; /* Allow auto expand */
+    overflow-y: visible !important;
   }
 
   .ql-editor {
     min-height: 200px; /* Ensure editor content area has enough height */
-    max-height: 200px; /* Set max height for scrolling */
-    overflow-y: auto; /* Enable vertical scrollbar */
+    max-height: none !important; /* Allow auto expand */
+    overflow-y: visible !important;
   }
 }
 

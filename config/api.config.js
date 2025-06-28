@@ -1,6 +1,7 @@
 // API Configuration
 const API_CONFIG = {
   // Base URL sẽ được set từ biến môi trường
+
   BASE_URL:
     process.env.NEXT_PUBLIC_API_URL ||
     "https://job-finder-kjt2.onrender.com/api",
@@ -8,7 +9,7 @@ const API_CONFIG = {
     process.env.NEXT_PUBLIC_SIGNALR_HUB_URL ||
     "https://job-finder-kjt2.onrender.com/chathub",
 
-  // Tách riêng các endpoint không phụ thuộc vào URL
+
   ENDPOINTS: {
     AUTH: {
       LOGIN: "auth/login",

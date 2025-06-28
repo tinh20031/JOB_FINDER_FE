@@ -180,3 +180,26 @@ Buttons Styles
   line-height: 21px;
   border-radius: 5px;
 }
+//them moi  hieu ung hover button o dayday
+.btn-confirm {
+  background: #1976d2;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 24px;
+  font-weight: 600;
+  font-size: 16px;
+  transition: all 0.2s cubic-bezier(0.4,0,0.2,1);
+  box-shadow: 0 2px 8px rgba(25, 118, 210, 0.08);
+  cursor: pointer;
+}
+.btn-confirm:hover:not(:disabled) {
+  background: #1251a3;
+  color: #fff;
+  box-shadow: 0 4px 16px rgba(25, 118, 210, 0.18);
+  transform: scale(1.04);
+}
+.btn-confirm:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}

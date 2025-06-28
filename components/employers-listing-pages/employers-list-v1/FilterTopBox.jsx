@@ -254,16 +254,68 @@ const FilterTopBox = () => {
       onClick={() => router.push(`/employers-single-v1/${company.userId}`)}
     >
       <div className="inner-box position-relative d-flex align-items-center">
-        <img src={company.urlCompanyLogo} alt={company.companyName} width={50} height={50} />
+        <img 
+          src={company.urlCompanyLogo} 
+          alt={company.companyName} 
+          width={50} 
+          height={50} 
+          style={{
+            borderRadius: 12,
+            border: '1px solid #e5e7eb',
+            objectFit: 'cover',
+            background: '#fff',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
+            display: 'block',
+          }}
+        />
         <div className="ms-3">
-          <h4>{company.companyName}</h4>
-          <div className="d-flex align-items-center gap-3">
-            <span className="icon flaticon-map-locator me-2"></span>
-            <span>{company.location}</span>
-            <span className="icon flaticon-briefcase me-2"></span>
-            <span>{industryMap[company.industryId] || `Industry ID: ${company.industryId}`}</span>
-            <span className="icon flaticon-user me-2"></span>
-            <span>{company.teamSize || 'N/A'}</span>
+          <h4 style={{marginBottom: 12, transition: 'color 0.2s'}} className="company-name-hover">{company.companyName}</h4>
+          <div className="d-flex align-items-center" style={{gap: 8}}>
+            <span style={{
+              background: '#e0edff',
+              color: '#2563eb',
+              borderRadius: 16,
+              padding: '4px 16px',
+              fontWeight: 500,
+              fontSize: 14,
+              marginRight: 0,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 6,
+            }}>
+              <span className="icon flaticon-map-locator me-2" style={{marginRight: 6}}></span>
+              {company.location}
+            </span>
+            <span style={{
+              background: '#e6f4ea',
+              color: '#1dbf73',
+              borderRadius: 16,
+              padding: '4px 16px',
+              fontWeight: 500,
+              fontSize: 14,
+              marginRight: 0,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 6,
+            }}>
+              <span className="icon flaticon-briefcase me-2" style={{marginRight: 6}}></span>
+              {industryMap[company.industryId] || `Industry ID: ${company.industryId}`}
+            </span>
+            <span style={{
+              background: '#fff4e6',
+              color: '#ffb200',
+              borderRadius: 16,
+              padding: '4px 16px',
+              fontWeight: 500,
+              fontSize: 14,
+              marginRight: 0,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 6,
+            }}>
+              <span className="icon flaticon-user me-2" style={{marginRight: 6}}></span>
+              {company.teamSize || 'N/A'}
+            </span>
           </div>
         </div>
         <button
@@ -418,6 +470,16 @@ const FilterTopBox = () => {
 
       {/* <ListingShowing /> */} {/* Keep ListingShowing if it handles pagination buttons based on totalCompanies */}
       {/* <!-- Listing Show More --> */}
+      <style jsx>{`
+        .company-name-hover {
+          transition: color 0.2s, font-weight 0.2s;
+        }
+        .company-name-hover:hover {
+          color: #2563eb !important;
+          font-weight: 700 !important;
+          cursor: pointer;
+        }
+      `}</style>
     </>
   );
 };
