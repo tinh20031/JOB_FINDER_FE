@@ -187,20 +187,6 @@ const ApplyJobModalContent = ({ jobId }) => {
           ></textarea>
         </div>
 
-        <div className="col-lg-12 col-md-12 col-sm-12 form-group">
-          <div className="input-group checkboxes square">
-            <input type="checkbox" name="remember-me" id="rememberMe" required />
-            <label htmlFor="rememberMe" className="remember">
-              <span className="custom-checkbox"></span> You accept our{" "}
-              <span data-bs-dismiss="modal">
-                <Link href="/terms">
-                  Terms and Conditions and Privacy Policy
-                </Link>
-              </span>
-            </label>
-          </div>
-        </div>
-
         {error && (
           <div className="col-lg-12 col-md-12 col-sm-12 form-group">
             <div className="alert alert-danger">{error}</div>

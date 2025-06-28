@@ -21,6 +21,7 @@ import Cookies from 'js-cookie';
 import { useRouter } from "next/navigation";
 import { companyService } from "@/services/companyService";
 import { industryService } from "@/services/industryService";
+import ClickableBox from "../../common/ClickableBox";
 
 const FilterTopBox = () => {
   const {
@@ -247,13 +248,13 @@ const FilterTopBox = () => {
 
   // Render danh sách company với nút bookmark
   const content = sortedAndPaginatedCompanies?.map((company) => (
-    <div
-      className="company-block-three"
+    <ClickableBox
       key={company.userId}
-      style={{ cursor: 'pointer' }}
       onClick={() => router.push(`/employers-single-v1/${company.userId}`)}
+      className="company-block-three"
+      style={{ cursor: 'pointer' }}
     >
-      <div className="inner-box position-relative d-flex align-items-center">
+      <div className="d-flex align-items-center position-relative">
         <img 
           src={company.urlCompanyLogo} 
           alt={company.companyName} 
@@ -340,7 +341,7 @@ const FilterTopBox = () => {
           <span className="flaticon-bookmark"></span>
         </button>
       </div>
-    </div>
+    </ClickableBox>
   ));
 
   // per page handler

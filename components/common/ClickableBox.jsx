@@ -1,5 +1,5 @@
 import React from "react";
-import "../job-listing-pages/job-list-v1/FilterJobsBox.css";
+import "./ClickableBox.css";
 
 const ClickableBox = ({
   onClick,
