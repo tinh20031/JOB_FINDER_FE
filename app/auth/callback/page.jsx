@@ -1,12 +1,12 @@
 "use client";
-import { useEffect } from "react";
+import { useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Cookies from "js-cookie";
 import { useDispatch } from "react-redux";
 import { setLoginState } from "@/features/auth/authSlice";
 import { jwtDecode } from "jwt-decode";
 
-export default function Callback() {
+function CallbackContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const dispatch = useDispatch();
@@ -70,3 +70,14 @@ export default function Callback() {
 
   return <div>Đang đăng nhập bằng Google...</div>;
 }
+
+export default function Callback() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <CallbackContent />
+    </Suspense>
+  );
+}
+
+// Force dynamic rendering
+export const dynamic = "force-dynamic";

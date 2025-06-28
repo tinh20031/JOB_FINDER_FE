@@ -1,5 +1,8 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  experimental: {
+    appDir: true,
+  },
   images: {
     domains: [
       "randomuser.me",
@@ -7,6 +10,7 @@ const nextConfig = {
       "res.cloudinary.com",
       "example.com",
       "img.freepik.com",
+      "localhost",
     ],
     remotePatterns: [
       {
@@ -15,11 +19,34 @@ const nextConfig = {
       },
     ],
   },
+  // Disable static generation for auth pages
+  async generateStaticParams() {
+    return [];
+  },
+  // Configure which pages should not be statically generated
   async rewrites() {
     return [
       {
         source: "/api/:path*",
         destination: "https://job-finder-kjt2.onrender.com/api/:path*", // Chuyển tiếp request đến backend
+      },
+      {
+        source: "/auth/:path*",
+        destination: "/auth/:path*",
+      },
+    ];
+  },
+  // Disable static optimization for auth pages
+  async headers() {
+    return [
+      {
+        source: "/auth/:path*",
+        headers: [
+          {
+            key: "Cache-Control",
+            value: "no-store, must-revalidate",
+          },
+        ],
       },
     ];
   },
