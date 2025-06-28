@@ -65,7 +65,7 @@ const ChatboxContactList = ({ onContactSelect, currentChatPartnerId, contacts = 
                 <div className="contact-info">
                   <div className="avatar-container">
                     <Image
-                      src={contact.avatar}
+                      src={contact.avatar && (contact.avatar.startsWith('/') || contact.avatar.startsWith('http')) ? contact.avatar : '/images/resource/default-avatar.png'}
                       className="rounded-circle user_img"
                       alt={contact.name}
                       width={60}
