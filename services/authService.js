@@ -251,28 +251,9 @@ export const authService = {
 
   // Update the Google login URL function in authService.js
   getGoogleLoginUrl() {
-    // Try the direct approach first if we're having cookie/state issues
-    const useDirectLogin =
-      process.env.NEXT_PUBLIC_USE_DIRECT_GOOGLE_LOGIN === "true";
-
-    if (useDirectLogin) {
-      return (
-        process.env.NEXT_PUBLIC_DIRECT_GOOGLE_LOGIN_URL ||
-        "https://job-finder-kjt2.onrender.com/api/auth/direct-google-login"
-      );
-    }
-
-    // Otherwise use standard OAuth endpoint
     return (
       process.env.NEXT_PUBLIC_GOOGLE_LOGIN_URL ||
       "https://job-finder-kjt2.onrender.com/api/auth/login-google"
     );
-  },
-
-  // Add a new method to handle OAuth errors
-  handleOAuthError(errorMessage) {
-    console.error("OAuth error:", errorMessage);
-    // You could implement custom error handling here
-    // For example, show a toast notification or redirect to login
   },
 };
