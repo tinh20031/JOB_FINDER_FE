@@ -253,7 +253,7 @@ export const authService = {
   getGoogleLoginUrl() {
     return (
       process.env.NEXT_PUBLIC_GOOGLE_LOGIN_URL ||
-      "https://job-finder-kjt2.onrender.com/api/auth/login-google"
+      "http://localhost:5194/api/auth/login-google"
     );
   },
 };

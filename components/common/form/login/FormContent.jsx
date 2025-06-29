@@ -9,6 +9,7 @@ import { setLoginState } from "@/features/auth/authSlice";
 import { jwtDecode } from "jwt-decode";
 import LoginWithSocial from "../shared/LoginWithSocial";
 import VerifyEmailForm from "../shared/VerifyEmailForm";
+import { toast } from "react-toastify";
 
 const FormContent = ({ isPopup = false }) => {
   const router = useRouter();
@@ -150,6 +151,26 @@ const FormContent = ({ isPopup = false }) => {
         setError("Incorrect password. Please try again.");
       } else if (error.message && error.message.includes("Unexpected token")) {
         setError("Network or server error.");
+      } else if (
+        error.message &&
+        error.message.toLowerCase().includes("Unverified")
+      ) {
+        // Xử lý trường hợp message tiếng Việt: Email chưa được xác thực
+        setShowVerifyEmailForm(true);
+        setFormData((prev) => ({
+          ...prev,
+          // Nếu API trả về email, lấy email đó, không thì giữ nguyên
+          email:
+            (error.response &&
+              error.response.data &&
+              error.response.data.email) ||
+            formData.email,
+        }));
+        setVerifyEmailAlert(
+          error.message ||
+            "Your email is not verified. Please check your email for the confirmation code."
+        );
+        setError("");
       } else {
         setError(error.message || "An error occurred. Please try again.");
       }
@@ -171,11 +192,66 @@ const FormContent = ({ isPopup = false }) => {
           )}
           <VerifyEmailForm
             initialEmail={formData.email}
-            onVerified={(email) => {
+            onVerified={async (email) => {
               setShowVerifyEmailForm(false);
               setFormData((prev) => ({ ...prev, email }));
               setVerifyEmailAlert("");
               setError("");
+              // Tự động login lại
+              setLoading(true);
+              try {
+                const responseData = await authService.login(
+                  email,
+                  formData.password
+                );
+                let user = responseData.user || {};
+                let userId = user.id || user.userId;
+                if (!userId && responseData.token) {
+                  try {
+                    const decoded = jwtDecode(responseData.token);
+                    userId = decoded.sub;
+                  } catch (e) {}
+                }
+                if (userId) {
+                  user.id = userId;
+                }
+                if (responseData.token) {
+                  localStorage.setItem("token", responseData.token);
+                }
+                await Promise.all([
+                  new Promise((resolve) => {
+                    localStorage.setItem("user", JSON.stringify(user));
+                    if (user.id) {
+                      localStorage.setItem("userId", user.id);
+                    }
+                    resolve();
+                  }),
+                  new Promise((resolve) => {
+                    dispatch(
+                      setLoginState({
+                        isLoggedIn: true,
+                        user: user,
+                        role: responseData.role,
+                        token: responseData.token,
+                      })
+                    );
+                    resolve();
+                  }),
+                ]);
+                // Thông báo thành công
+                toast.success(
+                  "Verification successful! You are now logged in."
+                );
+                // Chuyển hướng
+                const userRole = responseData.role || user.role;
+                const redirectPath =
+                  userRole === "Admin" ? "/admin-dashboard/dashboard" : "/";
+                window.location.href = redirectPath;
+              } catch (err) {
+                setError("Automatic login failed. Please login again.");
+              } finally {
+                setLoading(false);
+              }
             }}
             onCancel={() => {
               setShowVerifyEmailForm(false);
