@@ -50,7 +50,7 @@ const Education = ({
       }
       toast.success("Updated successfully");
     } catch (e) {
-      toast.error("Cập nhật thất bại!");
+      toast.error("Update failed!");
     }
   };
 
@@ -110,7 +110,7 @@ const Education = ({
         { autoClose: 10000 }
       );
     } catch (e) {
-      toast.error("Xóa thất bại!");
+      toast.error("Delete failed!");
     }
     setDeletingId(null);
   };

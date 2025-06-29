@@ -154,7 +154,7 @@ const DashboardCandidatesHeader = () => {
                                 <Image
                                     alt="Ảnh đại diện"
                                     className="thumb"
-                                    src={avatar}
+                                    src={getValidImageUrl(avatar) || "/images/resource/candidate-1.png"}
                                     width={50}
                                     height={50}
                                 />

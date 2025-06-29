@@ -1,8 +1,8 @@
 import axios from "axios";
 import { authService } from "./authService";
+const API_URL = "http://localhost:5194/api/Message";
+// const API_URL = "https://job-finder-kjt2.onrender.com/api/Message";
 
-const API_URL = "https://job-finder-kjt2.onrender.com/api/Message";
-// const API_URL = "http://localhost:5194/api/Message";
 const getToken = () => authService.getToken();
 
 const getHeaders = () => ({
@@ -43,12 +43,10 @@ const messageService = {
   },
 
   getUniqueMessageUsersByCompany: async (companyId) => {
-    const response = await axios.get(
-      `${API_URL}/candidates-messaged/${companyId}`
-    );
+    const response = await axios.get(`${API_URL}/candidates-messaged/${companyId}`);
     // API trả về mảng các candidate đã nhắn tin, chỉ cần lấy length
     return Array.isArray(response.data) ? response.data.length : 0;
-  },
+  }
 };
 
 export default messageService;

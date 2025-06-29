@@ -1,3 +1,5 @@
+"use client";
+
 import MobileMenu from "../../../header/MobileMenu";
 import LoginPopup from "../../../common/form/login/LoginPopup";
 import DashboardCandidatesSidebar from "../../../header/DashboardCandidatesSidebar";
@@ -9,8 +11,24 @@ import CopyrightFooter from "../../CopyrightFooter";
 import JobApplied from "./components/JobApplied";
 import DashboardCandidatesHeader from "../../../header/DashboardCandidatesHeader";
 import MenuToggler from "../../MenuToggler";
+import { useEffect, useState } from "react";
+import apiService from "@/services/api.service";
 
 const Index = () => {
+  const [fullName, setFullName] = useState("");
+
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        const profile = await apiService.get('/CandidateProfile/me');
+        setFullName(profile.fullName || "Candidate");
+      } catch {
+        setFullName("Candidate");
+      }
+    };
+    fetchProfile();
+  }, []);
+
   return (
     <div className="page-wrapper dashboard">
       <span className="header-span"></span>
@@ -31,7 +49,7 @@ const Index = () => {
       {/* <!-- Dashboard --> */}
       <section className="user-dashboard">
         <div className="dashboard-outer">
-          <BreadCrumb title="Howdy, Jerome!!" />
+          <BreadCrumb title={`Hello, ${fullName}!!`} />
           {/* breadCrumb */}
 
           <MenuToggler />

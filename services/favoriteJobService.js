@@ -1,7 +1,7 @@
 import axios from "axios";
+const API_URL = "http://localhost:5194/api/UserFavoriteJob";
+// const API_URL = "https://job-finder-kjt2.onrender.com/api/UserFavoriteJob";
 
-const API_URL = "https://job-finder-kjt2.onrender.com/api/UserFavoriteJob";
-// const API_URL = "http://localhost:5194/api/UserFavoriteJob";
 export const getUserFavorites = (userId) =>
   axios.get(`${API_URL}/user/${userId}`);
 

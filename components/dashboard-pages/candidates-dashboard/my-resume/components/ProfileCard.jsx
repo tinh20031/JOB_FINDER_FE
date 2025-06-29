@@ -36,7 +36,7 @@ const ProfileCard = ({ profile, onEdit }) => {
       </button>
       <div style={{ display: "flex", alignItems: "center", gap: 32 }}>
         <img
-          src={profile.image || profile.avatar || "/default-avatar.png"}
+          src={(profile.image && (profile.image.startsWith('/') || profile.image.startsWith('http'))) ? profile.image : (profile.avatar && (profile.avatar.startsWith('/') || profile.avatar.startsWith('http')) ? profile.avatar : '/images/resource/default-avatar.png')}
           alt="avatar"
           style={{
             width: 72,

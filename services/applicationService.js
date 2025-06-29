@@ -3,7 +3,7 @@ import Cookies from "js-cookie";
 
 // const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://job-finder-kjt2.onrender.com/api';
 const API_URL =
-  process.env.NEXT_PUBLIC_API_URL || "https://job-finder-kjt2.onrender.com/api";
+  process.env.NEXT_PUBLIC_API_URL || "http://localhost:5194/api";
 // Helper function to get token
 const getToken = () => {
   let token = Cookies.get("token");

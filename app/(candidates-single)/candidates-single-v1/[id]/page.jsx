@@ -57,7 +57,7 @@ const CandidateSingleDynamicV1 = ({ params }) => {
         setLoading(false);
       })
       .catch((err) => {
-        setError(err.message || "Lỗi khi tải dữ liệu ứng viên");
+        setError(err.message || "Error loading candidate data");
         setLoading(false);
       });
   }, [id]);
@@ -75,9 +75,9 @@ const CandidateSingleDynamicV1 = ({ params }) => {
     return age;
   }
 
-  if (loading || resumeLoading) return <div>Đang tải dữ liệu...</div>;
+  if (loading || resumeLoading) return <div>Loading data...</div>;
   if (error) return <div>{error}</div>;
-  if (!candidate || !user) return <div>Không tìm thấy ứng viên</div>;
+  if (!candidate || !user) return <div>Candidate not found</div>;
 
   return (
     <>

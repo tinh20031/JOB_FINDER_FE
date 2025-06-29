@@ -220,7 +220,7 @@ const JobSingleDynamicV3 = ({ params }) => {
   }
 
   if (fetchError) {
-    return <div>Lỗi hệ thống, vui lòng thử lại sau!</div>;
+    return <div>System error, please try again later!</div>;
   }
 
   return (

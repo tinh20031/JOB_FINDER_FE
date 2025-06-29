@@ -69,7 +69,7 @@ function CallbackContent() {
     }
   }, [router, searchParams, dispatch]);
 
-  return <div>Đang đăng nhập bằng Google...</div>;
+  return <div>Logging in with Google...</div>;
 }
 
 export default function Callback() {

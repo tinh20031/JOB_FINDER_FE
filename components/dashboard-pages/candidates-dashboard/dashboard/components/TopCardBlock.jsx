@@ -1,31 +1,88 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { applicationService } from "@/services/applicationService";
+import messageService from "@/services/messageService";
+import Cookies from "js-cookie";
+import { getUserFavorites } from "@/services/favoriteJobService";
+
 const TopCardBlock = () => {
+  const [appliedJobsCount, setAppliedJobsCount] = useState(0);
+  const [appliedTimesCount, setAppliedTimesCount] = useState(0);
+  const [messagedCompaniesCount, setMessagedCompaniesCount] = useState(0);
+  const [favoriteJobsCount, setFavoriteJobsCount] = useState(0);
+
+  useEffect(() => {
+    const fetchAppliedJobs = async () => {
+      try {
+        const applications = await applicationService.getAppliedJobs();
+        setAppliedTimesCount(applications.length || 0);
+        const uniqueJobIds = new Set(applications.map(app => app.jobId || (app.job && app.job.id)));
+        setAppliedJobsCount(uniqueJobIds.size);
+      } catch {
+        setAppliedJobsCount(0);
+        setAppliedTimesCount(0);
+      }
+    };
+    fetchAppliedJobs();
+  }, []);
+
+  useEffect(() => {
+    const fetchMessagedCompanies = async () => {
+      try {
+        let candidateId = Cookies.get("userId") || localStorage.getItem("userId");
+        if (!candidateId) return setMessagedCompaniesCount(0);
+        const res = await messageService.getMessagedCompanies(candidateId);
+        // API trả về mảng các công ty đã nhắn tin, chỉ cần lấy length
+        setMessagedCompaniesCount(Array.isArray(res.data) ? res.data.length : 0);
+      } catch {
+        setMessagedCompaniesCount(0);
+      }
+    };
+    fetchMessagedCompanies();
+  }, []);
+
+  useEffect(() => {
+    const fetchFavoriteJobs = async () => {
+      try {
+        let userId = Cookies.get("userId") || localStorage.getItem("userId");
+        if (!userId) return setFavoriteJobsCount(0);
+        const res = await getUserFavorites(userId);
+        setFavoriteJobsCount(Array.isArray(res.data) ? res.data.length : 0);
+      } catch {
+        setFavoriteJobsCount(0);
+      }
+    };
+    fetchFavoriteJobs();
+  }, []);
+
   const cardContent = [
     {
       id: 1,
       icon: "flaticon-briefcase",
-      countNumber: "22",
+      countNumber: appliedJobsCount,
       metaName: "Applied Jobs",
       uiClass: "ui-blue",
     },
     {
       id: 2,
       icon: "la-file-invoice",
-      countNumber: "9382",
-      metaName: "Job Alerts",
+      countNumber: appliedTimesCount,
+      metaName: "Total Applications",
       uiClass: "ui-red",
     },
     {
       id: 3,
       icon: "la-comment-o",
-      countNumber: "74",
+      countNumber: messagedCompaniesCount,
       metaName: "Messages",
       uiClass: "ui-yellow",
     },
     {
       id: 4,
       icon: "la-bookmark-o",
-      countNumber: "32",
-      metaName: "Shortlist",
+      countNumber: favoriteJobsCount,
+      metaName: "Favorite Jobs",
       uiClass: "ui-green",
     },
   ];
