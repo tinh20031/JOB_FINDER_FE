@@ -570,3 +570,80 @@ export async function getAboutMeByUserId(userId) {
   if (!res.ok) return null;
   return await res.json();
 }
+
+export async function getWorkExperienceByUserId(userId) {
+  if (!userId) return [];
+  try {
+    const res = await fetch(`${API_URL}/WorkExperience/user/${userId}`);
+    if (!res.ok) return [];
+    return await res.json();
+  } catch {
+    return [];
+  }
+}
+
+export async function getHighlightProjectByUserId(userId) {
+  if (!userId) return [];
+  try {
+    const res = await fetch(`${API_URL}/HighlightProject/user/${userId}`);
+    if (!res.ok) return [];
+    return await res.json();
+  } catch {
+    return [];
+  }
+}
+
+export async function getAwardByUserId(userId) {
+  if (!userId) return [];
+  try {
+    const res = await fetch(`${API_URL}/Award/user/${userId}`);
+    if (!res.ok) return [];
+    return await res.json();
+  } catch {
+    return [];
+  }
+}
+
+export async function getSkillByUserId(userId) {
+  if (!userId) return [];
+  try {
+    const res = await fetch(`${API_URL}/Skill/user/${userId}`);
+    if (!res.ok) return [];
+    return await res.json();
+  } catch {
+    return [];
+  }
+}
+
+export async function getForeignLanguageByUserId(userId) {
+  if (!userId) return [];
+  try {
+    const res = await fetch(`${API_URL}/ForeignLanguage/user/${userId}`);
+    if (!res.ok) return [];
+    return await res.json();
+  } catch {
+    return [];
+  }
+}
+
+export async function getEducationByUserId(userId) {
+  if (!userId) return [];
+  try {
+    const res = await fetch(`${API_URL}/Education/user/${userId}`);
+    if (!res.ok) return [];
+    return await res.json();
+  } catch {
+    return [];
+  }
+}
+
+export async function getCandidateProfileByUserId(userId) {
+  if (!userId) return null;
+  try {
+    const res = await fetch(`${API_URL}/CandidateProfile/${userId}`);
+    if (!res.ok) return null;
+    return await res.json();
+  } catch {
+    return null;
+  }
+}

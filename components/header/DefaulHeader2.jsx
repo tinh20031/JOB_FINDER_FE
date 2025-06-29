@@ -213,7 +213,7 @@ const DefaulHeader2 = () => {
               {isLoggedIn && (role === 'Candidate') && (
                 <Link href="/favorite-jobs">
                   <button className="menu-btn">
-                    <span className="count">{favoriteCount}</span>
+                    {favoriteCount > 0 && <span className="count">{favoriteCount}</span>}
                     <span className="icon la la-heart-o"></span>
                   </button>
                 </Link>
