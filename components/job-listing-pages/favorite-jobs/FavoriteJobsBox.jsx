@@ -103,7 +103,16 @@ const FavoriteJobsBox = () => {
                     verticalAlign: 'middle',
                   }}>
                     {(() => {
-                      const logoSrc = item.company?.urlCompanyLogo || '/images/company-logo/default-logo.png';
+                      let logoSrc = item.company?.urlCompanyLogo;
+                      if (
+                        !logoSrc ||
+                        typeof logoSrc !== "string" ||
+                        logoSrc.trim().toLowerCase() === "string" ||
+                        logoSrc.trim() === "" ||
+                        !(logoSrc.startsWith("/") || logoSrc.startsWith("http"))
+                      ) {
+                        logoSrc = "/images/company-logo/default-logo.png";
+                      }
                       const companyName = item.company?.companyName || 'Company';
                       return <Image width={54} height={54} src={logoSrc} alt={companyName} style={{ objectFit: 'cover', width: 54, height: 54, display: 'block' }} />;
                     })()}
@@ -169,7 +178,7 @@ const FavoriteJobsBox = () => {
                   transition: 'all 0.3s ease',
                   color: (favoriteJobIds || []).includes(item.id) ? '#2563eb' : '#666',
                 }}
-                title="Bỏ yêu thích"
+                title="Remove from favorites"
               >
                 {(favoriteJobIds || []).includes(item.id) ? (
                   <svg

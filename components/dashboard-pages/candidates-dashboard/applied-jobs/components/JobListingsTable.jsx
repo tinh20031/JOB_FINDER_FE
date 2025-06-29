@@ -162,9 +162,14 @@ const JobListingsTable = () => {
                   const detail = jobDetails[job.jobId];
                   const companyName = job.Company?.CompanyName || detail?.company?.companyName || "";
                   return (
-                    <tr key={job.jobId}>
+                    <tr
+                      key={job.jobId}
+                      onClick={() => handleJobClick(job.jobId)}
+                      className="job-row"
+                      style={{ cursor: 'pointer' }}
+                    >
                       <td>
-                        <div style={{ fontWeight: 600, cursor: 'pointer' }} onClick={() => handleJobClick(job.jobId)}>
+                        <div style={{ fontWeight: 600 }}>
                           {job.title}
                         </div>
                         <div style={{ color: '#888', fontSize: 14, marginTop: 4 }}>
@@ -176,7 +181,7 @@ const JobListingsTable = () => {
                         </div>
                       </td>
                       <td>
-                        <Link href="#" style={{ color: '#1967d2', fontWeight: 500, textDecoration: 'underline' }} onClick={e => { e.preventDefault(); router.push(`/candidates-dashboard/applied-jobs/${job.jobId}`); }}>{item.count} Applied</Link>
+                        <Link href="#" style={{ color: '#1967d2', fontWeight: 500, textDecoration: 'underline' }} onClick={e => { e.preventDefault(); e.stopPropagation(); router.push(`/candidates-dashboard/applied-jobs/${job.jobId}`); }}>{item.count} Applied</Link>
                       </td>
                       <td>
                         {job.timeStart ? new Date(job.timeStart).toLocaleDateString() : ''}
@@ -191,6 +196,21 @@ const JobListingsTable = () => {
           </div>
         )}
       </div>
+      <style jsx>{`
+        @media (hover: hover) and (pointer: fine) {
+          .manage-job-table tbody tr.job-row:hover {
+            background: #f7fafd;
+          }
+        }
+        @media (hover: none) and (pointer: coarse) {
+          .manage-job-table tbody tr.job-row {
+            cursor: pointer;
+          }
+        }
+        .manage-job-table tbody tr.job-row td div[style*="font-weight: 600"]:hover {
+          color: #2563eb;
+        }
+      `}</style>
     </div>
   );
 };

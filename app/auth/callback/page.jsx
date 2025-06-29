@@ -6,13 +6,6 @@ import { useDispatch } from "react-redux";
 import { setLoginState } from "@/features/auth/authSlice";
 import { jwtDecode } from "jwt-decode";
 
-export default function Callback() {
-  return (
-    <Suspense>
-      <CallbackContent />
-    </Suspense>
-  );
-}
 
 function CallbackContent() {
   const router = useRouter();
@@ -76,5 +69,16 @@ function CallbackContent() {
     }
   }, [router, searchParams, dispatch]);
 
-  return <div>Đang đăng nhập bằng Google...</div>;
+  return <div>Logging in with Google...</div>;
 }
+
+export default function Callback() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <CallbackContent />
+    </Suspense>
+  );
+}
+
+// Force dynamic rendering
+export const dynamic = "force-dynamic";

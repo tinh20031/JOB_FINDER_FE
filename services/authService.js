@@ -8,12 +8,12 @@ export const authService = {
       const data = await ApiService.login(email, password);
       console.log("authService.login: Raw data from ApiService.login:", data);
 
-      // Đặt cookieOptions ở đầu hàm login
+      
       const cookieOptions = {
-        expires: 7, // 7 days
+        expires: 7, 
         path: "/",
-        secure: process.env.NODE_ENV === "production", // Sử dụng secure chỉ trong môi trường production (HTTPS)
-        sameSite: "Lax", // Bảo vệ CSRF ở mức độ cơ bản
+        secure: process.env.NODE_ENV === "production", 
+        sameSite: "Lax", 
       };
 
       let decodedToken = null;
@@ -249,10 +249,11 @@ export const authService = {
     return await ApiService.resendVerification(email);
   },
 
+  // Update the Google login URL function in authService.js
   getGoogleLoginUrl() {
     return (
       process.env.NEXT_PUBLIC_GOOGLE_LOGIN_URL ||
-      "http://localhost:5194/api/auth/login-google"
+      "https://job-finder-kjt2.onrender.com/api/auth/login-google"
     );
   },
 };

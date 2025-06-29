@@ -54,17 +54,17 @@ const EmployersSingleV1 = ({ params }) => {
       if (isFavorite) {
         await jobService.unfavoriteCompany(company.userId);
         setIsFavorite(false);
-        toast.success("Đã xóa khỏi danh sách yêu thích");
+        toast.success("Removed from favorites");
       } else {
         await jobService.favoriteCompany(company.userId);
         setIsFavorite(true);
-        toast.success("Đã thêm vào danh sách yêu thích");
+        toast.success("Added to favorites");
       }
     } catch (error) {
       if (error?.response?.status === 401) {
-        toast.error("Phiên đăng nhập đã hết hạn, vui lòng đăng nhập lại");
+        toast.error("Login session expired, please login again");
       } else {
-        toast.error("Có lỗi xảy ra khi xử lý yêu thích");
+        toast.error("An error occurred while processing favorites");
       }
     } finally {
       setIsLoadingFavorite(false);
@@ -93,7 +93,7 @@ const EmployersSingleV1 = ({ params }) => {
       <section className="job-detail-section">
         {/* <!-- Upper Box --> */}
         <div className="upper-box" style={{ background: 'none', paddingTop: 0, marginTop: 0 }}>
-          {/* Cover Image - full width, sát header, logo lấn xuống, info bên phải như Facebook */}
+          {/* Cover Image - full width, near header, logo overlapping down, info on the right like Facebook */}
           {company.imageLogoLgr && (
             <div
               style={{
@@ -119,7 +119,7 @@ const EmployersSingleV1 = ({ params }) => {
                   display: 'block',
                 }}
               />
-              {/* Flex row: logo bên trái, info bên phải */}
+              {/* Flex row: logo on left, info on right */}
               <div
                 style={{
                   position: 'absolute',
@@ -153,7 +153,7 @@ const EmployersSingleV1 = ({ params }) => {
                   <div style={{display: 'flex', alignItems: 'center', gap: 12}}>
                     {/* <button
                       className={`bookmark-btn${isFavorite ? " active" : ""}`}
-                      title={isFavorite ? "Bỏ yêu thích" : "Lưu công ty"}
+                      title={isFavorite ? "Remove from favorites" : "Save company"}
                       onClick={handleBookmark}
                       disabled={isLoadingFavorite}
                       style={{
@@ -181,7 +181,7 @@ const EmployersSingleV1 = ({ params }) => {
         </div>
         {/* <!-- Upper Box --> */}
 
-        {/* Đường line ngăn cách trước About Company */}
+        {/* Divider line before About Company */}
         {/* <div style={{height: 1, background: '#000000', width: '80%', borderRadius: 1}}></div> */}
         <div
   style={{

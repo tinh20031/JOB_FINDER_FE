@@ -47,7 +47,7 @@ const CompanyFavouriteTable = () => {
         setError(null);
       } catch (err) {
         console.error('Error fetching favorite companies:', err);
-        setError('Bạn cần đăng nhập để xem công ty yêu thích');
+        setError('You need to login to view favorite companies');
         setCompanies([]);
       } finally {
         setLoading(false);
@@ -65,10 +65,10 @@ const CompanyFavouriteTable = () => {
       setIsLoadingUnfavorite(true);
       await companyService.unfavoriteCompany(companyId);
       setCompanies(prev => prev.filter(c => c.userId !== companyId));
-      toast.success("Đã xóa khỏi danh sách yêu thích");
+      toast.success("Removed from favorites");
     } catch (err) {
       console.error("Unfavorite error:", err, err?.response);
-      toast.error("Có lỗi khi bỏ yêu thích!");
+      toast.error("Error occurred while removing from favorites!");
     } finally {
       setIsLoadingUnfavorite(false);
     }
@@ -129,7 +129,7 @@ const CompanyFavouriteTable = () => {
                   visibility: 'visible',
                   cursor: isLoadingUnfavorite ? 'not-allowed' : 'pointer'
                 }}
-                title="Bỏ yêu thích"
+                title="Remove from favorites"
                 onClick={e => {
                   e.stopPropagation();
                   handleUnfavorite(company.userId);

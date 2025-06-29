@@ -331,7 +331,7 @@ const Index = () => {
         const userId = localStorage.getItem('userId');
 
         if (!userId) {
-            alert("Không tìm thấy User ID trong Local Storage. Vui lòng đăng nhập lại.");
+            alert("User ID not found in Local Storage. Please login again.");
             console.error("User ID not found in localStorage.");
             return false;
         }

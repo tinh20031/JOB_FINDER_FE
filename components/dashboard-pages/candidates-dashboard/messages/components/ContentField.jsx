@@ -51,7 +51,7 @@ const ChatBoxContentField = ({ messages, sendMessage, sendFile, currentChatPartn
             <Image
               width={48}
               height={48}
-              src={currentChatPartner.avatar || "/images/resource/default-avatar.png"}
+              src={currentChatPartner.avatar && (currentChatPartner.avatar.startsWith('/') || currentChatPartner.avatar.startsWith('http')) ? currentChatPartner.avatar : '/images/resource/default-avatar.png'}
               alt="user avatar"
               className="rounded-circle user_img"
               style={{ width: 48, height: 48, minWidth: 48, minHeight: 48, maxWidth: 48, maxHeight: 48 }}
@@ -87,8 +87,8 @@ const ChatBoxContentField = ({ messages, sendMessage, sendFile, currentChatPartn
                   style={{ width: 32, height: 32, minWidth: 32, minHeight: 32, maxWidth: 32, maxHeight: 32 }}
                   src={
                     isMyMessage
-                      ? (currentUserProfileImage || '/images/resource/candidate-6.png')
-                      : (currentChatPartner.avatar || '/images/resource/default-avatar.png')
+                      ? ((currentUserProfileImage && (currentUserProfileImage.startsWith('/') || currentUserProfileImage.startsWith('http'))) ? currentUserProfileImage : '/images/resource/candidate-6.png')
+                      : ((currentChatPartner.avatar && (currentChatPartner.avatar.startsWith('/') || currentChatPartner.avatar.startsWith('http'))) ? currentChatPartner.avatar : '/images/resource/default-avatar.png')
                   }
                   alt="avatar"
                   className="rounded-circle user_img_msg small-avatar"
