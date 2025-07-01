@@ -8,12 +8,12 @@ export const useFavoriteJobs = () => useContext(FavoriteJobsContext);
 export const FavoriteJobsProvider = ({ children }) => {
   const [favoriteCount, setFavoriteCount] = useState(0);
   const [favoriteJobIds, setFavoriteJobIds] = useState([]);
-  const userId = typeof window !== "undefined" ? Number(localStorage.getItem("userId")) : null;
+  const UserId = typeof window !== "undefined" ? Number(localStorage.getItem("userId")) : null;
 
   const fetchFavoriteJobs = async () => {
-    if (userId) {
+    if (UserId) {
       try {
-        const res = await getUserFavorites(userId);
+        const res = await getUserFavorites(UserId);
         setFavoriteJobIds(res.data.map((item) => item.jobId));
         setFavoriteCount(res.data.length);
       } catch {
@@ -26,7 +26,7 @@ export const FavoriteJobsProvider = ({ children }) => {
   useEffect(() => {
     fetchFavoriteJobs();
     // eslint-disable-next-line
-  }, [userId]);
+  }, [UserId]);
 
   // Hàm này sẽ được gọi khi thêm/xóa job yêu thích
   const updateFavoriteJobs = (newIds) => {

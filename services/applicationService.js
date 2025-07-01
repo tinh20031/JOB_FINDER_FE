@@ -1,13 +1,14 @@
-import axios from "axios";
-import Cookies from "js-cookie";
+import axios from 'axios';
+import Cookies from 'js-cookie';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://job-finder-kjt2.onrender.com/api';
-// const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5194/api";
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5194/api';
+// const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://job-finder-kjt2.onrender.com/api';
+
 // Helper function to get token
 const getToken = () => {
-  let token = Cookies.get("token");
+  let token = Cookies.get('token');
   if (!token) {
-    token = localStorage.getItem("token");
+    token = localStorage.getItem('token');
   }
   return token;
 };
@@ -18,7 +19,7 @@ export const applicationService = {
     try {
       const token = getToken();
       if (!token) {
-        throw new Error("No authentication token found");
+        throw new Error('No authentication token found');
       }
 
       const response = await axios.post(
@@ -26,14 +27,14 @@ export const applicationService = {
         formData,
         {
           headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "multipart/form-data",
-          },
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'multipart/form-data'
+          }
         }
       );
       return response.data;
     } catch (error) {
-      console.error("Error applying for job:", error);
+      console.error('Error applying for job:', error);
       throw error;
     }
   },
@@ -43,22 +44,22 @@ export const applicationService = {
     try {
       const token = getToken();
       if (!token) {
-        throw new Error("No authentication token found");
+        throw new Error('No authentication token found');
       }
 
       const response = await axios.get(
         `${API_URL}/Application/my-applications`,
         {
           headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
           },
-          withCredentials: true,
+          withCredentials: true
         }
       );
       return response.data;
     } catch (error) {
-      console.error("Error fetching applied jobs:", error);
+      console.error('Error fetching applied jobs:', error);
       throw error;
     }
   },
@@ -68,18 +69,21 @@ export const applicationService = {
     try {
       const token = getToken();
       if (!token) {
-        throw new Error("No authentication token found");
+        throw new Error('No authentication token found');
       }
 
-      const response = await axios.get(`${API_URL}/Application/job/${jobId}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-      });
+      const response = await axios.get(
+        `${API_URL}/Application/job/${jobId}`,
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        }
+      );
       return response.data;
     } catch (error) {
-      console.error("Error fetching job applicants:", error);
+      console.error('Error fetching job applicants:', error);
       throw error;
     }
   },
@@ -89,7 +93,7 @@ export const applicationService = {
     try {
       const token = getToken();
       if (!token) {
-        throw new Error("No authentication token found");
+        throw new Error('No authentication token found');
       }
 
       const response = await axios.put(
@@ -97,14 +101,14 @@ export const applicationService = {
         { status },
         {
           headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
         }
       );
       return response.data;
     } catch (error) {
-      console.error("Error updating application status:", error);
+      console.error('Error updating application status:', error);
       throw error;
     }
   },
@@ -114,7 +118,7 @@ export const applicationService = {
     try {
       const token = getToken();
       if (!token) {
-        throw new Error("No authentication token found");
+        throw new Error('No authentication token found');
       }
 
       const response = await axios.put(
@@ -122,14 +126,14 @@ export const applicationService = {
         {},
         {
           headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
         }
       );
       return response.data;
     } catch (error) {
-      console.error("Error withdrawing application:", error);
+      console.error('Error withdrawing application:', error);
       throw error;
     }
   },
@@ -139,21 +143,21 @@ export const applicationService = {
     try {
       const token = getToken();
       if (!token) {
-        throw new Error("No authentication token found");
+        throw new Error('No authentication token found');
       }
       const response = await axios.get(
         `${API_URL}/Application/distinct-job-count-by-user-in-company`,
         {
           headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
           },
-          params: { userId, companyId },
+          params: { userId, companyId }
         }
       );
       return response.data.distinctJobCount;
     } catch (error) {
-      console.error("Error fetching distinct job count:", error);
+      console.error('Error fetching distinct job count:', error);
       throw error;
     }
   },
@@ -163,21 +167,21 @@ export const applicationService = {
     try {
       const token = getToken();
       if (!token) {
-        throw new Error("No authentication token found");
+        throw new Error('No authentication token found');
       }
       const response = await axios.get(
         `${API_URL}/Application/jobs-applied-by-user-in-company`,
         {
           headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
           },
-          params: { userId, companyId },
+          params: { userId, companyId }
         }
       );
       return response.data;
     } catch (error) {
-      console.error("Error fetching jobs applied by user in company:", error);
+      console.error('Error fetching jobs applied by user in company:', error);
       throw error;
     }
   },
@@ -187,17 +191,20 @@ export const applicationService = {
     try {
       const token = getToken();
       if (!token) {
-        throw new Error("No authentication token found");
+        throw new Error('No authentication token found');
       }
-      const response = await axios.get(`${API_URL}/Application/job/${jobId}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-      });
+      const response = await axios.get(
+        `${API_URL}/Application/job/${jobId}`,
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        }
+      );
       return response.data;
     } catch (error) {
-      console.error("Error fetching applications by job:", error);
+      console.error('Error fetching applications by job:', error);
       throw error;
     }
   },
@@ -210,9 +217,7 @@ export const applicationService = {
 
   // Lấy số lượng candidate đã apply vào company (không trùng lặp)
   getUniqueCandidatesByCompany: async (companyId) => {
-    const response = await axios.get(
-      `${API_URL}/Application/company/${companyId}/unique-candidates`
-    );
+    const response = await axios.get(`${API_URL}/Application/company/${companyId}/unique-candidates`);
     return response.data.count;
   },
 
@@ -223,5 +228,5 @@ export const applicationService = {
       { params: { take } }
     );
     return response.data;
-  },
-};
+  }
+}; 

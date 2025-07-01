@@ -27,8 +27,8 @@ const getValidImageUrl = (url) => {
 
 const UserDetailPage = () => {
   const params = useParams();
-  const userId = params.userId;
-  const userIdInt = Number(userId);
+  const UserId = params.userId;
+  const UserIdInt = Number(UserId);
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [confirmModalOpen, setConfirmModalOpen] = useState(false);
@@ -40,7 +40,7 @@ const UserDetailPage = () => {
   useEffect(() => {
     const fetchUser = async () => {
       try {
-        const data = await ApiService.getUserById(userId);
+        const data = await ApiService.getUserById(UserId);
         setUser(data);
       } catch (error) {
         console.error('Error fetching user:', error);
@@ -50,12 +50,12 @@ const UserDetailPage = () => {
     };
 
     fetchUser();
-  }, [userId]);
+  }, [UserId]);
 
   const handleVerify = async () => {
     setConfirmLoading(true);
     try {
-      await userService.verifyCandidate(userIdInt);
+      await userService.verifyCandidate(UserIdInt);
       setConfirmModalOpen(false);
       setSuccessModalOpen(true);
     } catch (err) {

@@ -35,10 +35,10 @@ export const authService = {
         localStorage.setItem("profileImage", decodedToken.profileImage);
       }
       if (decodedToken && decodedToken.sub) {
-        localStorage.setItem("userId", decodedToken.sub);
+        localStorage.setItem("UserId", decodedToken.sub);
       }
       if (data.companyId) {
-        localStorage.setItem("companyId", data.companyId);
+        localStorage.setItem("CompanyProfileId", data.companyId);
       }
       if (data.user) {
         localStorage.setItem("user", JSON.stringify(data.user));
@@ -69,10 +69,10 @@ export const authService = {
         Cookies.set("profileImage", decodedToken.profileImage, cookieOptions);
       }
       if (decodedToken && decodedToken.sub) {
-        Cookies.set("userId", decodedToken.sub, cookieOptions);
+        Cookies.set("UserId", decodedToken.sub, cookieOptions);
       }
       if (data.companyId) {
-        Cookies.set("companyId", data.companyId, cookieOptions);
+        Cookies.set("CompanyProfileId", data.companyId, cookieOptions);
       }
 
       return data;
@@ -103,27 +103,27 @@ export const authService = {
     localStorage.removeItem("token");
     localStorage.removeItem("role");
     localStorage.removeItem("name");
-    localStorage.removeItem("companyId");
+    localStorage.removeItem("CompanyProfileId");
     localStorage.removeItem("fullName"); // Remove fullName
     localStorage.removeItem("profileImage"); // Remove profileImage
-    localStorage.removeItem("userId");
+    localStorage.removeItem("UserId");
 
     // Xóa token và các thông tin khác từ Cookies
     Cookies.remove("token", { path: "/" });
     Cookies.remove("role", { path: "/" });
     Cookies.remove("name", { path: "/" });
-    Cookies.remove("companyId", { path: "/" });
+    Cookies.remove("CompanyProfileId", { path: "/" });
     Cookies.remove("fullName", { path: "/" }); // Remove fullName
     Cookies.remove("profileImage", { path: "/" }); // Remove profileImage
-    Cookies.remove("userId", { path: "/" });
+    Cookies.remove("UserId", { path: "/" });
     // Nếu bạn có các domain cụ thể, cũng cần xóa
     Cookies.remove("token", { path: "/", domain: "localhost" });
     Cookies.remove("role", { path: "/", domain: "localhost" });
     Cookies.remove("name", { path: "/", domain: "localhost" });
-    Cookies.remove("companyId", { path: "/", domain: "localhost" });
+    Cookies.remove("CompanyProfileId", { path: "/", domain: "localhost" });
     Cookies.remove("fullName", { path: "/", domain: "localhost" }); // Remove fullName
     Cookies.remove("profileImage", { path: "/", domain: "localhost" }); // Remove profileImage
-    Cookies.remove("userId", { path: "/", domain: "localhost" });
+    Cookies.remove("UserId", { path: "/", domain: "localhost" });
   },
 
   getToken() {
@@ -176,20 +176,20 @@ export const authService = {
   },
 
   getCompanyId() {
-    const cookieCompanyId = Cookies.get("companyId");
+    const cookieCompanyId = Cookies.get("CompanyProfileId");
     if (cookieCompanyId) {
       return cookieCompanyId;
     }
-    const localCompanyId = localStorage.getItem("companyId");
+    const localCompanyId = localStorage.getItem("CompanyProfileId");
     if (localCompanyId) {
       return localCompanyId;
     }
-    // Fallback: lấy userId nếu không có companyId
-    const cookieUserId = Cookies.get("userId");
+    // Fallback: lấy UserId nếu không có CompanyProfileId
+    const cookieUserId = Cookies.get("UserId");
     if (cookieUserId) {
       return cookieUserId;
     }
-    const localUserId = localStorage.getItem("userId");
+    const localUserId = localStorage.getItem("UserId");
     if (localUserId) {
       return localUserId;
     }
@@ -253,7 +253,7 @@ export const authService = {
   getGoogleLoginUrl() {
     return (
       process.env.NEXT_PUBLIC_GOOGLE_LOGIN_URL ||
-      "https://job-finder-kjt2.onrender.com/api/auth/login-google"
+      "http://localhost:5194/api/auth/login-google"
     );
   },
 };

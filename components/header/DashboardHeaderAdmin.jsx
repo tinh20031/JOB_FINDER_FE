@@ -52,7 +52,7 @@ const DashboardHeaderAdmin = () => {
 
     useEffect(() => {
         const fetchAdminProfile = async () => {
-            let id = user?.userId || user?.id || (typeof window !== 'undefined' ? localStorage.getItem('userId') : null);
+            let id = user?.UserId || user?.id || (typeof window !== 'undefined' ? localStorage.getItem('userId') : null);
             if (isLoggedIn && id) {
                 try {
                     const profile = await apiService.get(`/User/${id}`);

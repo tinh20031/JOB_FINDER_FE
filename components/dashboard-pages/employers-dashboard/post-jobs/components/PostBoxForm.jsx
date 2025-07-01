@@ -1095,8 +1095,8 @@ const PostBoxForm = () => {
               disabled={isLoading}
             >
               <option value="">Select Level</option>
-              {levels.map((level, idx) => (
-                <option key={level.id || idx} value={level.id}>{level.levelName}</option>
+              {levels.map((level) => (
+                <option key={level.levelId} value={level.levelId}>{level.levelName}</option>
               ))}
             </select>
             {errors.levelId && <div className="invalid-feedback">{errors.levelId}</div>}
@@ -1114,7 +1114,7 @@ const PostBoxForm = () => {
             >
               <option value="">Select Job Type</option>
               {jobTypes.map(type => (
-                <option key={type.id} value={type.id}>{type.jobTypeName}</option>
+                <option key={type.jobTypeId} value={type.jobTypeId}>{type.jobTypeName}</option>
               ))}
             </select>
             {errors.jobTypeId && <div className="invalid-feedback">{errors.jobTypeId}</div>}
@@ -1132,7 +1132,7 @@ const PostBoxForm = () => {
             >
               <option value="">Select Experience Level</option>
               {experienceLevels.map(level => (
-                <option key={level.id} value={level.id}>{level.name}</option>
+                <option key={level.experienceLevelid} value={level.experienceLevelid}>{level.name}</option>
               ))}
             </select>
             {errors.experienceLevelId && <div className="invalid-feedback">{errors.experienceLevelId}</div>}

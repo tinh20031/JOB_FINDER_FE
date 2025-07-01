@@ -14,16 +14,16 @@ import { jobService } from '@/services/jobService';
 
 const EditJobPage = () => {
   const params = useParams();
-  const jobId = params.id;
+  const JobId = params.id;
   const [jobData, setJobData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    if (jobId) {
+    if (JobId) {
       const fetchJobData = async () => {
         try {
-          const data = await jobService.getJobById(jobId);
+          const data = await jobService.getJobById(JobId);
           // console.log("Fetched Job Data:", data);
           setJobData(data);
         } catch (err) {
@@ -38,7 +38,7 @@ const EditJobPage = () => {
       setLoading(false);
       setError("Job ID is missing.");
     }
-  }, [jobId]);
+  }, [JobId]);
 
   if (loading) {
     return (

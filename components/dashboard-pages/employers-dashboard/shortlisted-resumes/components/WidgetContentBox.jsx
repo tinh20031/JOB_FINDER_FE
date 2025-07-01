@@ -8,8 +8,8 @@ import { applicationService } from "@/services/applicationService";
 const WidgetContentBox = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const userId = searchParams.get("userId");
-  const companyId = searchParams.get("companyId");
+  const UserId = searchParams.get("userId");
+  const CompanyProfileId = searchParams.get("companyId");
 
   const [jobs, setJobs] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -17,10 +17,10 @@ const WidgetContentBox = () => {
 
   useEffect(() => {
     const fetchJobs = async () => {
-      if (!userId || !companyId) return;
+      if (!UserId || !CompanyProfileId) return;
       setLoading(true);
       try {
-        const jobs = await applicationService.getJobsAppliedByUserInCompany(userId, companyId);
+        const jobs = await applicationService.getJobsAppliedByUserInCompany(UserId, CompanyProfileId);
         setJobs(jobs);
         setError("");
       } catch (err) {
@@ -31,10 +31,10 @@ const WidgetContentBox = () => {
       }
     };
     fetchJobs();
-  }, [userId, companyId]);
+  }, [UserId, CompanyProfileId]);
 
-  const handleJobClick = (jobId) => {
-    router.push(`/job-single-v3/${jobId}`);
+  const handleJobClick = (JobId) => {
+    router.push(`/job-single-v3/${JobId}`);
   };
 
   return (

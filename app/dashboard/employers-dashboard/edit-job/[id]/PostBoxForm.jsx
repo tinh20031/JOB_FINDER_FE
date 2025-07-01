@@ -334,7 +334,7 @@ const PostBoxForm = ({ initialData, isEditing }) => {
           <select name="levelId" className="chosen-single form-select" value={formData.levelId} onChange={handleInputChange}>
             <option value="">Select Job Level</option>
             {levels.map(level => (
-              <option key={level.id} value={level.id}>{level.levelName}</option>
+              <option key={level.levelId} value={level.levelId}>{level.levelName}</option>
             ))}
           </select>
           {errors.levelId && <span className="error-message">{errors.levelId}</span>}
@@ -344,7 +344,7 @@ const PostBoxForm = ({ initialData, isEditing }) => {
           <select name="jobTypeId" className="chosen-single form-select" value={formData.jobTypeId} onChange={handleInputChange}>
             <option value="">Select Job Type</option>
             {jobTypes.map(type => (
-              <option key={type.id} value={type.id}>{type.jobTypeName}</option>
+              <option key={type.jobTypeId} value={type.jobTypeId}>{type.jobTypeName}</option>
             ))}
           </select>
           {errors.jobTypeId && <span className="error-message">{errors.jobTypeId}</span>}
@@ -354,7 +354,7 @@ const PostBoxForm = ({ initialData, isEditing }) => {
           <select name="experienceLevelId" className="chosen-single form-select" value={formData.experienceLevelId} onChange={handleInputChange}>
             <option value="">Select Experience Level</option>
             {experienceLevels.map(level => (
-              <option key={level.id} value={level.id}>{level.name}</option>
+              <option key={level.experienceLevelid} value={level.experienceLevelid}>{level.name}</option>
             ))}
           </select>
           {errors.experienceLevelId && <span className="error-message">{errors.experienceLevelId}</span>}
