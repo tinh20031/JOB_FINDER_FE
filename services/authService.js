@@ -81,7 +81,7 @@ export const authService = {
     }
   },
 
-  async register(fullName, email, phone, password) {
+  async register(fullName, email, phone, password, firebaseUid) {
     try {
       const userData = {
         fullName,
@@ -89,6 +89,7 @@ export const authService = {
         phone,
         password,
         role: "1", // Set default role as user
+        firebaseUid // Thêm trường này vào payload
       };
       const data = await ApiService.register(userData);
       console.log("Registration successful:", data);

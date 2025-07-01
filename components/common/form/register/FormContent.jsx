@@ -92,7 +92,8 @@ const FormContent = ({ onRegistrationSuccess }) => {
         formData.fullName,
         formData.email,
         formData.phone,
-        formData.password
+        formData.password,
+        "string"
       );
       setShowVerification(true);
       setRegisteredEmail(res.email || formData.email);
