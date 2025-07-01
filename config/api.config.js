@@ -180,10 +180,18 @@ const API_CONFIG = {
   // Helper function để xử lý response
   handleResponse: async (response) => {
     if (!response.ok) {
-      const error = await response.json().catch(() => ({}));
-      throw new Error(
-        error.message || `HTTP error! status: ${response.status}`
+      const errorData = await response.json().catch(() => ({}));
+      const error = new Error(
+        errorData.message || `HTTP error! status: ${response.status}`
       );
+      // Preserve original error data for better error handling
+      error.response = {
+        status: response.status,
+        statusText: response.statusText,
+        data: errorData,
+      };
+      error.data = errorData;
+      throw error;
     }
     return response.json();
   },

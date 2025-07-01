@@ -83,66 +83,45 @@ const FormContent = ({ isPopup = false }) => {
         userRole === "Admin" ? "/admin-dashboard/dashboard" : "/";
       window.location.href = redirectPath;
     } catch (error) {
-      // Handle unverified email
-      if (
-        error.response &&
-        error.response.data &&
-        error.response.data.requiresVerification
-      ) {
+      // Handle unverified email cases
+      const isUnverifiedEmail =
+        error.isUnverifiedEmail ||
+        error.response?.data?.requiresVerification ||
+        error.data?.requiresVerification ||
+        (error.message &&
+          (error.message.includes("requiresVerification") ||
+            error.message.toLowerCase().includes("not verified") ||
+            error.message.toLowerCase().includes("unverified") ||
+            error.message.toLowerCase().includes("email chưa được xác thực") ||
+            error.message.includes("Email has not been verified") ||
+            error.message.includes("check your inbox to verify") ||
+            error.message.includes("verify your account before logging in") ||
+            error.message.toLowerCase().includes("verify") ||
+            error.message.toLowerCase().includes("inbox")));
+
+      if (isUnverifiedEmail) {
+        // Extract email from error response or use form email
+        const unverifiedEmail =
+          error.email ||
+          error.response?.data?.email ||
+          error.data?.email ||
+          formData.email;
+
         setShowVerifyEmailForm(true);
         setFormData((prev) => ({
           ...prev,
-          email: error.response.data.email || formData.email,
+          email: unverifiedEmail,
         }));
-        setVerifyEmailAlert(
-          error.response.data.message ||
-            "Your email is not verified. Please check your email for the confirmation code."
-        );
+
+        // Set appropriate alert message
+        const alertMessage =
+          error.response?.data?.message ||
+          error.data?.message ||
+          error.message ||
+          "Your email is not verified. Please check your email for the confirmation code.";
+
+        setVerifyEmailAlert(alertMessage);
         setError("");
-      } else if (error.data && error.data.requiresVerification) {
-        setShowVerifyEmailForm(true);
-        setFormData((prev) => ({
-          ...prev,
-          email: error.data.email || formData.email,
-        }));
-        setVerifyEmailAlert(
-          error.data.message ||
-            "Your email is not verified. Please check your email for the confirmation code."
-        );
-        setError("");
-      } else if (
-        error.message &&
-        (error.message.includes("requiresVerification") ||
-          error.message.toLowerCase().includes("not verified"))
-      ) {
-        // fallback for thrown error with requiresVerification or message
-        try {
-          const errObj = JSON.parse(error.message);
-          if (errObj.requiresVerification) {
-            setShowVerifyEmailForm(true);
-            setFormData((prev) => ({
-              ...prev,
-              email: errObj.email || formData.email,
-            }));
-            setVerifyEmailAlert(
-              errObj.message ||
-                "Your email is not verified. Please check your email for the confirmation code."
-            );
-            setError("");
-          } else {
-            setShowVerifyEmailForm(true);
-            setVerifyEmailAlert(
-              "Your email is not verified. Please check your email for the confirmation code."
-            );
-            setError("");
-          }
-        } catch {
-          setShowVerifyEmailForm(true);
-          setVerifyEmailAlert(
-            "Your email is not verified. Please check your email for the confirmation code."
-          );
-          setError("");
-        }
       } else if (
         error.message &&
         (error.message.includes("401") ||
@@ -197,7 +176,7 @@ const FormContent = ({ isPopup = false }) => {
               setFormData((prev) => ({ ...prev, email }));
               setVerifyEmailAlert("");
               setError("");
-              // Tự động login lại
+              // Tự động login lại sau khi xác thực thành công
               setLoading(true);
               try {
                 const responseData = await authService.login(
@@ -306,6 +285,7 @@ const FormContent = ({ isPopup = false }) => {
               {loading ? "Logging in..." : "Log In"}
             </button>
           </div>
+
           {isPopup && (
             <button
               ref={closeBtnRef}
