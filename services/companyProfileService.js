@@ -3,6 +3,7 @@ import Cookies from "js-cookie";
 
 // const API_URL = "https://job-finder-kjt2.onrender.com/api";
 const API_URL = "http://localhost:5194/api";
+
 function getToken() {
   let token = localStorage.getItem("token");
   if (!token) {

@@ -41,7 +41,7 @@ const Awards = ({ awards = [], refetch, openExternal, setOpenExternal }) => {
       if (typeof refetch === "function") await refetch();
       toast.success("Award updated successfully!");
     } catch (e) {
-      toast.error("Cập nhật thất bại!");
+      toast.error("Update failed!");
     }
   };
 
@@ -97,7 +97,7 @@ const Awards = ({ awards = [], refetch, openExternal, setOpenExternal }) => {
         { autoClose: 10000 }
       );
     } catch (e) {
-      toast.error("Xóa thất bại!");
+      toast.error("Delete failed!");
     }
     setDeletingId(null);
   };

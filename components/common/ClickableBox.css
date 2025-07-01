@@ -1,0 +1,10 @@
+.job-block-hover .inner-box {
+  transition: box-shadow 0.2s, border-color 0.2s;
+}
+.job-block-hover:hover .inner-box {
+  box-shadow: 0 4px 24px rgba(37,99,235,0.10), 0 1.5px 8px rgba(0,0,0,0.06);
+}
+.job-block-hover:hover h4,
+.job-block-hover:hover h4 a {
+  color: #2563eb;
+} 

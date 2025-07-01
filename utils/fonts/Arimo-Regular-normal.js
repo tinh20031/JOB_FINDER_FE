@@ -6,3 +6,4 @@ var callAddFont = function () {
   this.addFont("Arimo-normal.ttf", "Arimo", "normal");
 };
 jsPDF.API.events.push(["addFonts", callAddFont]);
+export const ArimoRegularNormal = undefined;

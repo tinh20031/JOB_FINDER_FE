@@ -36,6 +36,62 @@ const FormContent = ({ isPopup = false }) => {
     e.preventDefault();
     setError("");
     setLoading(true);
+
+    // Test case: Simulate unverified email error for testing
+    if (
+      formData.email === "test@unverified.com" &&
+      formData.password === "test123"
+    ) {
+      console.log("Test case: Simulating unverified email error");
+      const mockError = {
+        response: {
+          status: 401,
+          data: {
+            requiresVerification: true,
+            message:
+              "Email chưa được xác thực. Vui lòng kiểm tra email của bạn.",
+            email: formData.email,
+          },
+        },
+      };
+
+      // Simulate the error handling
+      let isUnverifiedEmail = false;
+      let errorMessage = "";
+      let errorEmail = formData.email;
+
+      if (mockError.response && mockError.response.data) {
+        const errorData = mockError.response.data;
+        if (
+          errorData.requiresVerification ||
+          errorData.message?.toLowerCase().includes("not verified") ||
+          errorData.message?.toLowerCase().includes("unverified") ||
+          errorData.message
+            ?.toLowerCase()
+            .includes("email chưa được xác thực") ||
+          errorData.message?.toLowerCase().includes("chưa xác thực")
+        ) {
+          isUnverifiedEmail = true;
+          errorMessage =
+            errorData.message ||
+            "Your email is not verified. Please check your email for the confirmation code.";
+          errorEmail = errorData.email || formData.email;
+        }
+      }
+
+      if (isUnverifiedEmail) {
+        setShowVerifyEmailForm(true);
+        setFormData((prev) => ({
+          ...prev,
+          email: errorEmail,
+        }));
+        setVerifyEmailAlert(errorMessage);
+        setError("");
+        setLoading(false);
+        return;
+      }
+    }
+
     try {
       const responseData = await authService.login(
         formData.email,
@@ -83,66 +139,114 @@ const FormContent = ({ isPopup = false }) => {
         userRole === "Admin" ? "/admin-dashboard/dashboard" : "/";
       window.location.href = redirectPath;
     } catch (error) {
-      // Handle unverified email
-      if (
-        error.response &&
-        error.response.data &&
-        error.response.data.requiresVerification
-      ) {
-        setShowVerifyEmailForm(true);
-        setFormData((prev) => ({
-          ...prev,
-          email: error.response.data.email || formData.email,
-        }));
-        setVerifyEmailAlert(
-          error.response.data.message ||
-            "Your email is not verified. Please check your email for the confirmation code."
-        );
-        setError("");
-      } else if (error.data && error.data.requiresVerification) {
-        setShowVerifyEmailForm(true);
-        setFormData((prev) => ({
-          ...prev,
-          email: error.data.email || formData.email,
-        }));
-        setVerifyEmailAlert(
-          error.data.message ||
-            "Your email is not verified. Please check your email for the confirmation code."
-        );
-        setError("");
-      } else if (
-        error.message &&
-        (error.message.includes("requiresVerification") ||
-          error.message.toLowerCase().includes("not verified"))
-      ) {
-        // fallback for thrown error with requiresVerification or message
-        try {
-          const errObj = JSON.parse(error.message);
-          if (errObj.requiresVerification) {
-            setShowVerifyEmailForm(true);
-            setFormData((prev) => ({
-              ...prev,
-              email: errObj.email || formData.email,
-            }));
-            setVerifyEmailAlert(
-              errObj.message ||
-                "Your email is not verified. Please check your email for the confirmation code."
-            );
-            setError("");
-          } else {
-            setShowVerifyEmailForm(true);
-            setVerifyEmailAlert(
-              "Your email is not verified. Please check your email for the confirmation code."
-            );
-            setError("");
-          }
-        } catch {
-          setShowVerifyEmailForm(true);
-          setVerifyEmailAlert(
-            "Your email is not verified. Please check your email for the confirmation code."
-          );
-          setError("");
+      console.log("Login error:", error);
+
+      // Kiểm tra tất cả các trường hợp có thể của lỗi email chưa xác minh
+      let isUnverifiedEmail = false;
+      let errorMessage = "";
+      let errorEmail = formData.email;
+
+      // Kiểm tra error.response.data
+      if (error.response && error.response.data) {
+        const errorData = error.response.data;
+        if (
+          errorData.requiresVerification ||
+          errorData.message?.toLowerCase().includes("not verified") ||
+          errorData.message?.toLowerCase().includes("unverified") ||
+          errorData.message
+            ?.toLowerCase()
+            .includes("email chưa được xác thực") ||
+          errorData.message?.toLowerCase().includes("chưa xác thực")
+        ) {
+          isUnverifiedEmail = true;
+          errorMessage =
+            errorData.message ||
+            "Your email is not verified. Please check your email for the confirmation code.";
+          errorEmail = errorData.email || formData.email;
         }
+      }
+
+      // Kiểm tra error.data (trường hợp error trực tiếp)
+      if (!isUnverifiedEmail && error.data) {
+        const errorData = error.data;
+        if (
+          errorData.requiresVerification ||
+          errorData.message?.toLowerCase().includes("not verified") ||
+          errorData.message?.toLowerCase().includes("unverified") ||
+          errorData.message
+            ?.toLowerCase()
+            .includes("email chưa được xác thực") ||
+          errorData.message?.toLowerCase().includes("chưa xác thực")
+        ) {
+          isUnverifiedEmail = true;
+          errorMessage =
+            errorData.message ||
+            "Your email is not verified. Please check your email for the confirmation code.";
+          errorEmail = errorData.email || formData.email;
+        }
+      }
+
+      // Kiểm tra error.message
+      if (!isUnverifiedEmail && error.message) {
+        const message = error.message.toLowerCase();
+        if (
+          message.includes("requiresverification") ||
+          message.includes("not verified") ||
+          message.includes("unverified") ||
+          message.includes("email chưa được xác thực") ||
+          message.includes("chưa xác thực") ||
+          (message.includes("401") && message.includes("email"))
+        ) {
+          isUnverifiedEmail = true;
+          errorMessage =
+            error.message ||
+            "Your email is not verified. Please check your email for the confirmation code.";
+
+          // Thử parse JSON từ message nếu có
+          try {
+            const parsedError = JSON.parse(error.message);
+            if (parsedError.email) {
+              errorEmail = parsedError.email;
+            }
+          } catch (e) {
+            // Nếu không parse được JSON, giữ nguyên email hiện tại
+          }
+        }
+      }
+
+      // Kiểm tra status code 401 với message cụ thể
+      if (
+        !isUnverifiedEmail &&
+        error.response &&
+        error.response.status === 401
+      ) {
+        const message = (
+          error.response.data?.message ||
+          error.message ||
+          ""
+        ).toLowerCase();
+        if (
+          message.includes("email") &&
+          (message.includes("not verified") ||
+            message.includes("unverified") ||
+            message.includes("chưa xác thực"))
+        ) {
+          isUnverifiedEmail = true;
+          errorMessage =
+            error.response.data?.message ||
+            error.message ||
+            "Your email is not verified. Please check your email for the confirmation code.";
+        }
+      }
+
+      if (isUnverifiedEmail) {
+        setShowVerifyEmailForm(true);
+        setFormData((prev) => ({
+          ...prev,
+          email: errorEmail,
+        }));
+        setVerifyEmailAlert(errorMessage);
+        setError("");
       } else if (
         error.message &&
         (error.message.includes("401") ||
@@ -151,26 +255,6 @@ const FormContent = ({ isPopup = false }) => {
         setError("Incorrect password. Please try again.");
       } else if (error.message && error.message.includes("Unexpected token")) {
         setError("Network or server error.");
-      } else if (
-        error.message &&
-        error.message.toLowerCase().includes("Unverified")
-      ) {
-        // Xử lý trường hợp message tiếng Việt: Email chưa được xác thực
-        setShowVerifyEmailForm(true);
-        setFormData((prev) => ({
-          ...prev,
-          // Nếu API trả về email, lấy email đó, không thì giữ nguyên
-          email:
-            (error.response &&
-              error.response.data &&
-              error.response.data.email) ||
-            formData.email,
-        }));
-        setVerifyEmailAlert(
-          error.message ||
-            "Your email is not verified. Please check your email for the confirmation code."
-        );
-        setError("");
       } else {
         setError(error.message || "An error occurred. Please try again.");
       }

@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { jobService } from "@/services/jobService";
+import ClickableBox from "../../common/ClickableBox";
 
 const RelatedJobs2 = ({ job }) => {
   const [relatedJobs, setRelatedJobs] = useState([]);
@@ -44,8 +45,8 @@ const RelatedJobs2 = ({ job }) => {
     fetchRelatedJobs();
   }, [job]);
 
-  if (loading) return <div>Đang tải job liên quan...</div>;
-  if (!relatedJobs.length) return <div>Không có job liên quan.</div>;
+  if (loading) return <div>Loading related jobs...</div>;
+  if (!relatedJobs.length) return <div>No related jobs found.</div>;
 
   return (
     <>
@@ -54,61 +55,63 @@ const RelatedJobs2 = ({ job }) => {
         <div className="text">{relatedJobs.length} related job{relatedJobs.length !== 1 ? 's' : ''} found.</div>
       </div>
       {relatedJobs.slice(0, 4).map((item) => (
-        <div className="job-block" key={item.id}>
-          <div className="inner-box">
-            <div className="content">
-              <span className="company-logo">
-                <Image
-                  width={50}
-                  height={49}
-                  src={item.logo}
-                  alt={item.company?.companyName || item.companyName || 'item brand'}
-                />
-              </span>
-              <h4>
-                <Link href={`/job-single-v3/${item.id}`}>{item.jobTitle}</Link>
-              </h4>
+        <ClickableBox
+          className="job-block"
+          key={item.id}
+          onClick={() => window.location.href = `/job-single-v3/${item.id}`}
+        >
+          <div className="content">
+            <span className="company-logo">
+              <Image
+                width={50}
+                height={49}
+                src={item.logo}
+                alt={item.company?.companyName || item.companyName || 'item brand'}
+              />
+            </span>
+            <h4>
+              <Link href={`/job-single-v3/${item.id}`}>{item.jobTitle}</Link>
+            </h4>
 
-              <ul className="job-info">
-                <li>
-                  <span className="icon flaticon-briefcase"></span>
-                  {item.company?.companyName || item.companyName}
-                </li>
-                <li>
-                  <span className="icon flaticon-map-locator"></span>
-                  {item.provinceName || item.location}
-                </li>
-                <li>
-                  <span className="icon flaticon-clock-3"></span> 
-                  {item.createdAt
-                    ? (() => {
-                        const days = Math.floor((Date.now() - new Date(item.createdAt)) / (1000 * 60 * 60 * 24));
-                        return days === 0 ? 'Hôm nay' : `${days} ngày trước`;
-                      })()
-                    : 'N/A'}
-                </li>
-                <li>
-                  <span className="icon flaticon-money"></span> {item.minSalary && item.maxSalary ? `$${item.minSalary} - $${item.maxSalary}` : 'Negotiable'}
-                </li>
-              </ul>
-              {/* End .job-info */}
+            <ul className="job-info">
+              <li>
+                <span className="icon flaticon-briefcase"></span>
+                {item.company?.companyName || item.companyName}
+              </li>
+              <li>
+                <span className="icon flaticon-map-locator"></span>
+                {item.provinceName || item.location}
+              </li>
+              <li>
+                <span className="icon flaticon-clock-3"></span> 
+                {item.createdAt
+                  ? (() => {
+                      const days = Math.floor((Date.now() - new Date(item.createdAt)) / (1000 * 60 * 60 * 24));
+                      return days === 0 ? 'Hôm nay' : `${days} ngày trước`;
+                    })()
+                  : 'N/A'}
+              </li>
+              <li>
+                <span className="icon flaticon-money"></span> {item.minSalary && item.maxSalary ? `$${item.minSalary} - $${item.maxSalary}` : 'Negotiable'}
+              </li>
+            </ul>
+            {/* End .job-info */}
 
-              <ul className="job-other-info">
-                {item.jobType && item.jobType.jobTypeName && (
-                  <li className="privacy">{item.jobType.jobTypeName}</li>
-                )}
-                {item.experienceLevel && item.experienceLevel.name && (
-                  <li className="required">{item.experienceLevel.name}</li>
-                )}
-              </ul>
-              {/* End .job-other-info */}
+            <ul className="job-other-info">
+              {item.jobType && item.jobType.jobTypeName && (
+                <li className="privacy">{item.jobType.jobTypeName}</li>
+              )}
+              {item.experienceLevel && item.experienceLevel.name && (
+                <li className="required">{item.experienceLevel.name}</li>
+              )}
+            </ul>
+            {/* End .job-other-info */}
 
-              <button className="bookmark-btn">
-                <span className="flaticon-bookmark"></span>
-              </button>
-            </div>
+            <button className="bookmark-btn" onClick={e => e.stopPropagation()}>
+              <span className="flaticon-bookmark"></span>
+            </button>
           </div>
-        </div>
+        </ClickableBox>
       ))}
       {relatedJobs.length > 4 && (
         <div className="see-more" style={{ marginTop: 16 }}>

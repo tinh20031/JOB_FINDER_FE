@@ -375,20 +375,20 @@ const PostBoxForm = () => {
       }
     }
 
-    // Validate trọng số không được rỗng, không NaN
+    // Validate weights cannot be empty, not NaN
     if (formData.DescriptionWeight === '' || isNaN(Number(formData.DescriptionWeight))) {
-      newErrors.DescriptionWeight = 'Vui lòng nhập Description Weight';
+      newErrors.DescriptionWeight = 'Please enter Description Weight';
     }
     if (formData.SkillsWeight === '' || isNaN(Number(formData.SkillsWeight))) {
-      newErrors.SkillsWeight = 'Vui lòng nhập Skills Weight';
+      newErrors.SkillsWeight = 'Please enter Skills Weight';
     }
     if (formData.ExperienceWeight === '' || isNaN(Number(formData.ExperienceWeight))) {
-      newErrors.ExperienceWeight = 'Vui lòng nhập Experience Weight';
+      newErrors.ExperienceWeight = 'Please enter Experience Weight';
     }
     if (formData.EducationWeight === '' || isNaN(Number(formData.EducationWeight))) {
-      newErrors.EducationWeight = 'Vui lòng nhập Education Weight';
+      newErrors.EducationWeight = 'Please enter Education Weight';
     }
-    // Validate tổng trọng số = 100
+    // Validate total weight = 100
     const totalWeight =
       Number(formData.DescriptionWeight || 0) +
       Number(formData.SkillsWeight || 0) +
@@ -401,7 +401,7 @@ const PostBoxForm = () => {
       formData.EducationWeight !== '' &&
       totalWeight !== 100
     ) {
-      newErrors.DescriptionWeight = 'Tổng các trọng số phải bằng 100%';
+      newErrors.DescriptionWeight = 'Total weights must equal 100%';
     }
 
     setErrors(newErrors);

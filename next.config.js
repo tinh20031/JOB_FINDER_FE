@@ -28,7 +28,9 @@ const nextConfig = {
     return [
       {
         source: "/api/:path*",
+
         destination: "http://localhost:5194/api/:path*", // Chuyển tiếp request đến backend
+
         // destination: "https://job-finder-kjt2.onrender.com/api/:path*",
       },
       {
