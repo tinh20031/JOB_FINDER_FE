@@ -20,9 +20,18 @@ const VerifyEmailForm = ({ initialEmail = "", onVerified, onCancel }) => {
       if (onVerified) onVerified(email);
     } catch (err) {
       let msg = err?.response?.data?.message || err?.message;
+
+      // Handle various error formats
       if (!msg || msg.includes("HTTP error") || msg.includes("400")) {
         msg = "The verification code is invalid or has expired.";
+      } else if (msg.includes("404") || msg.includes("Not Found")) {
+        msg = "Email not found. Please check your email address.";
+      } else if (msg.includes("409") || msg.includes("Conflict")) {
+        msg = "Email already verified. You can now log in.";
+      } else if (msg.includes("500") || msg.includes("Internal Server Error")) {
+        msg = "Server error. Please try again later.";
       }
+
       setError(msg);
     } finally {
       setLoading(false);
@@ -37,8 +46,19 @@ const VerifyEmailForm = ({ initialEmail = "", onVerified, onCancel }) => {
       setMessage(
         res || "The verification code has been re-sent to your email."
       );
+      setError("");
     } catch (err) {
-      setError(err.message || "Unable to resend verification code.");
+      let msg = err?.response?.data?.message || err?.message;
+
+      if (!msg || msg.includes("HTTP error")) {
+        msg = "Unable to resend verification code. Please try again.";
+      } else if (msg.includes("404") || msg.includes("Not Found")) {
+        msg = "Email not found. Please check your email address.";
+      } else if (msg.includes("429") || msg.includes("Too Many Requests")) {
+        msg = "Too many requests. Please wait a moment before trying again.";
+      }
+
+      setError(msg);
     } finally {
       setResendLoading(false);
     }
@@ -70,13 +90,14 @@ const VerifyEmailForm = ({ initialEmail = "", onVerified, onCancel }) => {
             required
             className="form-control"
             placeholder="Enter verification code"
+            maxLength={6}
           />
         </div>
         <div className="form-group button-group">
           <button
             className="theme-btn btn-style-one"
             type="submit"
-            disabled={loading}
+            disabled={loading || !verificationCode.trim()}
           >
             {loading ? "Verifying..." : "Verify Email"}
           </button>

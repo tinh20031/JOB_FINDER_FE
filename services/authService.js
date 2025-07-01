@@ -76,6 +76,31 @@ export const authService = {
 
       return data;
     } catch (error) {
+      // Check if this is an unverified email error
+      const isUnverifiedEmail =
+        error.response?.data?.requiresVerification ||
+        error.data?.requiresVerification ||
+        (error.message &&
+          (error.message.includes("requiresVerification") ||
+            error.message.toLowerCase().includes("not verified") ||
+            error.message.toLowerCase().includes("unverified") ||
+            error.message.toLowerCase().includes("email chưa được xác thực") ||
+            error.message.includes("Email has not been verified") ||
+            error.message.includes("check your inbox to verify") ||
+            error.message.includes("verify your account before logging in") ||
+            error.message.toLowerCase().includes("verify") ||
+            error.message.toLowerCase().includes("inbox")));
+
+      if (isUnverifiedEmail) {
+        // Create a custom error with unverified email flag
+        const customError = new Error(error.message);
+        customError.isUnverifiedEmail = true;
+        customError.email =
+          error.response?.data?.email || error.data?.email || email;
+        customError.originalError = error;
+        throw customError;
+      }
+
       throw error;
     }
   },
