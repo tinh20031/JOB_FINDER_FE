@@ -130,26 +130,6 @@ const FormContent = ({ isPopup = false }) => {
         setError("Incorrect password. Please try again.");
       } else if (error.message && error.message.includes("Unexpected token")) {
         setError("Network or server error.");
-      } else if (
-        error.message &&
-        error.message.toLowerCase().includes("Unverified")
-      ) {
-        // Xử lý trường hợp message tiếng Việt: Email chưa được xác thực
-        setShowVerifyEmailForm(true);
-        setFormData((prev) => ({
-          ...prev,
-          // Nếu API trả về email, lấy email đó, không thì giữ nguyên
-          email:
-            (error.response &&
-              error.response.data &&
-              error.response.data.email) ||
-            formData.email,
-        }));
-        setVerifyEmailAlert(
-          error.message ||
-            "Your email is not verified. Please check your email for the confirmation code."
-        );
-        setError("");
       } else {
         setError(error.message || "An error occurred. Please try again.");
       }
