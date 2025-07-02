@@ -16,7 +16,7 @@ const defaultUser = { fullName: "", email: "", phone: "", roleId: "", password: 
 // Mapping roleId cố định
 const ROLE_MAP = [
   { id: 1, name: "Candidate" },
- 
+  { id: 2, name: "Company" },
   { id: 3, name: "Admin" }
 ];
 
@@ -28,7 +28,6 @@ const UserManager = () => {
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
-  const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [formUser, setFormUser] = useState(defaultUser);
   const [formError, setFormError] = useState("");
   const [alertMsg, setAlertMsg] = useState("");
@@ -41,6 +40,7 @@ const UserManager = () => {
   const [editUser, setEditUser] = useState(null);
   const [editError, setEditError] = useState("");
   const dispatch = useDispatch();
+  const [roleDropdownOpen, setRoleDropdownOpen] = useState(null);
 
   // Tự động ẩn alert sau 2.5s
   useEffect(() => {
@@ -87,29 +87,29 @@ const UserManager = () => {
     try {
       setLoading(true);
       const response = await ApiService.get('/' + API_CONFIG.ENDPOINTS.USER.BASE);
-      console.log('Users API Response:', response); // Debug log: Raw user data
-
       if (Array.isArray(response)) {
         const usersWithRoleId = response.map(user => {
-          console.log('Processing user:', user); // Debug log: Each user object
-          return ({
+          // Ưu tiên lấy roleId dạng số, nếu không có thì map từ tên role
+          let roleId = '';
+          if (user.roleId) {
+            roleId = parseInt(user.roleId);
+          } else if (user.role_id) {
+            roleId = parseInt(user.role_id);
+          } else if (user.role) {
+            // Nếu user.role là tên, map sang id
+            const found = ROLE_MAP.find(r => r.name.toLowerCase() === String(user.role).toLowerCase());
+            roleId = found ? found.id : '';
+          }
+          return {
             ...user,
-            // Assuming the API returns a field like 'roleId' or 'role_id' or just 'role' holding the ID
-            // Let's log potential fields to see which one exists and holds the ID
-            originalRoleIdField: user.roleId, // Log original roleId field if exists
-            potentialRoleField: user.role, // Log potential 'role' field
-            potentialRoleIdField: user.role_id, // Log potential 'role_id' field
-            roleId: user.roleId ? parseInt(user.roleId) : "" // Keep existing parsing logic for now
-          });
+            roleId
+          };
         });
-        console.log('Processed Users:', usersWithRoleId); // Debug log: Processed user data
         setUsers(usersWithRoleId);
       } else {
-        console.error('Invalid users data received (not an array):', response);
         setUsers([]);
       }
     } catch (error) {
-      console.error('Error fetching users:', error);
       setUsers([]);
     } finally {
       setLoading(false);
@@ -165,26 +165,6 @@ const UserManager = () => {
     setFormError("");
     setSelectedImageFile(null);
   };
-  const handleShowAdd = () => {
-    setFormUser({ ...defaultUser, role: "" });
-    setShowAddModal(true);
-    setFormError("");
-    setSelectedImageFile(null);
-  };
-  const handleShowDelete = (user) => {
-    setSelectedUser(user);
-    setShowDeleteModal(true);
-  };
-  const handleDelete = async () => {
-    try {
-      await ApiService.deleteUser(selectedUser.id);
-      setAlertMsg("User deleted successfully!");
-      fetchUsers();
-    } catch (error) {
-      setAlertMsg("Failed to delete user.");
-    }
-    setShowDeleteModal(false);
-  };
   const handleToggleLock = async (user) => {
 
     let action; // Declare action here
@@ -224,41 +204,11 @@ const UserManager = () => {
       });
     }
   };
-  const validateForm = () => {
-    if (!formUser.fullName || !formUser.email) {
-      setFormError("Full name and Email are required.");
-      return false;
-    }
-    if (showAddModal && !formUser.password) {
-      setFormError("Password is required.");
-      return false;
-    }
-    return true;
-  };
   const handleFormSubmit = (e) => {
     e.preventDefault();
     if (!validateForm()) return;
     // Add or Edit
-    if (showAddModal) {
-      const formData = new FormData();
-      formData.append('fullName', formUser.fullName);
-      formData.append('email', formUser.email);
-      formData.append('phone', formUser.phone);
-      formData.append('roleId', Number(formUser.roleId));
-      formData.append('password', formUser.password);
-      if (selectedImageFile) {
-        formData.append('imageFile', selectedImageFile);
-      }
-
-      ApiService.addUser(formData)
-        .then(() => {
-          setAlertMsg("User added successfully!");
-          fetchUsers();
-          setShowAddModal(false);
-          dispatch(setProfileUpdated(Date.now()));
-        })
-        .catch((err) => setFormError(err.message || "Failed to add user."));
-    } else if (showEditModal) {
+    if (showEditModal) {
       const formData = new FormData();
       formData.append('fullName', formUser.fullName);
       formData.append('email', formUser.email);
@@ -292,6 +242,36 @@ const UserManager = () => {
   const getRoleName = (roleId) => {
     const found = ROLE_MAP.find(r => r.id === Number(roleId));
     return found ? found.name : '';
+  };
+
+  const validateForm = () => {
+    if (!formUser.fullName || !formUser.email) {
+      setFormError("Full name and Email are required.");
+      return false;
+    }
+    if (showAddModal && !formUser.password) {
+      setFormError("Password is required.");
+      return false;
+    }
+    return true;
+  };
+
+  const handleRoleButtonClick = (userId) => {
+    setRoleDropdownOpen(roleDropdownOpen === userId ? null : userId);
+  };
+
+  const handleRoleChange = async (user, newRoleId) => {
+    try {
+      const formData = new FormData();
+      formData.append('roleId', newRoleId);
+      await ApiService.updateUser(user.id, formData);
+      setAlertMsg('Role updated successfully!');
+      fetchUsers();
+    } catch (err) {
+      setAlertMsg('Failed to update role.');
+    } finally {
+      setRoleDropdownOpen(null);
+    }
   };
 
   return (
@@ -339,9 +319,6 @@ const UserManager = () => {
                       <option key="locked" value="locked">Locked</option>
                       <option key="unlocked" value="unlocked">Unlocked</option>
                     </select>
-                    <button className="btn btn-primary" onClick={handleShowAdd}>
-                      Add User
-                    </button>
                   </div>
                 </div>
                 <div className={`widget-content ${!loading ? 'fade-in' : ''}`}> 
@@ -380,13 +357,23 @@ const UserManager = () => {
                                 <td>{user.fullName}</td>
                                 <td>{user.email}</td>
                                 <td>{user.phone}</td>
-                                {/* Display the actual role name from user data */}
-                                <td>{getRoleName(user.roleId) || user.role || 'Unknown Role'}</td>
+                                {/* Cột Role: dropdown đổi role */}
+                                <td>
+                                  <select
+                                    className="form-select form-select-sm"
+                                    style={{ width: 120, display: 'inline-block' }}
+                                    value={user.roleId || ''}
+                                    onChange={e => handleRoleChange(user, Number(e.target.value))}
+                                  >
+                                    {ROLE_MAP.map(role => (
+                                      <option key={role.id} value={role.id}>{role.name}</option>
+                                    ))}
+                                  </select>
+                                </td>
+                                {/* Cột Actions: chỉ còn View và Lock/Unlock */}
                                 <td>
                                   <button className="btn btn-sm me-1" onClick={() => handleShowDetail(user)} style={{display:'none'}}>View</button>
                                   <Link href={`/admin-dashboard/user-manager/${user.id}`} className="btn btn-sm me-1">View</Link>
-                                  <button className="btn btn-sm me-1" onClick={() => handleShowEdit(user)}>Edit</button>
-                                  <button className="btn btn-sm me-1" onClick={() => handleShowDelete(user)}>Delete</button>
                                   <button
                                     className={`btn btn-sm me-1 ${isLocked ? 'btn-outline-danger' : 'btn-outline-secondary'}`}
                                     onClick={() => handleToggleLock(user)}
@@ -484,92 +471,6 @@ const UserManager = () => {
                   <button className="btn btn-primary" type="submit">Save</button>
                 </div>
               </form>
-            </div>
-          </div>
-        </div>
-      )}
-      {/* Add Modal */}
-      {showAddModal && (
-        <div className="modal show" style={{display:'block'}}>
-          <div className="modal-dialog">
-            <div className="modal-content">
-              <form onSubmit={handleFormSubmit}>
-                <div className="modal-header">
-                  <h5 className="modal-title">Add User</h5>
-                  <button className="btn-close" onClick={()=>setShowAddModal(false)} type="button"></button>
-                </div>
-                <div className="modal-body">
-                  {formError && <div className="alert alert-danger">{formError}</div>}
-                  <div className="mb-2">
-                    <label>Profile Image</label>
-                    <input 
-                      className="form-control" 
-                      type="file"
-                      name="image"
-                      onChange={handleFormChange}
-                      accept="image/*"
-                    />
-                    {selectedImageFile && (
-                      <img 
-                        src={URL.createObjectURL(selectedImageFile)} 
-                        alt="Preview" 
-                        style={{width: '100px', height: '100px', objectFit: 'cover', marginTop: '10px', borderRadius: '50%'}}
-                      />
-                    )}
-                  </div>
-                  <div className="mb-2">
-                    <label>Full Name</label>
-                    <input className="form-control" name="fullName" value={formUser.fullName} onChange={handleFormChange} required />
-                  </div>
-                  <div className="mb-2">
-                    <label>Email</label>
-                    <input className="form-control" name="email" value={formUser.email} onChange={handleFormChange} required />
-                  </div>
-                  <div className="mb-2">
-                    <label>Phone</label>
-                    <input className="form-control" name="phone" value={formUser.phone} onChange={handleFormChange} />
-                  </div>
-                  <div className="mb-2">
-                    <label>Role</label>
-                    <select className="form-control" name="role" value={formUser.role || ""} onChange={handleFormChange} required>
-                      <option value="">Select Role</option>
-                      {ROLE_MAP.map(role => (
-                        <option key={`add-role-${role.id}`} value={role.name}>
-                          {role.name}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                  <div className="mb-2">
-                    <label>Password</label>
-                    <input className="form-control" name="password" type="password" value={formUser.password} onChange={handleFormChange} required autoComplete="new-password" />
-                  </div>
-                </div>
-                <div className="modal-footer">
-                  <button className="btn btn-secondary" type="button" onClick={()=>setShowAddModal(false)}>Cancel</button>
-                  <button className="btn btn-primary" type="submit">Add</button>
-                </div>
-              </form>
-            </div>
-          </div>
-        </div>
-      )}
-      {/* Delete Modal */}
-      {showDeleteModal && (
-        <div className="modal show" style={{display:'block'}}>
-          <div className="modal-dialog">
-            <div className="modal-content">
-              <div className="modal-header">
-                <h5 className="modal-title">Delete User</h5>
-                <button className="btn-close" onClick={()=>setShowDeleteModal(false)}></button>
-              </div>
-              <div className="modal-body">
-                Are you sure you want to delete user <b>{selectedUser.fullName}</b>?
-              </div>
-              <div className="modal-footer">
-                <button className="btn btn-secondary" onClick={()=>setShowDeleteModal(false)}>Cancel</button>
-                <button className="btn btn-danger" onClick={handleDelete}>Delete</button>
-              </div>
             </div>
           </div>
         </div>

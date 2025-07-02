@@ -127,57 +127,13 @@ const JobPostManagement = () => {
       setAlertMsg(`Failed to update lock status: ${error.message || 'Unknown error'}`);
     }
   };
-  
-  const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [selectedJobToDelete, setSelectedJobToDelete] = useState(null);
-
-
-  const handleShowDelete = (job) => {
-    setSelectedJobToDelete(job);
-    setShowDeleteModal(true);
-  };
-
-  
-  const handleDelete = async () => {
-    if (!selectedJobToDelete) return;
-    try {
-      await ApiService.request(`Job/${selectedJobToDelete.jobId}`, 'DELETE');
-      setAlertMsg(`Job post "${selectedJobToDelete.title}" removed!`);
-      setAllJobs(prevJobs => prevJobs.filter(job => job.jobId !== selectedJobToDelete.jobId));
-      setShowDeleteModal(false);
-      setSelectedJobToDelete(null);
-    } catch (error) {
-      setAlertMsg(`Failed to remove job post: ${error.message}`);
-    }
-  };
-
-
-  const DeleteJobModal = () => (
-    <div className={`modal fade show`} style={{ display: 'block' }} tabIndex="-1">
-      <div className="modal-dialog modal-dialog-centered">
-        <div className="modal-content">
-          <div className="modal-header">
-            <h5 className="modal-title">Confirm Delete</h5>
-            <button type="button" className="btn-close" onClick={() => setShowDeleteModal(false)}></button>
-          </div>
-          <div className="modal-body">
-            Are you sure you want to delete the job post <b>{selectedJobToDelete?.title}</b>? This action cannot be undone.
-          </div>
-          <div className="modal-footer">
-            <button type="button" className="btn btn-secondary" onClick={() => setShowDeleteModal(false)}>Cancel</button>
-            <button type="button" className="btn btn-danger" onClick={handleDelete}>Delete</button>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
 
   if (loading) return <div className="page-wrapper dashboard" style={{background:'#f7f8fa', minHeight:'100vh'}}><div className="text-center py-5">Loading...</div></div>;
   if (error) return <div className="page-wrapper dashboard" style={{background:'#f7f8fa', minHeight:'100vh'}}><div className="text-center py-5 text-danger">{error}</div></div>;
 
   return (
     <>
-    <div className={`page-wrapper dashboard ${showDeleteModal ? 'modal-open' : ''}`} style={{background:'#f7f8fa', minHeight:'100vh'}}>
+    <div className={`page-wrapper dashboard`} style={{background:'#f7f8fa', minHeight:'100vh'}}>
       <span className="header-span"></span>
       <DashboardHeader />
       <MobileMenu />
@@ -256,13 +212,10 @@ const JobPostManagement = () => {
                               ))}
                             </select>
                             <button
-                              className={`btn btn-sm ${item.isLocked ? 'btn-outline-success' : 'btn-outline-warning'}`}
+                              className={`btn btn-sm ${item.isLocked ? 'btn-outline-success' : 'btn-outline-danger'}`}
                               onClick={() => handleLockJob(item.jobId, item.isLocked)}
                             >
                               {item.isLocked ? 'Unlock' : 'Lock'}
-                            </button>
-                            <button className="btn btn-sm btn-outline-danger" onClick={() => handleShowDelete(item)} disabled={item.isLocked}>
-                              Delete
                             </button>
                           </div>
                         </div>
@@ -292,9 +245,6 @@ const JobPostManagement = () => {
           </div>
         </div>
       </section>
-      
-      {showDeleteModal && <div className="modal-backdrop fade show"></div>}
-      {showDeleteModal && <DeleteJobModal />}
       
     </div>
     <style jsx>{`
