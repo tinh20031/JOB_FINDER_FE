@@ -201,7 +201,12 @@ const FormContent = ({ onRegistrationSuccess }) => {
   };
 
   return (
-    <div>
+    <div className="form-inner" style={{ position: 'relative' }}>
+      {loading && (
+        <div className="modal-loading-overlay">
+          <span className="spinner-border spinner-border-lg" role="status" aria-hidden="true"></span>
+        </div>
+      )}
       {showVerifyEmailForm ? (
         <VerifyEmailForm
           initialEmail={formData.email}
@@ -337,6 +342,36 @@ const FormContent = ({ onRegistrationSuccess }) => {
           </button>
         </div>
       )}
+      <style>{`
+        .spinner-border {
+          display: inline-block;
+          width: 1.2rem;
+          height: 1.2rem;
+          vertical-align: text-bottom;
+          border: 0.15em solid currentColor;
+          border-right-color: transparent;
+          border-radius: 50%;
+          animation: spinner-border .75s linear infinite;
+        }
+        .spinner-border-lg {
+          width: 3rem;
+          height: 3rem;
+          border-width: 0.3em;
+        }
+        .modal-loading-overlay {
+          position: absolute;
+          z-index: 10;
+          top: 0; left: 0; right: 0; bottom: 0;
+          background: rgba(255,255,255,0.6);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          border-radius: 12px;
+        }
+        @keyframes spinner-border {
+          100% { transform: rotate(360deg); }
+        }
+      `}</style>
     </div>
   );
 };

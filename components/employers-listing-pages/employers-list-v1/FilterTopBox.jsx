@@ -86,14 +86,10 @@ const FilterTopBox = () => {
           limit: currentLimit
         };
 
-        console.log('Fetching companies with params:', filterParams);
         const result = await companyService.filterCompanies(filterParams);
         
         setCompanies(result.data);
         setTotalCompanies(result.totalCount);
-        
-        console.log('Companies fetched:', result.data);
-        console.log('Total companies:', result.totalCount);
 
       } catch (err) {
         console.error("Error fetching companies:", err);
@@ -192,22 +188,16 @@ const FilterTopBox = () => {
   };
 
   // Apply frontend filters to the fetched data if API doesn't handle them fully
-  console.log('Companies before frontend filters:', companies); // Log before filters
 
   const filteredByKeyword = companies?.filter(keywordFilter);
-  console.log('After keywordFilter:', filteredByKeyword?.length, filteredByKeyword);
 
   const filteredByLocation = filteredByKeyword?.filter(locationFilter);
-  console.log('After locationFilter:', filteredByLocation?.length, filteredByLocation);
 
   const filteredByDestination = filteredByLocation?.filter(destinationFilter);
-  console.log('After destinationFilter:', filteredByDestination?.length, filteredByDestination);
 
   const filteredByIndustry = filteredByDestination?.filter(industryFilter);
-  console.log('After industryFilter:', filteredByIndustry?.length, filteredByIndustry);
 
   const filteredByCompanySize = filteredByIndustry?.filter(companySizeFilter);
-  console.log('After companySizeFilter:', filteredByCompanySize?.length, filteredByCompanySize);
 
   const filteredCompanies = filteredByCompanySize; // Final filtered list
 
@@ -215,8 +205,6 @@ const FilterTopBox = () => {
    const sortedAndPaginatedCompanies = filteredCompanies
       ?.sort(sortFilter) // Apply sort here
      ?.slice(perPage.start, perPage.end !== 0 ? perPage.end : filteredCompanies?.length); // Simplified slice logic
-
-  console.log('After sort and slice (paginated):', sortedAndPaginatedCompanies); // Log after sort/slice
 
   // Xử lý click bookmark
   const handleBookmark = async (companyId) => {

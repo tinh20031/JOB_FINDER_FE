@@ -29,7 +29,6 @@ const FilterSidebar = () => {
                 ]);
                 setFetchedProvinces(provincesRes);
                 setFetchedIndustries(industriesRes);
-                console.log('Employer Filter Sidebar Lookup Data:', { provincesRes, industriesRes });
             } catch (err) {
                 setLookupDataError(err.message || 'Failed to fetch lookup data in sidebar');
                 console.error('Failed to fetch lookup data in FilterSidebar', err);

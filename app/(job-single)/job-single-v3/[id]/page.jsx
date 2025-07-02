@@ -82,6 +82,14 @@ const JobSingleDynamicV3 = ({ params }) => {
     fetchData();
   }, [params.id]);
 
+  useEffect(() => {
+    if (job && job.jobTitle) {
+      document.title = `${job.jobTitle} | JobFinder`;
+    } else {
+      document.title = 'Job Detail | JobFinder';
+    }
+  }, [job]);
+
   const getIndustryName = (id) => industries.find(i => i.industryId === id)?.industryName || "N/A";
   const getLevelName = (id) => levels.find(l => l.id === id)?.levelName || "N/A";
   const getJobTypeName = (id) => jobTypes.find(jt => jt.id === id)?.jobTypeName || "N/A";
@@ -111,9 +119,10 @@ const JobSingleDynamicV3 = ({ params }) => {
         }))
     : [];
 
-  const levelName = job?.levelId
-    ? levels.find(l => l.id === job.levelId)?.levelName || "N/A"
-    : "N/A";
+  const levelName = job?.level?.levelName || "N/A";
+  const experienceLevelName = job?.experienceLevel?.name || "N/A";
+  const industryName = job?.industry?.industryName || "N/A";
+  const jobTypeName = job?.jobType?.jobTypeName || 'N/A';
 
   if (!job && !fetchError) {
     return (
@@ -243,7 +252,10 @@ const JobSingleDynamicV3 = ({ params }) => {
           <div className="auto-container">
             <JobHeader job={{
               ...job,
-              jobTypeName: getJobTypeName(job?.jobTypeId),
+              jobTypeName,
+              industryName,
+              levelName,
+              experienceLevelName,
               addressDetail: job?.addressDetail,
               provinceName: job?.provinceName,
               minSalary: job?.minSalary,
@@ -258,10 +270,10 @@ const JobSingleDynamicV3 = ({ params }) => {
                   <h4>Job Overview</h4>
                   <JobOverView2
                     job={job}
-                    industryName={getIndustryName(job?.industryId)}
+                    industryName={industryName}
                     levelName={levelName}
-                    jobTypeName={getJobTypeName(job?.jobTypeId)}
-                    experienceLevelName={getExperienceLevelName(job?.experienceLevelId)}
+                    jobTypeName={jobTypeName}
+                    experienceLevelName={experienceLevelName}
                   />
                 </div>
                 {/* <!-- job-overview-two --> */}
@@ -389,7 +401,7 @@ const JobSingleDynamicV3 = ({ params }) => {
                           companyId={job?.companyId} 
                           jobId={job?.id} 
                           companyName={company?.companyName}
-                          industry={getIndustryName(company?.industryId)}
+                          industry={industryName}
                           urlCompanyLogo={company?.urlCompanyLogo}
                         />
                       </div>

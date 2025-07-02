@@ -211,6 +211,48 @@ class ApiServiceClass {
     const options = API_CONFIG.getRequestOptions("POST", { email });
     return API_CONFIG.handleResponse(await fetch(url, options));
   }
+
+  // Upload CV (PDF only)
+  static async uploadCV({ file, userId, fullCvJson }) {
+    const url = API_CONFIG.getUrl("CV");
+    const token = localStorage.getItem("token");
+    const formData = new FormData();
+    formData.append("File", file);
+    formData.append("UserId", userId);
+    if (fullCvJson) formData.append("FullCvJson", fullCvJson);
+    const options = {
+      method: "POST",
+      body: formData,
+      headers: {
+        Authorization: `Bearer ${token}`,
+        // KHÔNG set Content-Type, browser sẽ tự động set boundary cho multipart/form-data
+      },
+    };
+    const response = await fetch(url, options);
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({}));
+      throw new Error(error.message || `HTTP error! status: ${response.status}`);
+    }
+    return response.json();
+  }
+
+  // Lấy danh sách CV của user hiện tại
+  static async getMyCVs() {
+    const url = API_CONFIG.getUrl("CV/my-cvs");
+    const token = localStorage.getItem("token");
+    const options = {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    };
+    const response = await fetch(url, options);
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({}));
+      throw new Error(error.message || `HTTP error! status: ${response.status}`);
+    }
+    return response.json();
+  }
 }
 
 // Sau đó tạo object từ class
@@ -306,6 +348,8 @@ const ApiService = {
   },
   verifyEmail: ApiServiceClass.verifyEmail,
   resendVerification: ApiServiceClass.resendVerification,
+  uploadCV: ApiServiceClass.uploadCV,
+  getMyCVs: ApiServiceClass.getMyCVs,
 };
 
 export default ApiService;

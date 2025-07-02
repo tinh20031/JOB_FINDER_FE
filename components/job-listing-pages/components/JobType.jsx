@@ -23,7 +23,7 @@ const JobType = ({ jobTypes, onSelectJobType }) => {
     return (
         <ul className="switchbox">
             {jobTypes?.map((item) => (
-                <li key={item.id}>
+                <li key={item.jobTypeId}>
                     <label className="switch">
                         <input
                             type="checkbox"

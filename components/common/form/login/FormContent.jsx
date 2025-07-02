@@ -139,7 +139,12 @@ const FormContent = ({ isPopup = false }) => {
   };
 
   return (
-    <div className="form-inner">
+    <div className="form-inner" style={{ position: 'relative' }}>
+      {loading && (
+        <div className="modal-loading-overlay">
+          <span className="spinner-border spinner-border-lg" role="status" aria-hidden="true"></span>
+        </div>
+      )}
       <h3>Login to JobFinder</h3>
       {error && <div className="alert alert-danger">{error}</div>}
       {showVerifyEmailForm ? (
@@ -229,6 +234,7 @@ const FormContent = ({ isPopup = false }) => {
               required
               value={formData.email}
               onChange={handleChange}
+              disabled={loading}
             />
           </div>
           <div className="form-group">
@@ -240,12 +246,13 @@ const FormContent = ({ isPopup = false }) => {
               required
               value={formData.password}
               onChange={handleChange}
+              disabled={loading}
             />
           </div>
           <div className="form-group">
             <div className="field-outer">
               <div className="input-group checkboxes square">
-                <input type="checkbox" name="remember-me" id="remember" />
+                <input type="checkbox" name="remember-me" id="remember" disabled={loading} />
                 <label htmlFor="remember" className="remember">
                   <span className="custom-checkbox"></span> Remember me
                 </label>
@@ -261,8 +268,16 @@ const FormContent = ({ isPopup = false }) => {
               type="submit"
               name="log-in"
               disabled={loading}
+              style={{ position: 'relative', opacity: loading ? 0.7 : 1 }}
             >
-              {loading ? "Logging in..." : "Log In"}
+              {loading ? (
+                <>
+                  <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                  Logging in...
+                </>
+              ) : (
+                "Log In"
+              )}
             </button>
           </div>
 
@@ -295,6 +310,36 @@ const FormContent = ({ isPopup = false }) => {
 
         <LoginWithSocial />
       </div>
+      <style>{`
+        .spinner-border {
+          display: inline-block;
+          width: 1.2rem;
+          height: 1.2rem;
+          vertical-align: text-bottom;
+          border: 0.15em solid currentColor;
+          border-right-color: transparent;
+          border-radius: 50%;
+          animation: spinner-border .75s linear infinite;
+        }
+        .spinner-border-lg {
+          width: 3rem;
+          height: 3rem;
+          border-width: 0.3em;
+        }
+        .modal-loading-overlay {
+          position: absolute;
+          z-index: 10;
+          top: 0; left: 0; right: 0; bottom: 0;
+          background: rgba(255,255,255,0.6);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          border-radius: 12px;
+        }
+        @keyframes spinner-border {
+          100% { transform: rotate(360deg); }
+        }
+      `}</style>
     </div>
   );
 };
