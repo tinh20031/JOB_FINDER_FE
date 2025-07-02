@@ -18,10 +18,10 @@ const RelatedJobs2 = ({ job }) => {
       setLoading(true);
       try {
         const filters = {
-          category: job.industryId,
+          category: job.industry?.industryId || job.industryId,
           location: job.provinceName,
-          jobType: job.jobTypeId ? [job.jobTypeId] : undefined,
-          experience: job.experienceLevelId ? [job.experienceLevelId] : undefined,
+          jobType: job.jobType?.id ? [job.jobType.id] : (job.jobTypeId ? [job.jobTypeId] : undefined),
+          experience: job.experienceLevel?.id ? [job.experienceLevel.id] : (job.experienceLevelId ? [job.experienceLevelId] : undefined),
         };
         const { data } = await jobService.getJobs(filters);
         // Lọc thêm các điều kiện phụ trợ
@@ -30,7 +30,7 @@ const RelatedJobs2 = ({ job }) => {
           j.id !== job.id &&
           j.status === 1 &&
           (!j.expiryDate || new Date(j.expiryDate) > now) &&
-          (job.levelId ? j.levelId === job.levelId : true) &&
+          ((job.level?.id || job.levelId) ? (j.level?.id || j.levelId) === (job.level?.id || job.levelId) : true) &&
           (job.skills && job.skills.length > 0
             ? j.skills?.some(jskill => job.skills.some(s => s.skillId === jskill.skillId))
             : true)
@@ -66,7 +66,7 @@ const RelatedJobs2 = ({ job }) => {
                 width={50}
                 height={49}
                 src={item.logo}
-                alt={item.company?.companyName || item.companyName || 'item brand'}
+                alt={item.company?.companyName || item.companyName ||'item brand'}
               />
             </span>
             <h4>
@@ -116,11 +116,12 @@ const RelatedJobs2 = ({ job }) => {
       {relatedJobs.length > 4 && (
         <div className="see-more" style={{ marginTop: 16 }}>
           <a
-            href={`/job-list-v1?industryId=${job.industryId}` +
+            href={
+              `/job-list-v1?industryId=${job.industry?.industryId || job.industryId}` +
               (job.provinceName ? `&provinceName=${encodeURIComponent(job.provinceName)}` : '') +
-              (job.levelId ? `&levelId=${job.levelId}` : '') +
-              (job.jobTypeId ? `&jobTypeId=${job.jobTypeId}` : '') +
-              (job.experienceLevelId ? `&experienceLevelId=${job.experienceLevelId}` : '')
+              ((job.level?.id || job.levelId) ? `&levelId=${job.level?.id || job.levelId}` : '') +
+              ((job.jobType?.id || job.jobTypeId) ? `&jobTypeId=${job.jobType?.id || job.jobTypeId}` : '') +
+              ((job.experienceLevel?.id || job.experienceLevelId) ? `&experienceLevelId=${job.experienceLevel?.id || job.experienceLevelId}` : '')
             }
             className="theme-btn btn-style-three"
           >

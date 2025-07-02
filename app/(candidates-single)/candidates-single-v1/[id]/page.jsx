@@ -93,6 +93,14 @@ const CandidateSingleDynamicV1 = ({ params }) => {
       });
   }, [id]);
 
+  useEffect(() => {
+    if (user && user.fullName) {
+      document.title = `${user.fullName} | JobFinder`;
+    } else {
+      document.title = 'Candidate Detail | JobFinder';
+    }
+  }, [user]);
+
   // Hàm tính tuổi từ ngày sinh
   function getAge(dob) {
     if (!dob) return "No info";
@@ -106,7 +114,90 @@ const CandidateSingleDynamicV1 = ({ params }) => {
     return age;
   }
 
-  if (loading || resumeLoading) return <div>Loading data...</div>;
+  if (loading || resumeLoading) return (
+    <>
+      <span className="header-span"></span>
+      <LoginPopup />
+      <DefaulHeader2 />
+      <MobileMenu />
+      <section className="candidate-detail-section">
+        <div className="upper-box">
+          <div className="auto-container">
+            <div className="candidate-block-five">
+              <div className="inner-box">
+                <div className="content">
+                  <figure className="image">
+                    <div style={{width:100, height:100, borderRadius:'50%', background:'#e5e7eb', margin:'0 auto'}} className="skeleton-animate"></div>
+                  </figure>
+                  <div style={{height:24, width:120, background:'#e5e7eb', borderRadius:8, margin:'16px auto'}} className="skeleton-animate"></div>
+                  <div style={{display:'flex', gap:8, margin:'8px 0'}}>
+                    <div style={{height:24, width:80, background:'#e5e7eb', borderRadius:16}} className="skeleton-animate"></div>
+                    <div style={{height:24, width:80, background:'#e5e7eb', borderRadius:16}} className="skeleton-animate"></div>
+                  </div>
+                  <ul className="post-tags" style={{display:'flex', gap:8}}>
+                    {[1,2,3].map(i => <li key={i}><div style={{height:20, width:40, background:'#e5e7eb', borderRadius:8}} className="skeleton-animate"></div></li>)}
+                  </ul>
+                </div>
+                <div className="btn-box">
+                  <div style={{height:36, width:140, background:'#e5e7eb', borderRadius:8, margin:'0 auto'}} className="skeleton-animate"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div className="candidate-detail-outer">
+          <div className="auto-container">
+            <div className="row">
+              <div className="content-column col-lg-8 col-md-12 col-sm-12">
+                <div className="job-detail">
+                  {[1,2].map(i => (
+                    <div key={i} style={{marginBottom:32}}>
+                      <div style={{height:24, width:180, background:'#e5e7eb', borderRadius:8, marginBottom:20}} className="skeleton-animate"></div>
+                      <div style={{height:20, width:'100%', background:'#e5e7eb', borderRadius:8, marginBottom:10}} className="skeleton-animate"></div>
+                      <div style={{height:20, width:'80%', background:'#e5e7eb', borderRadius:8, marginBottom:10}} className="skeleton-animate"></div>
+                      <div style={{height:20, width:'60%', background:'#e5e7eb', borderRadius:8}} className="skeleton-animate"></div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <div className="sidebar-column col-lg-4 col-md-12 col-sm-12">
+                <aside className="sidebar">
+                  <div className="sidebar-widget">
+                    <div className="widget-content">
+                      <ul className="job-overview">
+                        {[1,2,3,4].map(i => (
+                          <li key={i} style={{marginBottom:12}}>
+                            <div style={{height:18, width:100, background:'#e5e7eb', borderRadius:8}} className="skeleton-animate"></div>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  </div>
+                  <div className="sidebar-widget">
+                    <div className="widget-content">
+                      <div style={{display:'flex', flexWrap:'wrap', gap:8}}>
+                        {[1,2,3,4].map(i => <div key={i} style={{height:24, width:60, background:'#e5e7eb', borderRadius:16}} className="skeleton-animate"></div>)}
+                      </div>
+                    </div>
+                  </div>
+                </aside>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+      <FooterDefault footerStyle="alternate5" />
+      <style>{`
+        .skeleton-animate {
+          animation: skeleton-loading 1.2s infinite linear alternate;
+        }
+        @keyframes skeleton-loading {
+          0% { background-color: #e5e7eb; }
+          100% { background-color: #f3f4f6; }
+        }
+      `}</style>
+    </>
+  );
   if (error) return <div>{error}</div>;
   if (!candidate || !user) return <div>Candidate not found</div>;
 
@@ -133,10 +224,12 @@ const CandidateSingleDynamicV1 = ({ params }) => {
                 <div className="content">
                   <figure className="image">
                     <Image
-                      width={100}
-                      height={100}
+                      // width={100}
+                      // height={100}
                       src={user.image || "/images/resource/default-avatar.png"}
                       alt="avatar"
+                      fill
+                      style={{ objectFit: 'cover', objectPosition: 'center' }}
                     />
                   </figure>
                   <h4 className="name">{user.fullName}</h4>

@@ -21,7 +21,7 @@ const ExperienceLevel = ({ experienceLevels, onSelectExperienceLevel }) => {
     return (
         <ul className="switchbox">
             {experienceLevels?.map((item) => (
-                <li key={item.id}>
+                <li key={item.experienceLevelid}>
                     <label className="switch">
                         <input
                             type="checkbox"

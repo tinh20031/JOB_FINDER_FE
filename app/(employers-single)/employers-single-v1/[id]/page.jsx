@@ -48,6 +48,14 @@ const EmployersSingleV1 = ({ params }) => {
     if (company?.userId) fetchFavorite();
   }, [company?.userId]);
 
+  useEffect(() => {
+    if (company && company.companyName) {
+      document.title = `${company.companyName} | JobFinder`;
+    } else {
+      document.title = 'Company Detail | JobFinder';
+    }
+  }, [company]);
+
   const handleBookmark = async () => {
     try {
       setIsLoadingFavorite(true);
