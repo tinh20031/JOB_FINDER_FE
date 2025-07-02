@@ -10,6 +10,7 @@ import { store } from "../store/store";
 import "react-toastify/dist/ReactToastify.css";
 import { ToastContainer } from "react-toastify";
 import { FavoriteJobsProvider } from "../contexts/FavoriteJobsContext";
+import '../components/dashboard-pages/candidates-dashboard/cv-manager/components/CvManagerTable.css';
 
 
 export default function RootLayout({ children }) {
