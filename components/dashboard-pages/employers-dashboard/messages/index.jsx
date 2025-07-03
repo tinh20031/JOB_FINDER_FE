@@ -30,16 +30,21 @@ const MessagesPage = () => {
       {/* <!-- End User Sidebar Menu --> */}
 
       {/* <!-- Dashboard --> */}
-      <section className="user-dashboard">
-        <div className="dashboard-outer">
-          <BreadCrumb title="Messages!" />
+      <section className="user-dashboard" style={{ height: "80vh", position: "relative", zIndex: 1 }}>
+        <div className="dashboard-outer" style={{ height: "100%", position: "relative", zIndex: 2 }}>
+          <BreadCrumb title="Messages" />
           {/* breadCrumb */}
 
           <MenuToggler />
           {/* Collapsible sidebar button */}
 
           <div className="row" style={{ height: "100%", position: "relative", zIndex: 3 }}>
-            <div className="col-lg-12" style={{ height: "100%", position: "relative", zIndex: 4 }}>
+            <div
+              className={`col-lg-12 ${
+                chatSidebar ? "active-chat-contacts" : ""
+              }`}
+              style={{ height: "100%", position: "relative", zIndex: 4 }}
+            >
               <div className="chat-widget" style={{ height: "100%", position: "relative", zIndex: 5 }}>
                 <div className="widget-content" style={{ height: "100%", position: "relative", zIndex: 6 }}>
                   <ChatBox />

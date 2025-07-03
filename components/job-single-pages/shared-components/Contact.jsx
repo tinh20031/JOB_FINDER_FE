@@ -1,6 +1,6 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import axios from "axios";
+import messageService from "@/services/messageService";
 import { authService } from "@/services/authService";
 import { useSelector } from "react-redux";
 
@@ -35,15 +35,14 @@ const Contact = ({
     }
     setError("");
 
-    // Get userId and token from Redux, fallback to authService
+    // Get userId from Redux, fallback to authService
     const userId =
       user?.id ||
       user?.userId ||
       authService.getStoredUser()?.id ||
       authService.getStoredUser()?.userId;
-    const authToken = token || authService.getToken();
-    if (!userId || !authToken) {
-      setError("You must be loggin in");
+    if (!userId) {
+      setError("You must be logged in");
       return;
     }
 
@@ -55,12 +54,7 @@ const Contact = ({
     };
 
     try {
-      await axios.post("/api/Message/send", payload, {
-        headers: {
-          Authorization: `Bearer ${authToken}`,
-          "Content-Type": "application/json",
-        },
-      });
+      await messageService.sendMessage(payload);
       closeModal();
       router.push(
         `/candidates-dashboard/messages?companyId=${companyId}&jobId=${jobId}`
