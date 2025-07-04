@@ -9,19 +9,22 @@ import MobileMenu from "@/components/header/MobileMenu";
 import CompnayInfo from "@/components/job-single-pages/shared-components/CompanyInfo";
 import SocialTwo from "@/components/job-single-pages/social/SocialTwo";
 import Contact from "@/components/job-single-pages/shared-components/Contact";
-import JobDetailsDescriptions from "@/components/job-single-pages/shared-components/JobDetailsDescriptions";
 import RelatedJobs2 from "@/components/job-single-pages/related-jobs/RelatedJobs2";
 import JobOverView2 from "@/components/job-single-pages/job-overview/JobOverView2";
 import ApplyJobModalContent from "@/components/job-single-pages/shared-components/ApplyJobModalContent";
 import Image from "next/image";
-import { companyService } from "@/services/companyService";
-import { companyProfileService } from "@/services/companyProfileService";
 import DefaulHeader2 from "@/components/header/DefaulHeader2";
 import ApiService from "@/services/api.service";
 import API_CONFIG from "@/config/api.config";
 import { notFound } from 'next/navigation';
 import JobHeader from "@/components/job-single-pages/shared-components/JobHeader";
 import JobDetailsBox from "@/components/job-single-pages/shared-components/JobDetailsBox";
+import useResumeData from "@/services/useResumeData";
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+import { useRouter } from "next/navigation";
+import "bootstrap/dist/js/bootstrap.bundle.min.js";
+import { Modal } from "bootstrap";
 
 const JobSingleDynamicV3 = ({ params }) => {
   const [job, setJob] = useState(null);
@@ -31,6 +34,9 @@ const JobSingleDynamicV3 = ({ params }) => {
   const [experienceLevels, setExperienceLevels] = useState([]);
   const [company, setCompany] = useState(null);
   const [fetchError, setFetchError] = useState(null);
+  const { profile, loading } = useResumeData();
+  console.log("[page.jsx] profile data:", profile);
+  const router = useRouter();
 
   useEffect(() => {
     const fetchData = async () => {
@@ -114,6 +120,46 @@ const JobSingleDynamicV3 = ({ params }) => {
   const levelName = job?.levelId
     ? levels.find(l => l.id === job.levelId)?.levelName || "N/A"
     : "N/A";
+
+  function isPersonalDetailsComplete(profile) {
+    return (
+      profile.fullName &&
+      profile.jobTitle &&
+      profile.phone &&
+      profile.gender &&
+      profile.dob &&
+      profile.province &&
+      profile.city
+    );
+  }
+
+  const handleApply = (e) => {
+    e.preventDefault();
+    if (loading) return;
+    if (!isPersonalDetailsComplete(profile)) {
+      toast.error(
+        <div style={{ cursor: "pointer" }}>
+          Please complete your Personal Details before applying for a job. <br />
+          <b>Click here to update your profile.</b>
+        </div>,
+        {
+          position: "bottom-right",
+          autoClose: 10000,
+          closeOnClick: true,
+          style: { background: "#e74c3c", color: "#fff", fontWeight: 500 },
+          onClick: () => router.push("/candidates-dashboard/my-resume"),
+        }
+      );
+      return;
+    }
+    const modalEl = document.getElementById('applyJobModal');
+    if (modalEl) {
+      const applyModal = new Modal(modalEl);
+      applyModal.show();
+    } else {
+      console.error("Modal element not found!");
+    }
+  };
 
   if (!job && !fetchError) {
     return (
@@ -215,6 +261,17 @@ const JobSingleDynamicV3 = ({ params }) => {
           .skeleton-link { width: 80px; height: 16px; background: #e0e0e0; }
           .skeleton-box { width: 100%; height: 40px; margin-bottom: 16px; }
         `}</style>
+        <ToastContainer
+          position="bottom-right"
+          autoClose={10000}
+          hideProgressBar={false}
+          newestOnTop={false}
+          closeOnClick
+          rtl={false}
+          pauseOnFocusLoss
+          draggable
+          pauseOnHover
+        />
       </>
     );
   }
@@ -290,8 +347,7 @@ const JobSingleDynamicV3 = ({ params }) => {
                     <a
                       href="#"
                       className="theme-btn btn-style-one"
-                      data-bs-toggle="modal"
-                      data-bs-target="#applyJobModal"
+                      onClick={handleApply}
                     >
                       Apply For Job
                     </a>
@@ -460,6 +516,17 @@ const JobSingleDynamicV3 = ({ params }) => {
         font-weight: 500;
       }
       `}</style>
+      <ToastContainer
+        position="bottom-right"
+        autoClose={10000}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+      />
     </>
   );
 };
