@@ -874,6 +874,77 @@ export const jobService = {
     const { data: jobs } = await this.getJobs(filters);
     return jobs.filter((job) => job.status === 1);
   },
+
+  // POST: Track job view
+  async trackJobView(jobId) {
+    try {
+      const token = getValidToken();
+      const headers = token ? { Authorization: `Bearer ${token}` } : {};
+      const response = await axios.post(
+        `${API_URL}/JobView/track`,
+        { jobId },
+        { headers }
+      );
+      return response.data;
+    } catch (error) {
+      console.error("Error tracking job view:", error);
+      // Optionally, you can throw or return null
+      return null;
+    }
+  },
+
+  // Lấy thống kê tổng hợp cho công ty (view, apply, phần trăm apply, từng job) theo khoảng thời gian
+  async getCompanyStatistics(companyId, fromDate, toDate) {
+    try {
+      const token = getValidToken();
+      const headers = token ? { Authorization: `Bearer ${token}` } : {};
+      const params = {};
+      if (fromDate) params.fromDate = fromDate;
+      if (toDate) params.toDate = toDate;
+      const response = await axios.get(
+        `${API_URL}/JobStatistics/company/${companyId}`,
+        { headers, params }
+      );
+      return response.data;
+    } catch (error) {
+      console.error("Error fetching company statistics:", error);
+      throw error;
+    }
+  },
+
+  // Lấy danh sách job theo companyId
+  async getJobsByCompanyId(companyId) {
+    try {
+      const config = getAuthConfig();
+      const response = await axios.get(`${API_URL}/Job`, config);
+      const apiJobs = response.data;
+      // Lọc job theo companyId
+      const jobs = apiJobs.filter((job) => job.companyId === companyId);
+      return jobs;
+    } catch (error) {
+      console.error("Error fetching jobs by companyId:", error);
+      return [];
+    }
+  },
+
+  // Lấy thống kê job theo khoảng thời gian tuỳ ý
+  async getJobStatisticsFiltered(jobId, fromDate, toDate) {
+    try {
+      const token = getValidToken();
+      const headers = token ? { Authorization: `Bearer ${token}` } : {};
+      const params = {};
+      if (fromDate) params.fromDate = fromDate;
+      if (toDate) params.toDate = toDate;
+      const response = await axios.get(
+        `${API_URL}/JobStatistics/job/${jobId}`,
+        { headers, params }
+      );
+      return response.data;
+    } catch (error) {
+      console.error("Error fetching job statistics filtered:", error);
+      throw error;
+    }
+  },
 };
 
 export default jobService;

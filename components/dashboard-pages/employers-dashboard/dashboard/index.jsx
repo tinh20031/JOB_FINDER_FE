@@ -18,18 +18,18 @@ const Index = () => {
   // Filter input style giống WidgetTopFilterBox
   const filterInputStyle = {
     minWidth: 220,
-    background: '#f5f8fa',
-    border: '1px solid #e5e9ec',
+    background: "#f5f8fa",
+    border: "1px solid #e5e9ec",
     borderRadius: 8,
     fontSize: 14,
-    fontFamily: 'inherit',
+    fontFamily: "inherit",
     height: 48,
-    boxShadow: 'none',
-    outline: 'none',
-    color: '#6f6f6f',
+    boxShadow: "none",
+    outline: "none",
+    color: "#6f6f6f",
     fontWeight: 400,
     paddingLeft: 16,
-    width: '100%'
+    width: "100%",
   };
   return (
     <div className="page-wrapper dashboard">
@@ -88,15 +88,25 @@ const Index = () => {
             <div className="col-lg-12">
               {/* <!-- applicants Widget --> */}
               <div className="applicants-widget ls-widget">
-                <div className="widget-title" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
-                  <h3 style={{ margin: 0, fontWeight: 600, fontSize: 24 }}>Recent Applicants</h3>
+                <div
+                  className="widget-title"
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    marginBottom: 24,
+                  }}
+                >
+                  <h3 style={{ margin: 0, fontWeight: 600, fontSize: 24 }}>
+                    Recent Applicants
+                  </h3>
                   <div className="chosen-outer" style={{ minWidth: 300 }}>
                     <input
                       type="text"
                       className="chosen-single form-select chosen-container"
                       placeholder="Enter Candidate name..."
                       value={candidateName}
-                      onChange={e => setCandidateName(e.target.value)}
+                      onChange={(e) => setCandidateName(e.target.value)}
                       style={filterInputStyle}
                     />
                   </div>

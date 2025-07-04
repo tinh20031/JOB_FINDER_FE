@@ -90,6 +90,12 @@ const JobSingleDynamicV3 = ({ params }) => {
     }
   }, [job]);
 
+  useEffect(() => {
+    if (job && job.id) {
+      jobService.trackJobView(job.id);
+    }
+  }, [job]);
+
   const getIndustryName = (id) => industries.find(i => i.industryId === id)?.industryName || "N/A";
   const getLevelName = (id) => levels.find(l => l.id === id)?.levelName || "N/A";
   const getJobTypeName = (id) => jobTypes.find(jt => jt.id === id)?.jobTypeName || "N/A";
