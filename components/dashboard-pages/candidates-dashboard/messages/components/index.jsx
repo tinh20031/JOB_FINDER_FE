@@ -7,9 +7,10 @@ import ContentField from "./ContentField";
 import { useDispatch, useSelector } from "react-redux";
 import { chatSidebarToggle } from "../../../../../features/toggle/toggleSlice";
 import messageService from '../../../../../services/messageService';
-import signalRService from '../../../../../services/signalRService';
+import chatService from '../../../../../services/chatService';
 import { useSearchParams } from 'next/navigation';
 import apiService from '../../../../../services/api.service';
+import Cookies from 'js-cookie';
 
 const ChatBox = () => {
     const dispatch = useDispatch();
@@ -27,11 +28,14 @@ const ChatBox = () => {
     const [unreadContactIds, setUnreadContactIds] = useState([]);
     const [onlineUserIds, setOnlineUserIds] = useState([]);
     const [partnerOnline, setPartnerOnline] = useState(false);
+    const [loadingMessages, setLoadingMessages] = useState(false);
 
     useEffect(() => {
-        const id = user?.id || user?.userId;
+        let id = user?.id || user?.userId;
+        if (!id && typeof window !== 'undefined') {
+            id = localStorage.getItem('userId') || (typeof Cookies !== 'undefined' ? Cookies.get('userId') : undefined);
+        }
         setCurrentUserId(id);
-
         const fetchUserProfile = async () => {
             if (id) {
                 try {
@@ -43,9 +47,7 @@ const ChatBox = () => {
                 }
             }
         }
-
         fetchUserProfile();
-
     }, [user, profileUpdated]);
 
     const fetchChatContacts = useCallback(async () => {
@@ -53,7 +55,7 @@ const ChatBox = () => {
         setLoadingContacts(true);
         setErrorLoadingContacts(null);
         try {
-            const response = await messageService.getMessagedCompanies(currentUserId);
+            const response = await messageService.getMessagedCompanies(Number(currentUserId));
             const fetchedContacts = response.data.map(msg => ({
                 id: String(msg.companyId),
                 name: msg.companyName || "Unknown",
@@ -64,20 +66,23 @@ const ChatBox = () => {
             }));
             const uniqueContacts = Array.from(new Map(fetchedContacts.map(item => [item['id'], item])).values());
             setChatContacts(uniqueContacts.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp)));
+            if (urlCompanyId && uniqueContacts.some(c => c.id === urlCompanyId)) {
+                setCurrentChatPartnerId(urlCompanyId);
+            }
         } catch (err) {
             console.error("Error loading contacts:", err);
             setErrorLoadingContacts("Failed to load chat contacts. Please try again later.");
         } finally {
             setLoadingContacts(false);
         }
-    }, [currentUserId]);
+    }, [currentUserId, urlCompanyId]);
 
     useEffect(() => {
         fetchChatContacts();
     }, [fetchChatContacts]);
 
     useEffect(() => {
-        signalRService.startConnection();
+        chatService.startConnection();
 
         const handleReceiveMessage = (messageData) => {
             const isForCurrentChat =
@@ -87,15 +92,42 @@ const ChatBox = () => {
             if (isForCurrentChat) {
                 setMessages(prev => [...prev, messageData]);
             }
-            
-            const contactId = String(messageData.senderId) === String(currentUserId) ? messageData.receiverId : messageData.senderId;
+
+            const contactId = String(messageData.senderId) === String(currentUserId) ? String(messageData.receiverId) : String(messageData.senderId);
+
             if (String(contactId) !== String(currentChatPartnerId)) {
                 setUnreadContactIds(prev => [...new Set([...prev, String(contactId)])]);
             }
 
-            fetchChatContacts();
+            // Update contacts list in-place without refetching
+            setChatContacts(prevContacts => {
+                const isSenderUser = String(messageData.senderId) === String(currentUserId);
+                const contactIndex = prevContacts.findIndex(c => c.id === contactId);
+
+                let newOrUpdatedContact;
+
+                if (contactIndex > -1) { // Contact exists, update it
+                    newOrUpdatedContact = {
+                        ...prevContacts[contactIndex],
+                        lastMessageText: messageData.messageText || (messageData.fileUrl ? 'Sent a file' : ''),
+                        timestamp: messageData.sentAt,
+                    };
+                } else { // New contact
+                    newOrUpdatedContact = {
+                        id: contactId,
+                        name: isSenderUser ? messageData.receiverFullName : messageData.senderFullName,
+                        lastMessageText: messageData.messageText || (messageData.fileUrl ? 'Sent a file' : ''),
+                        timestamp: messageData.sentAt,
+                        avatar: (isSenderUser ? messageData.receiverImage : messageData.senderImage) || "/images/resource/default-avatar.png",
+                        unreadCount: 0,
+                    };
+                }
+
+                const remainingContacts = prevContacts.filter(c => c.id !== contactId);
+                return [newOrUpdatedContact, ...remainingContacts];
+            });
         };
-        
+
         const handleUserOnlineStatus = ({ userId, isOnline }) => {
             setOnlineUserIds(prev => isOnline ? [...new Set([...prev, String(userId)])] : prev.filter(id => id !== String(userId)));
             if (String(userId) === String(currentChatPartnerId)) {
@@ -107,31 +139,28 @@ const ChatBox = () => {
             setOnlineUserIds(onlineUsers.map(String));
         };
 
-        signalRService.on("ReceiveMessage", handleReceiveMessage);
-        signalRService.on("UserOnlineStatusChanged", handleUserOnlineStatus);
-        signalRService.on("OnlineUsersList", handleOnlineUsersList);
+        chatService.on("ReceiveMessage", handleReceiveMessage);
+        chatService.on("UserOnlineStatusChanged", handleUserOnlineStatus);
+        chatService.on("OnlineUsersList", handleOnlineUsersList);
 
         return () => {
-            signalRService.off("ReceiveMessage", handleReceiveMessage);
-            signalRService.off("UserOnlineStatusChanged", handleUserOnlineStatus);
-            signalRService.off("OnlineUsersList", handleOnlineUsersList);
+            chatService.off("ReceiveMessage", handleReceiveMessage);
+            chatService.off("UserOnlineStatusChanged", handleUserOnlineStatus);
+            chatService.off("OnlineUsersList", handleOnlineUsersList);
         };
-    }, [currentUserId, currentChatPartnerId, fetchChatContacts]);
+    }, [currentUserId, currentChatPartnerId]);
 
     useEffect(() => {
         if (currentChatPartnerId && currentUserId) {
+            setLoadingMessages(true);
             messageService.getMessageHistory(currentUserId, currentChatPartnerId)
                 .then(response => {
-                    const historyMessages = response.data.map(msg => ({
-                        ...msg,
-                        timestamp: msg.timestamp ? new Date(msg.timestamp).toISOString() : null,
-                    }));
-                    setMessages(historyMessages);
+                    setMessages(response.data);
                 })
                 .catch(error => {
-                    console.error("Error fetching message history:", error);
                     setMessages([]);
-                });
+                })
+                .finally(() => setLoadingMessages(false));
         }
     }, [currentChatPartnerId, currentUserId]);
 
@@ -140,18 +169,25 @@ const ChatBox = () => {
             setPartnerOnline(onlineUserIds.includes(String(currentChatPartnerId)));
         }
     }, [currentChatPartnerId, onlineUserIds]);
+
+    useEffect(() => {
+        if (currentUserId && currentChatPartnerId) {
+            const roomId = `${Math.min(Number(currentUserId), Number(currentChatPartnerId))}_${Math.max(Number(currentUserId), Number(currentChatPartnerId))}`;
+            chatService.joinRoom(roomId);
+        }
+    }, [currentUserId, currentChatPartnerId]);
     
-    const sendMessage = async (messageText) => {
-        if (!messageText.trim() || !currentChatPartnerId || !currentUserId) return;
-        
+    const sendMessage = async (messageText, file = null) => {
+        if ((!messageText || !messageText.trim()) && !file) return;
+        if (!currentChatPartnerId || !currentUserId) return;
         try {
             const payload = {
                 senderId: parseInt(currentUserId, 10),
                 receiverId: parseInt(currentChatPartnerId, 10),
                 messageText: messageText,
+                file: file,
             };
             await messageService.sendMessage(payload);
-            // Giao diện sẽ được cập nhật bởi sự kiện 'ReceiveMessage' từ server.
         } catch (e) {
             console.error('Error sending message via HTTP: ', e);
         }
@@ -166,6 +202,7 @@ const ChatBox = () => {
 
     const currentChatPartner = chatContacts.find(c => String(c.id) === String(currentChatPartnerId));
 
+    console.log("[DEBUG] chatContacts:", chatContacts);
     return (
         <div className="row" style={{ height: "100%" }}>
             <div className="contacts_column col-xl-4 col-lg-5 col-md-12 col-sm-12 chat" style={{ height: "100%" }} id="chat_contacts">
@@ -190,12 +227,14 @@ const ChatBox = () => {
             <div className="col-xl-8 col-lg-7 col-md-12 col-sm-12 chat" style={{ height: "100%" }}>
                 <ContentField
                     messages={messages}
+                    setMessages={setMessages}
                     sendMessage={sendMessage}
                     currentChatPartner={currentChatPartner}
                     currentUserId={currentUserId}
                     currentUserFullName={currentUserFullName}
                     currentUserProfileImage={currentUserProfileImage}
                     partnerOnline={partnerOnline}
+                    loadingMessages={loadingMessages}
                 />
             </div>
         </div>

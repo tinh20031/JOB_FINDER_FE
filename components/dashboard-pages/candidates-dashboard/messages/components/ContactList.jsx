@@ -8,6 +8,9 @@ const ChatboxContactList = ({ onContactSelect, currentChatPartnerId, contacts = 
     contact.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  console.log("[DEBUG] ContactList contacts:", contacts);
+  console.log("[DEBUG] ContactList filteredContacts:", filteredContacts);
+
   const getTimeAgo = (timestamp) => {
     if (!timestamp) return '';
     try {
@@ -23,17 +26,46 @@ const ChatboxContactList = ({ onContactSelect, currentChatPartnerId, contacts = 
   if (loading) return (
     <div className="chat-contacts-container">
       <div className="search-box">
-        <div className="form-group position-relative">
+        <div className="form-group position-relative" style={{ position: 'relative' }}>
           <input
             type="text"
             placeholder="Search"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
+            style={{
+              width: '100%',
+              padding: '10px 15px 10px 40px',
+              border: '1px solid #ddd',
+              borderRadius: 20,
+              fontSize: 14,
+              boxSizing: 'border-box',
+              background: '#fff',
+            }}
           />
-          <i className="flaticon-search"></i>
+          <i
+            className="flaticon-search"
+            style={{
+              position: 'absolute',
+              left: 15,
+              top: '50%',
+              transform: 'translateY(-50%)',
+              color: '#999',
+              fontSize: 16
+            }}
+          />
         </div>
       </div>
-      <ul className="contacts-list" style={{ flexGrow: 1, overflowY: "auto" }}></ul>
+      <ul className="contacts-list" style={{ flexGrow: 1, overflowY: "auto" }}>
+        {Array.from({ length: 6 }).map((_, idx) => (
+          <div key={idx} style={{ display: 'flex', alignItems: 'center', padding: '12px 0' }}>
+            <div style={{ width: 40, height: 40, borderRadius: '50%', background: '#eee', marginRight: 12 }} />
+            <div style={{ flex: 1 }}>
+              <div style={{ width: '60%', height: 14, background: '#eee', borderRadius: 6, marginBottom: 6 }} />
+              <div style={{ width: '40%', height: 12, background: '#f3f3f3', borderRadius: 6 }} />
+            </div>
+          </div>
+        ))}
+      </ul>
     </div>
   );
 
@@ -42,85 +74,105 @@ const ChatboxContactList = ({ onContactSelect, currentChatPartnerId, contacts = 
   return (
     <div className="chat-contacts-container">
       <div className="search-box">
-        <div className="form-group position-relative">
+        <div className="form-group position-relative" style={{ position: 'relative' }}>
           <input
             type="text"
             placeholder="Search"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
+            style={{
+              width: '100%',
+              padding: '10px 15px 10px 40px',
+              border: '1px solid #ddd',
+              borderRadius: 20,
+              fontSize: 14,
+              boxSizing: 'border-box',
+              background: '#fff',
+            }}
           />
-          <i className="flaticon-search"></i>
+          <i
+            className="flaticon-search"
+            style={{
+              position: 'absolute',
+              left: 15,
+              top: '50%',
+              transform: 'translateY(-50%)',
+              color: '#999',
+              fontSize: 16
+            }}
+          />
         </div>
       </div>
 
       <ul className="contacts-list" style={{ flexGrow: 1, overflowY: "auto" }}>
-        {filteredContacts.length > 0 ? (
-          filteredContacts.map((contact) => {
-            return (
-              <li
-                key={contact.id}
-                className={`contact-item ${contact.id === currentChatPartnerId ? "active" : ""} ${unreadContactIds.includes(contact.id) ? "unread" : ""}`}
-                onClick={() => onContactSelect(contact.id)}
-              >
-                <div className="contact-info">
-                  <div className="avatar-container">
-                    <Image
-                      src={contact.avatar && (contact.avatar.startsWith('/') || contact.avatar.startsWith('http')) ? contact.avatar : '/images/resource/default-avatar.png'}
-                      className="rounded-circle user_img"
-                      alt={contact.name}
-                      width={60}
-                      height={60}
-                    />
-                    {contact.unreadCount > 0 && (
-                      <span className="unread-badge-on-avatar">{contact.unreadCount}</span>
-                    )}
-                    {unreadContactIds.includes(contact.id) && (
-                      <span className="unread-badge"></span>
-                    )}
-                  </div>
-                  <div className="message-overview">
-                    <div className="name-time">
-                      <h4 className="name">{contact.name}</h4>
-                      <span className="status-dot" title={contact.isOnline ? 'Online' : 'Offline'}>
-                        <span style={{
-                          display: 'inline-block',
-                          width: 10,
-                          height: 10,
-                          borderRadius: '50%',
-                          background: contact.isOnline ? '#4caf50' : '#aaa',
-                          marginRight: 4
-                        }} />
-                        <span style={{ fontSize: 12, color: contact.isOnline ? '#4caf50' : '#aaa', marginLeft: 2 }}>
-                          {contact.isOnline ? 'Online' : 'Offline'}
-                        </span>
-                      </span>
-                    </div>
-                    <p className="last-message-preview">
-                      {contact.lastMessageText.length > 30 
-                        ? `${contact.lastMessageText.substring(0, 30)}...` 
-                        : contact.lastMessageText}
-                    </p>
-                    <p className="contact-position">{contact.position}</p>
-                  </div>
-                  {contact.productImage && (
-                    <div className="product-image-container">
-                      <Image
-                        src={contact.productImage}
-                        alt={contact.productName || "Product"}
-                        width={50}
-                        height={50}
-                        objectFit="cover"
-                      />
-                    </div>
-                  )}
-                </div>
-              </li>
-            );
-          })
+        {loading ? (
+          Array.from({ length: 6 }).map((_, idx) => (
+            <li key={idx} style={{ display: 'flex', alignItems: 'center', padding: '12px 0', borderBottom: '1px solid #eee' }}>
+              <div style={{ width: 40, height: 40, borderRadius: '50%', background: '#eee', marginRight: 12 }} />
+              <div style={{ flex: 1 }}>
+                <div style={{ width: '60%', height: 14, background: '#eee', borderRadius: 6, marginBottom: 6 }} />
+                <div style={{ width: '40%', height: 12, background: '#f3f3f3', borderRadius: 6 }} />
+              </div>
+            </li>
+          ))
         ) : (
-          <li className="no-contacts">
-            <p>No conversations found.</p>
-          </li>
+          filteredContacts.length > 0 ? (
+            filteredContacts.map((contact) => {
+              return (
+                <li
+                  key={contact.id}
+                  className={`contact-item ${contact.id === currentChatPartnerId ? "active" : ""} ${unreadContactIds.includes(contact.id) ? "unread" : ""}`}
+                  onClick={() => onContactSelect(contact.id)}
+                >
+                  <div className="contact-info">
+                    <div className="avatar-container">
+                      <Image
+                        src={contact.avatar && (contact.avatar.startsWith('/') || contact.avatar.startsWith('http')) ? contact.avatar : '/images/resource/default-avatar.png'}
+                        className="rounded-circle user_img"
+                        alt={contact.name}
+                        width={60}
+                        height={60}
+                      />
+                      {contact.unreadCount > 0 && (
+                        <span className="unread-badge-on-avatar">{contact.unreadCount}</span>
+                      )}
+                      {unreadContactIds.includes(contact.id) && (
+                        <span className="unread-badge"></span>
+                      )}
+                    </div>
+                    <div className="message-overview">
+                      <div className="name-time">
+                        <h4 className="name">{contact.name}</h4>
+                        <span className="time">{contact.timestamp ? getTimeAgo(contact.timestamp) : ''}</span>
+                        <span className="status-dot" title={contact.isOnline ? 'Online' : 'Offline'}>
+                          <span style={{
+                            display: 'inline-block',
+                            width: 10,
+                            height: 10,
+                            borderRadius: '50%',
+                            background: contact.isOnline ? '#4caf50' : '#aaa',
+                            marginRight: 4
+                          }} />
+                          <span style={{ fontSize: 12, color: contact.isOnline ? '#4caf50' : '#aaa', marginLeft: 2 }}>
+                            {contact.isOnline ? 'Online' : 'Offline'}
+                          </span>
+                        </span>
+                      </div>
+                      <p className="last-message-preview">
+                        {contact.lastMessageText && contact.lastMessageText.length > 30 
+                          ? `${contact.lastMessageText.substring(0, 30)}...` 
+                          : contact.lastMessageText}
+                      </p>
+                    </div>
+                  </div>
+                </li>
+              );
+            })
+          ) : (
+            <li className="no-contacts">
+              <p>No conversations found.</p>
+            </li>
+          )
         )}
       </ul>
 
