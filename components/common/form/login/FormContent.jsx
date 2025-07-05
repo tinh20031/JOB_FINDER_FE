@@ -10,6 +10,7 @@ import { jwtDecode } from "jwt-decode";
 import LoginWithSocial from "../shared/LoginWithSocial";
 import VerifyEmailForm from "../shared/VerifyEmailForm";
 import { toast } from "react-toastify";
+import ForgotPasswordForm from "./ForgotPasswordForm";
 
 const FormContent = ({ isPopup = false }) => {
   const router = useRouter();
@@ -23,6 +24,7 @@ const FormContent = ({ isPopup = false }) => {
   const [showVerifyEmailForm, setShowVerifyEmailForm] = useState(false);
   const closeBtnRef = useRef(null);
   const [verifyEmailAlert, setVerifyEmailAlert] = useState("");
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -140,161 +142,163 @@ const FormContent = ({ isPopup = false }) => {
 
   return (
     <div className="form-inner">
-      <h3>Login to JobFinder</h3>
-      {error && <div className="alert alert-danger">{error}</div>}
-      {showVerifyEmailForm ? (
-        <>
-          {verifyEmailAlert && (
-            <div className="alert alert-warning" style={{ fontWeight: 500 }}>
-              {verifyEmailAlert}
-            </div>
-          )}
-          <VerifyEmailForm
-            initialEmail={formData.email}
-            onVerified={async (email) => {
-              setShowVerifyEmailForm(false);
-              setFormData((prev) => ({ ...prev, email }));
-              setVerifyEmailAlert("");
-              setError("");
-              // Tự động login lại sau khi xác thực thành công
-              setLoading(true);
-              try {
-                const responseData = await authService.login(
-                  email,
-                  formData.password
-                );
-                let user = responseData.user || {};
-                let userId = user.id || user.userId;
-                if (!userId && responseData.token) {
-                  try {
-                    const decoded = jwtDecode(responseData.token);
-                    userId = decoded.sub;
-                  } catch (e) {}
-                }
-                if (userId) {
-                  user.id = userId;
-                }
-                if (responseData.token) {
-                  localStorage.setItem("token", responseData.token);
-                }
-                await Promise.all([
-                  new Promise((resolve) => {
-                    localStorage.setItem("user", JSON.stringify(user));
-                    if (user.id) {
-                      localStorage.setItem("userId", user.id);
-                    }
-                    resolve();
-                  }),
-                  new Promise((resolve) => {
-                    dispatch(
-                      setLoginState({
-                        isLoggedIn: true,
-                        user: user,
-                        role: responseData.role,
-                        token: responseData.token,
-                      })
-                    );
-                    resolve();
-                  }),
-                ]);
-                // Thông báo thành công
-                toast.success(
-                  "Verification successful! You are now logged in."
-                );
-                // Chuyển hướng
-                const userRole = responseData.role || user.role;
-                const redirectPath =
-                  userRole === "Admin" ? "/admin-dashboard/dashboard" : "/";
-                window.location.href = redirectPath;
-              } catch (err) {
-                setError("Automatic login failed. Please login again.");
-              } finally {
-                setLoading(false);
-              }
-            }}
-            onCancel={() => {
-              setShowVerifyEmailForm(false);
-              setVerifyEmailAlert("");
-            }}
-          />
-        </>
+      {showForgotPassword ? (
+        <ForgotPasswordForm onClose={() => setShowForgotPassword(false)} />
       ) : (
-        <form onSubmit={handleSubmit}>
-          <div className="form-group">
-            <label>Email Address</label>
-            <input
-              type="email"
-              name="email"
-              placeholder="Email"
-              required
-              value={formData.email}
-              onChange={handleChange}
-            />
-          </div>
-          <div className="form-group">
-            <label>Password</label>
-            <input
-              type="password"
-              name="password"
-              placeholder="Password"
-              required
-              value={formData.password}
-              onChange={handleChange}
-            />
-          </div>
-          <div className="form-group">
-            <div className="field-outer">
-              <div className="input-group checkboxes square">
-                <input type="checkbox" name="remember-me" id="remember" />
-                <label htmlFor="remember" className="remember">
-                  <span className="custom-checkbox"></span> Remember me
-                </label>
-              </div>
-              <a href="#" className="pwd">
-                Forgot password?
-              </a>
-            </div>
-          </div>
-          <div className="form-group">
-            <button
-              className="theme-btn btn-style-one"
-              type="submit"
-              name="log-in"
-              disabled={loading}
-            >
-              {loading ? "Logging in..." : "Log In"}
-            </button>
-          </div>
-
-          {isPopup && (
-            <button
-              ref={closeBtnRef}
-              data-bs-dismiss="modal"
-              style={{ display: "none" }}
-            ></button>
-          )}
-        </form>
-      )}
-      <div className="bottom-box">
-        <div className="text">
-          Don&apos;t have an account?{" "}
-          {isPopup ? (
-            <Link
-              href="#"
-              className="call-modal signup"
-              data-bs-toggle="modal"
-              data-bs-target="#registerModal"
-            >
-              Signup
-            </Link>
+        <>
+          <h3>Login to JobFinder</h3>
+          {error && <div className="alert alert-danger">{error}</div>}
+          {showVerifyEmailForm ? (
+            <>
+              {verifyEmailAlert && (
+                <div className="alert alert-warning" style={{ fontWeight: 500 }}>
+                  {verifyEmailAlert}
+                </div>
+              )}
+              <VerifyEmailForm
+                initialEmail={formData.email}
+                onVerified={async (email) => {
+                  setShowVerifyEmailForm(false);
+                  setFormData((prev) => ({ ...prev, email }));
+                  setVerifyEmailAlert("");
+                  setError("");
+                  setLoading(true);
+                  try {
+                    const responseData = await authService.login(
+                      email,
+                      formData.password
+                    );
+                    let user = responseData.user || {};
+                    let userId = user.id || user.userId;
+                    if (!userId && responseData.token) {
+                      try {
+                        const decoded = jwtDecode(responseData.token);
+                        userId = decoded.sub;
+                      } catch (e) {}
+                    }
+                    if (userId) {
+                      user.id = userId;
+                    }
+                    if (responseData.token) {
+                      localStorage.setItem("token", responseData.token);
+                    }
+                    await Promise.all([
+                      new Promise((resolve) => {
+                        localStorage.setItem("user", JSON.stringify(user));
+                        if (user.id) {
+                          localStorage.setItem("userId", user.id);
+                        }
+                        resolve();
+                      }),
+                      new Promise((resolve) => {
+                        dispatch(
+                          setLoginState({
+                            isLoggedIn: true,
+                            user: user,
+                            role: responseData.role,
+                            token: responseData.token,
+                          })
+                        );
+                        resolve();
+                      }),
+                    ]);
+                    toast.success(
+                      "Verification successful! You are now logged in."
+                    );
+                    const userRole = responseData.role || user.role;
+                    const redirectPath =
+                      userRole === "Admin" ? "/admin-dashboard/dashboard" : "/";
+                    window.location.href = redirectPath;
+                  } catch (err) {
+                    setError("Automatic login failed. Please login again.");
+                  } finally {
+                    setLoading(false);
+                  }
+                }}
+                onCancel={() => {
+                  setShowVerifyEmailForm(false);
+                  setVerifyEmailAlert("");
+                }}
+              />
+            </>
           ) : (
-            <Link href="/register">Signup</Link>
-          )}
-        </div>
-        <div className="divider"></div>
+            <form onSubmit={handleSubmit}>
+              <div className="form-group">
+                <label>Email Address</label>
+                <input
+                  type="email"
+                  name="email"
+                  placeholder="Email"
+                  required
+                  value={formData.email}
+                  onChange={handleChange}
+                />
+              </div>
+              <div className="form-group">
+                <label>Password</label>
+                <input
+                  type="password"
+                  name="password"
+                  placeholder="Password"
+                  required
+                  value={formData.password}
+                  onChange={handleChange}
+                />
+              </div>
+              <div className="form-group">
+                <div className="field-outer">
+                  <div className="input-group checkboxes square">
+                    <input type="checkbox" name="remember-me" id="remember" />
+                    <label htmlFor="remember" className="remember">
+                      <span className="custom-checkbox"></span> Remember me
+                    </label>
+                  </div>
+                  <a href="#" className="pwd" onClick={e => { e.preventDefault(); setShowForgotPassword(true); }}>
+                    Forgot password?
+                  </a>
+                </div>
+              </div>
+              <div className="form-group">
+                <button
+                  className="theme-btn btn-style-one"
+                  type="submit"
+                  name="log-in"
+                  disabled={loading}
+                >
+                  {loading ? "Logging in..." : "Log In"}
+                </button>
+              </div>
 
-        <LoginWithSocial />
-      </div>
+              {isPopup && (
+                <button
+                  ref={closeBtnRef}
+                  data-bs-dismiss="modal"
+                  style={{ display: "none" }}
+                ></button>
+              )}
+            </form>
+          )}
+          <div className="bottom-box">
+            <div className="text">
+              Don&apos;t have an account?{" "}
+              {isPopup ? (
+                <Link
+                  href="#"
+                  className="call-modal signup"
+                  data-bs-toggle="modal"
+                  data-bs-target="#registerModal"
+                >
+                  Signup
+                </Link>
+              ) : (
+                <Link href="/register">Signup</Link>
+              )}
+            </div>
+            <div className="divider"></div>
+            <LoginWithSocial />
+          </div>
+        </>
+      )}
     </div>
   );
 };
