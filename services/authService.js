@@ -74,6 +74,18 @@ export const authService = {
         Cookies.set("CompanyProfileId", data.companyId, cookieOptions);
       }
 
+      // Lưu userId chuẩn cho candidate
+      let userId = null;
+      if (data.user && (data.user.id || data.user.userId)) {
+        userId = data.user.id || data.user.userId;
+      } else if (decodedToken && (decodedToken.sub || decodedToken.userId || decodedToken.id)) {
+        userId = decodedToken.sub || decodedToken.userId || decodedToken.id;
+      }
+      if (userId) {
+        localStorage.setItem("userId", userId);
+        Cookies.set("userId", userId, cookieOptions);
+      }
+
       return data;
     } catch (error) {
       // Check if this is an unverified email error
