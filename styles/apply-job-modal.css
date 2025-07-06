@@ -1,0 +1,239 @@
+/* Apply Job Modal Specific Styles - Very High Specificity */
+/* Only affects the apply job modal, not other modals */
+
+/* Target the specific Bootstrap modal for apply job */
+#applyJobModal.apply-job-modal .modal-dialog {
+  max-width: 600px !important;
+  width: 96vw !important;
+}
+
+#applyJobModal.apply-job-modal .modal-content {
+  max-height: 90vh !important;
+  overflow-y: auto !important;
+  max-width: 600px !important;
+  width: 100% !important;
+  padding: 20px !important;
+  border-radius: 8px !important;
+  background: white !important;
+  position: relative !important;
+  display: flex !important;
+  flex-direction: column !important;
+  color: var(--bs-modal-color) !important;
+  pointer-events: auto !important;
+  background-color: var(--bs-modal-bg) !important;
+  background-clip: padding-box !important;
+  border: var(--bs-modal-border-width) solid var(--bs-modal-border-color) !important;
+  border-radius: var(--bs-modal-border-radius) !important;
+  outline: 0 !important;
+}
+
+#applyJobModal.apply-job-modal .modal-content.apply-modal-content {
+  padding: 40px 40px 40px 40px !important;
+}
+
+/* Override Bootstrap modal styles specifically for apply job modal */
+#applyJobModal.apply-job-modal .modal-content {
+  background: white !important;
+  padding: 20px !important;
+  border-radius: 8px !important;
+  width: 100% !important;
+  max-width: 600px !important;
+  max-height: 90vh !important;
+  overflow-y: auto !important;
+}
+
+/* Mobile responsive for apply job modal only */
+@media (max-width: 600px) {
+  #applyJobModal.apply-job-modal .modal-dialog {
+    max-width: 100vw !important;
+    width: 100vw !important;
+    margin: 0 !important;
+  }
+  #applyJobModal.apply-job-modal .modal-content {
+    min-height: 100vh !important;
+    max-height: 95vh !important;
+    overflow-y: auto !important;
+  }
+}
+
+/* Apply Job Modal Specific Components - Only affect elements inside apply job modal */
+#applyJobModal.apply-job-modal .cv-option-card {
+  padding: 8px 10px;
+  margin-bottom: 10px;
+  border-radius: 8px;
+  border: 1.5px solid #ddd;
+  background: #fff;
+  transition: border 0.2s, background 0.2s;
+}
+
+#applyJobModal.apply-job-modal .cv-option-card.selected {
+  border: 2px solid #1976d2;
+  background: #f0f7ff;
+}
+
+#applyJobModal.apply-job-modal .cv-option-card input[type="radio"] {
+  accent-color: #1976d2;
+}
+
+/* Custom CV Select - Only in apply job modal */
+#applyJobModal.apply-job-modal .custom-cv-select {
+  width: 100%;
+  padding: 6px 10px;
+  font-size: 14px;
+  border: 1.5px solid #1976d2 !important;
+  border-radius: 8px;
+  background: #fff !important;
+  color: #1976d2;
+  margin: 6px 0 2px 0;
+  transition: border 0.2s, box-shadow 0.2s;
+  outline: none;
+  font-weight: 500;
+  box-shadow: 0 2px 8px rgba(25,118,210,0.04);
+}
+
+#applyJobModal.apply-job-modal .custom-cv-select:focus {
+  border: 2px solid #1976d2 !important;
+  box-shadow: 0 0 0 2px #e3f0fd;
+}
+
+#applyJobModal.apply-job-modal .custom-cv-select option {
+  padding: 6px 8px;
+  font-size: 14px;
+}
+
+#applyJobModal.apply-job-modal .upload-date {
+  color: #888;
+  font-size: 13px;
+  margin: 2px 0 1px 0;
+}
+
+/* View CV Link - Only in apply job modal */
+#applyJobModal.apply-job-modal .view-cv-link-btn {
+  display: inline-flex;
+  align-items: center;
+  color: #1976d2;
+  font-weight: 500;
+  font-size: 14px;
+  border: 1px solid #1976d2;
+  background: #f0f7ff;
+  border-radius: 6px;
+  padding: 4px 10px;
+  margin-top: 4px;
+  text-decoration: none;
+  transition: background 0.2s, color 0.2s, box-shadow 0.2s;
+  cursor: pointer;
+}
+
+#applyJobModal.apply-job-modal .view-cv-link-btn:hover {
+  background: #1976d2;
+  color: #fff !important;
+  text-decoration: none;
+  box-shadow: 0 2px 8px rgba(25,118,210,0.08);
+}
+
+#applyJobModal.apply-job-modal .view-cv-link-btn:hover * {
+  color: #fff !important;
+}
+
+#applyJobModal.apply-job-modal .view-cv-link-btn i {
+  font-size: 16px;
+}
+
+/* File Upload - Only in apply job modal */
+#applyJobModal.apply-job-modal .choose-file-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 4px;
+  flex-wrap: nowrap;
+}
+
+#applyJobModal.apply-job-modal .selected-file-name {
+  display: inline-block;
+  min-width: 0;
+  max-width: 90px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  vertical-align: middle;
+  font-size: 13px;
+}
+
+@media (max-width: 480px) {
+  #applyJobModal.apply-job-modal .choose-file-row {
+    gap: 5px;
+  }
+  #applyJobModal.apply-job-modal .selected-file-name {
+    max-width: 60px;
+    font-size: 13px;
+  }
+  #applyJobModal.apply-job-modal label[for="upload-cv-file"] {
+    font-size: 13px;
+    padding: 6px 8px;
+  }
+}
+
+/* Loading Overlay - Only in apply job modal */
+#applyJobModal.apply-job-modal .modal-loading-overlay {
+  position: absolute;
+  z-index: 10;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(255,255,255,0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+}
+
+#applyJobModal.apply-job-modal .spinner-border {
+  display: inline-block;
+  width: 1.2rem;
+  height: 1.2rem;
+  vertical-align: text-bottom;
+  border: 0.15em solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  animation: spinner-border .75s linear infinite;
+}
+
+#applyJobModal.apply-job-modal .spinner-border-lg {
+  width: 3rem;
+  height: 3rem;
+  border-width: 0.3em;
+}
+
+@keyframes spinner-border {
+  100% { transform: rotate(360deg); }
+}
+
+/* Form Styles - Only in apply job modal */
+#applyJobModal.apply-job-modal .job-apply-form .form-group:last-child {
+  margin-bottom: 0 !important;
+  padding-bottom: 0 !important;
+}
+
+#applyJobModal.apply-job-modal .job-apply-form .form-group > select,
+#applyJobModal.apply-job-modal .job-apply-form .form-group > input,
+#applyJobModal.apply-job-modal .job-apply-form .form-group > textarea {
+  width: 100%;
+  box-sizing: border-box;
+  min-width: 0;
+}
+
+#applyJobModal.apply-job-modal .job-apply-form .cv-option-card,
+#applyJobModal.apply-job-modal .job-apply-form .cover-letter-section {
+  margin-left: auto;
+  margin-right: auto;
+  width: 95%;
+  max-width: 100%;
+}
+
+#applyJobModal.apply-job-modal .field-error {
+  color: #e60023;
+  font-size: 14px;
+  margin-top: 4px;
+  font-weight: 400;
+  background: none !important;
+  padding: 0 !important;
+  border: none !important;
+} 

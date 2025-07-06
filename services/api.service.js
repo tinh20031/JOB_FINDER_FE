@@ -253,6 +253,26 @@ class ApiServiceClass {
     }
     return response.json();
   }
+
+  // Xoá CV theo id
+  static async deleteCV(cvId) {
+    const url = API_CONFIG.getUrl(`CV/${cvId}`);
+    const token = localStorage.getItem("token");
+    const options = {
+      method: "DELETE",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    };
+    const response = await fetch(url, options);
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({}));
+      throw new Error(error.message || `HTTP error! status: ${response.status}`);
+    }
+    // Nếu BE trả về 204 No Content thì return null
+    if (response.status === 204) return null;
+    return response.json();
+  }
 }
 
 // Sau đó tạo object từ class
@@ -350,6 +370,7 @@ const ApiService = {
   resendVerification: ApiServiceClass.resendVerification,
   uploadCV: ApiServiceClass.uploadCV,
   getMyCVs: ApiServiceClass.getMyCVs,
+  deleteCV: ApiServiceClass.deleteCV,
 };
 
 export default ApiService;

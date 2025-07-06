@@ -80,10 +80,18 @@ const FormContent = ({ isPopup = false }) => {
       if (isPopup && closeBtnRef.current) {
         closeBtnRef.current.click();
       }
-      const userRole = responseData.role || user.role;
-      const redirectPath =
-        userRole === "Admin" ? "/admin-dashboard/dashboard" : "/";
-      window.location.href = redirectPath;
+      if (isPopup) {
+        window.location.reload();
+      } else {
+        const userRole = responseData.role || user.role;
+        if (userRole === "Admin") {
+          window.location.href = "/admin-dashboard/dashboard";
+        } else if (userRole === "Employer") {
+          window.location.href = "/employers-dashboard/dashboard";
+        } else {
+          window.location.href = "/candidates-dashboard/dashboard";
+        }
+      }
     } catch (error) {
       // Handle unverified email cases
       const isUnverifiedEmail =
