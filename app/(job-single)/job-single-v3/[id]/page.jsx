@@ -22,6 +22,7 @@ import API_CONFIG from "@/config/api.config";
 import { notFound } from 'next/navigation';
 import JobHeader from "@/components/job-single-pages/shared-components/JobHeader";
 import JobDetailsBox from "@/components/job-single-pages/shared-components/JobDetailsBox";
+import "@/styles/apply-job-modal.css";
 
 const JobSingleDynamicV3 = ({ params }) => {
   const [job, setJob] = useState(null);
@@ -315,7 +316,7 @@ const JobSingleDynamicV3 = ({ params }) => {
 
                   {/* <!-- Modal --> */}
                   <div
-                    className="modal fade"
+                    className="modal fade apply-job-modal"
                     id="applyJobModal"
                     tabIndex="-1"
                     aria-hidden="true"

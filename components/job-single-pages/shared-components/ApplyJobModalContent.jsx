@@ -6,6 +6,8 @@ import { applicationService } from "@/services/applicationService";
 import ApiService from '@/services/api.service';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import Modal from "@/components/common/Modal";
+import "@/styles/modal.css";
 
 const ApplyJobModalContent = ({ jobId }) => {
   const router = useRouter();
@@ -25,6 +27,7 @@ const ApplyJobModalContent = ({ jobId }) => {
   const [fileError, setFileError] = useState("");
   const [cvListError, setCvListError] = useState("");
   const [coverLetterError, setCoverLetterError] = useState("");
+  const [showProfileWarning, setShowProfileWarning] = useState(false);
 
   // Lấy CV mới nhất (giả sử sort theo createdAt giảm dần)
   const latestCV = cvList && cvList.length > 0
@@ -175,8 +178,27 @@ const ApplyJobModalContent = ({ jobId }) => {
         router.push("/candidates-dashboard/applied-jobs");
       }, 1500);
     } catch (error) {
-      setError(error.response?.data?.message || error.message || "Failed to apply for the job. Please try again.");
-      toast.error(error.response?.data?.message || error.message || "Failed to apply for the job. Please try again.");
+      // Lấy message từ nhiều key, ưu tiên errorMessage, ErrorMessage, message
+      const errorMsg =
+        error.response?.data?.ErrorMessage ||
+        error.response?.data?.errorMessage ||
+        error.response?.data?.message ||
+        error.message ||
+        "Failed to apply for the job. Please try again.";
+
+      // So sánh không phân biệt hoa thường
+      if (
+        error.response &&
+        error.response.status === 400 &&
+        errorMsg.toLowerCase().includes("vui lòng cập nhật đầy đủ thông tin cá nhân")
+      ) {
+        document.querySelector('#applyJobModal .closed-modal')?.click();
+        setShowProfileWarning(true);
+        // Không setError, không toast!
+      } else {
+        setError(errorMsg);
+        toast.error(errorMsg);
+      }
     } finally {
       setIsLoading(false);
     }
@@ -380,191 +402,29 @@ const ApplyJobModalContent = ({ jobId }) => {
           </button>
         </div>
       </div>
-      <style>{`
-        /* Mở rộng chiều ngang modal apply job */
-        #applyJobModal .modal-dialog {
-          max-width: 600px;
-          width: 96vw;
+
+      {/* Modal cảnh báo cập nhật profile */}
+      <Modal
+        open={showProfileWarning}
+        onClose={() => setShowProfileWarning(false)}
+        title="Update profile"
+        footer={
+          <>
+            <button className="btn-cancel" onClick={() => setShowProfileWarning(false)}>Cancel</button>
+            <button
+              className="btn-confirm"
+              onClick={() => {
+                window.open('/candidates-dashboard/my-profile', '_blank');
+                setShowProfileWarning(false);
+              }}
+            >
+              Update Profile
+            </button>
+          </>
         }
-        #applyJobModal .modal-content {
-          max-height: 90vh;
-          overflow-y: auto;
-        }
-        /* Nếu dùng custom modal, có thể thêm class cho modal root và style width tại đây */
-        .cv-option-card {
-          padding: 8px 10px;
-          margin-bottom: 10px;
-          border-radius: 8px;
-          border: 1.5px solid #ddd;
-          background: #fff;
-          transition: border 0.2s, background 0.2s;
-        }
-        .cv-option-card.selected {
-          border: 2px solid #1976d2;
-          background: #f0f7ff;
-        }
-        .cv-option-card input[type="radio"] {
-          accent-color: #1976d2;
-        }
-        .spinner-border {
-          display: inline-block;
-          width: 1.2rem;
-          height: 1.2rem;
-          vertical-align: text-bottom;
-          border: 0.15em solid currentColor;
-          border-right-color: transparent;
-          border-radius: 50%;
-          animation: spinner-border .75s linear infinite;
-        }
-        .spinner-border-lg {
-          width: 3rem;
-          height: 3rem;
-          border-width: 0.3em;
-        }
-        .modal-loading-overlay {
-          position: absolute;
-          z-index: 10;
-          top: 0; left: 0; right: 0; bottom: 0;
-          background: rgba(255,255,255,0.6);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          border-radius: 12px;
-        }
-        @keyframes spinner-border {
-          100% { transform: rotate(360deg); }
-        }
-        .custom-cv-select {
-          width: 100%;
-          padding: 6px 10px;
-          font-size: 14px;
-          border: 1.5px solid #1976d2 !important;
-          border-radius: 8px;
-          background: #fff !important;
-          color: #1976d2;
-          margin: 6px 0 2px 0;
-          transition: border 0.2s, box-shadow 0.2s;
-          outline: none;
-          font-weight: 500;
-          box-shadow: 0 2px 8px rgba(25,118,210,0.04);
-        }
-        .custom-cv-select:focus {
-          border: 2px solid #1976d2 !important;
-          box-shadow: 0 0 0 2px #e3f0fd;
-        }
-        .custom-cv-select option {
-          padding: 6px 8px;
-          font-size: 14px;
-        }
-        .upload-date {
-          color: #888;
-          font-size: 13px;
-          margin: 2px 0 1px 0;
-        }
-        .view-cv-link {
-          display: none;
-        }
-        .view-cv-link-btn {
-          display: inline-flex;
-          align-items: center;
-          color: #1976d2;
-          font-weight: 500;
-          font-size: 14px;
-          border: 1px solid #1976d2;
-          background: #f0f7ff;
-          border-radius: 6px;
-          padding: 4px 10px;
-          margin-top: 4px;
-          text-decoration: none;
-          transition: background 0.2s, color 0.2s, box-shadow 0.2s;
-          cursor: pointer;
-        }
-        .view-cv-link-btn:hover {
-          background: #1976d2;
-          color: #fff !important;
-          text-decoration: none;
-          box-shadow: 0 2px 8px rgba(25,118,210,0.08);
-        }
-        .view-cv-link-btn:hover * {
-          color: #fff !important;
-        }
-        .view-cv-link-btn i {
-          font-size: 16px;
-        }
-        .choose-file-row {
-          display: flex;
-          align-items: center;
-          gap: 6px;
-          margin-top: 4px;
-          flex-wrap: nowrap;
-        }
-        .selected-file-name {
-          display: inline-block;
-          min-width: 0;
-          max-width: 90px;
-          white-space: nowrap;
-          overflow: hidden;
-          text-overflow: ellipsis;
-          vertical-align: middle;
-          font-size: 13px;
-        }
-        @media (max-width: 480px) {
-          .choose-file-row {
-            gap: 5px;
-          }
-          .selected-file-name {
-            max-width: 60px;
-            font-size: 13px;
-          }
-          label[for="upload-cv-file"] {
-            font-size: 13px;
-            padding: 6px 8px;
-          }
-        }
-        @media (max-width: 600px) {
-          #applyJobModal .modal-dialog {
-            max-width: 100vw;
-            width: 100vw;
-            margin: 0;
-          }
-          #applyJobModal .modal-content {
-            min-height: 100vh;
-            max-height: 95vh;
-            overflow-y: auto;
-          }
-        }
-        .cover-letter-section {
-          margin-bottom: 18px;
-        }
-        /* Giảm khoảng trắng bên dưới nút Apply Job */
-        .job-apply-form .form-group:last-child {
-          margin-bottom: 0 !important;
-          padding-bottom: 0 !important;
-        }
-        .job-apply-form .form-group > select,
-        .job-apply-form .form-group > input,
-        .job-apply-form .form-group > textarea {
-          width: 100%;
-          box-sizing: border-box;
-          min-width: 0;
-        }
-        .job-apply-form .cv-option-card,
-        .job-apply-form .cover-letter-section {
-          margin-left: auto;
-          margin-right: auto;
-          width: 95%;
-          max-width: 100%;
-        }
-        .field-error {
-          color: #e60023;
-          font-size: 14px;
-          margin-top: 4px;
-          font-weight: 400;
-          background: none !important;
-          padding: 0 !important;
-          border: none !important;
-        }
-      `}</style>
+      >
+        <p>You need to update your profile to apply for this job.</p>
+      </Modal>
     </form>
   );
 };
