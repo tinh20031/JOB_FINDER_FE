@@ -29,6 +29,13 @@ const ChatBox = () => {
     const [onlineUserIds, setOnlineUserIds] = useState([]);
     const [partnerOnline, setPartnerOnline] = useState(false);
     const [loadingMessages, setLoadingMessages] = useState(false);
+    
+    // Pagination states
+    const [currentPage, setCurrentPage] = useState(1);
+    const [hasMoreMessages, setHasMoreMessages] = useState(true);
+    const [loadingMoreMessages, setLoadingMoreMessages] = useState(false);
+    const [totalMessages, setTotalMessages] = useState(0);
+    const PAGE_SIZE = 20;
 
     useEffect(() => {
         let id = user?.id || user?.userId;
@@ -76,6 +83,59 @@ const ChatBox = () => {
             setLoadingContacts(false);
         }
     }, [currentUserId, urlCompanyId]);
+
+    // Load messages with pagination
+    const loadMessages = useCallback(async (page = 1, append = false) => {
+        if (!currentChatPartnerId || !currentUserId) return;
+        
+        if (page === 1) {
+            setLoadingMessages(true);
+        } else {
+            setLoadingMoreMessages(true);
+        }
+
+        try {
+            const response = await messageService.getMessageHistoryWithPagination(
+                currentUserId, 
+                currentChatPartnerId, 
+                page, 
+                PAGE_SIZE
+            );
+            
+            const newMessages = response.data.messages || response.data;
+            const total = response.data.total || newMessages.length;
+            
+            setTotalMessages(total);
+            
+            if (append) {
+                setMessages(prev => [...newMessages, ...prev]);
+            } else {
+                setMessages(newMessages);
+            }
+            
+            // Check if there are more messages to load
+            const loadedCount = (page - 1) * PAGE_SIZE + newMessages.length;
+            setHasMoreMessages(loadedCount < total);
+            
+        } catch (error) {
+            console.error("Error loading messages:", error);
+            if (!append) {
+                setMessages([]);
+            }
+        } finally {
+            setLoadingMessages(false);
+            setLoadingMoreMessages(false);
+        }
+    }, [currentChatPartnerId, currentUserId]);
+
+    // Load more messages when scrolling up
+    const loadMoreMessages = useCallback(() => {
+        if (!loadingMoreMessages && hasMoreMessages) {
+            const nextPage = currentPage + 1;
+            setCurrentPage(nextPage);
+            loadMessages(nextPage, true);
+        }
+    }, [loadingMoreMessages, hasMoreMessages, currentPage, loadMessages]);
 
     useEffect(() => {
         fetchChatContacts();
@@ -150,19 +210,15 @@ const ChatBox = () => {
         };
     }, [currentUserId, currentChatPartnerId]);
 
+    // Reset pagination and load messages when chat partner changes
     useEffect(() => {
         if (currentChatPartnerId && currentUserId) {
-            setLoadingMessages(true);
-            messageService.getMessageHistory(currentUserId, currentChatPartnerId)
-                .then(response => {
-                    setMessages(response.data);
-                })
-                .catch(error => {
-                    setMessages([]);
-                })
-                .finally(() => setLoadingMessages(false));
+            setCurrentPage(1);
+            setHasMoreMessages(true);
+            setMessages([]);
+            loadMessages(1, false);
         }
-    }, [currentChatPartnerId, currentUserId]);
+    }, [currentChatPartnerId, currentUserId, loadMessages]);
 
     useEffect(() => {
         if (currentChatPartnerId) {
@@ -235,6 +291,9 @@ const ChatBox = () => {
                     currentUserProfileImage={currentUserProfileImage}
                     partnerOnline={partnerOnline}
                     loadingMessages={loadingMessages}
+                    loadingMoreMessages={loadingMoreMessages}
+                    hasMoreMessages={hasMoreMessages}
+                    onLoadMoreMessages={loadMoreMessages}
                 />
             </div>
         </div>

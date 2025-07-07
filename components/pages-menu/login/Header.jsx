@@ -35,20 +35,32 @@ const Header = () => {
                   <Image
                     width={154}
                     height={50}
-                    src={require("@/public/images/jobfinder-logo.png").default || "/images/jobfinder-logo.png"}
+                    src={
+                      require("@/public/images/jobfinder-logo.png").default ||
+                      "/images/jobfinder-logo.png"
+                    }
                     alt="JobFinder logo"
                     title="JobFinder"
-                    onError={(e) => { e.target.onerror = null; e.target.src = "/images/logo.svg"; }}
+                    onError={(e) => {
+                      e.target.onerror = null;
+                      e.target.src = "/images/logo.svg";
+                    }}
                   />
                 </Link>
                 <Link href="/" className="isSticky">
                   <Image
                     width={154}
                     height={50}
-                    src={require("@/public/images/jobfinder-logo.png").default || "/images/jobfinder-logo.png"}
+                    src={
+                      require("@/public/images/jobfinder-logo.png").default ||
+                      "/images/jobfinder-logo.png"
+                    }
                     alt="JobFinder logo"
                     title="JobFinder"
-                    onError={(e) => { e.target.onerror = null; e.target.src = "/images/logo.svg"; }}
+                    onError={(e) => {
+                      e.target.onerror = null;
+                      e.target.src = "/images/logo.svg";
+                    }}
                   />
                 </Link>
               </div>
@@ -58,9 +70,7 @@ const Header = () => {
 
           <div className="outer-box">
             {/* <!-- Login/Register --> */}
-            <div className="btn-box">
-              
-            </div>
+            <div className="btn-box"></div>
           </div>
           {/* End outer-box */}
         </div>

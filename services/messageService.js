@@ -10,10 +10,21 @@ const getHeaders = () => ({
 });
 
 const messageService = {
-  // Lấy lịch sử chat giữa 2 user
+  // Lấy lịch sử chat giữa 2 user (toàn bộ - giữ lại để tương thích)
   getMessageHistory: (userId1, userId2) => {
     return axios.get(`${API_URL}/history/${userId1}/${userId2}`, {
       headers: getHeaders(),
+    });
+  },
+
+  // Lấy lịch sử chat với pagination
+  getMessageHistoryWithPagination: (userId1, userId2, page = 1, pageSize = 20) => {
+    return axios.get(`${API_URL}/history/${userId1}/${userId2}`, {
+      headers: getHeaders(),
+      params: {
+        page,
+        pageSize
+      }
     });
   },
 
