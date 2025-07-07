@@ -1,8 +1,12 @@
 'use client'
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import axios from "axios";
 import ApiService from '@/services/api.service';
+import Modal from "@/components/common/Modal";
+import "@/styles/modal.css";
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 // Chỉ cho phép PDF
 function checkFileTypes(files) {
     const allowedTypes = ["application/pdf"];
@@ -21,6 +25,10 @@ const CvUploader = () => {
     const [successMsg, setSuccessMsg] = useState("");
     const [cvList, setCvList] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [deleteTargetId, setDeleteTargetId] = useState(null);
+    const [showLimitModal, setShowLimitModal] = useState(false);
+    const fileInputRef = useRef(null);
 
     // Fetch CV list on mount
     useEffect(() => {
@@ -59,7 +67,7 @@ const CvUploader = () => {
         try {
             await ApiService.uploadCV({ file, userId });
             setManager([...getManager, file]);
-            setSuccessMsg("Upload successful!");
+            toast.success("Upload CV successfully!");
             // Refresh CV list after upload
             const data = await ApiService.request("CV/my-cvs", "GET");
             setCvList(data);
@@ -78,41 +86,87 @@ const CvUploader = () => {
         setManager(deleted);
     };
 
-    // Thêm hàm handleDelete để xóa CV trên server và reload danh sách
-    const handleDelete = async (cvId) => {
-        if (!window.confirm("Are you sure you want to delete this CV?")) return;
+    // Thêm hàm mở modal xác nhận xoá
+    const confirmDelete = (cvId) => {
+        setDeleteTargetId(cvId);
+        setShowDeleteModal(true);
+    };
+
+    // Sửa lại handleDelete để dùng với modal
+    const handleDelete = async () => {
+        if (!deleteTargetId) return;
+        setShowDeleteModal(false);
         try {
-            await ApiService.request(`CV/${cvId}`, "DELETE");
-            setSuccessMsg("CV deleted successfully!");
+            await ApiService.deleteCV(deleteTargetId);
+            toast.success("CV deleted successfully!");
             // Reload danh sách CV
             const data = await ApiService.getMyCVs();
             setCvList(data);
         } catch (err) {
             setError(err?.message || "Failed to delete CV. Please try again.");
+        } finally {
+            setDeleteTargetId(null);
         }
     };
 
     return (
         <>
+            <ToastContainer position="top-right" autoClose={3000} />
+            <style>{`
+                .spinner {
+                  display: inline-block;
+                  width: 18px;
+                  height: 18px;
+                  border: 2px solid #fff;
+                  border-top: 2px solid #1967d2;
+                  border-radius: 50%;
+                  animation: spin 0.7s linear infinite;
+                  margin-right: 8px;
+                  vertical-align: middle;
+                }
+                @keyframes spin {
+                  0% { transform: rotate(0deg);}
+                  100% { transform: rotate(360deg);}
+                }
+            `}</style>
             <div className="uploading-resume">
                 <div className="uploadButton">
                     <input
+                        ref={fileInputRef}
                         className="uploadButton-input"
                         type="file"
                         name="attachments[]"
                         accept=".pdf,application/pdf"
                         id="upload"
                         onChange={cvManagerHandler}
-                        disabled={uploading || cvList.length >= 5}
+                        style={{ display: 'none' }}
+                        disabled={uploading}
                     />
-                    <label className="cv-uploadButton" htmlFor="upload">
+                    <div
+                        className="cv-uploadButton"
+                        style={{ cursor: uploading ? 'not-allowed' : 'pointer' }}
+                        onClick={() => {
+                            if (uploading) return;
+                            if (cvList.length >= 5) {
+                                setShowLimitModal(true);
+                                return;
+                            }
+                            fileInputRef.current.click();
+                        }}
+                    >
                         <span className="title">Drop files here to upload</span>
                         <span className="text">
                             Only PDF files (.pdf) are allowed, maximum size 5MB
                         </span>
-                        <span className="theme-btn btn-style-one">
+                        <button
+                            className="theme-btn btn-style-one"
+                            type="button"
+                            disabled={uploading}
+                            style={{ marginTop: 16 }}
+                        >
+                            {uploading && <span className="spinner" />}
                             {uploading ? "Uploading..." : "Upload Resume"}
-                        </span>
+                        </button>
                         {getError && <p className="ui-danger mb-0">{getError}</p>}
                         {successMsg && <p className="ui-success mb-0">{successMsg}</p>}
                         {cvList.length >= 5 && (
@@ -120,21 +174,8 @@ const CvUploader = () => {
                                 You can only upload and store up to 5 CVs. Please delete an old CV to upload a new one.
                             </p>
                         )}
-                    </label>
-                </div>
-            </div>
-
-            <div className="files-outer">
-                {getManager?.map((file, i) => (
-                    <div key={i} className="file-edit-box">
-                        <span className="title">{file.name}</span>
-                        <div className="edit-btns">
-                            <button onClick={() => deleteHandler(file.name)}>
-                                <span className="la la-trash"></span>
-                            </button>
-                        </div>
                     </div>
-                ))}
+                </div>
             </div>
 
             {/* Table styled like job listing */}
@@ -206,9 +247,20 @@ const CvUploader = () => {
                                                     <div className="option-box">
                                                         <ul className="option-list">
                                                             <li>
+                                                                <a
+                                                                    href={cv.fileUrl || cv.FileUrl}
+                                                                    target="_blank"
+                                                                    rel="noopener noreferrer"
+                                                                    data-text="View"
+                                                                    style={{ marginRight: 4 }}
+                                                                >
+                                                                    <span className="la la-eye"></span>
+                                                                </a>
+                                                            </li>
+                                                            <li>
                                                                 <button
                                                                     data-text="Delete"
-                                                                    onClick={() => handleDelete(cv.cvId || cv.CVId)}
+                                                                    onClick={() => confirmDelete(cv.cvId || cv.CVId)}
                                                                 >
                                                                     <span className="la la-trash"></span>
                                                                 </button>
@@ -225,6 +277,33 @@ const CvUploader = () => {
                     )}
                 </div>
             </div>
+            <Modal
+                open={showDeleteModal}
+                onClose={() => setShowDeleteModal(false)}
+                title="Confirm Delete CV"
+                footer={
+                    <>
+                        <button className="btn-cancel" onClick={() => setShowDeleteModal(false)}>Cancel</button>
+                        <button className="btn-confirm" onClick={handleDelete}>Delete</button>
+                    </>
+                }
+            >
+                <div>Are you sure you want to delete this CV? This action cannot be undone.</div>
+            </Modal>
+            <Modal
+                open={showLimitModal}
+                onClose={() => setShowLimitModal(false)}
+                title="Upload Limit"
+                footer={
+                    <button className="btn-confirm" onClick={() => setShowLimitModal(false)}>
+                        OK
+                    </button>
+                }
+            >
+                <div>
+                    You can only upload and store up to 5 CVs. Please delete an old CV to upload a new one.
+                </div>
+            </Modal>
         </>
     );
 };

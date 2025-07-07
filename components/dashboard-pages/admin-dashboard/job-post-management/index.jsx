@@ -43,7 +43,7 @@ const JobPostManagement = () => {
     const fetchInitialData = async () => {
       try {
         setLoading(true);
-        const jobsRes = await ApiService.request('Job', 'GET');
+        const jobsRes = await ApiService.request('Job?role=admin', 'GET');
 
 
         if (Array.isArray(jobsRes)) {

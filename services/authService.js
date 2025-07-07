@@ -293,4 +293,18 @@ export const authService = {
       "http://localhost:5194/api/auth/login-google"
     );
   },
+
+  // Forgot Password APIs
+  async forgotPasswordRequest(email) {
+    return ApiService.post('/auth/forgot-password/request', { email });
+  },
+  async forgotPasswordVerify(email, code) {
+    return ApiService.post('/auth/forgot-password/verify', { email, code });
+  },
+  async forgotPasswordReset(email, code, newPassword) {
+    return ApiService.post('/auth/forgot-password/reset', { email, code, newPassword });
+  },
+  async forgotPasswordResendVerification(email) {
+    return ApiService.post('/auth/forgot-password/resend-verification', { email });
+  },
 };

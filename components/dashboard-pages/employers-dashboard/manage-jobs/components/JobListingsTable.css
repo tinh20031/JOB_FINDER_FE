@@ -99,20 +99,44 @@
 
 /* CSS cho trạng thái Active (xanh lá cây) */
 .status-active {
-  color: #28a745; /* Màu xanh lá cây phổ biến */
-  font-weight: 500; /* Để chữ đậm hơn một chút */
+  color: #28a745;
+  font-weight: bold;
 }
 
 /* CSS cho trạng thái Inactive (đỏ) */
 .status-inactive {
-  color: #dc3545; /* Màu đỏ phổ biến */
-  font-weight: 500;
+  color: #dc3545;
+  font-weight: bold;
 }
 
 /* CSS cho trạng thái Pending (xanh nước biển) */
 .status-pending {
-  color: #007bff; /* Màu xanh nước biển phổ biến */
-  font-weight: 500;
+  color: #007bff;
+  font-weight: bold;
+}
+
+/* CSS cho trạng thái Cancelled (xám hoặc cam nhạt) */
+.status-cancelled {
+  color: #f0ad4e;
+  font-weight: bold;
+}
+
+/* CSS cho trạng thái Locked (đỏ đậm) */
+.status-locked {
+  color: #d9534f;
+  font-weight: bold;
+}
+
+/* CSS cho trạng thái Not Started (cam nhạt) */
+.status-not-started {
+  color: #f0ad4e;
+  font-weight: bold;
+}
+
+/* CSS cho trạng thái Expired (xám nhạt) */
+.status-expired {
+  color: #6c757d;
+  font-weight: bold;
 }
 
 /* Bạn có thể cần thêm các class CSS khác tùy thuộc vào cấu trúc HTML và thiết kế tổng thể */

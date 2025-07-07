@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 // const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5194/api';
-const PROVINCE_API_URL = 'https://provinces.open-api.vn/api';
+const PROVINCE_API_URL = 'http://provinces.open-api.vn/api';
 
 const locationService = {
     // Lấy danh sách tỉnh/thành phố từ API Việt Nam

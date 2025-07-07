@@ -16,10 +16,11 @@ import 'react-quill/dist/quill.snow.css';
 import { motion, AnimatePresence } from "framer-motion";
 import Modal from "@/components/common/Modal";
 import "@/styles/modal.css";
+import locationService from "../../../../../services/locationService";
 
 const ReactQuill = dynamic(() => import('react-quill'), { ssr: false });
 
-const PostBoxForm = () => {
+const PostBoxForm = ({ cloneData, isClone }) => {
   const specialisms = [
     { value: "Banking", label: "Banking" },
     { value: "Digital & Creative", label: "Digital & Creative" },
@@ -130,18 +131,19 @@ const PostBoxForm = () => {
   const [newSkill, setNewSkill] = useState('');
 
   useEffect(() => {
-    Promise.all([
+    Promise.allSettled([
       ApiService.get(API_CONFIG.ENDPOINTS.LEVEL),
       ApiService.get(API_CONFIG.ENDPOINTS.JOB_TYPE),
       ApiService.get(API_CONFIG.ENDPOINTS.EXPERIENCE_LEVEL),
       ApiService.get(API_CONFIG.ENDPOINTS.INDUSTRY),
-      axios.get("https://provinces.open-api.vn/api/p/")
-    ]).then(([levels, jobTypes, experienceLevels, industries, provinces]) => {
-      setLevels(levels);
-      setJobTypes(jobTypes);
-      setExperienceLevels(experienceLevels);
-      setIndustries(industries);
-      setProvinces(provinces.data);
+      locationService.getProvinces()
+    ]).then((results) => {
+      const [levelsRes, jobTypesRes, experienceLevelsRes, industriesRes, provincesRes] = results;
+      setLevels(levelsRes.status === 'fulfilled' ? levelsRes.value : []);
+      setJobTypes(jobTypesRes.status === 'fulfilled' ? jobTypesRes.value : []);
+      setExperienceLevels(experienceLevelsRes.status === 'fulfilled' ? experienceLevelsRes.value : []);
+      setIndustries(industriesRes.status === 'fulfilled' ? industriesRes.value : []);
+      setProvinces(provincesRes.status === 'fulfilled' ? (provincesRes.value || []) : []);
       setIsLoading(false);
     }).catch(() => {
       setIsLoading(false);
@@ -164,6 +166,7 @@ const PostBoxForm = () => {
 
   // Load draft data on component mount
   useEffect(() => {
+    if (isClone) return; // Nếu là clone, không load draft
     const savedDraft = localStorage.getItem(DRAFT_KEY);
     if (savedDraft) {
       try {
@@ -174,7 +177,7 @@ const PostBoxForm = () => {
         console.error('Error loading draft:', error);
       }
     }
-  }, []);
+  }, [isClone]);
 
   // Check if form has actual changes
   const hasActualChanges = () => {
@@ -487,7 +490,6 @@ const PostBoxForm = () => {
       return;
     }
 
-    console.log("Submit clicked", formData, user);
     setError("");
     setSuccess(false);
 
@@ -500,8 +502,6 @@ const PostBoxForm = () => {
       setError("You must log in with a company account to post a job.");
       return;
     }
-
-    console.log("Type of user.userId before jobData:", typeof user.userId, user.userId);
 
     try {
       // Create job first
@@ -532,9 +532,7 @@ const PostBoxForm = () => {
         EducationWeight: Number(formData.EducationWeight),
       };
 
-      console.log("Sending job data:", jobData);
       const jobResult = await ApiService.createJob(jobData);
-      console.log("Job creation response:", jobResult);
       
       setSuccess(true);
       setShowSuccessModal(true);
@@ -568,7 +566,6 @@ const PostBoxForm = () => {
       });
       setErrors({});
     } catch (error) {
-      console.error("API Error:", error.response?.data || error.message);
       setError(error.response?.data?.message || "Failed to create job. Please try again.");
     }
   };
@@ -583,6 +580,36 @@ const PostBoxForm = () => {
       setHasUnsavedChanges(false);
     }
   }, [formData]);
+
+  useEffect(() => {
+    if (isClone && cloneData) {
+      setFormData(prev => ({
+        ...prev,
+        title: cloneData.title || "",
+        description: cloneData.description || "",
+        education: cloneData.education || "",
+        companyId: cloneData.companyId || 0,
+        isSalaryNegotiable: cloneData.isSalaryNegotiable || false,
+        minSalary: cloneData.minSalary || null,
+        maxSalary: cloneData.maxSalary || null,
+        industryId: cloneData.industryId || 0,
+        levelId: cloneData.levelId || 0,
+        jobTypeId: cloneData.jobTypeId || 0,
+        experienceLevelId: cloneData.experienceLevelId || 0,
+        provinceName: cloneData.provinceName || "",
+        addressDetail: cloneData.addressDetail || "",
+        YourSkill: cloneData.yourSkill || "",
+        YourExperience: cloneData.yourExperience || "",
+        DescriptionWeight: cloneData.descriptionWeight ? cloneData.descriptionWeight * 100 : "",
+        SkillsWeight: cloneData.skillsWeight ? cloneData.skillsWeight * 100 : "",
+        ExperienceWeight: cloneData.experienceWeight ? cloneData.experienceWeight * 100 : "",
+        EducationWeight: cloneData.educationWeight ? cloneData.educationWeight * 100 : "",
+        expiryDate: '',
+        timeStart: '',
+        timeEnd: '',
+      }));
+    }
+  }, [isClone, cloneData]);
 
   if (isLoading) {
     return (
@@ -668,33 +695,9 @@ const PostBoxForm = () => {
             onClick={e => {
               e.preventDefault();
               setShowSuccessModal(false);
-              setFormData({
-                title: '',
-                description: '',
-                education: '',
-                companyId: 0,
-                isSalaryNegotiable: false,
-                minSalary: null,
-                maxSalary: null,
-                industryId: 0,
-                expiryDate: '',
-                levelId: 0,
-                jobTypeId: 0,
-                experienceLevelId: 0,
-                timeStart: '',
-                timeEnd: '',
-                provinceName: '',
-                addressDetail: '',
-                createdAt: new Date().toISOString(),
-                updatedAt: new Date().toISOString(),
-                YourSkill: '',
-                YourExperience: '',
-                DescriptionWeight: '',
-                SkillsWeight: '',
-                ExperienceWeight: '',
-                EducationWeight: '',
-              });
-              setErrors({});
+              setTimeout(() => {
+                router.push("/employers-dashboard/manage-jobs");
+              }, 100);
             }}
           >
             Close
@@ -1068,8 +1071,9 @@ const PostBoxForm = () => {
 
           {/* Industry */}
           <motion.div className="form-group col-lg-6 col-md-12" variants={itemVariants}>
-            <label>Industry</label>
+            <label htmlFor="industryId">Industry</label>
             <select 
+              id="industryId"
               name="industryId" 
               value={formData.industryId}
               onChange={handleInputChange}
@@ -1086,8 +1090,9 @@ const PostBoxForm = () => {
 
           {/* Job Level */}
           <motion.div className="form-group col-lg-6 col-md-12" variants={itemVariants}>
-            <label>Job Level</label>
+            <label htmlFor="levelId">Job Level</label>
             <select 
+              id="levelId"
               name="levelId" 
               value={formData.levelId}
               onChange={handleInputChange}
@@ -1104,8 +1109,9 @@ const PostBoxForm = () => {
 
           {/* Job Type */}
           <motion.div className="form-group col-lg-6 col-md-12" variants={itemVariants}>
-            <label>Job Type</label>
+            <label htmlFor="jobTypeId">Job Type</label>
             <select 
+              id="jobTypeId"
               name="jobTypeId" 
               value={formData.jobTypeId}
               onChange={handleInputChange}
@@ -1122,8 +1128,9 @@ const PostBoxForm = () => {
 
           {/* Experience Level */}
           <motion.div className="form-group col-lg-6 col-md-12" variants={itemVariants}>
-            <label>Experience Level</label>
+            <label htmlFor="experienceLevelId">Experience Level</label>
             <select 
+              id="experienceLevelId"
               name="experienceLevelId" 
               value={formData.experienceLevelId}
               onChange={handleInputChange}
