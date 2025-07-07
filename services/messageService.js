@@ -7,34 +7,46 @@ const getToken = () => authService.getToken();
 
 const getHeaders = () => ({
   Authorization: `Bearer ${getToken()}`,
-  "Content-Type": "application/json",
 });
 
 const messageService = {
-  // Get list of candidates that a company has messaged
+  // Lấy lịch sử chat giữa 2 user
+  getMessageHistory: (userId1, userId2) => {
+    return axios.get(`${API_URL}/history/${userId1}/${userId2}`, {
+      headers: getHeaders(),
+    });
+  },
+
+  // Lấy danh sách candidate mà company đã nhắn
   getMessagedCandidates: (companyId) => {
     return axios.get(`${API_URL}/candidates-messaged/${companyId}`, {
       headers: getHeaders(),
     });
   },
 
-  // Get list of companies that a candidate has messaged
+  // Lấy danh sách company mà candidate đã nhắn
   getMessagedCompanies: (candidateId) => {
     return axios.get(`${API_URL}/companies-messaged/${candidateId}`, {
       headers: getHeaders(),
     });
   },
 
-  // Get message history between two users
-  getMessageHistory: (userId, partnerId) => {
-    return axios.get(`${API_URL}/history/${userId}/${partnerId}`, {
-      headers: getHeaders(),
-    });
-  },
+  // Gửi tin nhắn (text/file)
+  sendMessage: ({ senderId, receiverId, messageText, file, relatedJobId, isSticker }) => {
+    const formData = new FormData();
+    formData.append("SenderId", senderId);
+    formData.append("ReceiverId", receiverId);
+    if (messageText) formData.append("MessageText", messageText);
+    if (file) formData.append("File", file);
+    if (relatedJobId) formData.append("RelatedJobId", relatedJobId);
+    if (isSticker) formData.append("IsSticker", isSticker);
 
-  // Send a message
-  sendMessage: (payload) => {
-    return axios.post(`${API_URL}/send`, payload, { headers: getHeaders() });
+    return axios.post(`${API_URL}/send`, formData, {
+      headers: {
+        ...getHeaders(),
+        "Content-Type": "multipart/form-data",
+      },
+    });
   },
 
   // Join SignalR group

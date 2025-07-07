@@ -74,6 +74,18 @@ export const authService = {
         Cookies.set("CompanyProfileId", data.companyId, cookieOptions);
       }
 
+      // Lưu userId chuẩn cho candidate
+      let userId = null;
+      if (data.user && (data.user.id || data.user.userId)) {
+        userId = data.user.id || data.user.userId;
+      } else if (decodedToken && (decodedToken.sub || decodedToken.userId || decodedToken.id)) {
+        userId = decodedToken.sub || decodedToken.userId || decodedToken.id;
+      }
+      if (userId) {
+        localStorage.setItem("userId", userId);
+        Cookies.set("userId", userId, cookieOptions);
+      }
+
       return data;
     } catch (error) {
       // Check if this is an unverified email error
@@ -280,5 +292,19 @@ export const authService = {
       process.env.NEXT_PUBLIC_GOOGLE_LOGIN_URL ||
       "http://localhost:5194/api/auth/login-google"
     );
+  },
+
+  // Forgot Password APIs
+  async forgotPasswordRequest(email) {
+    return ApiService.post('/auth/forgot-password/request', { email });
+  },
+  async forgotPasswordVerify(email, code) {
+    return ApiService.post('/auth/forgot-password/verify', { email, code });
+  },
+  async forgotPasswordReset(email, code, newPassword) {
+    return ApiService.post('/auth/forgot-password/reset', { email, code, newPassword });
+  },
+  async forgotPasswordResendVerification(email) {
+    return ApiService.post('/auth/forgot-password/resend-verification', { email });
   },
 };

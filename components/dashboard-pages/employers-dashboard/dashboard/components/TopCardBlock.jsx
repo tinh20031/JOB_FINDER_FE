@@ -11,15 +11,8 @@ const TopCardBlock = () => {
   const [messages, setMessages] = useState(0);
 
   useEffect(() => {
-    // Gọi API lấy danh sách jobs và đếm số lượng
-    jobService.getJobs().then((res) => {
-      setPostedJobs(res.total || 0);
-    });
-    applicationService.getAllApplications().then((res) => {
-      setApplicants(Array.isArray(res) ? res.length : 0);
-    });
     // Lấy companyId từ localStorage (hoặc từ redux nếu có)
-    const userStr = localStorage.getItem('user');
+    const userStr = localStorage.getItem("user");
     let companyId = null;
     if (userStr) {
       try {
@@ -28,13 +21,22 @@ const TopCardBlock = () => {
       } catch {}
     }
     if (companyId) {
-      applicationService.getUniqueCandidatesByCompany(companyId).then((count) => {
-        setCandidates(count || 0);
+      // Gọi API lấy danh sách jobs và đếm số lượng
+      jobService.getJobs({ role: "company", companyId }).then((res) => {
+        setPostedJobs(res.total || 0);
       });
+      applicationService
+        .getUniqueCandidatesByCompany(companyId)
+        .then((count) => {
+          setCandidates(count || 0);
+        });
       messageService.getUniqueMessageUsersByCompany(companyId).then((count) => {
         setMessages(count || 0);
       });
     }
+    applicationService.getAllApplications().then((res) => {
+      setApplicants(Array.isArray(res) ? res.length : 0);
+    });
   }, []);
 
   const cardContent = [

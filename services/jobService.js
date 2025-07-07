@@ -115,157 +115,157 @@ function getAuthConfig() {
 export const jobService = {
   // ==================== CRUD OPERATIONS ====================
 
-  // GET: Lấy danh sách tất cả jobs
+  // GET: Lấy danh sách tất cả jobs (có hỗ trợ filter role, companyId, ...)
   async getJobs(filters = {}) {
-    try {
-      const config = getAuthConfig();
-      const response = await axios.get(`${API_URL}/Job`, config);
-      const apiJobs = response.data;
+    const config = getAuthConfig();
+    const params = new URLSearchParams(filters).toString();
+    const response = await axios.get(
+      `${API_URL}/Job${params ? `?${params}` : ""}`,
+      config
+    );
+    const apiJobs = response.data;
 
-      // Ánh xạ dữ liệu từ API sang cấu trúc frontend
-      const jobs = apiJobs.map((job) => ({
-        id: job.jobId,
-        jobTitle: job.title,
-        description: job.description,
-        education: job.education,
-        yourSkill: job.yourSkill,
-        yourExperience: job.yourExperience,
-        location: `${job.addressDetail || ""}${
-          job.addressDetail && job.provinceName ? ", " : ""
-        }${job.provinceName || ""}`.trim(),
-        provinceName: job.provinceName,
-        isSalaryNegotiable: job.isSalaryNegotiable,
-        minSalary: job.minSalary,
-        maxSalary: job.maxSalary,
-        logo:
-          job.company?.urlCompanyLogo ||
-          "/images/company-logo/default-logo.png",
+    // Ánh xạ dữ liệu từ API sang cấu trúc frontend
+    const jobs = apiJobs.map((job) => ({
+      id: job.jobId,
+      jobTitle: job.title,
+      description: job.description,
+      education: job.education,
+      yourSkill: job.yourSkill,
+      yourExperience: job.yourExperience,
+      location: `${job.addressDetail || ""}${
+        job.addressDetail && job.provinceName ? ", " : ""
+      }${job.provinceName || ""}`.trim(),
+      provinceName: job.provinceName,
+      isSalaryNegotiable: job.isSalaryNegotiable,
+      minSalary: job.minSalary,
+      maxSalary: job.maxSalary,
+      logo:
+        job.company?.urlCompanyLogo ||
+        "/images/company-logo/default-logo.png",
 
-        // Company info
-        companyId: job.companyId,
-        company: job.company
-          ? {
-              id: job.company.id,
-              fullName: job.company.fullName,
-              email: job.company.email,
-              companyName: job.company.companyName,
-              location: job.company.location,
-              urlCompanyLogo: job.company.urlCompanyLogo,
-            }
-          : null,
+      // Company info
+      companyId: job.companyId,
+      company: job.company
+        ? {
+            id: job.company.id,
+            fullName: job.company.fullName,
+            email: job.company.email,
+            companyName: job.company.companyName,
+            location: job.company.location,
+            urlCompanyLogo: job.company.urlCompanyLogo,
+          }
+        : null,
 
-        // Other IDs
-        industryId: job.industryId,
-        industry: job.industry
-          ? {
-              industryId: job.industry.industryId,
-              industryName: job.industry.industryName,
-            }
-          : null,
-        jobTypeId: job.jobTypeId,
-        jobType: job.jobType
-          ? {
-              id: job.jobType.id,
-              jobTypeName: job.jobType.jobTypeName,
-            }
-          : null,
-        levelId: job.levelId,
-        level: job.level
-          ? {
-              id: job.level.id,
-              levelName: job.level.levelName,
-            }
-          : null,
-        experienceLevelId: job.experienceLevelId,
-        experienceLevel: job.experienceLevel
-          ? {
-              id: job.experienceLevel.id,
-              name: job.experienceLevel.name,
-            }
-          : null,
+      // Other IDs
+      industryId: job.industryId,
+      industry: job.industry
+        ? {
+            industryId: job.industry.industryId,
+            industryName: job.industry.industryName,
+          }
+        : null,
+      jobTypeId: job.jobTypeId,
+      jobType: job.jobType
+        ? {
+            id: job.jobType.id,
+            jobTypeName: job.jobType.jobTypeName,
+          }
+        : null,
+      levelId: job.levelId,
+      level: job.level
+        ? {
+            id: job.level.id,
+            levelName: job.level.levelName,
+          }
+        : null,
+      experienceLevelId: job.experienceLevelId,
+      experienceLevel: job.experienceLevel
+        ? {
+            id: job.experienceLevel.id,
+            name: job.experienceLevel.name,
+          }
+        : null,
 
-        // Time fields
-        expiryDate: job.expiryDate,
-        timeStart: job.timeStart,
-        timeEnd: job.timeEnd,
-        createdAt: job.createdAt,
-        updatedAt: job.updatedAt,
-        status: job.status,
-        addressDetail: job.addressDetail,
-        skills: job.skills || [],
-        descriptionWeight: job.descriptionWeight ?? null,
-        skillsWeight: job.skillsWeight ?? null,
-        experienceWeight: job.experienceWeight ?? null,
-        educationWeight: job.educationWeight ?? null,
-      }));
+      // Time fields
+      expiryDate: job.expiryDate,
+      timeStart: job.timeStart,
+      timeEnd: job.timeEnd,
+      createdAt: job.createdAt,
+      updatedAt: job.updatedAt,
+      status: job.status,
+      addressDetail: job.addressDetail,
+      skills: job.skills || [],
+      descriptionWeight: job.descriptionWeight ?? null,
+      skillsWeight: job.skillsWeight ?? null,
+      experienceWeight: job.experienceWeight ?? null,
+      educationWeight: job.educationWeight ?? null,
+      deactivatedByAdmin: job.deactivatedByAdmin,
+    }));
 
-      // Apply frontend filters
-      let filteredJobs = [...jobs];
+    // Apply frontend filters
+    let filteredJobs = [...jobs];
 
-      if (filters.keyword) {
-        filteredJobs = filteredJobs.filter(
-          (job) =>
-            job.jobTitle
-              ?.toLowerCase()
-              .includes(filters.keyword.toLowerCase()) ||
-            job.description
-              ?.toLowerCase()
-              .includes(filters.keyword.toLowerCase())
-        );
-      }
-
-      if (filters.location) {
-        filteredJobs = filteredJobs.filter((job) =>
-          job.location?.toLowerCase().includes(filters.location.toLowerCase())
-        );
-      }
-
-      if (filters.jobType?.length) {
-        filteredJobs = filteredJobs.filter((job) =>
-          filters.jobType.includes(job.jobTypeId)
-        );
-      }
-
-      if (filters.category) {
-        filteredJobs = filteredJobs.filter(
-          (job) => job.industryId === parseInt(filters.category)
-        );
-      }
-
-      if (filters.salary?.min !== undefined) {
-        filteredJobs = filteredJobs.filter(
-          (job) => job.minSalary >= filters.salary.min
-        );
-      }
-
-      if (filters.salary?.max !== undefined) {
-        filteredJobs = filteredJobs.filter(
-          (job) => job.maxSalary <= filters.salary.max
-        );
-      }
-
-      if (filters.experience?.length) {
-        filteredJobs = filteredJobs.filter((job) =>
-          filters.experience.includes(job.experienceLevelId)
-        );
-      }
-
-      // Pagination
-      const total = filteredJobs.length;
-      const start = filters.page
-        ? (filters.page - 1) * (filters.limit || 10)
-        : 0;
-      const end = filters.limit ? start + filters.limit : filteredJobs.length;
-      const paginatedJobs = filteredJobs.slice(start, end);
-
-      return {
-        data: paginatedJobs,
-        total: total,
-      };
-    } catch (error) {
-      console.error("Error fetching jobs:", error);
-      return { data: [], total: 0 };
+    if (filters.keyword) {
+      filteredJobs = filteredJobs.filter(
+        (job) =>
+          job.jobTitle
+            ?.toLowerCase()
+            .includes(filters.keyword.toLowerCase()) ||
+          job.description
+            ?.toLowerCase()
+            .includes(filters.keyword.toLowerCase())
+      );
     }
+
+    if (filters.location) {
+      filteredJobs = filteredJobs.filter((job) =>
+        job.location?.toLowerCase().includes(filters.location.toLowerCase())
+      );
+    }
+
+    if (filters.jobType?.length) {
+      filteredJobs = filteredJobs.filter((job) =>
+        filters.jobType.includes(job.jobTypeId)
+      );
+    }
+
+    if (filters.category) {
+      filteredJobs = filteredJobs.filter(
+        (job) => job.industryId === parseInt(filters.category)
+      );
+    }
+
+    if (filters.salary?.min !== undefined) {
+      filteredJobs = filteredJobs.filter(
+        (job) => job.minSalary >= filters.salary.min
+      );
+    }
+
+    if (filters.salary?.max !== undefined) {
+      filteredJobs = filteredJobs.filter(
+        (job) => job.maxSalary <= filters.salary.max
+      );
+    }
+
+    if (filters.experience?.length) {
+      filteredJobs = filteredJobs.filter((job) =>
+        filters.experience.includes(job.experienceLevelId)
+      );
+    }
+
+    // Pagination
+    const total = filteredJobs.length;
+    const start = filters.page
+      ? (filters.page - 1) * (filters.limit || 10)
+      : 0;
+    const end = filters.limit ? start + filters.limit : filteredJobs.length;
+    const paginatedJobs = filteredJobs.slice(start, end);
+
+    return {
+      data: paginatedJobs,
+      total: total,
+    };
   },
 
   // GET: Lấy job theo ID
@@ -353,6 +353,7 @@ export const jobService = {
         skillsWeight: job.skillsWeight ?? null,
         experienceWeight: job.experienceWeight ?? null,
         educationWeight: job.educationWeight ?? null,
+        deactivatedByAdmin: job.deactivatedByAdmin,
       };
     } catch (error) {
       // Nếu là lỗi 403 hoặc 404 thì ném lại để page.jsx bắt được
@@ -873,6 +874,77 @@ export const jobService = {
   async getActiveJobs(filters = {}) {
     const { data: jobs } = await this.getJobs(filters);
     return jobs.filter((job) => job.status === 1);
+  },
+
+  // POST: Track job view
+  async trackJobView(jobId) {
+    try {
+      const token = getValidToken();
+      const headers = token ? { Authorization: `Bearer ${token}` } : {};
+      const response = await axios.post(
+        `${API_URL}/JobView/track`,
+        { jobId },
+        { headers }
+      );
+      return response.data;
+    } catch (error) {
+      console.error("Error tracking job view:", error);
+      // Optionally, you can throw or return null
+      return null;
+    }
+  },
+
+  // Lấy thống kê tổng hợp cho công ty (view, apply, phần trăm apply, từng job) theo khoảng thời gian
+  async getCompanyStatistics(companyId, fromDate, toDate) {
+    try {
+      const token = getValidToken();
+      const headers = token ? { Authorization: `Bearer ${token}` } : {};
+      const params = {};
+      if (fromDate) params.fromDate = fromDate;
+      if (toDate) params.toDate = toDate;
+      const response = await axios.get(
+        `${API_URL}/JobStatistics/company/${companyId}`,
+        { headers, params }
+      );
+      return response.data;
+    } catch (error) {
+      console.error("Error fetching company statistics:", error);
+      throw error;
+    }
+  },
+
+  // Lấy danh sách job theo companyId
+  async getJobsByCompanyId(companyId) {
+    try {
+      const config = getAuthConfig();
+      const response = await axios.get(`${API_URL}/Job`, config);
+      const apiJobs = response.data;
+      // Lọc job theo companyId
+      const jobs = apiJobs.filter((job) => job.companyId === companyId);
+      return jobs;
+    } catch (error) {
+      console.error("Error fetching jobs by companyId:", error);
+      return [];
+    }
+  },
+
+  // Lấy thống kê job theo khoảng thời gian tuỳ ý
+  async getJobStatisticsFiltered(jobId, fromDate, toDate) {
+    try {
+      const token = getValidToken();
+      const headers = token ? { Authorization: `Bearer ${token}` } : {};
+      const params = {};
+      if (fromDate) params.fromDate = fromDate;
+      if (toDate) params.toDate = toDate;
+      const response = await axios.get(
+        `${API_URL}/JobStatistics/job/${jobId}`,
+        { headers, params }
+      );
+      return response.data;
+    } catch (error) {
+      console.error("Error fetching job statistics filtered:", error);
+      throw error;
+    }
   },
 };
 
