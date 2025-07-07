@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useParams } from "next/navigation";
 import DashboardHeader from "../../../../components/header/DashboardHeader";
 import DashboardEmployerSidebar from "../../../../components/header/DashboardEmployerSidebar";
@@ -16,8 +16,13 @@ const CloneJobPage = () => {
   const jobId = params?.jobId;
   const [cloneData, setCloneData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const titleSet = useRef(false);
 
   useEffect(() => {
+    if (!titleSet.current) {
+      document.title = 'Clone Job || Job Finder';
+      titleSet.current = true;
+    }
     if (!jobId) return;
     jobService.getJobById(jobId)
       .then(data => {
@@ -46,11 +51,7 @@ const CloneJobPage = () => {
                   </div>
                   <div className="widget-content">
                     <PostJobSteps />
-                    {loading ? (
-                      <div>Loading...</div>
-                    ) : (
-                      <PostBoxForm cloneData={cloneData} isClone />
-                    )}
+                    <PostBoxForm cloneData={cloneData} isClone loading={loading} />
                   </div>
                 </div>
               </div>

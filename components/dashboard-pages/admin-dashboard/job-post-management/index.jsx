@@ -120,7 +120,7 @@ const JobPostManagement = () => {
       setAlertMsg(`Job ${newLockStatus ? 'locked' : 'unlocked'} successfully!`);
       setAllJobs(prevJobs =>
         prevJobs.map(job =>
-          job.jobId === jobId ? { ...job, isLocked: newLockStatus } : job
+          job.jobId === jobId ? { ...job, deactivatedByAdmin: newLockStatus } : job
         )
       );
     } catch (error) {
@@ -173,7 +173,7 @@ const JobPostManagement = () => {
                     <div style={{padding:32, textAlign:'center'}}>No jobs found.</div>
                   ) : (
                     paginatedJobs.map((item) => (
-                      <div className={`job-block ${item.isLocked ? 'locked-job' : ''}`} key={item.jobId}>
+                      <div className={`job-block ${item.deactivatedByAdmin ? 'locked-job' : ''}`} key={item.jobId}>
                         <div className="inner-box d-flex align-items-center justify-content-between">
                           <div className="content">
                             <span className="company-logo">
@@ -185,7 +185,7 @@ const JobPostManagement = () => {
                               <li><span className="icon fa fa-calendar"></span>{new Date(item.timeStart).toLocaleDateString()}</li>
                               <li><span className="icon fa fa-calendar"></span>{new Date(item.timeEnd).toLocaleDateString()}</li>
                               <li>
-                                {item.isLocked ? (
+                                {item.deactivatedByAdmin ? (
                                   <span className="badge bg-danger">Locked</span>
                                 ) : (
                                   <span className={`badge ${
@@ -204,7 +204,7 @@ const JobPostManagement = () => {
                               className="form-select form-select-sm"
                               value={item.status}
                               onChange={(e) => handleUpdateStatus(item.jobId, e.target.value)}
-                              disabled={item.isLocked}
+                              disabled={item.deactivatedByAdmin}
                               style={{ width: '150px' }}
                             >
                               {jobStatuses.map((status, index) => (
@@ -212,10 +212,10 @@ const JobPostManagement = () => {
                               ))}
                             </select>
                             <button
-                              className={`btn btn-sm ${item.isLocked ? 'btn-outline-success' : 'btn-outline-danger'}`}
-                              onClick={() => handleLockJob(item.jobId, item.isLocked)}
+                              className={`btn btn-sm ${item.deactivatedByAdmin ? 'btn-outline-success' : 'btn-outline-danger'}`}
+                              onClick={() => handleLockJob(item.jobId, item.deactivatedByAdmin)}
                             >
-                              {item.isLocked ? 'Unlock' : 'Lock'}
+                              {item.deactivatedByAdmin ? 'Unlock' : 'Lock'}
                             </button>
                           </div>
                         </div>
