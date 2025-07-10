@@ -1,7 +1,5 @@
 import API_CONFIG from "../config/api.config";
 
-
-// 
 const BASE_URL = "http://localhost:5194/api";
 // const BASE_URL = "https://job-finder-kjt2.onrender.com/api";
 // Định nghĩa class trước
@@ -231,7 +229,9 @@ class ApiServiceClass {
     const response = await fetch(url, options);
     if (!response.ok) {
       const error = await response.json().catch(() => ({}));
-      throw new Error(error.message || `HTTP error! status: ${response.status}`);
+      throw new Error(
+        error.message || `HTTP error! status: ${response.status}`
+      );
     }
     return response.json();
   }
@@ -249,7 +249,9 @@ class ApiServiceClass {
     const response = await fetch(url, options);
     if (!response.ok) {
       const error = await response.json().catch(() => ({}));
-      throw new Error(error.message || `HTTP error! status: ${response.status}`);
+      throw new Error(
+        error.message || `HTTP error! status: ${response.status}`
+      );
     }
     return response.json();
   }
@@ -267,7 +269,9 @@ class ApiServiceClass {
     const response = await fetch(url, options);
     if (!response.ok) {
       const error = await response.json().catch(() => ({}));
-      throw new Error(error.message || `HTTP error! status: ${response.status}`);
+      throw new Error(
+        error.message || `HTTP error! status: ${response.status}`
+      );
     }
     // Nếu BE trả về 204 No Content thì return null
     if (response.status === 204) return null;
