@@ -10,6 +10,9 @@ import ApiService from "../../../../services/api.service";
 import API_CONFIG from '../../../../config/api.config';
 import { useDispatch } from 'react-redux';
 import { setProfileUpdated } from '@/features/auth/authSlice';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 const defaultUser = { fullName: "", email: "", phone: "", roleId: "", password: "", status: "Active", skills: [], cvUrl: "", image: "" };
 
@@ -41,6 +44,24 @@ const UserManager = () => {
   const [editError, setEditError] = useState("");
   const dispatch = useDispatch();
   const [roleDropdownOpen, setRoleDropdownOpen] = useState(null);
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
+  // Đọc page, search, filterRole, filterLock từ query string khi mount
+  useEffect(() => {
+    const pageParam = searchParams.get('page');
+    const searchParam = searchParams.get('search');
+    const roleParam = searchParams.get('role');
+    const lockParam = searchParams.get('lock');
+    if (pageParam && !isNaN(Number(pageParam)) && Number(pageParam) > 0) {
+      setCurrentPage(Number(pageParam));
+    } else {
+      setCurrentPage(1);
+    }
+    if (typeof searchParam === 'string') setSearch(searchParam);
+    if (typeof roleParam === 'string') setFilterRole(roleParam);
+    if (typeof lockParam === 'string') setFilterLock(lockParam);
+  }, [searchParams]);
 
   // Tự động ẩn alert sau 2.5s
   useEffect(() => {
@@ -58,11 +79,9 @@ const UserManager = () => {
   const fetchRoles = async () => {
     try {
       const response = await ApiService.get('/' + API_CONFIG.ENDPOINTS.ROLE.GET_ALL);
-      console.log('Roles API Response:', response);
       
       let processedRoles = [];
       if (Array.isArray(response)) {
-        console.log('Response is an array, processing roles...');
         processedRoles = response
           .filter(role => role && typeof role.roleId !== 'undefined' && role.roleId !== null)
           .map(role => ({
@@ -70,15 +89,10 @@ const UserManager = () => {
             name: role.roleName || `Role ${role.roleId}` // Fallback name
           }));
       } else {
-        console.error('API did not return an array for roles:', response);
+        // API did not return an array for roles
       }
-      
-      console.log('Processed Roles before setting state:', processedRoles);
       setRoles(processedRoles);
-      console.log('Roles state after setting:', processedRoles); // Log state value
-
     } catch (error) {
-      console.error('Error fetching roles:', error);
       setRoles([]);
     }
   };
@@ -131,12 +145,48 @@ const UserManager = () => {
   const totalPages = Math.ceil(filteredUsers.length / usersPerPage);
   const paginatedUsers = filteredUsers.slice((currentPage-1)*usersPerPage, currentPage*usersPerPage);
 
+  // Khi chuyển trang, cập nhật query string
+  const handleSetPage = (page) => {
+    const params = new URLSearchParams(Array.from(searchParams.entries()));
+    params.set('page', page);
+    params.set('search', search);
+    params.set('role', filterRole);
+    params.set('lock', filterLock);
+    router.replace(`?${params.toString()}`);
+    setCurrentPage(page);
+  };
+
+  // Khi tìm kiếm/filter, cập nhật query string và reset về page 1
   const handleSearch = (e) => {
-    setSearch(e.target.value);
+    const value = e.target.value;
+    setSearch(value);
+    const params = new URLSearchParams(Array.from(searchParams.entries()));
+    params.set('search', value);
+    params.set('page', 1);
+    params.set('role', filterRole);
+    params.set('lock', filterLock);
+    router.replace(`?${params.toString()}`);
     setCurrentPage(1);
   };
-  const handlePageChange = (page) => {
-    setCurrentPage(page);
+  const handleFilterRole = (role) => {
+    setFilterRole(role);
+    const params = new URLSearchParams(Array.from(searchParams.entries()));
+    params.set('role', role);
+    params.set('page', 1);
+    params.set('search', search);
+    params.set('lock', filterLock);
+    router.replace(`?${params.toString()}`);
+    setCurrentPage(1);
+  };
+  const handleFilterLock = (lock) => {
+    setFilterLock(lock);
+    const params = new URLSearchParams(Array.from(searchParams.entries()));
+    params.set('lock', lock);
+    params.set('page', 1);
+    params.set('search', search);
+    params.set('role', filterRole);
+    router.replace(`?${params.toString()}`);
+    setCurrentPage(1);
   };
 
   // Handler functions
@@ -145,11 +195,6 @@ const UserManager = () => {
     setShowDetailModal(true);
   };
   const handleShowEdit = (user) => {
-    console.log('Opening Edit Modal for User:', user); // Log user data
-    console.log('User Role ID (before formUser): ', user.roleId, typeof user.roleId); // Log user.roleId (from user data)
-    console.log('User Role Name (from user data): ', user.role); // Log user.role name
-    console.log('Available Roles for lookup:', roles); // Log available roles
-
     // Map role name sang roleId cố định
     const foundRole = ROLE_MAP.find(role => role.name === user.role);
     const roleIdToSet = foundRole ? foundRole.id : "";
@@ -166,17 +211,15 @@ const UserManager = () => {
     setSelectedImageFile(null);
   };
   const handleToggleLock = async (user) => {
-
     let action; // Declare action here
     try {
       const isLocked = user.isActive === false;
       action = isLocked ? 'unlock' : 'lock'; // Assign value here
       await ApiService.request(`user/${user.id}/${action}`, 'PUT');
-      setAlertMsg(`User ${isLocked ? 'unlocked' : 'locked'} successfully!`);
+      toast.success(`User ${isLocked ? 'unlocked' : 'locked'} successfully!`);
       setTimeout(fetchUsers, 300);
     } catch (error) {
-      console.error('Error toggling user lock status:', error); // Added console log for error
-      setAlertMsg(`Failed to ${action} user.`);
+      toast.error(`Failed to ${action} user.`);
     }
   };
 
@@ -218,18 +261,9 @@ const UserManager = () => {
       }
       formData.append('roleId', Number(formUser.roleId)); // Gửi roleId (số)
       // Không gửi trường role (chuỗi) lên API
-      console.log('Submitting Edit Form:', { // Log data before appending to FormData
-        fullName: formUser.fullName,
-        email: formUser.email,
-        phone: formUser.phone,
-        roleId: formUser.roleId,
-        roleIdType: typeof formUser.roleId // Log type of roleId
-      });
-      console.log('FormData roleId value (should match above): ', formData.get('roleId'), typeof formData.get('roleId')); // Log value and type from FormData
-
       ApiService.updateUser(editUser.id, formData)
         .then(() => {
-          setAlertMsg("User updated successfully!");
+          toast.success("User updated successfully!");
           fetchUsers();
           setShowEditModal(false);
           dispatch(setProfileUpdated(Date.now()));
@@ -265,217 +299,285 @@ const UserManager = () => {
       const formData = new FormData();
       formData.append('roleId', newRoleId);
       await ApiService.updateUser(user.id, formData);
-      setAlertMsg('Role updated successfully!');
+      toast.success('Role updated successfully!');
       fetchUsers();
     } catch (err) {
-      setAlertMsg('Failed to update role.');
+      toast.error('Failed to update role.');
     } finally {
       setRoleDropdownOpen(null);
     }
   };
 
   return (
-    <div className="page-wrapper dashboard">
-      <span className="header-span"></span>
-      <DashboardHeader />
-      <DashboardAdminSidebar />
-      <section className="user-dashboard">
-        <div className="dashboard-outer">
-          <BreadCrumb title="User Manager" />
-          <MenuToggler />
-          {alertMsg && (
-            <div className="alert alert-info" style={{marginBottom: 12}}>
-              {alertMsg}
-            </div>
-          )}
-          <div className="row">
-            <div className="col-lg-12">
-              <div className="ls-widget">
-                <div className="widget-title d-flex justify-content-between align-items-center">
-                  <h4>User Manager</h4>
-                  <div className="d-flex align-items-center gap-2">
-                    <input
-                      type="text"
-                      className="form-control form-control-sm me-2"
-                      style={{width:220}}
-                      placeholder="Search by name, email, phone..."
-                      value={search}
-                      onChange={handleSearch}
-                    />
-                    <select className="form-select form-select-sm me-2" style={{width:120}} value={filterRole} onChange={e=>setFilterRole(e.target.value)}>
-                      <option key="all" value="all">All Roles</option>
-                      {Array.isArray(roles) && roles.length > 0 ? (
-                        roles.map(role => (
-                          <option key={`filter-role-${role.name}`} value={role.name}>
-                            {role.name || `Role`}
-                          </option>
-                        ))
-                      ) : (
-                        <option value="" disabled>No roles available</option>
-                      )}
-                    </select>
-                    <select className="form-select form-select-sm me-2" style={{width:120}} value={filterLock} onChange={e=>setFilterLock(e.target.value)}>
-                      <option key="all-status" value="all">All Status</option>
-                      <option key="locked" value="locked">Locked</option>
-                      <option key="unlocked" value="unlocked">Unlocked</option>
-                    </select>
-                  </div>
-                </div>
-                <div className={`widget-content ${!loading ? 'fade-in' : ''}`}> 
-                  {loading ? (
-                    <div className="spinner"></div>
-                  ) : (
-                    <>
-                    <table className="default-table manage-job-table">
-                      <thead>
-                        <tr>
-                          <th>ID</th>
-                          <th>Image</th>
-                          <th>Full Name</th>
-                          <th>Email</th>
-                          <th>Phone</th>
-                          <th>Role</th>
-                          <th>Actions</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {paginatedUsers.length === 0 ? (
-                          <tr><td colSpan={7}>No users found</td></tr>
+    <>
+      <ToastContainer position="top-right" autoClose={3000} />
+      <div className="page-wrapper dashboard">
+        <span className="header-span"></span>
+        <DashboardHeader />
+        <DashboardAdminSidebar />
+        <section className="user-dashboard">
+          <div className="dashboard-outer">
+            <BreadCrumb title="User Manager" />
+            <MenuToggler />
+            {alertMsg && (
+              <div className="alert alert-info" style={{marginBottom: 12}}>
+                {alertMsg}
+              </div>
+            )}
+            <div className="row">
+              <div className="col-lg-12">
+                <div className="ls-widget">
+                  <div className="widget-title d-flex justify-content-between align-items-center">
+                    <h4>User Manager</h4>
+                    <div className="d-flex align-items-center gap-2">
+                      <input
+                        type="text"
+                        className="form-control form-control-sm me-2"
+                        style={{width:220}}
+                        placeholder="Search by name, email, phone..."
+                        value={search}
+                        onChange={handleSearch}
+                      />
+                      <select className="form-select form-select-sm me-2" style={{width:120}} value={filterRole} onChange={e=>handleFilterRole(e.target.value)}>
+                        <option key="all" value="all">All Roles</option>
+                        {Array.isArray(roles) && roles.length > 0 ? (
+                          roles.map(role => (
+                            <option key={`filter-role-${role.name}`} value={role.name}>
+                              {role.name || `Role`}
+                            </option>
+                          ))
                         ) : (
-                          paginatedUsers.map((user) => {
-                            const isLocked = user.isActive === false;
-                            return (
-                              <tr key={user.id}>
-                                <td>{user.id}</td>
-                                <td>
-                                  <img 
-                                    src={user.image || '/images/default-avatar.png'} 
-                                    alt={user.fullName}
-                                    style={{width: '50px', height: '50px', borderRadius: '50%', objectFit: 'cover'}}
-                                  />
-                                </td>
-                                <td>{user.fullName}</td>
-                                <td>{user.email}</td>
-                                <td>{user.phone}</td>
-                                {/* Cột Role: dropdown đổi role */}
-                                <td>
-                                  <select
-                                    className="form-select form-select-sm"
-                                    style={{ width: 120, display: 'inline-block' }}
-                                    value={user.roleId || ''}
-                                    onChange={e => handleRoleChange(user, Number(e.target.value))}
-                                  >
-                                    {ROLE_MAP.map(role => (
-                                      <option key={role.id} value={role.id}>{role.name}</option>
-                                    ))}
-                                  </select>
-                                </td>
-                                {/* Cột Actions: chỉ còn View và Lock/Unlock */}
-                                <td>
-                                  <button className="btn btn-sm me-1" onClick={() => handleShowDetail(user)} style={{display:'none'}}>View</button>
-                                  <Link href={`/admin-dashboard/user-manager/${user.id}`} className="btn btn-sm me-1">View</Link>
-                                  <button
-                                    className={`btn btn-sm me-1 ${isLocked ? 'btn-outline-danger' : 'btn-outline-secondary'}`}
-                                    onClick={() => handleToggleLock(user)}
-                                  >
-                                    {isLocked ? 'Unlock' : 'Lock'}
-                                  </button>
-                                </td>
-                              </tr>
-                            );
-                          })
+                          <option value="" disabled>No roles available</option>
                         )}
-                      </tbody>
-                    </table>
-                    {/* Pagination */}
-                    {totalPages > 1 && (
-                      <nav className="mt-3">
-                        <ul className="pagination justify-content-end">
-                          <li className={`page-item${currentPage===1?' disabled':''}`}>
-                            <button className="page-link" onClick={()=>handlePageChange(currentPage-1)} disabled={currentPage===1}>&laquo;</button>
-                          </li>
-                          {Array.from({length: totalPages}, (_,i)=>(
-                            <li key={i+1} className={`page-item${currentPage===i+1?' active':''}`}>
-                              <button className="page-link" onClick={()=>handlePageChange(i+1)}>{i+1}</button>
-                            </li>
-                          ))}
-                          <li className={`page-item${currentPage===totalPages?' disabled':''}`}>
-                            <button className="page-link" onClick={()=>handlePageChange(currentPage+1)} disabled={currentPage===totalPages}>&raquo;</button>
-                          </li>
-                        </ul>
-                      </nav>
+                      </select>
+                      <select className="form-select form-select-sm me-2" style={{width:120}} value={filterLock} onChange={e=>handleFilterLock(e.target.value)}>
+                        <option key="all-status" value="all">All Status</option>
+                        <option key="locked" value="locked">Locked</option>
+                        <option key="unlocked" value="unlocked">Unlocked</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div className={`widget-content ${!loading ? 'fade-in' : ''}`}> 
+                    {loading ? (
+                      <div className="table-outer">
+                        <table className="default-table manage-job-table">
+                          <thead>
+                            <tr>
+                              <th>Avatar</th>
+                              <th>Full Name</th>
+                              <th>Email</th>
+                              <th>Phone</th>
+                              <th>Role</th>
+                              <th>Actions</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {[...Array(8)].map((_, idx) => (
+                              <tr key={idx}>
+                                <td><div className="skeleton-line" style={{ width: 50, height: 50, borderRadius: '50%' }}></div></td>
+                                <td><div className="skeleton-line" style={{ width: 120, height: 18, borderRadius: 6 }}></div></td>
+                                <td><div className="skeleton-line" style={{ width: 160, height: 18, borderRadius: 6 }}></div></td>
+                                <td><div className="skeleton-line" style={{ width: 100, height: 18, borderRadius: 6 }}></div></td>
+                                <td><div className="skeleton-line" style={{ width: 80, height: 18, borderRadius: 6 }}></div></td>
+                                <td><div className="skeleton-line" style={{ width: 80, height: 32, borderRadius: 8 }}></div></td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                        <style jsx>{`
+                          .skeleton-line {
+                            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 37%, #f0f0f0 63%);
+                            background-size: 400% 100%;
+                            animation: skeleton-loading 1.4s ease infinite;
+                            border-radius: 6px;
+                          }
+                          @keyframes skeleton-loading {
+                            0% { background-position: 100% 50%; }
+                            100% { background-position: 0 50%; }
+                          }
+                        `}</style>
+                      </div>
+                    ) : (
+                      <>
+                      <table className="default-table manage-job-table">
+                        <thead>
+                          <tr>
+                            {/* <th>ID</th> */}
+                            <th>Avatar</th>
+                            <th>Full Name</th>
+                            <th>Email</th>
+                            <th>Phone</th>
+                            <th>Role</th>
+                            <th>Actions</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {paginatedUsers.length === 0 ? (
+                            <tr><td colSpan={6}>No users found</td></tr>
+                          ) : (
+                            paginatedUsers.map((user) => {
+                              const isLocked = user.isActive === false;
+                              return (
+                                <tr key={user.id}>
+                                  {/* <td>{user.id}</td> */}
+                                  <td>
+                                    <img 
+                                      src={user.image || '/images/default-avatar.png'} 
+                                      alt={user.fullName}
+                                      style={{width: '50px', height: '50px', borderRadius: '50%', objectFit: 'cover'}}
+                                    />
+                                  </td>
+                                  <td>{user.fullName}</td>
+                                  <td>{user.email}</td>
+                                  <td>{user.phone}</td>
+                                  {/* Cột Role: dropdown đổi role */}
+                                  <td>
+                                    <select
+                                      className="form-select form-select-sm"
+                                      style={{ width: 120, display: 'inline-block' }}
+                                      value={user.roleId || ''}
+                                      onChange={e => handleRoleChange(user, Number(e.target.value))}
+                                    >
+                                      {ROLE_MAP.map(role => (
+                                        <option key={role.id} value={role.id}>{role.name}</option>
+                                      ))}
+                                    </select>
+                                  </td>
+                                  {/* Cột Actions: chỉ còn View và Lock/Unlock */}
+                                  <td>
+                                    <button className="btn btn-sm me-1" onClick={() => handleShowDetail(user)} style={{display:'none'}}>View</button>
+                                    <Link href={`/admin-dashboard/user-manager/${user.id}`} className="btn btn-sm me-1">View</Link>
+                                    <button
+                                      className={`btn btn-sm me-1 ${isLocked ? 'btn-outline-danger' : 'btn-outline-secondary'}`}
+                                      onClick={() => handleToggleLock(user)}
+                                    >
+                                      {isLocked ? 'Unlock' : 'Lock'}
+                                    </button>
+                                  </td>
+                                </tr>
+                              );
+                            })
+                          )}
+                        </tbody>
+                      </table>
+                      {/* Pagination */}
+                      {filteredUsers.length > 0 && (
+                        (() => {
+                          const totalPagesToShow = totalPages >= 1 ? totalPages : 1;
+                          return (
+                            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 16, margin: '24px 0' }}>
+                              <button
+                                disabled={currentPage === 1}
+                                onClick={() => handleSetPage(currentPage - 1)}
+                                style={{ background: 'none', border: 'none', fontSize: 22, cursor: 'pointer', color: currentPage === 1 ? '#ccc' : '#444' }}
+                              >
+                                &#8592;
+                              </button>
+                              {Array.from({ length: totalPagesToShow }, (_, i) => (
+                                <button
+                                  key={i + 1}
+                                  onClick={() => handleSetPage(i + 1)}
+                                  style={{
+                                    width: 40,
+                                    height: 40,
+                                    borderRadius: '50%',
+                                    background: currentPage === i + 1 ? '#1967d2' : 'none',
+                                    color: currentPage === i + 1 ? '#fff' : '#444',
+                                    border: 'none',
+                                    fontWeight: 600,
+                                    fontSize: 18,
+                                    cursor: 'pointer',
+                                    outline: 'none',
+                                    boxShadow: 'none',
+                                    transition: 'background 0.2s, color 0.2s'
+                                  }}
+                                >
+                                  {i + 1}
+                                </button>
+                              ))}
+                              <button
+                                disabled={currentPage === totalPagesToShow || totalPagesToShow === 0}
+                                onClick={() => handleSetPage(currentPage + 1)}
+                                style={{ background: 'none', border: 'none', fontSize: 22, cursor: 'pointer', color: currentPage === totalPagesToShow || totalPagesToShow === 0 ? '#ccc' : '#444' }}
+                              >
+                                &#8594;
+                              </button>
+                            </div>
+                          );
+                        })()
+                      )}
+                      </>
                     )}
-                    </>
-                  )}
+                  </div>
                 </div>
               </div>
             </div>
           </div>
-        </div>
-      </section>
-      {/* Edit Modal */}
-      {showEditModal && (
-        <div className="modal show" style={{display:'block'}}>
-          <div className="modal-dialog">
-            <div className="modal-content">
-              <form onSubmit={handleFormSubmit}>
-                <div className="modal-header">
-                  <h5 className="modal-title">Edit User</h5>
-                  <button className="btn-close" onClick={()=>setShowEditModal(false)} type="button"></button>
-                </div>
-                <div className="modal-body">
-                  {editError && <div className="alert alert-danger">{editError}</div>}
-                  <div className="mb-2">
-                    <label>Profile Image</label>
-                    <input 
-                      className="form-control" 
-                      type="file"
-                      name="image"
-                      onChange={handleFormChange}
-                      accept="image/*"
-                    />
-                    {(selectedImageFile || formUser.image) && (
-                      <img 
-                        src={selectedImageFile ? URL.createObjectURL(selectedImageFile) : formUser.image} 
-                        alt="Preview" 
-                        style={{width: '100px', height: '100px', objectFit: 'cover', marginTop: '10px', borderRadius: '50%'}}
+        </section>
+        {/* Edit Modal */}
+        {showEditModal && (
+          <div className="modal show" style={{display:'block'}}>
+            <div className="modal-dialog">
+              <div className="modal-content">
+                <form onSubmit={handleFormSubmit}>
+                  <div className="modal-header">
+                    <h5 className="modal-title">Edit User</h5>
+                    <button className="btn-close" onClick={()=>setShowEditModal(false)} type="button"></button>
+                  </div>
+                  <div className="modal-body">
+                    {editError && <div className="alert alert-danger">{editError}</div>}
+                    <div className="mb-2">
+                      <label>Profile Image</label>
+                      <input 
+                        className="form-control" 
+                        type="file"
+                        name="image"
+                        onChange={handleFormChange}
+                        accept="image/*"
                       />
-                    )}
+                      {(selectedImageFile || formUser.image) && (
+                        <img 
+                          src={selectedImageFile ? URL.createObjectURL(selectedImageFile) : formUser.image} 
+                          alt="Preview" 
+                          style={{width: '100px', height: '100px', objectFit: 'cover', marginTop: '10px', borderRadius: '50%'}}
+                        />
+                      )}
+                    </div>
+                    <div className="mb-2">
+                      <label>Full Name</label>
+                      <input className="form-control" name="fullName" value={formUser.fullName} onChange={handleFormChange} required />
+                    </div>
+                    <div className="mb-2">
+                      <label>Email</label>
+                      <input className="form-control" name="email" value={formUser.email} onChange={handleFormChange} required />
+                    </div>
+                    <div className="mb-2">
+                      <label>Phone</label>
+                      <input className="form-control" name="phone" value={formUser.phone} onChange={handleFormChange} />
+                    </div>
+                    <div className="mb-2">
+                      <label>Role</label>
+                      <select className="form-control" name="role" value={formUser.role || ""} onChange={handleFormChange} required>
+                        <option value="">Select Role</option>
+                        {ROLE_MAP.map(role => (
+                          <option key={`edit-role-${role.id}`} value={role.name}>
+                            {role.name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
                   </div>
-                  <div className="mb-2">
-                    <label>Full Name</label>
-                    <input className="form-control" name="fullName" value={formUser.fullName} onChange={handleFormChange} required />
+                  <div className="modal-footer">
+                    <button className="btn btn-secondary" type="button" onClick={()=>setShowEditModal(false)}>Cancel</button>
+                    <button className="btn btn-primary" type="submit">Save</button>
                   </div>
-                  <div className="mb-2">
-                    <label>Email</label>
-                    <input className="form-control" name="email" value={formUser.email} onChange={handleFormChange} required />
-                  </div>
-                  <div className="mb-2">
-                    <label>Phone</label>
-                    <input className="form-control" name="phone" value={formUser.phone} onChange={handleFormChange} />
-                  </div>
-                  <div className="mb-2">
-                    <label>Role</label>
-                    <select className="form-control" name="role" value={formUser.role || ""} onChange={handleFormChange} required>
-                      <option value="">Select Role</option>
-                      {ROLE_MAP.map(role => (
-                        <option key={`edit-role-${role.id}`} value={role.name}>
-                          {role.name}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-                <div className="modal-footer">
-                  <button className="btn btn-secondary" type="button" onClick={()=>setShowEditModal(false)}>Cancel</button>
-                  <button className="btn btn-primary" type="submit">Save</button>
-                </div>
-              </form>
+                </form>
+              </div>
             </div>
           </div>
-        </div>
-      )}
-    </div>
+        )}
+      </div>
+    </>
   );
 };
 
