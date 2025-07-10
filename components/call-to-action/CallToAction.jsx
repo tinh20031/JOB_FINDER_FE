@@ -43,7 +43,7 @@ const CallToAction = () => {
 
           <div
             className="image-column"
-            style={{ backgroundImage: " url(images/resource/image-1.png)" }}
+            style={{ backgroundImage: " url(/images/resource/image-1.png)" }}
           >
             <figure className="image">
               <Image
