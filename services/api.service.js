@@ -170,7 +170,7 @@ class ApiServiceClass {
       }
       return response.json();
     } catch (error) {
-      console.error("API request error:", error);
+      // console.error("API request error:", error);
       throw error;
     }
   }

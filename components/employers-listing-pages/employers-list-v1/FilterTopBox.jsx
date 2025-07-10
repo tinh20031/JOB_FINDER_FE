@@ -18,7 +18,7 @@ import { useState, useEffect } from "react";
 import { jobService } from "../../../services/jobService";
 import { toast } from "react-toastify";
 import Cookies from 'js-cookie';
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from 'next/navigation';
 import { companyService } from "@/services/companyService";
 import { industryService } from "@/services/industryService";
 import ClickableBox from "../../common/ClickableBox";
@@ -36,6 +36,7 @@ const FilterTopBox = () => {
   } = useSelector((state) => state.employerFilter) || {};
   const dispatch = useDispatch();
   const router = useRouter();
+  const searchParams = useSearchParams();
 
   // Add state for fetched companies, loading, and error
   const [companies, setCompanies] = useState([]);
@@ -59,6 +60,40 @@ const FilterTopBox = () => {
     };
     fetchIndustries();
   }, []);
+
+  // Đọc page và perPage từ query string khi mount
+  useEffect(() => {
+    const pageParam = searchParams.get('page');
+    const perPageParam = searchParams.get('perPage');
+    if (perPageParam && !isNaN(Number(perPageParam)) && Number(perPageParam) > 0) {
+      dispatch(addPerPage({ start: 0, end: Number(perPageParam) }));
+    }
+    if (pageParam && !isNaN(Number(pageParam)) && Number(pageParam) > 0) {
+      const perPageVal = perPageParam && !isNaN(Number(perPageParam)) && Number(perPageParam) > 0 ? Number(perPageParam) : (perPage.end !== 0 ? perPage.end - perPage.start : 10);
+      dispatch(addPerPage({ start: (Number(pageParam) - 1) * perPageVal, end: Number(pageParam) * perPageVal }));
+    }
+  }, [searchParams]);
+
+  // Khi chuyển trang, cập nhật query string
+  const handleSetPage = (page) => {
+    const params = new URLSearchParams(Array.from(searchParams.entries()));
+    params.set('page', page);
+    params.set('perPage', perPage.end !== 0 ? perPage.end - perPage.start : 10);
+    router.replace(`?${params.toString()}`);
+    const perPageVal = perPage.end !== 0 ? perPage.end - perPage.start : 10;
+    dispatch(addPerPage({ start: (page - 1) * perPageVal, end: page * perPageVal }));
+  };
+
+  // Khi chọn perPage, cập nhật query string và reset về page 1
+  const perPageHandler = (e) => {
+    const pageData = JSON.parse(e.target.value);
+    const perPageVal = pageData.end !== 0 ? pageData.end - pageData.start : 10;
+    const params = new URLSearchParams(Array.from(searchParams.entries()));
+    params.set('perPage', perPageVal);
+    params.set('page', 1);
+    router.replace(`?${params.toString()}`);
+    dispatch(addPerPage({ start: 0, end: perPageVal }));
+  };
 
   // Fetch companies based on filters and pagination
   useEffect(() => {
@@ -332,12 +367,6 @@ const FilterTopBox = () => {
     </ClickableBox>
   ));
 
-  // per page handler
-  const perPageHandler = (e) => {
-    const pageData = JSON.parse(e.target.value);
-    dispatch(addPerPage(pageData));
-  };
-
   // sort handler
   const sortHandler = (e) => {
     dispatch(addSort(e.target.value));
@@ -459,6 +488,57 @@ const FilterTopBox = () => {
 
       {/* <ListingShowing /> */} {/* Keep ListingShowing if it handles pagination buttons based on totalCompanies */}
       {/* <!-- Listing Show More --> */}
+      {/* Thêm UI phân trang số trang phía dưới danh sách company */}
+      {!loading && !error && filteredCompanies.length > 0 && (
+        (() => {
+          const perPageVal = perPage.end !== 0 ? perPage.end - perPage.start : 10;
+          const totalPages = Math.ceil(filteredCompanies.length / perPageVal);
+          const currentPage = perPageVal ? Math.floor(perPage.start / perPageVal) + 1 : 1;
+          if (totalPages >= 1) {
+            return (
+              <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 16, margin: '24px 0' }}>
+                <button
+                  disabled={currentPage === 1}
+                  onClick={() => handleSetPage(currentPage - 1)}
+                  style={{ background: 'none', border: 'none', fontSize: 22, cursor: 'pointer', color: currentPage === 1 ? '#ccc' : '#444' }}
+                >
+                  &#8592;
+                </button>
+                {Array.from({ length: totalPages }, (_, i) => (
+                  <button
+                    key={i + 1}
+                    onClick={() => handleSetPage(i + 1)}
+                    style={{
+                      width: 40,
+                      height: 40,
+                      borderRadius: '50%',
+                      background: currentPage === i + 1 ? '#1967d2' : 'none',
+                      color: currentPage === i + 1 ? '#fff' : '#444',
+                      border: 'none',
+                      fontWeight: 600,
+                      fontSize: 18,
+                      cursor: 'pointer',
+                      outline: 'none',
+                      boxShadow: 'none',
+                      transition: 'background 0.2s, color 0.2s'
+                    }}
+                  >
+                    {i + 1}
+                  </button>
+                ))}
+                <button
+                  disabled={currentPage === totalPages || totalPages === 0}
+                  onClick={() => handleSetPage(currentPage + 1)}
+                  style={{ background: 'none', border: 'none', fontSize: 22, cursor: 'pointer', color: currentPage === totalPages || totalPages === 0 ? '#ccc' : '#444' }}
+                >
+                  &#8594;
+                </button>
+              </div>
+            );
+          }
+          return null;
+        })()
+      )}
       <style jsx>{`
         .company-name-hover {
           transition: color 0.2s, font-weight 0.2s;

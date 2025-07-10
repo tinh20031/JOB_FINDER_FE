@@ -25,7 +25,7 @@ import Image from "next/image";
 import { jobService } from "../../../services/jobService";
 import { toast } from "react-toastify";
 import "./FilterJobsBox.css"; // Thêm import CSS
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import {
   getUserFavorites,
   addFavoriteJob,
@@ -97,6 +97,7 @@ const FilterJobsBox = () => {
   const { sort } = jobSort;
   const dispatch = useDispatch();
 
+  const router = useRouter();
   const searchParams = useSearchParams();
   const industryId = searchParams.get("industryId");
   const provinceName = searchParams.get("provinceName");
@@ -201,6 +202,24 @@ const FilterJobsBox = () => {
         .catch((err) => console.error(err));
     }
   }, [userId]);
+
+  // Đọc page từ query string khi mount
+  useEffect(() => {
+    const pageParam = searchParams.get('page');
+    if (pageParam && !isNaN(Number(pageParam)) && Number(pageParam) > 0) {
+      setCurrentPage(Number(pageParam));
+    } else {
+      setCurrentPage(1);
+    }
+  }, [searchParams]);
+
+  // Khi chuyển trang, cập nhật query string
+  const handleSetPage = (page) => {
+    const params = new URLSearchParams(Array.from(searchParams.entries()));
+    params.set('page', page);
+    router.replace(`?${params.toString()}`);
+    setCurrentPage(page);
+  };
 
   // Helper function để tìm tên từ ID trong dữ liệu lookup
   const getCompanyName = (companyId) => {
@@ -711,7 +730,7 @@ const FilterJobsBox = () => {
       >
         <button
           disabled={currentPage === 1}
-          onClick={() => setCurrentPage(currentPage - 1)}
+          onClick={() => handleSetPage(currentPage - 1)}
           style={{
             background: "none",
             border: "none",
@@ -725,7 +744,7 @@ const FilterJobsBox = () => {
         {Array.from({ length: totalPages }, (_, i) => (
           <button
             key={i + 1}
-            onClick={() => setCurrentPage(i + 1)}
+            onClick={() => handleSetPage(i + 1)}
             style={{
               width: 40,
               height: 40,
@@ -745,14 +764,14 @@ const FilterJobsBox = () => {
           </button>
         ))}
         <button
-          disabled={currentPage === totalPages}
-          onClick={() => setCurrentPage(currentPage + 1)}
+          disabled={currentPage === totalPages || totalPages === 0}
+          onClick={() => handleSetPage(currentPage + 1)}
           style={{
             background: "none",
             border: "none",
             fontSize: 22,
             cursor: "pointer",
-            color: currentPage === totalPages ? "#ccc" : "#444",
+            color: currentPage === totalPages || totalPages === 0 ? "#ccc" : "#444",
           }}
         >
           &#8594;

@@ -20,8 +20,67 @@ import BreadCrumb from "../../BreadCrumb";
 import MenuToggler from "../../MenuToggler";
 import DashboardHeader from "../../../header/DashboardHeaderAdmin";
 import MobileMenu from "../../../header/MobileMenu";
+import Modal from "@/components/common/Modal";
+import "@/styles/modal.css";
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+import { useRouter, useSearchParams } from 'next/navigation';
+
+// Skeleton component for job blocks
+const JobSkeleton = () => (
+  <div className="job-block skeleton-job">
+    <div className="inner-box d-flex align-items-center justify-content-between">
+      <div className="content">
+        <div className="d-flex align-items-center gap-3">
+          <div className="skeleton-logo" style={{
+            width: 50,
+            height: 49,
+            borderRadius: '50%',
+            backgroundColor: '#e9ecef',
+            animation: 'pulse 1.5s ease-in-out infinite'
+          }}></div>
+          <div className="flex-grow-1">
+            <div className="skeleton-title" style={{
+              height: 24,
+              width: '60%',
+              backgroundColor: '#e9ecef',
+              borderRadius: 4,
+              marginBottom: 8,
+              animation: 'pulse 1.5s ease-in-out infinite'
+            }}></div>
+            <div className="skeleton-info" style={{
+              height: 16,
+              width: '40%',
+              backgroundColor: '#e9ecef',
+              borderRadius: 4,
+              animation: 'pulse 1.5s ease-in-out infinite'
+            }}></div>
+          </div>
+        </div>
+      </div>
+      <div className="job-actions d-flex flex-row align-items-center gap-2 ms-3">
+        <div className="skeleton-select" style={{
+          width: 150,
+          height: 38,
+          backgroundColor: '#e9ecef',
+          borderRadius: 4,
+          animation: 'pulse 1.5s ease-in-out infinite'
+        }}></div>
+        <div className="skeleton-button" style={{
+          width: 80,
+          height: 38,
+          backgroundColor: '#e9ecef',
+          borderRadius: 4,
+          animation: 'pulse 1.5s ease-in-out infinite'
+        }}></div>
+      </div>
+    </div>
+  </div>
+);
 
 const JobPostManagement = () => {
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const [allJobs, setAllJobs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -34,16 +93,27 @@ const JobPostManagement = () => {
   const [selectedIndustry, setSelectedIndustry] = useState("");
   const [filterStatus, setFilterStatus] = useState("");
   const [searchKeyword, setSearchKeyword] = useState("");
+  const [filterLock, setFilterLock] = useState("");
 
-  const [alertMsg, setAlertMsg] = useState("");
-  const jobStatuses = ["Pending", "Approved", "Rejected"];
+  const jobStatuses = [
+    { value: 0, label: "Pending" },
+    { value: 1, label: "Active" },
+    { value: 2, label: "Inactive" }
+  ];
+
+  const lockStatuses = [
+    { value: "locked", label: "Locked" },
+    { value: "unlocked", label: "Unlocked" }
+  ];
+
+  const [showExpiredModal, setShowExpiredModal] = useState(false);
 
   // Fetch all jobs on component mount
   useEffect(() => {
     const fetchInitialData = async () => {
       try {
         setLoading(true);
-        const jobsRes = await ApiService.request('Job', 'GET');
+        const jobsRes = await ApiService.request('Job?role=admin', 'GET');
 
 
         if (Array.isArray(jobsRes)) {
@@ -64,6 +134,16 @@ const JobPostManagement = () => {
     };
     fetchInitialData();
   }, []);
+
+  // Đọc page từ query string khi mount
+  useEffect(() => {
+    const pageParam = searchParams.get('page');
+    if (pageParam && !isNaN(Number(pageParam)) && Number(pageParam) > 0) {
+      setCurrentPage(Number(pageParam));
+    } else {
+      setCurrentPage(1);
+    }
+  }, [searchParams]);
 
   // Derive unique companies and industries from allJobs for filtering
   const { companies, industries } = useMemo(() => {
@@ -87,29 +167,51 @@ const JobPostManagement = () => {
   const filteredJobs = useMemo(() => {
     return allJobs.filter(job => {
       const matchSearch = searchKeyword === "" || job.title?.toLowerCase().includes(searchKeyword.toLowerCase());
-      const matchCompany = selectedCompany === "" || job.company?.id === parseInt(selectedCompany);
+      const matchCompany = selectedCompany === "" || job.company?.companyName?.toLowerCase().includes(selectedCompany.toLowerCase());
       const matchIndustry = selectedIndustry === "" || job.industry?.industryId === parseInt(selectedIndustry);
       const matchStatus = filterStatus === "" || job.status === parseInt(filterStatus);
-      return matchSearch && matchCompany && matchIndustry && matchStatus;
+      const matchLock = filterLock === "" || 
+        (filterLock === "locked" && job.deactivatedByAdmin) || 
+        (filterLock === "unlocked" && !job.deactivatedByAdmin);
+      return matchSearch && matchCompany && matchIndustry && matchStatus && matchLock;
     });
-  }, [allJobs, searchKeyword, selectedCompany, selectedIndustry, filterStatus]);
+  }, [allJobs, searchKeyword, selectedCompany, selectedIndustry, filterStatus, filterLock]);
 
 
   // Pagination logic
   const totalPages = Math.ceil(filteredJobs.length / itemsPerPage);
   const paginatedJobs = filteredJobs.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
+  // Khi chuyển trang, cập nhật query string
+  const handleSetPage = (page) => {
+    const params = new URLSearchParams(Array.from(searchParams.entries()));
+    params.set('page', page);
+    router.replace(`?${params.toString()}`);
+    setCurrentPage(page);
+  };
+
   const handleUpdateStatus = async (jobId, newStatus) => {
     try {
       await ApiService.request(`Job/${jobId}/status?newStatus=${newStatus}`, 'PUT');
-      setAlertMsg("Job status updated successfully!");
+      toast.success("Job status updated successfully!");
       setAllJobs(prevJobs =>
         prevJobs.map(job =>
           job.jobId === jobId ? { ...job, status: parseInt(newStatus) } : job
         )
       );
     } catch (error) {
-      setAlertMsg(`Failed to update job status: ${error.message || 'Unknown error'}`);
+      let msg = error?.response?.data;
+      if (typeof msg === 'object' && msg !== null) {
+        msg = msg.message || JSON.stringify(msg);
+      }
+      if (typeof msg !== 'string') {
+        msg = error?.message || 'Unknown error';
+      }
+      if (msg.toLowerCase().includes('expired')) {
+        setShowExpiredModal(true);
+      } else {
+        toast.error(`Failed to update job status: ${msg}`);
+      }
     }
   };
 
@@ -117,22 +219,108 @@ const JobPostManagement = () => {
     const newLockStatus = !isCurrentlyLocked;
     try {
       await ApiService.request(`Job/${jobId}/lock?isLock=${newLockStatus}`, 'PUT');
-      setAlertMsg(`Job ${newLockStatus ? 'locked' : 'unlocked'} successfully!`);
+      toast.success(`Job ${newLockStatus ? 'locked' : 'unlocked'} successfully!`);
       setAllJobs(prevJobs =>
         prevJobs.map(job =>
-          job.jobId === jobId ? { ...job, isLocked: newLockStatus } : job
+          job.jobId === jobId ? { ...job, deactivatedByAdmin: newLockStatus } : job
         )
       );
     } catch (error) {
-      setAlertMsg(`Failed to update lock status: ${error.message || 'Unknown error'}`);
+      let msg = error?.response?.data;
+      if (typeof msg === 'object' && msg !== null) {
+        msg = msg.message || JSON.stringify(msg);
+      }
+      if (typeof msg !== 'string') {
+        msg = error?.message || 'Unknown error';
+      }
+      toast.error(`Failed to update lock status: ${msg}`);
     }
   };
 
-  if (loading) return <div className="page-wrapper dashboard" style={{background:'#f7f8fa', minHeight:'100vh'}}><div className="text-center py-5">Loading...</div></div>;
+  // Helper để xác định trạng thái phụ
+  function getJobDisplayStatus(job) {
+    const now = new Date();
+    if (job.deactivatedByAdmin) return { label: 'Locked', color: 'bg-danger' };
+    // Nếu job pending nhưng đã hết hạn, ưu tiên hiển thị Expired
+    if (job.status === 0) {
+      if (new Date(job.timeEnd) < now) return { label: 'Expired', color: 'bg-dark' };
+      return { label: 'Pending', color: 'bg-warning' };
+    }
+    if (job.status === 1) {
+      if (new Date(job.timeStart) > now) return { label: 'Not Started', color: 'bg-orange' };
+      if (new Date(job.timeEnd) < now) return { label: 'Expired', color: 'bg-dark' };
+      return { label: 'Active', color: 'bg-success' };
+    }
+    if (job.status === 2) {
+      if (new Date(job.timeEnd) < now) return { label: 'Expired', color: 'bg-dark' };
+      if (new Date(job.timeStart) > now && !job.deactivatedByAdmin) return { label: 'Cancelled', color: 'bg-secondary' };
+      return { label: 'Inactive', color: 'bg-secondary' };
+    }
+    return { label: 'Unknown', color: 'bg-secondary' };
+  }
+
+  if (loading) {
+    return (
+      <div className="page-wrapper dashboard" style={{background:'#f7f8fa', minHeight:'100vh'}}>
+        <span className="header-span"></span>
+        <DashboardHeader />
+        <MobileMenu />
+        <DashboardAdminSidebar />
+
+        <section className="user-dashboard">
+          <div className="dashboard-outer">
+            <BreadCrumb title="Job Post Management" />
+            <MenuToggler />
+            
+            <div className="row">
+              <div className="col-lg-12">
+                <div className="ls-widget">
+                  <div className="widget-title d-flex flex-wrap gap-3 justify-content-between align-items-center">
+                    <h4>Job Post List</h4>
+                    <div className="d-flex flex-wrap gap-2 align-items-center">
+                      <div className="skeleton-search" style={{
+                        width: 180,
+                        height: 38,
+                        backgroundColor: '#e9ecef',
+                        borderRadius: 4,
+                        animation: 'pulse 1.5s ease-in-out infinite'
+                      }}></div>
+                      <div className="skeleton-select" style={{
+                        width: 160,
+                        height: 38,
+                        backgroundColor: '#e9ecef',
+                        borderRadius: 4,
+                        animation: 'pulse 1.5s ease-in-out infinite'
+                      }}></div>
+                      <div className="skeleton-select" style={{
+                        width: 120,
+                        height: 38,
+                        backgroundColor: '#e9ecef',
+                        borderRadius: 4,
+                        animation: 'pulse 1.5s ease-in-out infinite'
+                      }}></div>
+                    </div>
+                  </div>
+
+                  <div className="widget-content">
+                    {Array.from({ length: 5 }, (_, index) => (
+                      <JobSkeleton key={index} />
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+    );
+  }
+
   if (error) return <div className="page-wrapper dashboard" style={{background:'#f7f8fa', minHeight:'100vh'}}><div className="text-center py-5 text-danger">{error}</div></div>;
 
   return (
     <>
+    <ToastContainer position="top-right" autoClose={3000} />
     <div className={`page-wrapper dashboard`} style={{background:'#f7f8fa', minHeight:'100vh'}}>
       <span className="header-span"></span>
       <DashboardHeader />
@@ -144,10 +332,19 @@ const JobPostManagement = () => {
           <BreadCrumb title="Job Post Management" />
           <MenuToggler />
           
-          {alertMsg && <div className="alert alert-info alert-dismissible fade show" role="alert" style={{marginBottom: 12}}>
-              {alertMsg}
-              <button type="button" className="btn-close" onClick={() => setAlertMsg("")}></button>
-            </div>}
+          {/* Modal cảnh báo job hết hạn */}
+          <Modal
+            open={showExpiredModal}
+            onClose={() => setShowExpiredModal(false)}
+            title="Cannot update expired job"
+            footer={
+              <button className="btn-confirm" onClick={() => setShowExpiredModal(false)}>
+                Close
+              </button>
+            }
+          >
+            <p>This job has expired and cannot be updated. Please check the job posting time!</p>
+          </Modal>
 
           <div className="row">
             <div className="col-lg-12">
@@ -155,15 +352,16 @@ const JobPostManagement = () => {
                 <div className="widget-title d-flex flex-wrap gap-3 justify-content-between align-items-center">
                   <h4>Job Post List ({filteredJobs.length})</h4>
                   <div className="d-flex flex-wrap gap-2 align-items-center">
-                    <input type="text" className="form-control form-control-sm" style={{width:180}} placeholder="Search job title..." value={searchKeyword} onChange={(e) => {setSearchKeyword(e.target.value); setCurrentPage(1);}} />
-                    <select className="form-select form-select-sm" style={{width:160}} value={selectedCompany} onChange={(e) => {setSelectedCompany(e.target.value); setCurrentPage(1);}}>
-                      <option value="">All Companies</option>
-                      {companies.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-                    </select>
+                    <input type="text" className="form-control form-control-sm" style={{width:180}} placeholder="Search job title..." value={searchKeyword} onChange={(e) => {setSearchKeyword(e.target.value); handleSetPage(1);}} />
+                    <input type="text" className="form-control form-control-sm" style={{width:160}} placeholder="Search company..." value={selectedCompany} onChange={(e) => {setSelectedCompany(e.target.value); handleSetPage(1);}} />
                  
-                    <select className="form-select form-select-sm" style={{width:120}} value={filterStatus} onChange={(e) => {setFilterStatus(e.target.value); setCurrentPage(1);}}>
+                    <select className="form-select form-select-sm" style={{width:120}} value={filterStatus} onChange={(e) => {setFilterStatus(e.target.value); handleSetPage(1);}}>
                       <option value="">All Status</option>
-                      {jobStatuses.map((status, index) => (<option key={index} value={index}>{status}</option>))}
+                      {jobStatuses.map((status, idx) => (<option key={status.value !== undefined ? status.value : `status-${idx}`} value={status.value}>{status.label}</option>))}
+                    </select>
+                    <select className="form-select form-select-sm" style={{width:120}} value={filterLock} onChange={(e) => {setFilterLock(e.target.value); handleSetPage(1);}}>
+                      <option value="">All Lock Status</option>
+                      {lockStatuses.map((status, idx) => (<option key={status.value !== undefined ? status.value : `lock-${idx}`} value={status.value}>{status.label}</option>))}
                     </select>
                   </div>
                 </div>
@@ -173,7 +371,7 @@ const JobPostManagement = () => {
                     <div style={{padding:32, textAlign:'center'}}>No jobs found.</div>
                   ) : (
                     paginatedJobs.map((item) => (
-                      <div className={`job-block ${item.isLocked ? 'locked-job' : ''}`} key={item.jobId}>
+                      <div className={`job-block ${item.deactivatedByAdmin ? 'locked-job' : ''}`} key={item.jobId}>
                         <div className="inner-box d-flex align-items-center justify-content-between">
                           <div className="content">
                             <span className="company-logo">
@@ -185,17 +383,10 @@ const JobPostManagement = () => {
                               <li><span className="icon fa fa-calendar"></span>{new Date(item.timeStart).toLocaleDateString()}</li>
                               <li><span className="icon fa fa-calendar"></span>{new Date(item.timeEnd).toLocaleDateString()}</li>
                               <li>
-                                {item.isLocked ? (
-                                  <span className="badge bg-danger">Locked</span>
-                                ) : (
-                                  <span className={`badge ${
-                                    item.status === 0 ? 'bg-warning' :
-                                    item.status === 1 ? 'bg-success' :
-                                    item.status === 2 ? 'bg-danger' : 'bg-secondary'
-                                  }`}>
-                                    {item.status === 0 ? 'Pending' : item.status === 1 ? 'Approved' : item.status === 2 ? 'Rejected' : 'Unknown'}
-                                  </span>
-                                )}
+                                {(() => {
+                                  const display = getJobDisplayStatus(item);
+                                  return <span className={`badge ${display.color}`}>{display.label}</span>;
+                                })()}
                               </li>
                             </ul>
                           </div>
@@ -204,18 +395,18 @@ const JobPostManagement = () => {
                               className="form-select form-select-sm"
                               value={item.status}
                               onChange={(e) => handleUpdateStatus(item.jobId, e.target.value)}
-                              disabled={item.isLocked}
+                              disabled={item.deactivatedByAdmin}
                               style={{ width: '150px' }}
                             >
-                              {jobStatuses.map((status, index) => (
-                                <option key={index} value={index}>{status}</option>
+                              {jobStatuses.map((status) => (
+                                <option key={status.value} value={status.value}>{status.label}</option>
                               ))}
                             </select>
                             <button
-                              className={`btn btn-sm ${item.isLocked ? 'btn-outline-success' : 'btn-outline-danger'}`}
-                              onClick={() => handleLockJob(item.jobId, item.isLocked)}
+                              className={`btn btn-sm ${item.deactivatedByAdmin ? 'btn-outline-success' : 'btn-outline-danger'}`}
+                              onClick={() => handleLockJob(item.jobId, item.deactivatedByAdmin)}
                             >
-                              {item.isLocked ? 'Unlock' : 'Lock'}
+                              {item.deactivatedByAdmin ? 'Unlock' : 'Lock'}
                             </button>
                           </div>
                         </div>
@@ -223,21 +414,44 @@ const JobPostManagement = () => {
                     ))
                   )}
                   {totalPages > 1 && (
-                    <nav className="mt-3">
-                        <ul className="pagination justify-content-center">
-                            <li className={`page-item ${currentPage === 1 ? 'disabled' : ''}`}>
-                                <button className="page-link" onClick={() => setCurrentPage(currentPage - 1)}>&laquo;</button>
-                            </li>
-                            {Array.from({ length: totalPages }, (_, i) => (
-                                <li key={i + 1} className={`page-item ${currentPage === i + 1 ? 'active' : ''}`}>
-                                    <button className="page-link" onClick={() => setCurrentPage(i + 1)}>{i + 1}</button>
-                                </li>
-                            ))}
-                            <li className={`page-item ${currentPage === totalPages ? 'disabled' : ''}`}>
-                                <button className="page-link" onClick={() => setCurrentPage(currentPage + 1)}>&raquo;</button>
-                            </li>
-                        </ul>
-                    </nav>
+                    <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 16, margin: '24px 0' }}>
+                      <button
+                        disabled={currentPage === 1}
+                        onClick={() => handleSetPage(currentPage - 1)}
+                        style={{ background: 'none', border: 'none', fontSize: 22, cursor: 'pointer', color: currentPage === 1 ? '#ccc' : '#444' }}
+                      >
+                        &#8592;
+                      </button>
+                      {Array.from({ length: totalPages }, (_, i) => (
+                        <button
+                          key={i + 1}
+                          onClick={() => handleSetPage(i + 1)}
+                          style={{
+                            width: 40,
+                            height: 40,
+                            borderRadius: '50%',
+                            background: currentPage === i + 1 ? '#1967d2' : 'none',
+                            color: currentPage === i + 1 ? '#fff' : '#444',
+                            border: 'none',
+                            fontWeight: 600,
+                            fontSize: 18,
+                            cursor: 'pointer',
+                            outline: 'none',
+                            boxShadow: 'none',
+                            transition: 'background 0.2s, color 0.2s'
+                          }}
+                        >
+                          {i + 1}
+                        </button>
+                      ))}
+                      <button
+                        disabled={currentPage === totalPages || totalPages === 0}
+                        onClick={() => handleSetPage(currentPage + 1)}
+                        style={{ background: 'none', border: 'none', fontSize: 22, cursor: 'pointer', color: currentPage === totalPages || totalPages === 0 ? '#ccc' : '#444' }}
+                      >
+                        &#8594;
+                      </button>
+                    </div>
                   )}
                 </div>
               </div>
@@ -254,6 +468,29 @@ const JobPostManagement = () => {
       }
       .page-wrapper.modal-open {
         overflow: hidden;
+      }
+      .bg-orange {
+        background-color: #fd7e14 !important;
+        color: #fff;
+      }
+      .bg-dark {
+        background-color: #343a40 !important;
+        color: #fff;
+      }
+      @keyframes pulse {
+        0% {
+          opacity: 1;
+        }
+        50% {
+          opacity: 0.5;
+        }
+        100% {
+          opacity: 1;
+        }
+      }
+      .skeleton-job .inner-box {
+        background-color: #f8f9fa;
+        border: 1px solid #e9ecef;
       }
     `}</style>
     </>

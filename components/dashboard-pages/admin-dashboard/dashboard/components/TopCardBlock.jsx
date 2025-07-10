@@ -3,12 +3,14 @@
 import { useState, useEffect } from 'react';
 import ApiService from '../../../../../services/api.service';
 import API_CONFIG from '../../../../../config/api.config';
+import jobService from '../../../../../services/jobService';
 
 const TopCardBlock = () => {
   const [stats, setStats] = useState({
     totalUsers: 0,
     totalEmployers: 0,
     activeJobs: 0,
+    totalJobs: 0, // Add total jobs
     applications: {
       submitted: 0,
       processing: 0,
@@ -26,11 +28,10 @@ const TopCardBlock = () => {
         const totalUsers = usersData.filter(user => user.role === 'Candidate').length;
         const totalEmployers = usersData.filter(user => user.role === 'Company').length;
 
-        // Fetch jobs data
-        const jobsData = await ApiService.get('/' + API_CONFIG.ENDPOINTS.JOB.BASE);
-        
-        // Count active jobs
-        const activeJobs = jobsData.filter(job => job.status === 'Active').length;
+        // Fetch jobs data for admin
+        const { data: jobsData, total: totalJobs } = await jobService.getJobs({ role: 'admin', limit: 10000 });
+        // Count active jobs (handle both number and string status)
+        const activeJobs = jobsData.filter(job => job.status === 1 || String(job.status).toLowerCase() === 'active').length;
 
         // Count applications by status
         const applications = {
@@ -43,6 +44,7 @@ const TopCardBlock = () => {
           totalUsers,
           totalEmployers,
           activeJobs,
+          totalJobs, // Set total jobs from service
           applications
         });
       } catch (error) {
@@ -55,70 +57,47 @@ const TopCardBlock = () => {
 
   return (
     <>
-      <div className="col-xl-3 col-md-6 col-sm-12">
-        <div className="ls-widget">
-          <div className="tabs-box">
-            <div className="widget-title">
-              <h4>Candidate Accounts</h4>
-            </div>
-            <div className="widget-content">
-              <div className="number">{stats.totalUsers}</div>
-              <div className="text">Total Candidates</div>
-            </div>
+      <div className="ui-block col-xl-3 col-lg-6 col-md-6 col-sm-12">
+        <div className="ui-item ui-blue">
+          <div className="left">
+            <i className="icon flaticon-briefcase"></i>
+          </div>
+          <div className="right">
+            <h4>{stats.totalJobs}</h4>
+            <p>Posted Jobs</p>
           </div>
         </div>
       </div>
-
-      <div className="col-xl-3 col-md-6 col-sm-12">
-        <div className="ls-widget">
-          <div className="tabs-box">
-            <div className="widget-title">
-              <h4>Company Accounts</h4>
-            </div>
-            <div className="widget-content">
-              <div className="number">{stats.totalEmployers}</div>
-              <div className="text">Total Companies</div>
-            </div>
+      <div className="ui-block col-xl-3 col-lg-6 col-md-6 col-sm-12">
+        <div className="ui-item ui-red">
+          <div className="left">
+            <i className="icon la la-bolt"></i>
+          </div>
+          <div className="right">
+            <h4>{stats.activeJobs}</h4>
+            <p>Active Jobs</p>
           </div>
         </div>
       </div>
-
-      <div className="col-xl-3 col-md-6 col-sm-12">
-        <div className="ls-widget">
-          <div className="tabs-box">
-            <div className="widget-title">
-              <h4>Active Jobs</h4>
-            </div>
-            <div className="widget-content">
-              <div className="number">{stats.activeJobs}</div>
-              <div className="text">Currently Active</div>
-            </div>
+      <div className="ui-block col-xl-3 col-lg-6 col-md-6 col-sm-12">
+        <div className="ui-item ui-yellow">
+          <div className="left">
+            <i className="icon la la-users"></i>
+          </div>
+          <div className="right">
+            <h4>{stats.totalUsers}</h4>
+            <p>Candidate Accounts</p>
           </div>
         </div>
       </div>
-
-      <div className="col-xl-3 col-md-6 col-sm-12">
-        <div className="ls-widget">
-          <div className="tabs-box">
-            <div className="widget-title">
-              <h4>Applications</h4>
-            </div>
-            <div className="widget-content">
-              <div className="row">
-                <div className="col-4">
-                  <div className="number">{stats.applications.submitted}</div>
-                  <div className="text">Submitted</div>
-                </div>
-                <div className="col-4">
-                  <div className="number">{stats.applications.processing}</div>
-                  <div className="text">Processing</div>
-                </div>
-                <div className="col-4">
-                  <div className="number">{stats.applications.interviewing}</div>
-                  <div className="text">Interviewing</div>
-                </div>
-              </div>
-            </div>
+      <div className="ui-block col-xl-3 col-lg-6 col-md-6 col-sm-12">
+        <div className="ui-item ui-green">
+          <div className="left">
+            <i className="icon la la-building"></i>
+          </div>
+          <div className="right">
+            <h4>{stats.totalEmployers}</h4>
+            <p>Company Accounts</p>
           </div>
         </div>
       </div>

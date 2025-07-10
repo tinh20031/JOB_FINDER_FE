@@ -20,7 +20,7 @@ import locationService from "../../../../../services/locationService";
 
 const ReactQuill = dynamic(() => import('react-quill'), { ssr: false });
 
-const PostBoxForm = () => {
+const PostBoxForm = ({ cloneData, isClone }) => {
   const specialisms = [
     { value: "Banking", label: "Banking" },
     { value: "Digital & Creative", label: "Digital & Creative" },
@@ -166,6 +166,7 @@ const PostBoxForm = () => {
 
   // Load draft data on component mount
   useEffect(() => {
+    if (isClone) return; // Nếu là clone, không load draft
     const savedDraft = localStorage.getItem(DRAFT_KEY);
     if (savedDraft) {
       try {
@@ -176,7 +177,7 @@ const PostBoxForm = () => {
         console.error('Error loading draft:', error);
       }
     }
-  }, []);
+  }, [isClone]);
 
   // Check if form has actual changes
   const hasActualChanges = () => {
@@ -580,6 +581,36 @@ const PostBoxForm = () => {
     }
   }, [formData]);
 
+  useEffect(() => {
+    if (isClone && cloneData) {
+      setFormData(prev => ({
+        ...prev,
+        title: cloneData.title || "",
+        description: cloneData.description || "",
+        education: cloneData.education || "",
+        companyId: cloneData.companyId || 0,
+        isSalaryNegotiable: cloneData.isSalaryNegotiable || false,
+        minSalary: cloneData.minSalary || null,
+        maxSalary: cloneData.maxSalary || null,
+        industryId: cloneData.industryId || 0,
+        levelId: cloneData.levelId || 0,
+        jobTypeId: cloneData.jobTypeId || 0,
+        experienceLevelId: cloneData.experienceLevelId || 0,
+        provinceName: cloneData.provinceName || "",
+        addressDetail: cloneData.addressDetail || "",
+        YourSkill: cloneData.yourSkill || "",
+        YourExperience: cloneData.yourExperience || "",
+        DescriptionWeight: cloneData.descriptionWeight ? cloneData.descriptionWeight * 100 : "",
+        SkillsWeight: cloneData.skillsWeight ? cloneData.skillsWeight * 100 : "",
+        ExperienceWeight: cloneData.experienceWeight ? cloneData.experienceWeight * 100 : "",
+        EducationWeight: cloneData.educationWeight ? cloneData.educationWeight * 100 : "",
+        expiryDate: '',
+        timeStart: '',
+        timeEnd: '',
+      }));
+    }
+  }, [isClone, cloneData]);
+
   if (isLoading) {
     return (
       <div className="skeleton-loader">
@@ -664,33 +695,9 @@ const PostBoxForm = () => {
             onClick={e => {
               e.preventDefault();
               setShowSuccessModal(false);
-              setFormData({
-                title: '',
-                description: '',
-                education: '',
-                companyId: 0,
-                isSalaryNegotiable: false,
-                minSalary: null,
-                maxSalary: null,
-                industryId: 0,
-                expiryDate: '',
-                levelId: 0,
-                jobTypeId: 0,
-                experienceLevelId: 0,
-                timeStart: '',
-                timeEnd: '',
-                provinceName: '',
-                addressDetail: '',
-                createdAt: new Date().toISOString(),
-                updatedAt: new Date().toISOString(),
-                YourSkill: '',
-                YourExperience: '',
-                DescriptionWeight: '',
-                SkillsWeight: '',
-                ExperienceWeight: '',
-                EducationWeight: '',
-              });
-              setErrors({});
+              setTimeout(() => {
+                router.push("/employers-dashboard/manage-jobs");
+              }, 100);
             }}
           >
             Close

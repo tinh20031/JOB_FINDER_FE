@@ -1037,6 +1037,11 @@
   resolved "https://registry.npmjs.org/@unrs/resolver-binding-win32-x64-msvc/-/resolver-binding-win32-x64-msvc-1.9.2.tgz"
   integrity sha512-ryoo+EB19lMxAd80ln9BVf8pdOAxLb97amrQ3SFN9OCRn/5M5wvwDgAe4i8ZjhpbiHoDeP8yavcTEnpKBo7lZg==
 
+DatePicker@^2.0.0:
+  version "2.0.0"
+  resolved "https://registry.yarnpkg.com/DatePicker/-/DatePicker-2.0.0.tgz#be3e5f27cba0b935adc95a89123f67f47c63ac1c"
+  integrity sha512-x5zuXdURsRHGtLJAufN+LaR7EaisJ8HUDrfoHmOHQ5xfqYQa35kIwaQQeAQgc14puau2t1A2slDTuKqJwfZAdA==
+
 abort-controller@^3.0.0:
   version "3.0.0"
   resolved "https://registry.npmjs.org/abort-controller/-/abort-controller-3.0.0.tgz"

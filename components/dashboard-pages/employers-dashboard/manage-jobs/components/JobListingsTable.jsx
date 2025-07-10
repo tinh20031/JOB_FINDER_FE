@@ -23,6 +23,8 @@ const JobListingsTable = () => {
   const [pendingStatusJob, setPendingStatusJob] = useState(null);
   const [pendingNewStatus, setPendingNewStatus] = useState(null);
   const [appliedCounts, setAppliedCounts] = useState({});
+  const [showStartDateModal, setShowStartDateModal] = useState(false);
+  const [pendingActivateJob, setPendingActivateJob] = useState(null);
   const userRole = (typeof window !== 'undefined' && (localStorage.getItem('role') || Cookies?.get?.('role') || ''))?.toLowerCase();
 
   useEffect(() => {
@@ -36,15 +38,14 @@ const JobListingsTable = () => {
           jobsResponse,
           companiesResponse,
         ] = await Promise.all([
-          jobService.getJobs(),
+          jobService.getJobs({ role: 'company', companyId: userId }),
           jobService.getCompanies(),
         ]);
 
         console.log('Raw jobs data from API:', jobsResponse.data);
 
-        // Filter jobs for current company
-        const filteredJobs = jobsResponse.data.filter(job => job.companyId === parseInt(userId));
-        setJobs(filteredJobs);
+        // Không cần filter lại ở FE nữa
+        setJobs(jobsResponse.data);
 
         // Set companies data
         const companiesMap = companiesResponse.reduce((acc, company) => {
@@ -95,8 +96,8 @@ const JobListingsTable = () => {
     try {
       await jobService.updateJobStatus(job.id, newStatus);
       // Sau khi đổi status, reload lại jobs
-      const jobsResponse = await jobService.getJobs();
-      setJobs(jobsResponse.data.filter(j => j.companyId === parseInt(currentUserId)));
+      const jobsResponse = await jobService.getJobs({ role: 'company', companyId: currentUserId });
+      setJobs(jobsResponse.data);
     } catch (err) {
       alert('Failed to update status: ' + (err?.response?.data || err.message));
     } finally {
@@ -109,8 +110,8 @@ const JobListingsTable = () => {
     setLockLoadingId(job.id);
     try {
       await jobService.lockJob(job.id, !job.deactivatedByAdmin);
-      const jobsResponse = await jobService.getJobs();
-      setJobs(jobsResponse.data.filter(j => j.companyId === parseInt(currentUserId)));
+      const jobsResponse = await jobService.getJobs({ role: 'company', companyId: currentUserId });
+      setJobs(jobsResponse.data);
     } catch (err) {
       alert('Failed to lock/unlock: ' + (err?.response?.data || err.message));
     } finally {
@@ -138,6 +139,9 @@ const JobListingsTable = () => {
     setPendingStatusJob(null);
     setPendingNewStatus(null);
   };
+
+  const now = new Date();
+  const isBeforeStart = (job) => new Date(job.timeStart) > now;
 
   // Animation variants cho modal
   const modalVariants = {
@@ -185,6 +189,24 @@ const JobListingsTable = () => {
       </table>
     </div>
   );
+
+  // Hàm xác định trạng thái hiển thị cho công ty
+  function getCompanyJobStatus(job) {
+    const now = new Date();
+    if (job.deactivatedByAdmin) return "Locked";
+    if (job.status === 0) return "Pending";
+    if (job.status === 1) {
+      if (new Date(job.timeStart) > now) return "Not Started";
+      if (new Date(job.timeEnd) < now) return "Expired";
+      return "Active";
+    }
+    if (job.status === 2) {
+      if (new Date(job.timeEnd) < now) return "Expired";
+      if (new Date(job.timeStart) > now && !job.deactivatedByAdmin) return "Cancelled";
+      return "Inactive";
+    }
+    return "Unknown";
+  }
 
   if (loading) {
     return <TableSkeleton />;
@@ -277,15 +299,7 @@ const JobListingsTable = () => {
                         {formatDateVN(job.timeEnd)}
                       </td>
                       <td className="status">
-                        {job.status === 0 ? (
-                          <span className="status-pending">Pending</span>
-                        ) : job.status === 1 ? (
-                          <span className="status-active">Active</span>
-                        ) : job.status === 2 ? (
-                          <span className="status-inactive">Inactive</span>
-                        ) : (
-                          <span className="status-unknown">Unknown</span>
-                        )}
+                        <span className={`status-${getCompanyJobStatus(job).toLowerCase().replace(/[^a-z]/g, '-')}`}>{getCompanyJobStatus(job)}</span>
                       </td>
                       <td>
                         <div className="option-box">
@@ -313,7 +327,14 @@ const JobListingsTable = () => {
                                 <button
                                   disabled={disableStatusButton || statusLoadingId === job.id}
                                   style={disableStatusButton ? { opacity: 0.5, cursor: 'not-allowed' } : {}}
-                                  onClick={() => handleRequestChangeStatus(job, job.status === 1 ? 'inactive' : 'active')}
+                                  onClick={() => {
+                                    if (job.status !== 1 && isBeforeStart(job)) {
+                                      setPendingActivateJob(job);
+                                      setShowStartDateModal(true);
+                                    } else {
+                                      handleRequestChangeStatus(job, job.status === 1 ? 'inactive' : 'active');
+                                    }
+                                  }}
                                   data-text={job.status === 1 ? 'Deactivate' : 'Activate'}
                                 >
                                   {statusLoadingId === job.id ? (
@@ -358,6 +379,14 @@ const JobListingsTable = () => {
                                 </li>
                               </>
                             )}
+                            <li>
+                              <button
+                                onClick={() => router.push(`/employers-dashboard/clone-job/${job.id}`)}
+                                data-text="Clone Job"
+                              >
+                                <span className="la la-copy"></span>
+                              </button>
+                            </li>
                           </ul>
                         </div>
                       </td>
@@ -388,6 +417,20 @@ const JobListingsTable = () => {
         </p>
       </Modal>
 
+      <Modal
+        open={showStartDateModal}
+        onClose={() => setShowStartDateModal(false)}
+        title="Cannot Activate Job"
+        footer={
+          <button className="btn-confirm" onClick={() => setShowStartDateModal(false)}>OK</button>
+        }
+      >
+        <p>
+          The job <b>{pendingActivateJob?.jobTitle}</b> cannot be activated before its start date (<b>{formatDateVN(pendingActivateJob?.timeStart)}</b>).<br/>
+          You can only activate this job on or after its start date.
+        </p>
+      </Modal>
+
       <style jsx>{`
         .skeleton-applied {
           background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 37%, #f0f0f0 63%);
@@ -403,6 +446,8 @@ const JobListingsTable = () => {
           0% { background-position: 100% 50%; }
           100% { background-position: 0 50%; }
         }
+        .status-scheduled--not-started { color: #f0ad4e; font-weight: bold; }
+        .status-locked { color: #d9534f; font-weight: bold; }
       `}</style>
     </>
   );

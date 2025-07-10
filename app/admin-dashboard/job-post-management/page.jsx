@@ -2,7 +2,7 @@ import JobPostManagement from '@/components/dashboard-pages/admin-dashboard/job-
 
 export const metadata = {
   title: "Job Post Management | Admin Dashboard",
-  description: "Quản lý bài đăng hệ thống",
+  description: "Job Post Management",
 };
 
 const index = () => {
