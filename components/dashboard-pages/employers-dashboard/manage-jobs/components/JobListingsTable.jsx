@@ -4,7 +4,7 @@ import Link from "next/link";
 import Image from "next/image.js";
 import { useEffect, useState } from "react";
 import { jobService } from "../../../../../services/jobService";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import "./JobListingsTable.css";
 import Cookies from "js-cookie";
 import { motion, AnimatePresence } from 'framer-motion';
@@ -12,6 +12,7 @@ import Modal from "@/components/common/Modal";
 import "@/styles/modal.css";
 
 const JobListingsTable = () => {
+  const searchParams = useSearchParams();
   const router = useRouter();
   const [jobs, setJobs] = useState([]);
   const [companies, setCompanies] = useState({});
@@ -26,6 +27,11 @@ const JobListingsTable = () => {
   const [showStartDateModal, setShowStartDateModal] = useState(false);
   const [pendingActivateJob, setPendingActivateJob] = useState(null);
   const userRole = (typeof window !== 'undefined' && (localStorage.getItem('role') || Cookies?.get?.('role') || ''))?.toLowerCase();
+  const [currentPage, setCurrentPage] = useState(1);
+  const jobsPerPage = 10;
+  const [filterStatus, setFilterStatus] = useState('all');
+  const [filterTime, setFilterTime] = useState('all');
+  const [searchTitle, setSearchTitle] = useState('');
 
   useEffect(() => {
     const fetchData = async () => {
@@ -41,8 +47,6 @@ const JobListingsTable = () => {
           jobService.getJobs({ role: 'company', companyId: userId }),
           jobService.getCompanies(),
         ]);
-
-        console.log('Raw jobs data from API:', jobsResponse.data);
 
         // Không cần filter lại ở FE nữa
         setJobs(jobsResponse.data);
@@ -74,6 +78,24 @@ const JobListingsTable = () => {
     };
     if (jobs && jobs.length > 0) fetchCounts();
   }, [jobs]);
+
+  // Khi mount, đọc page từ query string
+  useEffect(() => {
+    const pageParam = searchParams.get('page');
+    if (pageParam && !isNaN(Number(pageParam)) && Number(pageParam) > 0) {
+      setCurrentPage(Number(pageParam));
+    } else {
+      setCurrentPage(1);
+    }
+  }, [searchParams]);
+
+  // Khi đổi trang, cập nhật query string
+  const handleSetPage = (page) => {
+    const params = new URLSearchParams(Array.from(searchParams.entries()));
+    params.set('page', page);
+    router.replace(`?${params.toString()}`);
+    setCurrentPage(page);
+  };
 
   const handleViewJob = (jobId) => {
     router.push(`/job-single-v3/${jobId}`);
@@ -208,6 +230,34 @@ const JobListingsTable = () => {
     return "Unknown";
   }
 
+  // Filter jobs theo trạng thái, thời gian, tên job
+  const filteredJobs = jobs.filter(job => {
+    // Filter trạng thái
+    if (filterStatus !== 'all') {
+      const status = getCompanyJobStatus(job).toLowerCase();
+      if (status !== filterStatus) return false;
+    }
+    // Filter theo tên job
+    if (searchTitle.trim() && !job.jobTitle.toLowerCase().includes(searchTitle.trim().toLowerCase())) {
+      return false;
+    }
+    // Filter theo thời gian
+    if (filterTime !== 'all') {
+      const now = new Date();
+      const created = new Date(job.timeStart);
+      let diff = (now - created) / (1000 * 60 * 60 * 24); // số ngày
+      if (filterTime === '7d' && diff > 7) return false;
+      if (filterTime === '30d' && diff > 30) return false;
+      if (filterTime === '6m' && diff > 183) return false;
+      if (filterTime === '12m' && diff > 365) return false;
+      if (filterTime === '5y' && diff > 1825) return false;
+    }
+    return true;
+  });
+  // Pagination logic
+  const totalPages = Math.ceil(filteredJobs.length / jobsPerPage);
+  const paginatedJobs = filteredJobs.slice((currentPage-1)*jobsPerPage, currentPage*jobsPerPage);
+
   if (loading) {
     return <TableSkeleton />;
   }
@@ -221,20 +271,39 @@ const JobListingsTable = () => {
       <div className="tabs-box">
         <div className="widget-title">
           <h4>My Job Listings</h4>
-
-          <div className="chosen-outer">
-            {/* <!--Tabs Box--> */}
-            <select className="chosen-single form-select">
-              <option>Last 6 Months</option>
-              <option>Last 12 Months</option>
-              <option>Last 16 Months</option>
-              <option>Last 24 Months</option>
-              <option>Last 5 year</option>
+          <div className="chosen-outer" style={{display:'flex', alignItems:'center', gap:8}}>
+            {/* Search job title bên trái cùng */}
+            <input
+              type="text"
+              className="job-search-input"
+              placeholder="Search job title..."
+              value={searchTitle}
+              onChange={e=>{setSearchTitle(e.target.value); setCurrentPage(1);}}
+              style={{minWidth:180, maxWidth:220}}
+            />
+            {/* Filter theo trạng thái */}
+            <select className="chosen-single form-select" value={filterStatus} onChange={e=>{setFilterStatus(e.target.value); setCurrentPage(1);}}>
+              <option value="all">All Status</option>
+              <option value="active">Active</option>
+              <option value="expired">Expired</option>
+              <option value="pending">Pending</option>
+              <option value="locked">Locked</option>
+              <option value="cancelled">Cancelled</option>
+              <option value="not started">Not Started</option>
+              <option value="inactive">Inactive</option>
+            </select>
+            {/* Filter theo thời gian */}
+            <select className="chosen-single form-select" value={filterTime} onChange={e=>{setFilterTime(e.target.value); setCurrentPage(1);}}>
+              <option value="all">All Time</option>
+              <option value="7d">Last 7 days</option>
+              <option value="30d">Last 30 days</option>
+              <option value="6m">Last 6 months</option>
+              <option value="12m">Last 12 months</option>
+              <option value="5y">Last 5 years</option>
             </select>
           </div>
         </div>
         {/* End filter top bar */}
-
         {/* Start table widget content */}
         <div className="widget-content">
           <div className="table-outer">
@@ -248,9 +317,8 @@ const JobListingsTable = () => {
                   <th>Action</th>
                 </tr>
               </thead>
-
               <tbody>
-                {jobs.map((job) => {
+                {paginatedJobs.map((job) => {
                   const isPending = job.status === 0;
                   const isExpired = new Date(job.timeEnd) < new Date();
                   const isLocked = job.deactivatedByAdmin;
@@ -393,8 +461,46 @@ const JobListingsTable = () => {
                     </tr>
                   );
                 })}
+                {paginatedJobs.length === 0 && (
+                  <tr><td colSpan={5}>No jobs found</td></tr>
+                )}
               </tbody>
             </table>
+            {/* Pagination UI */}
+            {filteredJobs.length > 0 && (
+              <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 16, margin: '24px 0' }}>
+                <button
+                  disabled={currentPage === 1}
+                  onClick={() => handleSetPage(currentPage - 1)}
+                  style={{ background: 'none', border: 'none', fontSize: 22, cursor: 'pointer', color: currentPage === 1 ? '#ccc' : '#444' }}
+                >&#8592;</button>
+                {Array.from({ length: totalPages }, (_, i) => (
+                  <button
+                    key={i + 1}
+                    onClick={() => handleSetPage(i + 1)}
+                    style={{
+                      width: 40,
+                      height: 40,
+                      borderRadius: '50%',
+                      background: currentPage === i + 1 ? '#1967d2' : 'none',
+                      color: currentPage === i + 1 ? '#fff' : '#444',
+                      border: 'none',
+                      fontWeight: 600,
+                      fontSize: 18,
+                      cursor: 'pointer',
+                      outline: 'none',
+                      boxShadow: 'none',
+                      transition: 'background 0.2s, color 0.2s'
+                    }}
+                  >{i + 1}</button>
+                ))}
+                <button
+                  disabled={currentPage === totalPages || totalPages === 0}
+                  onClick={() => handleSetPage(currentPage + 1)}
+                  style={{ background: 'none', border: 'none', fontSize: 22, cursor: 'pointer', color: currentPage === totalPages || totalPages === 0 ? '#ccc' : '#444' }}
+                >&#8594;</button>
+              </div>
+            )}
           </div>
         </div>
         {/* End table widget content */}
@@ -448,6 +554,27 @@ const JobListingsTable = () => {
         }
         .status-scheduled--not-started { color: #f0ad4e; font-weight: bold; }
         .status-locked { color: #d9534f; font-weight: bold; }
+        .job-search-input {
+          background: #f6f8fa;
+          border: 1px solid #e0e0e0;
+          border-radius: 8px;
+          height: 44px;
+          min-width: 180px;
+          max-width: 220px;
+          padding: 0 16px;
+          font-size: 16px;
+          color: #444;
+          transition: background 0.2s, border 0.2s;
+          outline: none;
+          box-shadow: none;
+          margin-right: 0;
+          font-weight: 400;
+        }
+        .job-search-input:focus {
+          background: #fff;
+          border: 1.5px solid #1967d2;
+          color: #222;
+        }
       `}</style>
     </>
   );

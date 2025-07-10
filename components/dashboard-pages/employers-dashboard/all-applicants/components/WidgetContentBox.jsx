@@ -9,7 +9,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { CircularProgressbar, buildStyles } from 'react-circular-progressbar';
 import 'react-circular-progressbar/dist/styles.css';
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 
 // Helper function to validate image URLs
 const getValidImageUrl = (url) => {
@@ -126,6 +126,7 @@ const ApplicantModal = ({ applicationId, show, onClose }) => {
 };
 
 const WidgetContentBox = ({ jobId, candidateName }) => {
+  const searchParams = useSearchParams();
   const router = useRouter();
   const [applicants, setApplicants] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -140,16 +141,13 @@ const WidgetContentBox = ({ jobId, candidateName }) => {
   const [jobCounts, setJobCounts] = useState({});
 
   useEffect(() => {
-    console.log("WidgetContentBox: useEffect triggered for jobId:", jobId);
     const fetchData = async () => {
       if (!jobId) {
-        console.log("WidgetContentBox: jobId is null or undefined.");
         setLoading(false);
         return;
       }
       try {
         setLoading(true);
-        console.log("WidgetContentBox: Attempting to fetch job details for jobId:", jobId);
         const jobDetails = await jobService.getJobById(jobId);
         if (jobDetails && jobDetails.title) {
           setJobTitle(jobDetails.title);
@@ -158,11 +156,8 @@ const WidgetContentBox = ({ jobId, candidateName }) => {
           setJobTitle(`Job ID: ${jobId}`);
           setJobDetails(null);
         }
-        console.log("WidgetContentBox: Job details fetched.", jobDetails);
 
-        console.log("WidgetContentBox: Attempting to fetch applicants for jobId:", jobId);
         const response = await applicationService.getJobApplicants(jobId);
-        console.log("WidgetContentBox: API Response data (applications only):", response);
 
         if (response && response.length > 0) {
           const applicantsWithAllDetails = await Promise.allSettled(
@@ -234,6 +229,24 @@ const WidgetContentBox = ({ jobId, candidateName }) => {
     };
     fetchJobCounts();
   }, [applicants, jobDetails?.companyId]);
+
+  // Khi mount, đọc page từ query string
+  useEffect(() => {
+    const pageParam = searchParams.get('page');
+    if (pageParam && !isNaN(Number(pageParam)) && Number(pageParam) > 0) {
+      setCurrentPage(Number(pageParam));
+    } else {
+      setCurrentPage(1);
+    }
+  }, [searchParams]);
+
+  // Khi đổi trang, cập nhật query string
+  const handleSetPage = (page) => {
+    const params = new URLSearchParams(Array.from(searchParams.entries()));
+    params.set('page', page);
+    router.replace(`?${params.toString()}`);
+    setCurrentPage(page);
+  };
 
   const totalApplicants = applicants.length;
   const approvedApplicants = applicants.filter(app => (app.status === 'Approved' || app.status === 1) && app.candidateProfile).length;
@@ -434,13 +447,13 @@ const WidgetContentBox = ({ jobId, candidateName }) => {
                 })}
               </div>
               <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 16, margin: '24px 0' }}>
-                <button disabled={currentPage === 1} onClick={() => setCurrentPage(currentPage - 1)} style={{ background: 'none', border: 'none', fontSize: 22, cursor: 'pointer', color: currentPage === 1 ? '#ccc' : '#444' }}>
+                <button disabled={currentPage === 1} onClick={() => handleSetPage(currentPage - 1)} style={{ background: 'none', border: 'none', fontSize: 22, cursor: 'pointer', color: currentPage === 1 ? '#ccc' : '#444' }}>
                   &#8592;
                 </button>
                 {Array.from({ length: totalPages || 1 }, (_, i) => (
                   <button
                     key={i + 1}
-                    onClick={() => setCurrentPage(i + 1)}
+                    onClick={() => handleSetPage(i + 1)}
                     style={{
                       width: 40,
                       height: 40,
@@ -459,7 +472,7 @@ const WidgetContentBox = ({ jobId, candidateName }) => {
                     {i + 1}
                   </button>
                 ))}
-                <button disabled={currentPage === totalPages || totalPages === 0} onClick={() => setCurrentPage(currentPage + 1)} style={{ background: 'none', border: 'none', fontSize: 22, cursor: 'pointer', color: currentPage === totalPages || totalPages === 0 ? '#ccc' : '#444' }}>
+                <button disabled={currentPage === totalPages || totalPages === 0} onClick={() => handleSetPage(currentPage + 1)} style={{ background: 'none', border: 'none', fontSize: 22, cursor: 'pointer', color: currentPage === totalPages || totalPages === 0 ? '#ccc' : '#444' }}>
                   &#8594;
                 </button>
               </div>
