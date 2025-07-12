@@ -5,6 +5,25 @@ import { jobService } from "../../../services/jobService";
 import Image from "next/image";
 import { useFavoriteJobs } from "../../../contexts/FavoriteJobsContext";
 import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useSelector, useDispatch } from "react-redux";
+import {
+  addCategory,
+  addDatePosted,
+  addDestination,
+  addKeyword,
+  addLocation,
+  addSalary,
+  addSort,
+  addTag,
+  clearExperience,
+  clearJobType,
+} from "../../../features/filter/filterSlice";
+import {
+  clearDatePostToggle,
+  clearExperienceToggle,
+  clearJobTypeToggle,
+} from "../../../features/job/jobSlice";
 
 const FavoriteJobsBox = () => {
   const [jobs, setJobs] = useState([]);
@@ -12,6 +31,29 @@ const FavoriteJobsBox = () => {
   const [error, setError] = useState(null);
   const userId = typeof window !== 'undefined' ? Number(localStorage.getItem('userId')) : null;
   const { updateFavoriteJobs, favoriteJobIds } = useFavoriteJobs();
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const dispatch = useDispatch();
+  const [jobsPerPage, setJobsPerPage] = useState(8);
+
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+
+  useEffect(() => {
+    const pageParam = searchParams.get('page');
+    if (pageParam && !isNaN(Number(pageParam)) && Number(pageParam) > 0) {
+      setCurrentPage(Number(pageParam));
+    } else {
+      setCurrentPage(1);
+    }
+  }, [searchParams]);
+
+  const handleSetPage = (page) => {
+    const params = new URLSearchParams(Array.from(searchParams.entries()));
+    params.set('page', page);
+    router.replace(`?${params.toString()}`);
+    setCurrentPage(page);
+  };
 
   useEffect(() => {
     const fetchFavoriteJobs = async () => {
@@ -49,9 +91,124 @@ const FavoriteJobsBox = () => {
     }
   };
 
+  // Lấy filter từ Redux
+  const { jobList, jobSort } = useSelector((state) => state.filter);
+  const { keyword, location, destination, category, jobType, datePosted, experience, salary, tag } = jobList || {};
+  const { sort } = jobSort;
+
+  // Các hàm filter giống FilterJobsBox
+  const keywordFilter = (item) => keyword ? item.jobTitle?.toLowerCase().includes(keyword.toLowerCase()) : true;
+  const locationFilter = (item) => location ? item?.provinceName?.toLowerCase().includes(location.toLowerCase()) || item?.location?.toLowerCase().includes(location.toLowerCase()) : true;
+  const categoryFilter = (item) => category ? String(item?.industryId) === String(category) : true;
+  const jobTypeFilter = (item) => jobType?.length ? jobType.includes(item.jobTypeId) : true;
+  const datePostedFilter = (item) => {
+    if (!datePosted || datePosted === "all") return true;
+    const now = new Date();
+    const created = new Date(item.createdAt);
+    switch (datePosted) {
+      case "last-hour":
+        return (now - created) <= 60 * 60 * 1000;
+      case "last-24-hour":
+        return (now - created) <= 24 * 60 * 60 * 1000;
+      case "last-7-days":
+        return (now - created) <= 7 * 24 * 60 * 60 * 1000;
+      case "last-14-days":
+        return (now - created) <= 14 * 24 * 60 * 60 * 1000;
+      case "last-30-days":
+        return (now - created) <= 30 * 24 * 60 * 60 * 1000;
+      default:
+        return true;
+    }
+  };
+  const experienceFilter = (item) => experience?.length ? experience.includes(item.experienceLevelId) : true;
+  const salaryFilter = (item) => salary?.min === 0 && salary?.max === 20000 ? true : item.minSalary >= salary?.min && item.maxSalary <= salary?.max;
+  const tagFilter = (item) => tag ? String(item?.industryId) === String(tag) : true;
+  const sortFilter = (a, b) => {
+    if (sort === "CreatedAtDesc") {
+      return new Date(b.createdAt) - new Date(a.createdAt);
+    } else if (sort === "CreatedAtAsc") {
+      return new Date(a.createdAt) - new Date(b.createdAt);
+    }
+    return 0;
+  };
+
+  // Lọc danh sách job yêu thích trước khi phân trang
+  const filteredJobs = jobs
+    .filter(keywordFilter)
+    .filter(locationFilter)
+    .filter(categoryFilter)
+    .filter(jobTypeFilter)
+    .filter(datePostedFilter)
+    .filter(experienceFilter)
+    .filter(salaryFilter)
+    .filter(tagFilter)
+    .sort(sortFilter);
+
+  // Đảm bảo dùng jobsPerPage thay cho số cứng khi phân trang
+  const totalPages = Math.ceil(filteredJobs.length / jobsPerPage);
+  const paginatedJobs = filteredJobs.slice((currentPage-1)*jobsPerPage, currentPage*jobsPerPage);
+
   return (
     <>
       <h3 style={{marginBottom: 24}}>Your Favorite Jobs</h3>
+      <div className="ls-switcher" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
+        <div className="show-result">
+          Show <strong>{paginatedJobs.length}</strong> of <strong>{filteredJobs.length}</strong> jobs
+        </div>
+        <div className="sort-by" style={{ display: "flex", gap: 8 }}>
+          {(keyword !== "" ||
+            location !== "" ||
+            destination?.min !== 0 ||
+            destination?.max !== 100 ||
+            category !== "" ||
+            jobType?.length !== 0 ||
+            datePosted !== "" ||
+            experience?.length !== 0 ||
+            salary?.min !== 0 ||
+            salary?.max !== 20000 ||
+            tag !== "" ||
+            sort !== "" ||
+            currentPage !== 1 ||
+            jobsPerPage !== 8) ? (
+            <button
+              onClick={() => {
+                dispatch(addKeyword(""));
+                dispatch(addLocation(""));
+                dispatch(addDestination({ min: 0, max: 100 }));
+                dispatch(addCategory(""));
+                dispatch(clearJobType());
+                dispatch(clearJobTypeToggle());
+                dispatch(addDatePosted(""));
+                dispatch(clearDatePostToggle());
+                dispatch(clearExperience());
+                dispatch(clearExperienceToggle());
+                dispatch(addSalary({ min: 0, max: 20000 }));
+                dispatch(addTag(""));
+                dispatch(addSort(""));
+                setCurrentPage(1);
+                setJobsPerPage(8);
+              }}
+              className="btn btn-danger text-nowrap me-2"
+              style={{ minHeight: "45px", marginBottom: "15px" }}
+            >
+              Clear All
+            </button>
+          ) : undefined}
+
+          <select
+            value={sort}
+            className="chosen-single form-select"
+            onChange={(e) => {
+              dispatch(addSort(e.target.value));
+              setCurrentPage(1);
+            }}
+          >
+            <option value="">Sort by (default)</option>
+            <option value="CreatedAtAsc">Newest</option>
+            <option value="CreatedAtDesc">Oldest</option>
+          </select>
+        </div>
+      </div>
       {loading ? (
         <>
           <div className="row">
@@ -85,8 +242,9 @@ const FavoriteJobsBox = () => {
       ) : jobs.length === 0 ? (
         <div>No favorite jobs found.</div>
       ) : (
+        <>
         <div className="row">
-          {jobs.map((item, index) => (
+          {paginatedJobs.map((item, index) => (
             <div key={item.id || index} className="job-block col-12 mb-4" style={{ position: 'relative' }}>
               <div className="inner-box">
                 <div className="content">
@@ -198,6 +356,42 @@ const FavoriteJobsBox = () => {
             </div>
           ))}
         </div>
+        {/* Pagination UI */}
+        {jobs.length > 0 && (
+          <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 16, margin: '24px 0' }}>
+            <button
+              disabled={currentPage === 1}
+              onClick={() => handleSetPage(currentPage - 1)}
+              style={{ background: 'none', border: 'none', fontSize: 22, cursor: 'pointer', color: currentPage === 1 ? '#ccc' : '#444' }}
+            >&#8592;</button>
+            {Array.from({ length: totalPages }, (_, i) => (
+              <button
+                key={i + 1}
+                onClick={() => handleSetPage(i + 1)}
+                style={{
+                  width: 40,
+                  height: 40,
+                  borderRadius: '50%',
+                  background: currentPage === i + 1 ? '#1967d2' : 'none',
+                  color: currentPage === i + 1 ? '#fff' : '#444',
+                  border: 'none',
+                  fontWeight: 600,
+                  fontSize: 18,
+                  cursor: 'pointer',
+                  outline: 'none',
+                  boxShadow: 'none',
+                  transition: 'background 0.2s, color 0.2s'
+                }}
+              >{i + 1}</button>
+            ))}
+            <button
+              disabled={currentPage === totalPages || totalPages === 0}
+              onClick={() => handleSetPage(currentPage + 1)}
+              style={{ background: 'none', border: 'none', fontSize: 22, cursor: 'pointer', color: currentPage === totalPages || totalPages === 0 ? '#ccc' : '#444' }}
+            >&#8594;</button>
+          </div>
+        )}
+        </>
       )}
     </>
   );

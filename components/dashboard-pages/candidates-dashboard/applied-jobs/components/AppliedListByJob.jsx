@@ -1,6 +1,6 @@
 'use client';
 import { useEffect, useState } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { applicationService } from "@/services/applicationService";
 import MobileMenu from "../../../../header/MobileMenu";
 import DashboardCandidatesHeader from "../../../../header/DashboardCandidatesHeader";
@@ -54,16 +54,40 @@ const statusMap = {
 
 const AppliedListByJob = () => {
   const params = useParams();
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const jobId = params?.jobId;
   const [applications, setApplications] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [showModal, setShowModal] = useState(false);
   const [modalContent, setModalContent] = useState("");
+  
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const applicationsPerPage = 5;
 
   const handleShowModal = (content) => {
     setModalContent(content);
     setShowModal(true);
+  };
+
+  // Khi mount, đọc page từ query string
+  useEffect(() => {
+    const pageParam = searchParams.get('page');
+    if (pageParam && !isNaN(Number(pageParam)) && Number(pageParam) > 0) {
+      setCurrentPage(Number(pageParam));
+    } else {
+      setCurrentPage(1);
+    }
+  }, [searchParams]);
+
+  // Khi đổi trang, cập nhật query string
+  const handleSetPage = (page) => {
+    const params = new URLSearchParams(Array.from(searchParams.entries()));
+    params.set('page', page);
+    router.replace(`?${params.toString()}`);
+    setCurrentPage(page);
   };
 
   useEffect(() => {
@@ -83,6 +107,10 @@ const AppliedListByJob = () => {
     };
     fetchData();
   }, [jobId]);
+
+  // Pagination logic
+  const totalPages = Math.ceil(applications.length / applicationsPerPage);
+  const paginatedApplications = applications.slice((currentPage-1)*applicationsPerPage, currentPage*applicationsPerPage);
 
   return (
     <div className="page-wrapper dashboard">
@@ -120,7 +148,7 @@ const AppliedListByJob = () => {
                             </tr>
                           </thead>
                           <tbody>
-                            {applications.map(app => (
+                            {paginatedApplications.map(app => (
                               <tr key={app.applicationId}>
                                 <td>
                                   {new Date(app.submittedAt).toLocaleTimeString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh', hour12: false })} {new Date(app.submittedAt).toLocaleDateString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh' })}
@@ -155,8 +183,8 @@ const AppliedListByJob = () => {
                                     </button>
                                   )}
                                 </td>
-                                <td>
-                                  <ul className="option-list" style={{margin: 0, padding: 0, listStyle: 'none'}}>
+                                <td style={{ textAlign: 'center' }}>
+                                  <ul className="option-list" style={{margin: 0, padding: 0, listStyle: 'none', display: 'flex', justifyContent: 'center', alignItems: 'center'}}>
                                     <li>
                                       <button
                                         data-text="View CV"
@@ -169,8 +197,48 @@ const AppliedListByJob = () => {
                                 </td>
                               </tr>
                             ))}
+                            {paginatedApplications.length === 0 && applications.length > 0 && (
+                              <tr><td colSpan={3}>No applications found on this page</td></tr>
+                            )}
                           </tbody>
                         </table>
+                        
+                        {/* Pagination UI */}
+                        {applications.length > 0 && (
+                          <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 16, margin: '24px 0' }}>
+                            <button
+                              disabled={currentPage === 1}
+                              onClick={() => handleSetPage(currentPage - 1)}
+                              style={{ background: 'none', border: 'none', fontSize: 22, cursor: 'pointer', color: currentPage === 1 ? '#ccc' : '#444' }}
+                            >&#8592;</button>
+                            {Array.from({ length: totalPages }, (_, i) => (
+                              <button
+                                key={i + 1}
+                                onClick={() => handleSetPage(i + 1)}
+                                style={{
+                                  width: 40,
+                                  height: 40,
+                                  borderRadius: '50%',
+                                  background: currentPage === i + 1 ? '#1967d2' : 'none',
+                                  color: currentPage === i + 1 ? '#fff' : '#444',
+                                  border: 'none',
+                                  fontWeight: 600,
+                                  fontSize: 18,
+                                  cursor: 'pointer',
+                                  outline: 'none',
+                                  boxShadow: 'none',
+                                  transition: 'background 0.2s, color 0.2s'
+                                }}
+                              >{i + 1}</button>
+                            ))}
+                            <button
+                              disabled={currentPage === totalPages || totalPages === 0}
+                              onClick={() => handleSetPage(currentPage + 1)}
+                              style={{ background: 'none', border: 'none', fontSize: 22, cursor: 'pointer', color: currentPage === totalPages || totalPages === 0 ? '#ccc' : '#444' }}
+                            >&#8594;</button>
+                          </div>
+                        )}
+                        
                         {showModal && (
                           <div className="modal-overlay">
                             <div className="modal-content">
