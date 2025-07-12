@@ -69,5 +69,12 @@ module.exports = [
     routePath: "/candidates-dashboard/favorite-companies",
     active: "",
   },
+  {
+    id: 14,
+    name: "CV Matching History",
+    icon: "la-search",
+    routePath: "/candidates-dashboard/cv-matching-history",
+    active: "",
+  },
 
 ];

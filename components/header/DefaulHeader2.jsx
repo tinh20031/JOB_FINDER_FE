@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useSelector, useDispatch } from 'react-redux';
 import { clearLoginState, setLoginState } from '@/features/auth/authSlice';
 import { authService } from "@/services/authService";
@@ -48,6 +48,27 @@ const DefaulHeader2 = () => {
   const { favoriteCount } = useFavoriteJobs();
   const [isFavoriteLoading, setIsFavoriteLoading] = useState(true);
   const userId = typeof window !== 'undefined' ? Number(localStorage.getItem('userId')) : null;
+
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const dropdownRef = useRef(null);
+
+  const handleDropdownToggle = () => setDropdownOpen((open) => !open);
+  const handleDropdownClose = () => setDropdownOpen(false);
+
+  // Đóng dropdown khi click ra ngoài
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setDropdownOpen(false);
+      }
+    };
+    if (dropdownOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [dropdownOpen]);
 
   useEffect(() => {
     if (typeof window !== 'undefined' && isLoggedIn) {
@@ -218,8 +239,14 @@ const DefaulHeader2 = () => {
                   </button>
                 </Link>
               )}
-              <div className="dropdown dashboard-option">
-                <a className="dropdown-toggle" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+              <div className="dropdown dashboard-option" ref={dropdownRef}>
+                <button
+                  className="dropdown-toggle"
+                  type="button"
+                  aria-expanded={dropdownOpen}
+                  onClick={handleDropdownToggle}
+                  style={{ background: 'none', border: 'none', padding: 0, display: 'flex', alignItems: 'center', cursor: 'pointer' }}
+                >
                   <Image
                     alt="avatar"
                     width={50}
@@ -229,8 +256,8 @@ const DefaulHeader2 = () => {
                     style={{ borderRadius: '50%', objectFit: 'cover', width: 50, height: 50 }}
                   />
                   <span className="name">{displayUserName}</span>
-                </a>
-                <ul className="dropdown-menu">
+                </button>
+                <ul className="dropdown-menu" style={{ display: dropdownOpen ? 'block' : 'none' }}>
                   {role === 'Company' && employerMenuData.map((item) => (
                     <li
                       className={`${isActiveLink(item.routePath, pathname) ? "active" : ""} mb-1`}

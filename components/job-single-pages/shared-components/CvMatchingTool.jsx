@@ -1,0 +1,657 @@
+import React, { useState, useRef, useEffect } from 'react';
+import { toast } from 'react-toastify';
+import { cvMatchingService } from '@/services/cvMatchingService';
+import { authService } from '@/services/authService';
+import ApiService from '@/services/api.service';
+import Modal from '@/components/common/Modal';
+
+const CvMatchingTool = ({ jobId, jobTitle }) => {
+  const [showModal, setShowModal] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [matchingResult, setMatchingResult] = useState(null);
+  const [showResult, setShowResult] = useState(false);
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [useExistingCv, setUseExistingCv] = useState(true);
+  const [isAuthenticated, setIsAuthenticated] = useState(authService.getToken() ? true : false);
+  const [selectedCvId, setSelectedCvId] = useState("");
+  const [showCancelConfirmModal, setShowCancelConfirmModal] = useState(false);
+  const [cvList, setCvList] = useState([]);
+  const [loadingCvList, setLoadingCvList] = useState(false);
+  const [cvListError, setCvListError] = useState("");
+  const fileInputRef = useRef(null);
+
+  // Fetch CV list when modal opens
+  useEffect(() => {
+    if (showModal && isAuthenticated && useExistingCv) {
+      fetchCvList();
+    }
+  }, [showModal, isAuthenticated, useExistingCv]);
+
+  const fetchCvList = async () => {
+    try {
+      setLoadingCvList(true);
+      setCvListError("");
+      const data = await ApiService.getMyCVs();
+      setCvList(data || []);
+      // Auto-select the first CV if available
+      if (data && data.length > 0 && !selectedCvId) {
+        setSelectedCvId(data[0].cvId || data[0].CVId);
+      }
+    } catch (err) {
+      console.error('Error fetching CV list:', err);
+      setCvListError("Failed to load saved CVs. Please try uploading a new CV.");
+      setCvList([]);
+    } finally {
+      setLoadingCvList(false);
+    }
+  };
+
+  // Check auth on open
+  const handleOpenModal = () => {
+    setIsAuthenticated(!!authService.getToken());
+    setShowModal(true);
+    setShowResult(false);
+    setMatchingResult(null);
+    setSelectedFile(null);
+    setSelectedCvId("");
+    setCvListError("");
+  };
+
+  // Chỉ hiện modal xác nhận nếu đang loading (isLoading === true)
+  const handleCloseModal = () => {
+    if (isLoading) {
+      setShowCancelConfirmModal(true);
+    } else {
+      setShowModal(false);
+    }
+  };
+
+  // Hàm xác nhận hủy
+  const handleConfirmCancel = () => {
+    setShowCancelConfirmModal(false);
+    setShowModal(false);
+    setIsLoading(false);
+    setMatchingResult(null);
+    setShowResult(false);
+    setSelectedFile(null);
+  };
+
+  // Hàm hủy xác nhận
+  const handleCancelCancel = () => {
+    setShowCancelConfirmModal(false);
+  };
+
+  const handleFileChange = (event) => {
+    const file = event.target.files[0];
+    if (file) {
+      if (file.type !== 'application/pdf') {
+        toast.error('Only PDF files are allowed');
+        return;
+      }
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error('File is too large. Please select a file smaller than 5MB');
+        return;
+      }
+      setSelectedFile(file);
+    }
+  };
+
+  const handleCvOptionChange = (option) => {
+    setUseExistingCv(option === 'existing');
+    setSelectedFile(null);
+    setSelectedCvId("");
+    if (option === 'existing' && cvList.length === 0) {
+      fetchCvList();
+    }
+  };
+
+  const handleTryMatch = async () => {
+    if (!authService.getToken()) {
+      toast.error('Please login to use this feature');
+      setIsAuthenticated(false);
+      return;
+    }
+
+    if (useExistingCv && !selectedCvId) {
+      toast.error('Please select a saved CV.');
+      return;
+    }
+
+    if (!useExistingCv && !selectedFile) {
+      toast.error('Please upload a PDF CV file.');
+      return;
+    }
+
+    setIsLoading(true);
+    setShowResult(false);
+    setMatchingResult(null);
+    
+    try {
+      const formData = new FormData();
+      formData.append('JobId', jobId);
+      
+      if (useExistingCv) {
+        formData.append('CvId', selectedCvId);
+      } else {
+        formData.append('CvFile', selectedFile);
+      }
+
+      // Log toàn bộ FormData trước khi gửi
+      for (let pair of formData.entries()) {
+        console.log('FormData:', pair[0], pair[1]);
+      }
+
+      const response = await cvMatchingService.tryMatch(formData);
+      
+      if (response.success) {
+        toast.success('CV match analysis completed successfully!');
+        setMatchingResult(response);
+        setShowResult(true);
+      } else {
+        toast.error(response.errorMessage || 'An error occurred during CV matching');
+      }
+    } catch (error) {
+      console.error('CV matching error:', error);
+      const errorMessage = error.response?.data?.errorMessage || error.response?.data?.message || error.message || 'An error occurred during CV matching';
+      toast.error(errorMessage);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const getScoreColor = (score) => {
+    if (score >= 80) return '#28a745';
+    if (score >= 60) return '#ffc107';
+    if (score >= 40) return '#fd7e14';
+    return '#dc3545';
+  };
+
+  // Get selected CV name for display
+  const getSelectedCvName = () => {
+    if (!selectedCvId) return "";
+    const selectedCv = cvList.find(cv => (cv.cvId || cv.CVId) === selectedCvId);
+    if (selectedCv) {
+      const fileUrl = selectedCv.fileUrl || selectedCv.FileUrl;
+      return fileUrl ? fileUrl.split('/').pop() : 'Saved CV';
+    }
+    return "";
+  };
+
+  // Modal content
+  const renderModalContent = () => {
+    if (!isAuthenticated) {
+      return (
+        <div className="cv-match-modal-content">
+          <h2>Try CV Match</h2>
+          <p style={{marginBottom: 32}}>Please login to use the CV Match feature.</p>
+          <a href="/login" className="theme-btn btn-style-one" style={{minWidth: 120}}>Login</a>
+        </div>
+      );
+    }
+
+    if (showResult && matchingResult) {
+      return (
+        <div className="cv-match-modal-content">
+          <h2 style={{fontWeight: 700, fontSize: 28, marginBottom: 18, color: '#222', letterSpacing: 0.5}}>CV Match Result</h2>
+          <div className="score-section" style={{display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: 24}}>
+            <div className="score-circle" style={{width: 120, height: 120, borderRadius: '50%', background: '#f5f8ff', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 12, boxShadow: '0 2px 8px rgba(102,126,234,0.08)'}}>
+              <div className="score-progress" style={{width: 100, height: 100, borderRadius: '50%', background: `conic-gradient(${getScoreColor(matchingResult.similarityScore)} ${matchingResult.similarityScore * 3.6}deg, #e9ecef 0deg)`, display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative'}}>
+                <div className="score-content" style={{
+                  textAlign: 'center',
+                  background: '#fff', // Nền trắng cho số
+                  width: 70, height: 70, borderRadius: '50%',
+                  display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+                  boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
+                  position: 'absolute',
+                  top: '50%', left: '50%', transform: 'translate(-50%, -50%)',
+                  zIndex: 2
+                }}>
+                  <span className="score-number" style={{
+                    fontSize: 32, fontWeight: 700, color: getScoreColor(matchingResult.similarityScore),
+                    textShadow: '0 1px 2px #fff'
+                  }}>{Math.round(matchingResult.similarityScore)}%</span>
+                  <div className="score-text" style={{fontSize: 16, color: '#888', fontWeight: 500, marginTop: 2}}>
+                    {matchingResult.similarityScore >= 80 ? 'Excellent' : matchingResult.similarityScore >= 60 ? 'Good' : matchingResult.similarityScore >= 40 ? 'Average' : 'Low'}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          {matchingResult.suggestions && matchingResult.suggestions.length > 0 && (
+            <div className="suggestions-section" style={{marginTop: 12}}>
+              <h4 style={{fontWeight: 700, fontSize: 20, color: '#222', marginBottom: 10}}>Suggestions to Improve</h4>
+              {matchingResult.suggestions.map((suggestion, idx) => (
+                <div key={idx} className="suggestion-item" style={{marginBottom: 18, background: '#f8f9ff', borderRadius: 8, padding: 16, boxShadow: '0 2px 8px rgba(102,126,234,0.04)'}}>
+                  <div className="suggestion-header" style={{display: 'flex', alignItems: 'center', gap: 8, fontWeight: 600, color: '#2563eb', fontSize: 16, marginBottom: 4}}>
+                    <i className="flaticon-lightbulb"></i>
+                    <span>{suggestion.category}</span>
+                  </div>
+                  <p className="suggestion-description" style={{margin: 0, color: '#444', fontSize: 15, lineHeight: 1.7}}>{suggestion.description}</p>
+                  {suggestion.specificActions && (
+                    <ul className="suggestion-actions" style={{margin: '10px 0 0 0', paddingLeft: 18, color: '#555', fontSize: 14, lineHeight: 1.6}}>
+                      {suggestion.specificActions.map((action, i) => (
+                        <li key={i}><i className="flaticon-check" style={{marginRight: 6, color: '#28a745'}}></i>{action}</li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+          <button className="theme-btn btn-style-three" style={{marginTop: 24}} onClick={()=>{setShowResult(false); setMatchingResult(null);}}>Try Again</button>
+        </div>
+      );
+    }
+
+    return (
+      <div className="cv-match-modal-content" style={{maxWidth: 540, margin: '0 auto', padding: '0 12px'}}>
+        <div className="intro-section">
+          <div className="intro-icon"><i className="flaticon-search"></i></div>
+          <h2>Try CV Match</h2>
+          <p className="intro-desc">Discover how well your CV matches the job requirements for <b>{jobTitle}</b>. Upload your CV or use a saved one to get instant feedback and suggestions to improve your chances!</p>
+          <ol className="intro-steps">
+            <li>Choose a saved CV or upload a new PDF CV.</li>
+            <li>Click <b>Analyze</b> to see your match score.</li>
+            <li>Read suggestions to improve your CV for this job.</li>
+          </ol>
+        </div>
+        <div style={{margin: '32px 0 0 0'}}>
+          <h3 style={{fontWeight: 600, fontSize: 24, marginBottom: 20, color: '#222', textAlign: 'left'}}>Choose your CV</h3>
+          <div style={{display: 'flex', flexDirection: 'column', gap: 18, marginBottom: 32}}>
+            <label style={{display: 'flex', alignItems: 'flex-start', gap: 12, cursor: 'pointer', padding: '14px 18px', border: '1.5px solid #e3e6ee', borderRadius: 10, background: useExistingCv ? '#f5f8ff' : '#fff', transition: 'background 0.2s, border 0.2s', boxShadow: useExistingCv ? '0 2px 8px rgba(102,126,234,0.07)' : 'none'}}>
+              <input type="radio" name="cvOption" checked={useExistingCv} onChange={()=>handleCvOptionChange('existing')} style={{width: 20, height: 20, accentColor: '#2563eb', marginTop: 2}} />
+              <div style={{flex: 1}}>
+                <div style={{fontWeight: 700, fontSize: 17, color: '#222'}}>Use Saved CV</div>
+                <div style={{fontSize: 15, color: '#888', marginTop: 2}}>Your previously uploaded CV</div>
+                {useExistingCv && (
+                  <div style={{marginTop: 12}}>
+                    {loadingCvList ? (
+                      <div style={{display: 'flex', alignItems: 'center', gap: 8, color: '#666'}}>
+                        <div className="spinner" style={{width: 16, height: 16, border: '2px solid #ddd', borderTop: '2px solid #2563eb', borderRadius: '50%', animation: 'spin 1s linear infinite'}}></div>
+                        <span>Loading CVs...</span>
+                      </div>
+                    ) : cvListError ? (
+                      <div style={{color: '#dc3545', fontSize: 14, marginTop: 8}}>{cvListError}</div>
+                    ) : cvList.length === 0 ? (
+                      <div style={{color: '#ffc107', fontSize: 14, marginTop: 8}}>No saved CVs found. Please upload a new CV.</div>
+                    ) : (
+                      <select 
+                        value={selectedCvId} 
+                        onChange={(e) => setSelectedCvId(e.target.value)}
+                        style={{
+                          width: '100%',
+                          padding: '8px 12px',
+                          border: '1px solid #ddd',
+                          borderRadius: 6,
+                          fontSize: 14,
+                          marginTop: 8,
+                          background: '#fff'
+                        }}
+                      >
+                        <option value="">Select a CV</option>
+                        {cvList.map((cv) => {
+                          const cvId = cv.cvId || cv.CVId;
+                          const fileUrl = cv.fileUrl || cv.FileUrl;
+                          const fileName = fileUrl ? fileUrl.split('/').pop() : 'Saved CV';
+                          const createdAt = new Date(cv.createdAt || cv.CreatedAt).toLocaleDateString();
+                          return (
+                            <option key={cvId} value={cvId}>
+                              {fileName} (Uploaded: {createdAt})
+                            </option>
+                          );
+                        })}
+                      </select>
+                    )}
+                    {selectedCvId && getSelectedCvName() && (
+                      <div style={{marginTop: 8, padding: 8, background: '#e8f5e8', borderRadius: 6, fontSize: 14, color: '#28a745'}}>
+                        <i className="flaticon-file" style={{marginRight: 6}}></i>
+                        {getSelectedCvName()}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            </label>
+            <label style={{display: 'flex', alignItems: 'flex-start', gap: 12, cursor: 'pointer', padding: '14px 18px', border: '1.5px solid #e3e6ee', borderRadius: 10, background: !useExistingCv ? '#f5f8ff' : '#fff', transition: 'background 0.2s, border 0.2s', boxShadow: !useExistingCv ? '0 2px 8px rgba(102,126,234,0.07)' : 'none'}}>
+              <input type="radio" name="cvOption" checked={!useExistingCv} onChange={()=>handleCvOptionChange('upload')} style={{width: 20, height: 20, accentColor: '#2563eb', marginTop: 2}} />
+              <div style={{flex: 1}}>
+                <div style={{fontWeight: 700, fontSize: 17, color: '#222'}}>Upload New CV</div>
+                <div style={{fontSize: 15, color: '#888', marginTop: 2}}>PDF file, max 5MB</div>
+                {!useExistingCv && (
+                  <div className="file-upload-section" style={{marginTop: 12}}>
+                    <div className="file-upload-area" onClick={()=>fileInputRef.current?.click()} style={{border: '2px dashed #b3b8d0', borderRadius: 10, padding: 20, textAlign: 'center', cursor: 'pointer', background: '#f8faff', transition: 'border 0.2s'}}>
+                      <i className="flaticon-upload" style={{fontSize: 24, color: '#667eea', marginBottom: 8}}></i>
+                      <p style={{margin: 0, color: '#222', fontWeight: 500}}>Click to select PDF file</p>
+                      <small style={{color: '#888'}}>Or drag and drop here</small>
+                      {selectedFile && (
+                        <div className="selected-file" style={{marginTop: 12, padding: 10, background: '#e8f5e8', borderRadius: 6, display: 'flex', alignItems: 'center', gap: 8, color: '#28a745'}}>
+                          <i className="flaticon-file"></i>
+                          <span>{selectedFile.name}</span>
+                        </div>
+                      )}
+                    </div>
+                    <input ref={fileInputRef} type="file" accept=".pdf" onChange={handleFileChange} style={{display:'none'}} />
+                  </div>
+                )}
+              </div>
+            </label>
+          </div>
+          <button 
+            className="theme-btn btn-style-one" 
+            style={{width: '100%', marginTop: 18}} 
+            onClick={handleTryMatch} 
+            disabled={isLoading || (useExistingCv ? !selectedCvId : !selectedFile) || loadingCvList}
+          >
+            {isLoading ? (
+              <><span className="spinner"></span>Analyzing...</>
+            ) : (
+              <><i className="flaticon-search" style={{marginRight: 8}}></i>Analyze</>
+            )}
+          </button>
+        </div>
+      </div>
+    );
+  };
+
+  return (
+    <>
+      <button className="theme-btn btn-style-one" style={{width: '100%', marginTop: 16, marginBottom: 8}} onClick={handleOpenModal}>
+        <i className="flaticon-search" style={{marginRight: 8}}></i> Try CV Match
+      </button>
+      <Modal open={showModal} onClose={handleCloseModal} title="Try CV Match">
+        <div style={{maxWidth: 650, margin: '0 auto', padding: 0}}>
+          <div style={{textAlign: 'center', margin: '32px 0 24px 0'}}>
+            <div style={{display: 'flex', justifyContent: 'center', alignItems: 'center', marginBottom: 16}}>
+              <span style={{display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 64, height: 64, borderRadius: '50%', background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', color: '#fff', fontSize: 32, boxShadow: '0 4px 16px rgba(102,126,234,0.10)'}}>
+                <i className="flaticon-search"></i>
+              </span>
+            </div>
+            <h2 style={{fontWeight: 700, fontSize: 32, margin: 0, color: '#222'}}>Try CV Match</h2>
+            <p style={{color: '#555', fontSize: 18, margin: '16px 0 0 0', lineHeight: 1.6}}>
+              <b>Instantly check how well your CV fits this job!</b><br/>
+              This feature helps you analyze your CV against the job requirements for <b>{jobTitle}</b>.<br/>
+              <span style={{color: '#888', fontSize: 16, display: 'block', marginTop: 8}}>
+                <b>How it works:</b>
+                <ol style={{textAlign: 'left', maxWidth: 500, margin: '16px auto 0 auto', color: '#666', fontSize: 15, lineHeight: 1.7}}>
+                  <li><b>Choose</b> a saved CV or upload a new PDF CV.</li>
+                  <li><b>Click Analyze</b> to see your match score and receive personalized suggestions.</li>
+                  <li><b>Improve</b> your CV based on the feedback to boost your chances of getting hired!</li>
+                </ol>
+              </span>
+            </p>
+          </div>
+          {renderModalContent()}
+        </div>
+      </Modal>
+      {/* Modal xác nhận hủy Try Match */}
+      <Modal
+        open={showCancelConfirmModal}
+        onClose={handleCancelCancel}
+        title="Cancel CV Match?"
+        footer={
+          <>
+            <button className="btn-cancel" onClick={handleCancelCancel}>No</button>
+            <button className="btn-confirm" onClick={handleConfirmCancel}>Yes</button>
+          </>
+        }
+      >
+        <div style={{textAlign: 'center', fontSize: 17, color: '#444', padding: '12px 0 4px 0'}}>
+          Are you sure you want to cancel CV Match? Your progress will be lost.
+        </div>
+      </Modal>
+      <style jsx>{`
+        .cv-match-modal-content {
+          max-width: 540px;
+          margin: 0 auto;
+          padding: 32px 16px 24px 16px;
+          text-align: center;
+        }
+        .intro-section {
+          margin-bottom: 32px;
+        }
+        .intro-icon {
+          width: 64px;
+          height: 64px;
+          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+          border-radius: 16px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          color: white;
+          font-size: 32px;
+          margin: 0 auto 16px auto;
+        }
+        .intro-desc {
+          color: #495057;
+          margin-bottom: 16px;
+        }
+        .intro-steps {
+          text-align: left;
+          margin: 0 auto 0 auto;
+          max-width: 400px;
+          color: #6c757d;
+        }
+        .intro-steps li {
+          margin-bottom: 8px;
+        }
+        .cv-select-section {
+          margin-top: 16px;
+        }
+        .cv-options {
+          display: flex;
+          flex-direction: column;
+          gap: 12px;
+          margin-bottom: 20px;
+        }
+        .option-item {
+          display: flex;
+          align-items: center;
+          cursor: pointer;
+          padding: 16px;
+          border: 2px solid #e9ecef;
+          border-radius: 8px;
+          transition: all 0.3s ease;
+        }
+        .option-item.active, .option-item:hover {
+          border-color: #667eea;
+          background: #f8f9ff;
+        }
+        .option-item input[type="radio"] {
+          margin-right: 12px;
+          accent-color: #667eea;
+        }
+        .option-content {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          flex: 1;
+        }
+        .option-content i {
+          font-size: 20px;
+          color: #667eea;
+        }
+        .option-content strong {
+          display: block;
+          color: #2c3e50;
+          font-weight: 600;
+        }
+        .option-content small {
+          color: #6c757d;
+          font-size: 12px;
+        }
+        .file-upload-section {
+          margin-bottom: 20px;
+        }
+        .file-upload-area {
+          border: 2px dashed #dee2e6;
+          border-radius: 8px;
+          padding: 32px;
+          text-align: center;
+          cursor: pointer;
+          transition: all 0.3s ease;
+        }
+        .file-upload-area:hover {
+          border-color: #667eea;
+          background-color: #f8f9ff;
+        }
+        .file-upload-area i {
+          font-size: 32px;
+          color: #667eea;
+          margin-bottom: 12px;
+        }
+        .file-upload-area p {
+          margin: 0 0 4px 0;
+          color: #2c3e50;
+          font-weight: 500;
+        }
+        .file-upload-area small {
+          color: #6c757d;
+        }
+        .selected-file {
+          margin-top: 16px;
+          padding: 12px;
+          background: #e8f5e8;
+          border-radius: 6px;
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          color: #28a745;
+        }
+        .matching-btn {
+          width: 100%;
+          padding: 14px 24px;
+          font-size: 16px;
+          font-weight: 600;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 8px;
+          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+          border: none;
+          border-radius: 8px;
+          color: white;
+          cursor: pointer;
+          transition: all 0.3s ease;
+        }
+        .matching-btn:hover:not(:disabled) {
+          transform: translateY(-2px);
+          box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+        .matching-btn:disabled {
+          opacity: 0.6;
+          cursor: not-allowed;
+        }
+        .spinner {
+          width: 16px;
+          height: 16px;
+          border: 2px solid #ffffff;
+          border-top: 2px solid transparent;
+          border-radius: 50%;
+          animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
+        }
+        .score-section {
+          display: flex;
+          justify-content: center;
+          margin-bottom: 32px;
+        }
+        .score-circle {
+          position: relative;
+          width: 120px;
+          height: 120px;
+        }
+        .score-progress {
+          width: 100%;
+          height: 100%;
+          border-radius: 50%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          position: relative;
+        }
+        .score-content {
+          background: white;
+          width: 80px;
+          height: 80px;
+          border-radius: 50%;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+        .score-number {
+          font-size: 20px;
+          font-weight: 700;
+          color: #2c3e50;
+          line-height: 1;
+        }
+        .score-text {
+          font-size: 10px;
+          color: #6c757d;
+          text-align: center;
+          margin-top: 2px;
+        }
+        .suggestions-section {
+          background: #f8f9fa;
+          border-radius: 8px;
+          padding: 20px;
+        }
+        .suggestions-section h4 {
+          margin: 0 0 16px 0;
+          color: #2c3e50;
+          font-weight: 600;
+        }
+        .suggestion-item {
+          background: white;
+          border-radius: 8px;
+          padding: 16px;
+          margin-bottom: 12px;
+          border-left: 4px solid #667eea;
+        }
+        .suggestion-item:last-child {
+          margin-bottom: 0;
+        }
+        .suggestion-header {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          margin-bottom: 8px;
+          color: #667eea;
+          font-weight: 600;
+        }
+        .suggestion-description {
+          margin: 0 0 12px 0;
+          color: #495057;
+          line-height: 1.5;
+        }
+        .suggestion-actions {
+          margin: 0;
+          padding-left: 20px;
+        }
+        .suggestion-actions li {
+          margin-bottom: 6px;
+          color: #6c757d;
+          line-height: 1.4;
+          display: flex;
+          align-items: flex-start;
+          gap: 8px;
+        }
+        .suggestion-actions li i {
+          color: #28a745;
+          font-size: 12px;
+          margin-top: 2px;
+        }
+        @media (max-width: 768px) {
+          .cv-match-modal-content { padding: 16px 4px; }
+          .intro-section { margin-bottom: 20px; }
+        }
+      `}</style>
+    </>
+  );
+};
+
+export default CvMatchingTool; 

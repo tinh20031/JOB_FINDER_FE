@@ -5,7 +5,7 @@ import axios from "axios";
 import ApiService from '@/services/api.service';
 import Modal from "@/components/common/Modal";
 import "@/styles/modal.css";
-import { ToastContainer, toast } from 'react-toastify';
+import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 // Chỉ cho phép PDF
 function checkFileTypes(files) {
@@ -111,7 +111,6 @@ const CvUploader = () => {
 
     return (
         <>
-            <ToastContainer position="top-right" autoClose={3000} />
             <style>{`
                 .spinner {
                   display: inline-block;

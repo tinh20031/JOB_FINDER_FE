@@ -22,12 +22,11 @@ import API_CONFIG from "@/config/api.config";
 import { notFound } from 'next/navigation';
 import JobHeader from "@/components/job-single-pages/shared-components/JobHeader";
 import JobDetailsBox from "@/components/job-single-pages/shared-components/JobDetailsBox";
+import CvMatchingTool from "@/components/job-single-pages/shared-components/CvMatchingTool";
 import useResumeData from "@/services/useResumeData";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { useRouter } from "next/navigation";
-import "bootstrap/dist/js/bootstrap.bundle.min.js";
-import { Modal } from "bootstrap";
 import "@/styles/apply-job-modal.css";
 
 const JobSingleDynamicV3 = ({ params }) => {
@@ -40,6 +39,11 @@ const JobSingleDynamicV3 = ({ params }) => {
   const [fetchError, setFetchError] = useState(null);
 
   useEffect(() => {
+    // Import Bootstrap only on client side
+    if (typeof window !== 'undefined') {
+      import("bootstrap/dist/js/bootstrap.bundle.min.js");
+    }
+    
     const fetchData = async () => {
       try {
         const [jobResponse, industriesResponse, levelsResponse, jobTypesResponse, experienceLevelsResponse] = await Promise.all([
@@ -90,10 +94,12 @@ const JobSingleDynamicV3 = ({ params }) => {
   }, [params.id]);
 
   useEffect(() => {
-    if (job && job.jobTitle) {
-      document.title = `${job.jobTitle} | JobFinder`;
-    } else {
-      document.title = 'Job Detail | JobFinder';
+    if (typeof window !== 'undefined') {
+      if (job && job.jobTitle) {
+        document.title = `${job.jobTitle} | JobFinder`;
+      } else {
+        document.title = 'Job Detail | JobFinder';
+      }
     }
   }, [job]);
 
@@ -288,6 +294,8 @@ const JobSingleDynamicV3 = ({ params }) => {
                 <JobDetailsBox job={job} />
                 {/* End job-details */}
 
+                {/* ĐÃ XOÁ CvMatchingTool khỏi content chính */}
+
                 <div className="other-options">
                   <div className="social-share">
                     <h5>Share this job</h5>
@@ -318,8 +326,8 @@ const JobSingleDynamicV3 = ({ params }) => {
                       <i className="flaticon-bookmark"></i>
                     </button>
                   </div>
-                  {/* End apply for job btn */}
-
+                  {/* Only one CvMatchingTool below Apply For Job */}
+                  <CvMatchingTool jobId={job.id} jobTitle={job.title} />
                   {/* <!-- Modal --> */}
                   <div
                     className="modal fade apply-job-modal"

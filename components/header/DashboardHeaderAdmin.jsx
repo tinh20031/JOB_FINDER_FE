@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import employerMenuData from "../../data/adminHeadedrMenuData";
 import { isActiveLink } from "../../utils/linkActiveChecker";
 import { usePathname, useRouter } from "next/navigation";
@@ -42,6 +42,28 @@ const DashboardHeaderAdmin = () => {
     const { favoriteCount } = useFavoriteJobs() || {};
     const { user, isLoggedIn, profileUpdated } = useSelector((state) => state.auth);
 
+    // Dropdown state management
+    const [dropdownOpen, setDropdownOpen] = useState(false);
+    const dropdownRef = useRef(null);
+
+    const handleDropdownToggle = () => setDropdownOpen((open) => !open);
+    const handleDropdownClose = () => setDropdownOpen(false);
+
+    // Close dropdown when clicking outside
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+                setDropdownOpen(false);
+            }
+        };
+        if (dropdownOpen) {
+            document.addEventListener('mousedown', handleClickOutside);
+        }
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+        };
+    }, [dropdownOpen]);
+
     const changeBackground = () => {
         if (window.scrollY >= 0) {
             setNavbar(true);
@@ -70,32 +92,22 @@ const DashboardHeaderAdmin = () => {
         fetchAdminProfile();
     }, [user, profileUpdated, isLoggedIn]);
 
+    useEffect(() => {
+        window.addEventListener("scroll", changeBackground);
+    }, []);
+
     const handleLogout = () => {
-        // Xóa cookie với cả path '/' và domain 'localhost'
-        if (typeof window !== "undefined") {
-          Cookies.remove('token', { path: '/' });
-          Cookies.remove('role', { path: '/' });
-          Cookies.remove('name', { path: '/' });
-          Cookies.remove('token', { path: '/', domain: 'localhost' });
-          Cookies.remove('role', { path: '/', domain: 'localhost' });
-          Cookies.remove('name', { path: '/', domain: 'localhost' });
-          localStorage.removeItem('token');
-          localStorage.removeItem('role');
-          localStorage.removeItem('name');
-          console.log('LOGOUT CALLED from Admin Dashboard Header: cookies and localStorage removed');
-        }
-        authService.logout(); // vẫn gọi để đồng bộ logic
-        dispatch(clearLoginState());
-        router.push('/'); // Redirect to home or login page
-      };
-    
-      const handleMenuClick = (item) => {
+        authService.logout(); // Clear localStorage
+        dispatch(clearLoginState()); // Clear Redux state
+        window.location.href = '/'; // Redirect to home page
+    };
+
+    const handleMenuClick = (item) => {
         if (item.isLogout) {
-          handleLogout();
-        } else {
-            router.push(item.routePath);
+            handleLogout();
         }
-      };
+        setDropdownOpen(false);
+    };
 
     return (
         // <!-- Main Header-->
@@ -123,17 +135,20 @@ const DashboardHeaderAdmin = () => {
                             </div>
                         </div>
                         {/* End .logo-box */}
+
+                        {/* <!-- Main Menu End--> */}
                     </div>
                     {/* End .nav-outer */}
 
                     <div className="outer-box">
                         {/* <!-- Dashboard Option --> */}
-                        <div className="dropdown dashboard-option">
-                            <a
+                        <div className="dropdown dashboard-option" ref={dropdownRef}>
+                            <button
                                 className="dropdown-toggle"
-                                role="button"
-                                data-bs-toggle="dropdown"
-                                aria-expanded="false"
+                                type="button"
+                                aria-expanded={dropdownOpen}
+                                onClick={handleDropdownToggle}
+                                style={{ background: 'none', border: 'none', padding: 0, display: 'flex', alignItems: 'center', cursor: 'pointer' }}
                             >
                                 <Image
                                     alt="avatar"
@@ -144,9 +159,9 @@ const DashboardHeaderAdmin = () => {
                                     style={{ borderRadius: '50%', objectFit: 'cover', width: 50, height: 50 }}
                                 />
                                 <span className="name">{fullName}</span>
-                            </a>
+                            </button>
 
-                            <ul className="dropdown-menu">
+                            <ul className="dropdown-menu" style={{ display: dropdownOpen ? 'block' : 'none' }}>
                                 {employerMenuData.map((item) => (
                                     <li
                                         className={`${
@@ -158,9 +173,10 @@ const DashboardHeaderAdmin = () => {
                                                 : ""
                                         } mb-1`}
                                         key={item.id}
+                                        onClick={() => handleMenuClick(item)}
                                     >
                                         {item.isLogout ? (
-                                            <a href="#" onClick={(e) => { e.preventDefault(); handleMenuClick(item); }}>
+                                            <a style={{ cursor: 'pointer' }}>
                                                 <i className={`la ${item.icon}`}></i>{" "}
                                                 {item.name}
                                             </a>

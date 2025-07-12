@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import employerMenuData from "../../data/employerHeaderMenuData";
 import HeaderNavContent from "./HeaderNavContent";
 import { isActiveLink } from "../../utils/linkActiveChecker";
@@ -43,6 +43,28 @@ const DashboardHeader = () => {
     // Use state for user info to handle updates
     const [displayUserName, setDisplayUserName] = useState("My Account");
     const [displayAvatar, setDisplayAvatar] = useState("/images/resource/company-6.png");
+
+    // Dropdown state management
+    const [dropdownOpen, setDropdownOpen] = useState(false);
+    const dropdownRef = useRef(null);
+
+    const handleDropdownToggle = () => setDropdownOpen((open) => !open);
+    const handleDropdownClose = () => setDropdownOpen(false);
+
+    // Close dropdown when clicking outside
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+                setDropdownOpen(false);
+            }
+        };
+        if (dropdownOpen) {
+            document.addEventListener('mousedown', handleClickOutside);
+        }
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+        };
+    }, [dropdownOpen]);
 
     // Update state when user data from Redux changes
     useEffect(() => {
@@ -99,6 +121,13 @@ const DashboardHeader = () => {
         window.location.href = '/'; // Redirect to home page
     };
 
+    const handleMenuClick = (item) => {
+        if (item.isLogout) {
+            handleLogout();
+        }
+        setDropdownOpen(false);
+    };
+
     return (
         // <!-- Main Header-->
         <header
@@ -144,12 +173,13 @@ const DashboardHeader = () => {
                         {/* End notification-icon */}
 
                         {/* <!-- Dashboard Option --> */}
-                        <div className="dropdown dashboard-option">
-                            <a
+                        <div className="dropdown dashboard-option" ref={dropdownRef}>
+                            <button
                                 className="dropdown-toggle"
-                                role="button"
-                                data-bs-toggle="dropdown"
-                                aria-expanded="false"
+                                type="button"
+                                aria-expanded={dropdownOpen}
+                                onClick={handleDropdownToggle}
+                                style={{ background: 'none', border: 'none', padding: 0, display: 'flex', alignItems: 'center', cursor: 'pointer' }}
                             >
                                 <Image
                                     alt="avatar"
@@ -159,9 +189,9 @@ const DashboardHeader = () => {
                                     height={50}
                                 />
                                 <span className="name">{displayUserName}</span>
-                            </a>
+                            </button>
 
-                            <ul className="dropdown-menu">
+                            <ul className="dropdown-menu" style={{ display: dropdownOpen ? 'block' : 'none' }}>
                                 {employerMenuData.map((item) => (
                                     <li
                                         className={`${
@@ -173,9 +203,10 @@ const DashboardHeader = () => {
                                                 : ""
                                         } mb-1`}
                                         key={item.id}
+                                        onClick={() => handleMenuClick(item)}
                                     >
                                         {item.isLogout ? (
-                                            <a onClick={handleLogout} style={{ cursor: 'pointer' }}>
+                                            <a style={{ cursor: 'pointer' }}>
                                                 <i className={`la ${item.icon}`}></i>{" "}
                                                 {item.name}
                                             </a>
