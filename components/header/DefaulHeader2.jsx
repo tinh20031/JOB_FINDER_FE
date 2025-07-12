@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useSelector, useDispatch } from 'react-redux';
 import { clearLoginState, setLoginState } from '@/features/auth/authSlice';
 import { authService } from "@/services/authService";
@@ -16,6 +16,7 @@ import BecomeRecruiterModal from '../common/form/shared/BecomeRecruiterModal';
 import { useFavoriteJobs } from "../../contexts/FavoriteJobsContext";
 
 import apiService from '@/services/api.service';
+import { startNotificationHub, stopNotificationHub } from "@/services/notificationHub";
 
 // Helper function to validate image URLs
 const getValidImageUrl = (url) => {
@@ -48,6 +49,11 @@ const DefaulHeader2 = () => {
   const { favoriteCount } = useFavoriteJobs();
   const [isFavoriteLoading, setIsFavoriteLoading] = useState(true);
   const userId = typeof window !== 'undefined' ? Number(localStorage.getItem('userId')) : null;
+
+  const [notifications, setNotifications] = useState([]);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [showDropdown, setShowDropdown] = useState(false);
+  const dropdownRef = useRef(null);
 
   useEffect(() => {
     if (typeof window !== 'undefined' && isLoggedIn) {
@@ -104,6 +110,65 @@ const DefaulHeader2 = () => {
     };
     fetchProfile();
   }, [isLoggedIn, role, profileUpdated, user]);
+
+  // Thêm logic fetch notification/unreadCount và SignalR cho company
+  useEffect(() => {
+    const fetchNotifications = async () => {
+      if (!userId || role !== 'Company') return;
+      try {
+        const res = await apiService.get(`/notification?page=1&pageSize=5`);
+        setNotifications(Array.isArray(res) ? res : []);
+      } catch {}
+    };
+    const fetchUnreadCount = async () => {
+      if (!userId || role !== 'Company') return;
+      try {
+        const res = await apiService.get(`/notification/unread-count`);
+        setUnreadCount(res?.count || 0);
+      } catch {}
+    };
+    if (isLoggedIn && role === 'Company') {
+      fetchNotifications();
+      fetchUnreadCount();
+    }
+  }, [isLoggedIn, userId, profileUpdated, role]);
+
+  useEffect(() => {
+    const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
+    if (isLoggedIn && userId && token && role === 'Company') {
+      const connection = startNotificationHub(token, userId, (notification) => {
+        setNotifications((prev) => [notification, ...prev]);
+        setUnreadCount((prev) => prev + 1);
+      });
+      return () => stopNotificationHub();
+    }
+  }, [isLoggedIn, userId, role]);
+
+  // Đóng dropdown khi click ngoài
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setShowDropdown(false);
+      }
+    }
+    if (showDropdown) {
+      document.addEventListener("mousedown", handleClickOutside);
+    } else {
+      document.removeEventListener("mousedown", handleClickOutside);
+    }
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [showDropdown]);
+
+  // Đánh dấu đã đọc khi mở dropdown
+  const handleBellClick = async () => {
+    setShowDropdown((prev) => !prev);
+    if (unreadCount > 0) {
+      try {
+        await apiService.put(`/Notification/read-all`);
+        setUnreadCount(0);
+      } catch {}
+    }
+  };
 
   const changeBackground = () => {
     if (typeof window !== 'undefined' && window.scrollY >= 10) {
@@ -217,6 +282,47 @@ const DefaulHeader2 = () => {
                     <span className="icon la la-heart-o"></span>
                   </button>
                 </Link>
+              )}
+              {/* Chuông notification cho company */}
+              {isLoggedIn && role === 'Company' && (
+                <div className="notification-bell-wrapper" ref={dropdownRef} style={{ position: 'relative', display: 'inline-block', marginRight: 12 }}>
+                  <button className="menu-btn" onClick={handleBellClick} style={{ position: 'relative' }}>
+                    {unreadCount > 0 && <span className="count" style={{ background: '#e74c3c', color: '#fff', borderRadius: '50%', fontSize: 12, position: 'absolute', top: 0, right: 0, minWidth: 18, minHeight: 18, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{unreadCount}</span>}
+                    <span className="icon la la-bell"></span>
+                  </button>
+                  {showDropdown && (
+                    <div className="notification-dropdown" style={{ position: 'absolute', right: 0, top: 40, background: '#fff', boxShadow: '0 2px 8px rgba(0,0,0,0.15)', borderRadius: 8, minWidth: 320, zIndex: 1000 }}>
+                      <div style={{ padding: 12, borderBottom: '1px solid #eee', fontWeight: 600 }}>New announcement</div>
+                      <div style={{ maxHeight: 350, overflowY: 'auto' }}>
+                        {notifications.length === 0 ? (
+                          <div style={{ padding: 16, textAlign: 'center', color: '#888' }}>No new notifications</div>
+                        ) : (
+                          notifications.map((n) => (
+                            <Link key={n.notificationId} href={n.link || '#'} style={{ textDecoration: 'none', color: n.isRead ? '#aaa' : '#222' }}>
+                              <div
+                                style={{
+                                  padding: '12px 16px',
+                                  borderBottom: '1px solid #f3f3f3',
+                                  cursor: 'pointer',
+                                  background: n.isRead ? '#fff' : '#f1f6fd',
+                                  fontWeight: n.isRead ? 400 : 600,
+                                  opacity: n.isRead ? 0.7 : 1,
+                                }}
+                              >
+                                <div style={{ fontWeight: n.isRead ? 400 : 600 }}>{n.title}</div>
+                                <div style={{ fontSize: 13, color: n.isRead ? '#bbb' : '#1967d2', margin: '4px 0 2px 0' }}>{n.message}</div>
+                                <div style={{ fontSize: 12, color: '#888' }}>{n.createdAt ? new Date(n.createdAt).toLocaleString() : ''}</div>
+                              </div>
+                            </Link>
+                          ))
+                        )}
+                      </div>
+                      <div style={{ textAlign: 'center', padding: 8 }}>
+                        <Link href="/employers-dashboard/resume-alerts" style={{ fontSize: 13, color: '#1967d2' }}>View all notifications</Link>
+                      </div>
+                    </div>
+                  )}
+                </div>
               )}
               <div className="dropdown dashboard-option">
                 <a className="dropdown-toggle" role="button" data-bs-toggle="dropdown" aria-expanded="false">

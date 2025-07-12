@@ -1,101 +1,80 @@
+'use client';
+
 import Link from "next/link.js";
-import jobs from "../../../../../data/job-featured.js";
-import Image from "next/image.js";
+import { useEffect, useState } from "react";
 
 const JobAlertsTable = () => {
+  const [notifications, setNotifications] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchNotifications = async () => {
+      setLoading(true);
+      try {
+        // Lấy tối đa 1000 thông báo, tuỳ backend hỗ trợ
+        const res = await fetch("/api/notification?page=1&pageSize=1000", {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+            Accept: "application/json",
+          },
+        });
+        const data = await res.json();
+        setNotifications(Array.isArray(data) ? data : []);
+      } catch {
+        setNotifications([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchNotifications();
+  }, []);
+
   return (
     <div className="tabs-box">
       <div className="widget-title">
-        <h4>My Applied Jobs</h4>
-
-        <div className="chosen-outer">
-          {/* <!--Tabs Box--> */}
-          <select className="chosen-single form-select">
-            <option>Last 6 Months</option>
-            <option>Last 12 Months</option>
-            <option>Last 16 Months</option>
-            <option>Last 24 Months</option>
-            <option>Last 5 year</option>
-          </select>
-        </div>
+        <h4>Notification</h4>
       </div>
-      {/* End filter top bar */}
-
-      {/* Start table widget content */}
       <div className="widget-content">
         <div className="table-outer">
-          <div className="table-outer">
-            <table className="default-table manage-job-table">
-              <thead>
-                <tr>
-                  <th>Title</th>
-                  <th>Criteria</th>
-                  <th>Created</th>
-                  <th>Action</th>
-                </tr>
-              </thead>
-
-              <tbody>
-                {jobs.slice(4, 8).map((item) => (
-                  <tr key={item.id}>
+          <table className="default-table manage-job-table">
+            <thead>
+              <tr>
+                <th>Title</th>
+                <th>Content</th>
+                <th>Time</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {loading ? (
+                <tr><td colSpan={4} style={{textAlign:'center'}}>Loading...</td></tr>
+              ) : notifications.length === 0 ? (
+                <tr><td colSpan={4} style={{textAlign:'center'}}>No notifications</td></tr>
+              ) : (
+                notifications.map((n) => (
+                  <tr key={n.notificationId} style={{
+                    fontWeight: n.isRead ? 400 : 600,
+                    color: n.isRead ? '#aaa' : '#222',
+                    opacity: n.isRead ? 0.7 : 1,
+                    background: n.isRead ? '#fff' : '#f1f6fd',
+                  }}>
+                    <td>{n.title}</td>
+                    <td>{n.message}</td>
+                    <td>{n.createdAt ? new Date(n.createdAt).toLocaleString() : ''}</td>
                     <td>
-                      {/* <!-- Job Block --> */}
-                      <div className="job-block">
-                        <div className="inner-box">
-                          <div className="content">
-                            <span className="company-logo">
-                              <Image
-                                width={50}
-                                height={49}
-                                src={item.logo}
-                                alt="logo"
-                              />
-                            </span>
-                            <h4>
-                              <Link href={`/job-single-v3/${item.id}`}>
-                                {item.jobTitle}
-                              </Link>
-                            </h4>
-                            <ul className="job-info">
-                              <li>
-                                <span className="icon flaticon-briefcase"></span>
-                                Segment
-                              </li>
-                              <li>
-                                <span className="icon flaticon-map-locator"></span>
-                                London, UK
-                              </li>
-                            </ul>
-                          </div>
-                        </div>
-                      </div>
-                    </td>
-                    <td>Human Resources, Junior</td>
-                    <td>Nov 12, 2021 </td>
-                    <td>
-                      <div className="option-box">
-                        <ul className="option-list">
-                          <li>
-                            <button data-text="View Aplication">
-                              <span className="la la-eye"></span>
-                            </button>
-                          </li>
-                          <li>
-                            <button data-text="Delete Aplication">
-                              <span className="la la-trash"></span>
-                            </button>
-                          </li>
-                        </ul>
-                      </div>
+                      {n.link ? (
+                        <Link href={n.link} legacyBehavior>
+                          <a style={{ color: '#1967d2', fontWeight: 500 }}>See details</a>
+                        </Link>
+                      ) : '-'}
                     </td>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                ))
+              )}
+            </tbody>
+          </table>
         </div>
       </div>
-      {/* End table widget content */}
     </div>
   );
 };

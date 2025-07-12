@@ -325,6 +325,28 @@ const ApiService = {
       }
     });
   },
+  put: (endpoint, data) => {
+    const token = localStorage.getItem("token");
+    return fetch(`${BASE_URL}${endpoint}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: data ? JSON.stringify(data) : undefined,
+    }).then(async (res) => {
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({ message: `HTTP error! status: ${res.status}` }));
+        throw new Error(errorData.message || `HTTP error! status: ${res.status}`);
+      }
+      const text = await res.text();
+      try {
+        return JSON.parse(text);
+      } catch (error) {
+        return text;
+      }
+    });
+  },
   login: ApiServiceClass.login,
   register: ApiServiceClass.register,
   getCompanies: ApiServiceClass.getCompanies,
