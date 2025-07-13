@@ -1,7 +1,5 @@
 import API_CONFIG from "../config/api.config";
 
-
-// 
 const BASE_URL = "http://localhost:5194/api";
 // const BASE_URL = "https://job-finder-kjt2.onrender.com/api";
 // Định nghĩa class trước
@@ -231,7 +229,9 @@ class ApiServiceClass {
     const response = await fetch(url, options);
     if (!response.ok) {
       const error = await response.json().catch(() => ({}));
-      throw new Error(error.message || `HTTP error! status: ${response.status}`);
+      throw new Error(
+        error.message || `HTTP error! status: ${response.status}`
+      );
     }
     return response.json();
   }
@@ -249,7 +249,9 @@ class ApiServiceClass {
     const response = await fetch(url, options);
     if (!response.ok) {
       const error = await response.json().catch(() => ({}));
-      throw new Error(error.message || `HTTP error! status: ${response.status}`);
+      throw new Error(
+        error.message || `HTTP error! status: ${response.status}`
+      );
     }
     return response.json();
   }
@@ -267,7 +269,9 @@ class ApiServiceClass {
     const response = await fetch(url, options);
     if (!response.ok) {
       const error = await response.json().catch(() => ({}));
-      throw new Error(error.message || `HTTP error! status: ${response.status}`);
+      throw new Error(
+        error.message || `HTTP error! status: ${response.status}`
+      );
     }
     // Nếu BE trả về 204 No Content thì return null
     if (response.status === 204) return null;
@@ -317,6 +321,28 @@ const ApiService = {
         return JSON.parse(text);
       } catch (error) {
         // Nếu không phải JSON, trả về dạng text (cho các response như "OK")
+        return text;
+      }
+    });
+  },
+  put: (endpoint, data) => {
+    const token = localStorage.getItem("token");
+    return fetch(`${BASE_URL}${endpoint}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: data ? JSON.stringify(data) : undefined,
+    }).then(async (res) => {
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({ message: `HTTP error! status: ${res.status}` }));
+        throw new Error(errorData.message || `HTTP error! status: ${res.status}`);
+      }
+      const text = await res.text();
+      try {
+        return JSON.parse(text);
+      } catch (error) {
         return text;
       }
     });

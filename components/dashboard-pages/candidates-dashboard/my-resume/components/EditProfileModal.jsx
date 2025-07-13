@@ -30,11 +30,27 @@ const EditProfileModal = ({ open, onClose, onSubmit, profile }) => {
   const [provinceCodeMap, setProvinceCodeMap] = useState({});
 
   useEffect(() => {
+    // Convert dob from ISO string to YYYY-MM-DD format for date input
+    const formatDobForInput = (dob) => {
+      if (!dob) return "";
+      try {
+        const date = new Date(dob);
+        if (isNaN(date.getTime())) return "";
+        // Use local date to avoid timezone issues
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+      } catch (error) {
+        return "";
+      }
+    };
+
     setForm({
       FullName: profile?.fullName || "",
       JobTitle: profile?.jobTitle || "",
       Gender: profile?.gender || "Male",
-      Dob: profile?.dob || "",
+      Dob: formatDobForInput(profile?.dob),
       Province: profile?.province || "",
       City: profile?.city || "",
       Address: profile?.address || "",
@@ -98,11 +114,16 @@ const EditProfileModal = ({ open, onClose, onSubmit, profile }) => {
     const { name, value, files } = e.target;
     if (name === "imageFile") {
       const file = files[0];
-      setForm((prev) => ({ ...prev, imageFile: file }));
       if (file) {
+        setForm((prev) => ({ ...prev, imageFile: file }));
         const reader = new FileReader();
-        reader.onload = (ev) => setPreview(ev.target.result);
+        reader.onload = (ev) => {
+          setPreview(ev.target.result);
+        };
         reader.readAsDataURL(file);
+      } else {
+        setForm((prev) => ({ ...prev, imageFile: null }));
+        setPreview("");
       }
     } else {
       setForm((prev) => ({ ...prev, [name]: value }));
@@ -118,6 +139,10 @@ const EditProfileModal = ({ open, onClose, onSubmit, profile }) => {
     e.preventDefault();
     setForm((prev) => ({ ...prev, imageFile: null, image: "" }));
     setPreview("");
+    // Reset file input
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
   };
 
   const handleBlur = (e) => {
@@ -130,7 +155,7 @@ const EditProfileModal = ({ open, onClose, onSubmit, profile }) => {
     if (!form.FullName.trim()) newErrors.FullName = "Full name is required.";
     if (!form.JobTitle.trim()) newErrors.JobTitle = "Job title is required.";
     if (!form.Phone.trim()) newErrors.Phone = "Phone is required.";
-    if (!form.Dob) newErrors.Dob = "Date of birth is required.";
+    if (!form.Dob || form.Dob.trim() === "") newErrors.Dob = "Date of birth is required.";
     if (!form.Province.trim()) newErrors.Province = "Province is required.";
     if (!form.City.trim()) newErrors.City = "City is required.";
     return newErrors;
@@ -141,6 +166,23 @@ const EditProfileModal = ({ open, onClose, onSubmit, profile }) => {
     const validationErrors = validate();
     setErrors(validationErrors);
     if (Object.keys(validationErrors).length > 0) return;
+    
+    // Convert date back to ISO string for API
+    const formatDobForAPI = (dob) => {
+      if (!dob) return null;
+      try {
+        const date = new Date(dob);
+        if (isNaN(date.getTime())) return null;
+        // Create date at midnight local time to avoid timezone issues
+        const year = date.getFullYear();
+        const month = date.getMonth();
+        const day = date.getDate();
+        return new Date(year, month, day).toISOString();
+      } catch (error) {
+        return null;
+      }
+    };
+
     const submitData = {
       FullName: form.FullName,
       JobTitle: form.JobTitle,
@@ -149,7 +191,7 @@ const EditProfileModal = ({ open, onClose, onSubmit, profile }) => {
       City: form.City,
       Province: form.Province,
       Address: form.Address,
-      Dob: form.Dob,
+      Dob: formatDobForAPI(form.Dob),
       imageFile: form.imageFile,
       PersonalLink: form.PersonalLink,
     };
@@ -158,10 +200,15 @@ const EditProfileModal = ({ open, onClose, onSubmit, profile }) => {
 
   // Add URL validation function
   const getValidImageUrl = (url) => {
-    if (!url || typeof url !== 'string') {
+    if (!url || typeof url !== "string") {
       return null;
     }
-    if (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('/')) {
+    if (
+      url.startsWith("http://") ||
+      url.startsWith("https://") ||
+      url.startsWith("/") ||
+      url.startsWith("data:") // Add support for data URLs from FileReader
+    ) {
       return url;
     }
     return null;
@@ -315,15 +362,19 @@ const EditProfileModal = ({ open, onClose, onSubmit, profile }) => {
             {/* Avatar + Edit/Delete */}
             <div className="avatar-section">
               <img
-                src={getValidImageUrl(preview) || getValidImageUrl(form.image) || "/images/resource/default-avatar.png"}
+                src={
+                  preview ||
+                  getValidImageUrl(form.image) ||
+                  "/images/resource/default-avatar.png"
+                }
                 alt="avatar"
                 style={{
-                  width: '120px',
-                  height: '120px',
-                  borderRadius: '50%',
-                  objectFit: 'cover',
-                  border: '2px solid #eee',
-                  marginBottom: '16px'
+                  width: "120px",
+                  height: "120px",
+                  borderRadius: "50%",
+                  objectFit: "cover",
+                  border: "2px solid #eee",
+                  marginBottom: "16px",
                 }}
               />
               <input
@@ -493,19 +544,19 @@ const EditProfileModal = ({ open, onClose, onSubmit, profile }) => {
                     required
                     style={{
                       border:
-                        errors.Dob || (touched.Dob && !form.Dob)
+                        errors.Dob || (touched.Dob && (!form.Dob || form.Dob.trim() === ""))
                           ? "2px solid #e60023"
-                          : form.Dob
+                          : form.Dob && form.Dob.trim() !== ""
                           ? "2px solid #28a745"
                           : "1px solid #ddd",
                       outline:
-                        errors.Dob || (touched.Dob && !form.Dob)
+                        errors.Dob || (touched.Dob && (!form.Dob || form.Dob.trim() === ""))
                           ? "1px solid #e60023"
                           : undefined,
                       background: "#fff",
                     }}
                   />
-                  {(errors.Dob || (touched.Dob && !form.Dob)) && (
+                  {(errors.Dob || (touched.Dob && (!form.Dob || form.Dob.trim() === ""))) && (
                     <div
                       style={{ color: "#e60023", fontSize: 13, marginTop: 2 }}
                     >

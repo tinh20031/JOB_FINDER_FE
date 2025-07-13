@@ -13,6 +13,7 @@ import { clearLoginState } from "../../features/auth/authSlice";
 import { useRouter } from "next/navigation";
 import { useDispatch } from "react-redux";
 import apiService from '@/services/api.service';
+import { startNotificationHub, stopNotificationHub } from "@/services/notificationHub";
 
 
 const getValidAvatarPath = (user) => {
@@ -36,13 +37,24 @@ const DashboardHeader = () => {
     const [navbar, setNavbar] = useState(false);
 
     // Get user data from Redux store
-    const { user, isLoggedIn, role, profileUpdated, userId } = useSelector((state) => state.auth);
+    const { user, isLoggedIn, role, profileUpdated, userId: reduxUserId } = useSelector((state) => state.auth);
     const dispatch = useDispatch();
     const router = useRouter();
 
     // Use state for user info to handle updates
     const [displayUserName, setDisplayUserName] = useState("My Account");
     const [displayAvatar, setDisplayAvatar] = useState("/images/resource/company-6.png");
+    const [notifications, setNotifications] = useState([]);
+    const [unreadCount, setUnreadCount] = useState(0);
+    const [showDropdown, setShowDropdown] = useState(false);
+    const dropdownRef = useRef(null);
+    const [userId, setUserId] = useState(null);
+
+    // Lấy userId từ Redux hoặc localStorage khi reload
+    useEffect(() => {
+        const id = reduxUserId || (typeof window !== 'undefined' ? localStorage.getItem('userId') : null);
+        setUserId(id ? Number(id) : null);
+    }, [reduxUserId]);
 
     // Dropdown state management
     const [dropdownOpen, setDropdownOpen] = useState(false);
@@ -69,7 +81,7 @@ const DashboardHeader = () => {
     // Update state when user data from Redux changes
     useEffect(() => {
         const fetchCompanyProfile = async () => {
-            let id = userId || (typeof window !== 'undefined' ? localStorage.getItem('userId') : null);
+            let id = userId;
             if (role === 'Company' && isLoggedIn && id) {
                 try {
                     const profile = await apiService.get(`/CompanyProfile/${id}`);
@@ -101,7 +113,65 @@ const DashboardHeader = () => {
             }
         };
         fetchCompanyProfile();
-    }, [user, role, isLoggedIn, profileUpdated, userId]); 
+    }, [user, role, isLoggedIn, profileUpdated, userId]);
+
+    // Fetch notifications/unread count
+    useEffect(() => {
+        if (role === 'Company' && isLoggedIn && userId) {
+            const fetchNotifications = async () => {
+                try {
+                    const res = await apiService.get(`/notification?page=1&pageSize=5`);
+                    setNotifications(Array.isArray(res) ? res : []);
+                } catch {}
+            };
+            const fetchUnreadCount = async () => {
+                try {
+                    const res = await apiService.get(`/notification/unread-count`);
+                    setUnreadCount(res?.count || 0);
+                } catch {}
+            };
+            fetchNotifications();
+            fetchUnreadCount();
+        }
+    }, [isLoggedIn, userId, role, profileUpdated]);
+
+    // Tích hợp SignalR notification realtime cho company
+    useEffect(() => {
+        const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
+        if (role === 'Company' && isLoggedIn && userId && token) {
+            const connection = startNotificationHub(token, userId, (notification) => {
+                setNotifications((prev) => [notification, ...prev]);
+                setUnreadCount((prev) => prev + 1);
+            });
+            return () => stopNotificationHub();
+        }
+    }, [isLoggedIn, userId, role]);
+
+    // Đóng dropdown khi click ngoài
+    useEffect(() => {
+        function handleClickOutside(event) {
+            if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+                setShowDropdown(false);
+            }
+        }
+        if (showDropdown) {
+            document.addEventListener("mousedown", handleClickOutside);
+        } else {
+            document.removeEventListener("mousedown", handleClickOutside);
+        }
+        return () => document.removeEventListener("mousedown", handleClickOutside);
+    }, [showDropdown]);
+
+    // Đánh dấu đã đọc khi mở dropdown
+    const handleBellClick = async () => {
+        setShowDropdown((prev) => !prev);
+        if (unreadCount > 0) {
+            try {
+                await apiService.put(`/Notification/read-all`);
+                setUnreadCount(0);
+            } catch {}
+        }
+    };
 
     const changeBackground = () => {
         if (window.scrollY >= 0) {
@@ -167,9 +237,49 @@ const DashboardHeader = () => {
                         </button> */}
                         {/* wishlisted menu */}
 
-                        <button className="menu-btn">
-                            <span className="icon la la-bell"></span>
-                        </button>
+                        {/* Notification bell for Company */}
+                        {role === 'Company' && isLoggedIn && (
+                            <div style={{ position: 'relative', marginRight: 16 }}>
+                                <button className="menu-btn" onClick={handleBellClick} style={{ position: 'relative' }}>
+                                    <span className="icon la la-bell"></span>
+                                    {unreadCount > 0 && (
+                                        <span style={{ position: 'absolute', top: 0, right: 0, background: '#e74c3c', color: '#fff', borderRadius: '50%', fontSize: 12, minWidth: 18, height: 18, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 5px' }}>{unreadCount}</span>
+                                    )}
+                                </button>
+                                {showDropdown && (
+                                    <div ref={dropdownRef} style={{ position: 'absolute', right: 0, top: 36, width: 340, background: '#fff', boxShadow: '0 2px 8px rgba(0,0,0,0.15)', borderRadius: 8, zIndex: 1000 }}>
+                                        <div style={{ padding: 12, borderBottom: '1px solid #eee', fontWeight: 600 }}>New announcement</div>
+                                        <div style={{ maxHeight: 350, overflowY: 'auto' }}>
+                                            {notifications.length === 0 ? (
+                                                <div style={{ padding: 16, textAlign: 'center', color: '#888' }}>No new notifications</div>
+                                            ) : (
+                                                notifications.map((n) => (
+                                                    <Link key={n.notificationId} href={n.link || '#'} style={{ textDecoration: 'none', color: n.isRead ? '#aaa' : '#222' }}>
+                                                        <div
+                                                            style={{
+                                                                padding: '12px 16px',
+                                                                borderBottom: '1px solid #f3f3f3',
+                                                                cursor: 'pointer',
+                                                                background: n.isRead ? '#fff' : '#f1f6fd',
+                                                                fontWeight: n.isRead ? 400 : 600,
+                                                                opacity: n.isRead ? 0.7 : 1,
+                                                            }}
+                                                        >
+                                                            <div style={{ fontWeight: n.isRead ? 400 : 600 }}>{n.title}</div>
+                                                            <div style={{ fontSize: 13, color: n.isRead ? '#bbb' : '#1967d2', margin: '4px 0 2px 0' }}>{n.message}</div>
+                                                            <div style={{ fontSize: 12, color: '#888' }}>{n.createdAt ? new Date(n.createdAt).toLocaleString() : ''}</div>
+                                                        </div>
+                                                    </Link>
+                                                ))
+                                            )}
+                                        </div>
+                                        <div style={{ textAlign: 'center', padding: 8 }}>
+                                            <Link href="/employers-dashboard/resume-alerts" style={{ fontSize: 13, color: '#1967d2' }}>View all notifications</Link>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        )}
                         {/* End notification-icon */}
 
                         {/* <!-- Dashboard Option --> */}

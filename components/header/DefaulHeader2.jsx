@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
 import { useEffect, useState, useRef } from "react";
+
 import { useSelector, useDispatch } from 'react-redux';
 import { clearLoginState, setLoginState } from '@/features/auth/authSlice';
 import { authService } from "@/services/authService";
@@ -16,6 +17,7 @@ import BecomeRecruiterModal from '../common/form/shared/BecomeRecruiterModal';
 import { useFavoriteJobs } from "../../contexts/FavoriteJobsContext";
 
 import apiService from '@/services/api.service';
+import { startNotificationHub, stopNotificationHub } from "@/services/notificationHub";
 
 // Helper function to validate image URLs
 const getValidImageUrl = (url) => {
@@ -125,6 +127,65 @@ const DefaulHeader2 = () => {
     };
     fetchProfile();
   }, [isLoggedIn, role, profileUpdated, user]);
+
+  // Thêm logic fetch notification/unreadCount và SignalR cho company
+  useEffect(() => {
+    const fetchNotifications = async () => {
+      if (!userId || role !== 'Company') return;
+      try {
+        const res = await apiService.get(`/notification?page=1&pageSize=5`);
+        setNotifications(Array.isArray(res) ? res : []);
+      } catch {}
+    };
+    const fetchUnreadCount = async () => {
+      if (!userId || role !== 'Company') return;
+      try {
+        const res = await apiService.get(`/notification/unread-count`);
+        setUnreadCount(res?.count || 0);
+      } catch {}
+    };
+    if (isLoggedIn && role === 'Company') {
+      fetchNotifications();
+      fetchUnreadCount();
+    }
+  }, [isLoggedIn, userId, profileUpdated, role]);
+
+  useEffect(() => {
+    const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
+    if (isLoggedIn && userId && token && role === 'Company') {
+      const connection = startNotificationHub(token, userId, (notification) => {
+        setNotifications((prev) => [notification, ...prev]);
+        setUnreadCount((prev) => prev + 1);
+      });
+      return () => stopNotificationHub();
+    }
+  }, [isLoggedIn, userId, role]);
+
+  // Đóng dropdown khi click ngoài
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setShowDropdown(false);
+      }
+    }
+    if (showDropdown) {
+      document.addEventListener("mousedown", handleClickOutside);
+    } else {
+      document.removeEventListener("mousedown", handleClickOutside);
+    }
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [showDropdown]);
+
+  // Đánh dấu đã đọc khi mở dropdown
+  const handleBellClick = async () => {
+    setShowDropdown((prev) => !prev);
+    if (unreadCount > 0) {
+      try {
+        await apiService.put(`/Notification/read-all`);
+        setUnreadCount(0);
+      } catch {}
+    }
+  };
 
   const changeBackground = () => {
     if (typeof window !== 'undefined' && window.scrollY >= 10) {
