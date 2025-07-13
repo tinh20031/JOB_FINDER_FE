@@ -83,6 +83,11 @@
   }
 }
 
+@keyframes skeleton-loading {
+  0% { opacity: 0.5; }
+  100% { opacity: 1; }
+}
+
 /* Fix radio button size and shape (always small, round, like Bootstrap) */
 input[type="radio"].form-check-input {
   width: 16px !important;
@@ -95,4 +100,40 @@ input[type="radio"].form-check-input {
 
 .not-allowed-cursor {
   cursor: not-allowed !important;
+}
+
+/* Giảm padding cho tiêu đề Notifications widget, không ảnh hưởng widget khác */
+.notification-widget .widget-title {
+  padding-top: 8px !important;
+  padding-bottom: 8px !important;
+}
+
+/* Luôn giữ chiều cao mặc định cho notification-list, đồng bộ hai tab */
+.notification-list {
+  min-height: 320px;
+  max-height: 320px;
+  overflow-y: auto;
+}
+
+.notification-job-title {
+  display: inline-block;
+  max-width: 160px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  vertical-align: bottom;
+}
+
+.job-alert-expiring-text {
+  color: #e53935;
+  font-weight: 500;
+}
+.job-alert-upcoming-text {
+  color: #43a047;
+  font-weight: 500;
+}
+
+.job-alert-live-text {
+  color: #2b87d8;
+  font-weight: 600;
 }

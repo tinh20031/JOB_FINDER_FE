@@ -9,6 +9,7 @@ const TopCardBlock = () => {
   const [applicants, setApplicants] = useState(0);
   const [candidates, setCandidates] = useState(0);
   const [messages, setMessages] = useState(0);
+  const [activeJobs, setActiveJobs] = useState(0);
 
   useEffect(() => {
     // Lấy companyId từ localStorage (hoặc từ redux nếu có)
@@ -24,6 +25,12 @@ const TopCardBlock = () => {
       // Gọi API lấy danh sách jobs và đếm số lượng
       jobService.getJobs({ role: "company", companyId }).then((res) => {
         setPostedJobs(res.total || 0);
+        // Đếm số job active (status === 1)
+        if (Array.isArray(res.data)) {
+          setActiveJobs(res.data.filter(j => j.status === 1).length);
+        } else {
+          setActiveJobs(0);
+        }
       });
       applicationService
         .getUniqueCandidatesByCompany(companyId)
@@ -49,16 +56,16 @@ const TopCardBlock = () => {
     },
     {
       id: 2,
-      icon: "la-file-invoice",
-      countNumber: applicants,
-      metaName: "Applicants",
-      uiClass: "ui-red",
+      icon: "la-check-circle",
+      countNumber: activeJobs,
+      metaName: "Active Jobs",
+      uiClass: "ui-green",
     },
     {
       id: 3,
-      icon: "la-comment-o",
-      countNumber: messages,
-      metaName: "Messages",
+      icon: "la-file-invoice",
+      countNumber: applicants,
+      metaName: "Applicants",
       uiClass: "ui-yellow",
     },
     {
@@ -66,7 +73,7 @@ const TopCardBlock = () => {
       icon: "la-bookmark-o",
       countNumber: candidates,
       metaName: "Candidates",
-      uiClass: "ui-green",
+      uiClass: "ui-red",
     },
   ];
 

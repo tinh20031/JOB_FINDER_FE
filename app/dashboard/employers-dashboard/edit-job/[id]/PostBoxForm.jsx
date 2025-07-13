@@ -9,6 +9,8 @@ import Cookies from "js-cookie";
 import axios from "axios";
 import { motion, AnimatePresence } from 'framer-motion';
 import { jobService } from "../../../../../services/jobService";
+import Modal from "@/components/common/Modal";
+import "@/styles/modal.css";
 
 const ReactQuill = dynamic(() => import('react-quill'), { ssr: false });
 
@@ -66,6 +68,7 @@ const PostBoxForm = ({ initialData, isEditing }) => {
   const [user, setUser] = useState(null);
   const [isClient, setIsClient] = useState(false);
   const [errors, setErrors] = useState({});
+  const [showExpiredModal, setShowExpiredModal] = useState(false);
 
   useEffect(() => {
     setIsClient(true);
@@ -83,7 +86,6 @@ const PostBoxForm = ({ initialData, isEditing }) => {
     const userRole = localStorage.getItem('role') || Cookies.get('role');
     setUser({ userId, role: userRole });
     if (isEditing && initialData) {
-      console.log('initialData for PostBoxForm:', initialData);
       setFormData({
         ...initialData,
         jobId: initialData.jobId || initialData.id,
@@ -184,11 +186,16 @@ const PostBoxForm = ({ initialData, isEditing }) => {
     if (errors.education) setErrors(prev => ({ ...prev, education: '' }));
   };
 
+  const isExpired = formData && formData.timeEnd && new Date(formData.timeEnd) < new Date();
+
   const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log('Submitting formData:', formData);
     setError("");
     setSuccess(false);
+    if (isExpired) {
+      setShowExpiredModal(true);
+      return;
+    }
 
     if (!validateForm()) {
       setError("Please fill in all required fields correctly.");
@@ -207,10 +214,8 @@ const PostBoxForm = ({ initialData, isEditing }) => {
         }, 2000);
       } else {
         // Logic for creating a job will be implemented here
-        console.log("Create job logic not implemented yet.");
       }
     } catch (err) {
-      console.error("Error updating job:", err);
       const errorMessage = err.response?.data?.message || "Failed to update job. Please check the details and try again.";
       setError(errorMessage);
       setSuccess(false);
@@ -453,11 +458,20 @@ const PostBoxForm = ({ initialData, isEditing }) => {
           </div>
         )}    
             </div>
-          <button type="submit" className="theme-btn btn-style-one" disabled={isLoading || (isEditing && initialData && new Date(initialData.timeEnd) < new Date())}>
+          <button type="submit" className="theme-btn btn-style-one" disabled={isLoading}>
             {isLoading ? (<><i className="fas fa-spinner fa-spin me-2"></i>{isEditing ? "Updating..." : "Posting..."}</>) : (isEditing ? "Update Job" : "Post Job")}
           </button>
         </div>
       </div>
+      {/* Modal thông báo job đã hết hạn */}
+      <Modal
+        open={showExpiredModal}
+        onClose={() => setShowExpiredModal(false)}
+        title="Cannot update job"
+        footer={<button className="btn-confirm" onClick={() => setShowExpiredModal(false)}>Close</button>}
+      >
+        <p>This job has already expired and cannot be edited. Please create a new job posting instead.</p>
+      </Modal>
     </motion.form>
   );
 };

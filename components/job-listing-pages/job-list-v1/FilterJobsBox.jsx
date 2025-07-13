@@ -248,12 +248,13 @@ const FilterJobsBox = () => {
 
   // keyword filter on title
   const keywordFilter = (item) =>
-    keyword ? item.title.toLowerCase().includes(keyword.toLowerCase()) : true;
+    keyword ? item.jobTitle?.toLowerCase().includes(keyword.toLowerCase()) : true;
 
   // location filter
   const locationFilter = (item) =>
     location
-      ? item?.industryId?.toLowerCase().includes(location.toLowerCase())
+      ? item?.provinceName?.toLowerCase().includes(location.toLowerCase()) ||
+        item?.location?.toLowerCase().includes(location.toLowerCase())
       : true;
 
   // destination filter
@@ -266,7 +267,7 @@ const FilterJobsBox = () => {
   // category filter
   const categoryFilter = (item) =>
     category
-      ? item?.industryId?.toLowerCase() === category.toLowerCase()
+      ? String(item?.industryId) === String(category)
       : true;
 
   // job-type filter
@@ -274,27 +275,48 @@ const FilterJobsBox = () => {
     jobType?.length ? jobType.includes(item.jobTypeId) : true;
 
   // date-posted filter
-  const datePostedFilter = (item) =>
-    datePosted && datePosted !== "all"
-      ? item?.createdAt?.toLowerCase().split(" ").join("-").includes(datePosted)
-      : true;
+  const datePostedFilter = (item) => {
+    if (!datePosted || datePosted === "all") return true;
+    const now = new Date();
+    const created = new Date(item.createdAt);
+    switch (datePosted) {
+      case "last-hour":
+        return (now - created) <= 60 * 60 * 1000;
+      case "last-24-hour":
+        return (now - created) <= 24 * 60 * 60 * 1000;
+      case "last-7-days":
+        return (now - created) <= 7 * 24 * 60 * 60 * 1000;
+      case "last-14-days":
+        return (now - created) <= 14 * 24 * 60 * 60 * 1000;
+      case "last-30-days":
+        return (now - created) <= 30 * 24 * 60 * 60 * 1000;
+      default:
+        return true;
+    }
+  };
 
   // experience level filter
   const experienceFilter = (item) =>
-    experience?.length ? experience.includes(item.experienceId) : true;
+    experience?.length ? experience.includes(item.experienceLevelId) : true;
 
   // salary filter
   const salaryFilter = (item) =>
     salary?.min === 0 && salary?.max === 20000
       ? true
-      : item.salary >= salary?.min && item.salary <= salary?.max;
+      : item.minSalary >= salary?.min && item.maxSalary <= salary?.max;
 
   // tag filter
-  const tagFilter = (item) => (tag ? item?.industryId === tag : true);
+  const tagFilter = (item) => (tag ? String(item?.industryId) === String(tag) : true);
 
   // sort filter
-  const sortFilter = (a, b) =>
-    sort === "CreatedAtDesc" ? a.id > b.id && -1 : a.id < b.id && -1;
+  const sortFilter = (a, b) => {
+    if (sort === "CreatedAtDesc") {
+      return new Date(b.createdAt) - new Date(a.createdAt);
+    } else if (sort === "CreatedAtAsc") {
+      return new Date(a.createdAt) - new Date(b.createdAt);
+    }
+    return 0;
+  };
 
   // Thêm handler cho nút Show More
   const handleShowMore = () => {
@@ -321,9 +343,10 @@ const FilterJobsBox = () => {
     }
   };
 
-  // Lọc job active và áp dụng filter từ query string
+  // Lọc job active và áp dụng tất cả các filter
   const filteredActiveJobs = jobs
     .filter((job) => job.status === 1)
+    // Filter từ query string
     .filter(
       (job) => !industryId || String(job.industryId) === String(industryId)
     )
@@ -334,7 +357,19 @@ const FilterJobsBox = () => {
       (job) =>
         !experienceLevelId ||
         String(job.experienceLevelId) === String(experienceLevelId)
-    );
+    )
+    // Filter từ Redux state
+    .filter(keywordFilter)
+    .filter(locationFilter)
+    .filter(destinationFilter)
+    .filter(categoryFilter)
+    .filter(jobTypeFilter)
+    .filter(datePostedFilter)
+    .filter(experienceFilter)
+    .filter(salaryFilter)
+    .filter(tagFilter)
+    // Sort
+    .sort(sortFilter);
   const totalActiveJobs = filteredActiveJobs.length;
   const totalPages = Math.ceil(totalActiveJobs / itemsPerPage);
   // Phân trang trên mảng đã lọc
@@ -418,22 +453,6 @@ const FilterJobsBox = () => {
             <option value="">Sort by (default)</option>
             <option value="CreatedAtAsc">Newest</option>
             <option value="CreatedAtDesc">Oldest</option>
-          </select>
-          {/* End select */}
-
-          <select
-            onChange={(e) => {
-              const limit = Number(e.target.value);
-              setItemsPerPage(limit);
-              setCurrentPage(1);
-            }}
-            className="chosen-single form-select ms-3"
-            value={itemsPerPage}
-          >
-            <option value="8">8 Per Page</option>
-            <option value="16">16 Per Page</option>
-            <option value="24">24 Per Page</option>
-            <option value="40">40 Per Page</option>
           </select>
           {/* End select */}
         </div>

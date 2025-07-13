@@ -27,9 +27,9 @@ const JobType = ({ jobTypes, onSelectJobType }) => {
                     <label className="switch">
                         <input
                             type="checkbox"
-                            value={item.id} // Use item.id as the value
-                            checked={selectedJobTypes.includes(item.id) || false} // Check based on item.id
-                            onChange={(e) => jobTypeHandler(e, item.id)} // Pass item.id to handler
+                            value={item.jobTypeId}
+                            checked={selectedJobTypes.includes(item.jobTypeId)}
+                            onChange={(e) => jobTypeHandler(e, item.jobTypeId)}
                         />
                         <span className="slider round"></span>
                         <span className="title">{item.jobTypeName}</span>

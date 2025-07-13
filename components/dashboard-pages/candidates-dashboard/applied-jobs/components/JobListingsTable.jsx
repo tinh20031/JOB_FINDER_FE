@@ -3,7 +3,7 @@ import Image from "next/image";
 import { useEffect, useState } from "react";
 import Cookies from "js-cookie";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { jwtDecode } from "jwt-decode";
 import { applicationService } from "@/services/applicationService";
 import { jobService } from "@/services/jobService";
@@ -11,12 +11,17 @@ import "../../../employers-dashboard/manage-jobs/components/JobListingsTable.css
 
 const JobListingsTable = () => {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [applications, setApplications] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
   const [filteredJobs, setFilteredJobs] = useState([]);
   const [jobDetails, setJobDetails] = useState({});
+  
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const jobsPerPage = 5;
 
   useEffect(() => {
     const fetchAppliedJobs = async () => {
@@ -35,6 +40,24 @@ const JobListingsTable = () => {
     };
     fetchAppliedJobs();
   }, []);
+
+  // Khi mount, đọc page từ query string
+  useEffect(() => {
+    const pageParam = searchParams.get('page');
+    if (pageParam && !isNaN(Number(pageParam)) && Number(pageParam) > 0) {
+      setCurrentPage(Number(pageParam));
+    } else {
+      setCurrentPage(1);
+    }
+  }, [searchParams]);
+
+  // Khi đổi trang, cập nhật query string
+  const handleSetPage = (page) => {
+    const params = new URLSearchParams(Array.from(searchParams.entries()));
+    params.set('page', page);
+    router.replace(`?${params.toString()}`);
+    setCurrentPage(page);
+  };
 
   // Group applications by jobId
   useEffect(() => {
@@ -86,6 +109,10 @@ const JobListingsTable = () => {
     router.push(`/job-single-v3/${jobId}`);
   };
 
+  // Pagination logic
+  const totalPages = Math.ceil(filteredJobs.length / jobsPerPage);
+  const paginatedJobs = filteredJobs.slice((currentPage-1)*jobsPerPage, currentPage*jobsPerPage);
+
   const TableSkeleton = () => (
     <div className="table-outer">
       <table className="default-table manage-job-table">
@@ -126,17 +153,16 @@ const JobListingsTable = () => {
   return (
     <div className="tabs-box">
       <div className="widget-title">
-        <h4>My Job Listings</h4>
-        <div className="chosen-outer">
-          <div className="search-box">
-            <input
-              type="text"
-              placeholder="Search jobs..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="form-control"
-            />
-          </div>
+        <h4>My Applied Jobs</h4>
+        <div className="chosen-outer" style={{display:'flex', alignItems:'center', gap:8}}>
+          <input
+            type="text"
+            className="job-search-input"
+            placeholder="Search jobs..."
+            value={searchTerm}
+            onChange={(e) => {setSearchTerm(e.target.value); setCurrentPage(1);}}
+            style={{minWidth:180, maxWidth:220}}
+          />
         </div>
       </div>
       <div className="widget-content">
@@ -152,12 +178,12 @@ const JobListingsTable = () => {
               <thead>
                 <tr>
                   <th>Title</th>
-                  <th>Applicants</th>
+                  <th>Applications</th>
                   <th>Created & Expired</th>
                 </tr>
               </thead>
               <tbody>
-                {filteredJobs.map(item => {
+                {paginatedJobs.map(item => {
                   const job = item.job;
                   const detail = jobDetails[job.jobId];
                   const companyName = job.Company?.CompanyName || detail?.company?.companyName || "";
@@ -191,8 +217,47 @@ const JobListingsTable = () => {
                     </tr>
                   );
                 })}
+                {paginatedJobs.length === 0 && filteredJobs.length > 0 && (
+                  <tr><td colSpan={3}>No jobs found on this page</td></tr>
+                )}
               </tbody>
             </table>
+            
+            {/* Pagination UI */}
+            {filteredJobs.length > 0 && (
+              <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 16, margin: '24px 0' }}>
+                <button
+                  disabled={currentPage === 1}
+                  onClick={() => handleSetPage(currentPage - 1)}
+                  style={{ background: 'none', border: 'none', fontSize: 22, cursor: 'pointer', color: currentPage === 1 ? '#ccc' : '#444' }}
+                >&#8592;</button>
+                {Array.from({ length: totalPages }, (_, i) => (
+                  <button
+                    key={i + 1}
+                    onClick={() => handleSetPage(i + 1)}
+                    style={{
+                      width: 40,
+                      height: 40,
+                      borderRadius: '50%',
+                      background: currentPage === i + 1 ? '#1967d2' : 'none',
+                      color: currentPage === i + 1 ? '#fff' : '#444',
+                      border: 'none',
+                      fontWeight: 600,
+                      fontSize: 18,
+                      cursor: 'pointer',
+                      outline: 'none',
+                      boxShadow: 'none',
+                      transition: 'background 0.2s, color 0.2s'
+                    }}
+                  >{i + 1}</button>
+                ))}
+                <button
+                  disabled={currentPage === totalPages || totalPages === 0}
+                  onClick={() => handleSetPage(currentPage + 1)}
+                  style={{ background: 'none', border: 'none', fontSize: 22, cursor: 'pointer', color: currentPage === totalPages || totalPages === 0 ? '#ccc' : '#444' }}
+                >&#8594;</button>
+              </div>
+            )}
           </div>
         )}
       </div>
@@ -209,6 +274,27 @@ const JobListingsTable = () => {
         }
         .manage-job-table tbody tr.job-row td div[style*="font-weight: 600"]:hover {
           color: #2563eb;
+        }
+        .job-search-input {
+          background: #f6f8fa;
+          border: 1px solid #e0e0e0;
+          border-radius: 8px;
+          height: 44px;
+          min-width: 180px;
+          max-width: 220px;
+          padding: 0 16px;
+          font-size: 16px;
+          color: #444;
+          transition: background 0.2s, border 0.2s;
+          outline: none;
+          box-shadow: none;
+          margin-right: 0;
+          font-weight: 400;
+        }
+        .job-search-input:focus {
+          background: #fff;
+          border: 1.5px solid #1967d2;
+          color: #222;
         }
       `}</style>
     </div>

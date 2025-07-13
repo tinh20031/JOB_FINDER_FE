@@ -28,6 +28,8 @@ import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { useRouter } from "next/navigation";
 import "@/styles/apply-job-modal.css";
+import { useFavoriteJobs } from "@/contexts/FavoriteJobsContext";
+import { addFavoriteJob, removeFavoriteJob } from "@/services/favoriteJobService";
 
 const JobSingleDynamicV3 = ({ params }) => {
   const [job, setJob] = useState(null);
@@ -37,6 +39,10 @@ const JobSingleDynamicV3 = ({ params }) => {
   const [experienceLevels, setExperienceLevels] = useState([]);
   const [company, setCompany] = useState(null);
   const [fetchError, setFetchError] = useState(null);
+  const { favoriteJobIds, updateFavoriteJobs } = useFavoriteJobs();
+  const userId = typeof window !== 'undefined' ? Number(localStorage.getItem('userId')) : null;
+  const isFavorited = favoriteJobIds.includes(Number(params.id));
+  const [loadingFavorite, setLoadingFavorite] = useState(false);
 
   useEffect(() => {
     // Import Bootstrap only on client side
@@ -136,6 +142,24 @@ const JobSingleDynamicV3 = ({ params }) => {
   const experienceLevelName = job?.experienceLevel?.name || "N/A";
   const industryName = job?.industry?.industryName || "N/A";
   const jobTypeName = job?.jobType?.jobTypeName || 'N/A';
+
+  const handleBookmarkClick = async () => {
+    if (!userId || !params.id || loadingFavorite) return;
+    setLoadingFavorite(true);
+    try {
+      if (isFavorited) {
+        await removeFavoriteJob(userId, Number(params.id));
+        updateFavoriteJobs(favoriteJobIds.filter(id => id !== Number(params.id)));
+      } else {
+        await addFavoriteJob(userId, Number(params.id));
+        updateFavoriteJobs([...favoriteJobIds, Number(params.id)]);
+      }
+    } catch (e) {
+      // handle error if needed
+    } finally {
+      setLoadingFavorite(false);
+    }
+  };
 
   if (!job && !fetchError) {
     return (
@@ -322,7 +346,20 @@ const JobSingleDynamicV3 = ({ params }) => {
                     >
                       Apply For Job
                     </a>
-                    <button className="bookmark-btn">
+                    <button
+                      className={`bookmark-btn${isFavorited ? ' active' : ''}`}
+                      onClick={handleBookmarkClick}
+                      title={isFavorited ? "Remove from favorites" : "Add to favorites"}
+                      style={{
+                        border: 'none',
+                        transition: '0.3s',
+                        opacity: loadingFavorite ? 0.6 : 1,
+                        cursor: loadingFavorite ? 'not-allowed' : 'pointer',
+                        marginLeft: 16
+                        // KHÔNG set color/background ở đây!
+                      }}
+                      disabled={loadingFavorite}
+                    >
                       <i className="flaticon-bookmark"></i>
                     </button>
                   </div>
@@ -486,7 +523,12 @@ const JobSingleDynamicV3 = ({ params }) => {
         display: inline-block;
         font-weight: 500;
       }
-      `}</style>
+      .sidebar .btn-box .bookmark-btn.active,
+      .sidebar .btn-box .bookmark-btn.active .flaticon-bookmark {
+        color: #eaf1ff !important;
+        background: #2a6ee0 !important;
+      }
+    `}</style>
     </>
   );
 };

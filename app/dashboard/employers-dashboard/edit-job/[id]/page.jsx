@@ -24,10 +24,8 @@ const EditJobPage = () => {
       const fetchJobData = async () => {
         try {
           const data = await jobService.getJobById(JobId);
-          // console.log("Fetched Job Data:", data);
           setJobData(data);
         } catch (err) {
-          console.error("Error fetching job data:", err);
           setError("Failed to load job data.");
         } finally {
           setLoading(false);

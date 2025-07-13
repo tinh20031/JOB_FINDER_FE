@@ -10,6 +10,7 @@ import DashboardEmployerSidebar from "@/components/header/DashboardEmployerSideb
 import BreadCrumb from "../BreadCrumb";
 import CopyrightFooter from "../CopyrightFooter";
 import MenuToggler from "../MenuToggler";
+import { useRouter } from "next/navigation";
 
 const TableSkeleton = () => (
   <div className="table-outer">
@@ -77,6 +78,28 @@ const AllApplicationsByJob = () => {
     fetchData();
   }, [jobId]);
 
+  const router = useRouter();
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
+  const totalPages = Math.ceil(applications.length / itemsPerPage);
+  // Khi mount, đọc page từ query string
+  useEffect(() => {
+    const pageParam = searchParams.get('page');
+    if (pageParam && !isNaN(Number(pageParam)) && Number(pageParam) > 0) {
+      setCurrentPage(Number(pageParam));
+    } else {
+      setCurrentPage(1);
+    }
+  }, [searchParams]);
+  // Khi đổi trang, cập nhật query string
+  const handleSetPage = (page) => {
+    const params = new URLSearchParams(Array.from(searchParams.entries()));
+    params.set('page', page);
+    router.replace(`?${params.toString()}`);
+    setCurrentPage(page);
+  };
+  const paginatedApplications = applications.slice((currentPage-1)*itemsPerPage, currentPage*itemsPerPage);
+
   return (
     <div className="page-wrapper dashboard">
       <span className="header-span"></span>
@@ -113,7 +136,7 @@ const AllApplicationsByJob = () => {
                             </tr>
                           </thead>
                           <tbody>
-                            {applications.map(app => (
+                            {paginatedApplications.map(app => (
                               <tr key={app.applicationId || app.ApplicationId}>
                                 <td>
                                   {new Date(app.submittedAt || app.SubmittedAt).toLocaleTimeString('en-US', { hour12: false })} {new Date(app.submittedAt || app.SubmittedAt).toLocaleDateString('en-US')}
@@ -148,11 +171,12 @@ const AllApplicationsByJob = () => {
                                     </button>
                                   )}
                                 </td>
-                                <td>
-                                  <ul className="option-list" style={{margin: 0, padding: 0, listStyle: 'none'}}>
+                                 <td style={{ textAlign: 'center' }}>
+                                  <ul className="option-list" style={{ display: 'inline-block', margin: 0, padding: 0 }}>
                                     <li>
                                       <button
                                         data-text="View CV"
+                                        className="option-list-btn" // hoặc class cũ nếu có
                                         onClick={() => window.open(app.resumeUrl || app.ResumeUrl, '_blank')}
                                       >
                                         <span className="la la-eye"></span>
@@ -164,6 +188,41 @@ const AllApplicationsByJob = () => {
                             ))}
                           </tbody>
                         </table>
+                        {/* Pagination UI động */}
+                        {applications.length > 0 && (
+                          <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 16, margin: '24px 0' }}>
+                            <button
+                              disabled={currentPage === 1}
+                              onClick={() => handleSetPage(currentPage - 1)}
+                              style={{ background: 'none', border: 'none', fontSize: 22, cursor: 'pointer', color: currentPage === 1 ? '#ccc' : '#444' }}
+                            >&#8592;</button>
+                            {Array.from({ length: totalPages }, (_, i) => (
+                              <button
+                                key={i + 1}
+                                onClick={() => handleSetPage(i + 1)}
+                                style={{
+                                  width: 40,
+                                  height: 40,
+                                  borderRadius: '50%',
+                                  background: currentPage === i + 1 ? '#1967d2' : 'none',
+                                  color: currentPage === i + 1 ? '#fff' : '#444',
+                                  border: 'none',
+                                  fontWeight: 600,
+                                  fontSize: 18,
+                                  cursor: 'pointer',
+                                  outline: 'none',
+                                  boxShadow: 'none',
+                                  transition: 'background 0.2s, color 0.2s'
+                                }}
+                              >{i + 1}</button>
+                            ))}
+                            <button
+                              disabled={currentPage === totalPages || totalPages === 0}
+                              onClick={() => handleSetPage(currentPage + 1)}
+                              style={{ background: 'none', border: 'none', fontSize: 22, cursor: 'pointer', color: currentPage === totalPages || totalPages === 0 ? '#ccc' : '#444' }}
+                            >&#8594;</button>
+                          </div>
+                        )}
                         {showModal && (
                           <div className="modal-overlay">
                             <div className="modal-content">

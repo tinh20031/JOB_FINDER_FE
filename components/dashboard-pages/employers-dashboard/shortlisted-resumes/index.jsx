@@ -1,3 +1,5 @@
+"use client";
+
 import MobileMenu from "../../../header/MobileMenu";
 import DashboardHeader from "../../../header/DashboardHeader";
 import LoginPopup from "../../../common/form/login/LoginPopup";
@@ -7,8 +9,11 @@ import CopyrightFooter from "../../CopyrightFooter";
 import WidgetToFilterBox from "./components/WidgetToFilterBox";
 import WidgetContentBox from "./components/WidgetContentBox";
 import MenuToggler from "../../MenuToggler";
+import { useState } from "react";
 
 const index = () => {
+  const [searchTitle, setSearchTitle] = useState("");
+  const [filterTime, setFilterTime] = useState("Newest");
   return (
     <div className="page-wrapper dashboard">
       <span className="header-span"></span>
@@ -40,10 +45,10 @@ const index = () => {
               <div className="applicants-widget ls-widget">
                 <div className="widget-title">
                   <h4>All jobs Candidate applied</h4>
-                  <WidgetToFilterBox />
+                  <WidgetToFilterBox onSearch={setSearchTitle} filterTime={filterTime} setFilterTime={setFilterTime} />
                 </div>
                 {/* End widget top filter box */}
-                <WidgetContentBox />
+                <WidgetContentBox searchTitle={searchTitle} filterTime={filterTime} />
               </div>
               {/* <!-- applicants Widget --> */}
             </div>
