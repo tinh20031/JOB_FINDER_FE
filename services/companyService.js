@@ -74,6 +74,30 @@ export const companyService = {
     }
   },
 
+  favoriteCompany: async (companyProfileId) => {
+    try {
+      const token = getToken();
+      if (!token) {
+        throw new Error("No authentication token found");
+      }
+      const config = {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      };
+      const response = await axios.post(
+        `${API_URL}/Application/favorite-company/${companyProfileId}`,
+        {},
+        config
+      );
+      return response.data;
+    } catch (error) {
+      console.error("Error favoriting company:", error);
+      throw error;
+    }
+  },
+
   async filterCompanies(params = {}) {
     try {
       const queryParams = new URLSearchParams();

@@ -51,6 +51,7 @@ const DefaulHeader2 = () => {
   const [isFavoriteLoading, setIsFavoriteLoading] = useState(true);
   const userId = typeof window !== 'undefined' ? Number(localStorage.getItem('userId')) : null;
 
+  const [showDropdown, setShowDropdown] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef(null);
 

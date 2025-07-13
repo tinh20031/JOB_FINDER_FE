@@ -60,11 +60,11 @@ const CompanyFavouriteTable = () => {
     router.push('/login');
   };
 
-  const handleUnfavorite = async (companyId) => {
+  const handleUnfavorite = async (userId) => {
     try {
       setIsLoadingUnfavorite(true);
-      await companyService.unfavoriteCompany(companyId);
-      setCompanies(prev => prev.filter(c => c.userId !== companyId));
+      await companyService.unfavoriteCompany(userId);
+      setCompanies(prev => prev.filter(c => c.userId !== userId));
       toast.success("Removed from favorites");
     } catch (err) {
       console.error("Unfavorite error:", err, err?.response);
@@ -95,22 +95,17 @@ const CompanyFavouriteTable = () => {
                 alt={company.companyName}
                 width={50}
                 height={50}
+                style={{ borderRadius: 8, objectFit: 'cover', background: '#fff' }}
               />
               <div className="ms-3">
-                <h4>{company.companyName}</h4>
-                <div className="d-flex align-items-center gap-3">
+                <h4 style={{ margin: 0 }}>{company.companyName}</h4>
+                <div className="d-flex align-items-center gap-3" style={{ fontSize: 14, color: '#555' }}>
                   <span className="icon flaticon-map-locator me-2"></span>
                   <span>{company.location}</span>
-                  {company.industry?.industryName && (
+                  {company.industryName && (
                     <>
                       <span className="icon flaticon-briefcase me-2"></span>
-                      <span>{company.industry.industryName}</span>
-                    </>
-                  )}
-                  {company.teamSize && (
-                    <>
-                      <span className="icon flaticon-user me-2"></span>
-                      <span>{company.teamSize}</span>
+                      <span>{company.industryName}</span>
                     </>
                   )}
                 </div>

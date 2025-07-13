@@ -58,7 +58,6 @@ const DashboardHeader = () => {
 
     // Dropdown state management
     const [dropdownOpen, setDropdownOpen] = useState(false);
-    const dropdownRef = useRef(null);
 
     const handleDropdownToggle = () => setDropdownOpen((open) => !open);
     const handleDropdownClose = () => setDropdownOpen(false);
