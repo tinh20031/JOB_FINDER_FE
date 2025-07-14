@@ -167,54 +167,58 @@ const CvMatchingHistory = () => {
               </div>
               <div className="score-section" style={{display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, marginBottom: 18}}>
                 <div className="score-badge" style={{background: getScoreColor(selectedRecord.similarityScore), fontSize: 32, width: 70, height: 70, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 700, marginBottom: 2}}>
-                  {Math.round(selectedRecord.similarityScore)}%
+                  {/* Hiển thị % đúng chuẩn */}
+                  {typeof selectedRecord.similarityScore === 'number' ? Math.round(selectedRecord.similarityScore * 100) + '%' : selectedRecord.similarityScore}
                 </div>
-                <div style={{fontSize: 16, color: getScoreColor(selectedRecord.similarityScore), fontWeight: 600}}>{getScoreText(selectedRecord.similarityScore)}</div>
-              </div>
-              <div style={{marginBottom: 18, display: 'flex', gap: 10, justifyContent: 'center'}}>
-                <a
-                  href={`/job-single-v3/${selectedRecord.jobId || selectedRecord.job?.jobId}`}
-                  className="theme-btn btn-style-three"
-                  style={{fontWeight: 500, fontSize: 15, borderRadius: 6, display: 'flex', alignItems: 'center', gap: 6, background: '#f5f8ff', color: '#2563eb', border: '1.5px solid #e3e6ee'}} 
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  <i className="flaticon-briefcase"></i> View Job
-                </a>
-                {selectedRecord.cv && selectedRecord.cv.fileUrl && (
-                  <a
-                    href={selectedRecord.cv.fileUrl}
-                    className="theme-btn btn-style-three"
-                    style={{fontWeight: 500, fontSize: 15, borderRadius: 6, display: 'flex', alignItems: 'center', gap: 6, background: '#f5f8ff', color: '#2563eb', border: '1.5px solid #e3e6ee'}} 
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    <i className="flaticon-file"></i> View CV
-                  </a>
-                )}
+                <div style={{fontSize: 16, color: getScoreColor(selectedRecord.similarityScore), fontWeight: 600}}>{getScoreText(typeof selectedRecord.similarityScore === 'number' ? selectedRecord.similarityScore * 100 : selectedRecord.similarityScore)}</div>
               </div>
               <div className="suggestions-section">
                 <h5 style={{fontWeight: 700, fontSize: 18, marginBottom: 10}}>Suggestions to Improve</h5>
-                {selectedRecord.suggestions && selectedRecord.suggestions.length > 0 ? (
-                  selectedRecord.suggestions.map((suggestion, idx) => (
-                    <div key={idx} className="suggestion-item" style={{marginBottom: 16, background: '#f8f9ff', borderRadius: 8, padding: 14, boxShadow: '0 2px 8px rgba(102,126,234,0.04)'}}>
-                      <div className="suggestion-header" style={{display: 'flex', alignItems: 'center', gap: 8, fontWeight: 600, color: '#2563eb', fontSize: 15, marginBottom: 4}}>
-                        <i className="flaticon-lightbulb"></i>
-                        <span>{suggestion.category}</span>
-                      </div>
-                      <p className="suggestion-description" style={{margin: 0, color: '#444', fontSize: 15, lineHeight: 1.7}}>{suggestion.description}</p>
-                      {suggestion.specificActions && (
-                        <ul className="suggestion-actions" style={{margin: '10px 0 0 0', paddingLeft: 18, color: '#555', fontSize: 14, lineHeight: 1.6}}>
-                          {suggestion.specificActions.map((action, i) => (
-                            <li key={i}><i className="flaticon-check" style={{marginRight: 6, color: '#28a745'}}></i>{action}</li>
-                          ))}
-                        </ul>
-                      )}
-                    </div>
-                  ))
-                ) : (
-                  <div style={{color: '#888'}}>No suggestions available.</div>
-                )}
+                {/* Xử lý suggestions là mảng string hoặc mảng object */}
+                {(() => {
+                  let suggestions = selectedRecord.suggestions;
+                  if (typeof suggestions === 'string') {
+                    try {
+                      suggestions = JSON.parse(suggestions);
+                    } catch (e) {
+                      // Nếu không parse được thì để nguyên
+                    }
+                  }
+                  if (Array.isArray(suggestions) && suggestions.length > 0) {
+                    // Nếu là mảng string
+                    if (typeof suggestions[0] === 'string') {
+                      return suggestions.map((s, idx) => (
+                        <div key={idx} className="suggestion-item" style={{marginBottom: 16, background: '#f8f9ff', borderRadius: 8, padding: 14, boxShadow: '0 2px 8px rgba(102,126,234,0.04)'}}>
+                          <div className="suggestion-header" style={{display: 'flex', alignItems: 'center', gap: 8, fontWeight: 600, color: '#2563eb', fontSize: 15, marginBottom: 4}}>
+                            <i className="flaticon-lightbulb"></i>
+                            <span>Suggestion</span>
+                          </div>
+                          <p className="suggestion-description" style={{margin: 0, color: '#444', fontSize: 15, lineHeight: 1.7}}>{s}</p>
+                        </div>
+                      ));
+                    } else {
+                      // Nếu là mảng object như cũ
+                      return suggestions.map((suggestion, idx) => (
+                        <div key={idx} className="suggestion-item" style={{marginBottom: 16, background: '#f8f9ff', borderRadius: 8, padding: 14, boxShadow: '0 2px 8px rgba(102,126,234,0.04)'}}>
+                          <div className="suggestion-header" style={{display: 'flex', alignItems: 'center', gap: 8, fontWeight: 600, color: '#2563eb', fontSize: 15, marginBottom: 4}}>
+                            <i className="flaticon-lightbulb"></i>
+                            <span>{suggestion.category}</span>
+                          </div>
+                          <p className="suggestion-description" style={{margin: 0, color: '#444', fontSize: 15, lineHeight: 1.7}}>{suggestion.description}</p>
+                          {suggestion.specificActions && (
+                            <ul className="suggestion-actions" style={{margin: '10px 0 0 0', paddingLeft: 18, color: '#555', fontSize: 14, lineHeight: 1.6}}>
+                              {suggestion.specificActions.map((action, i) => (
+                                <li key={i}><i className="flaticon-check" style={{marginRight: 6, color: '#28a745'}}></i>{action}</li>
+                              ))}
+                            </ul>
+                          )}
+                        </div>
+                      ));
+                    }
+                  } else {
+                    return <div style={{color: '#888'}}>No suggestions available.</div>;
+                  }
+                })()}
               </div>
             </div>
           </div>

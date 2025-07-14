@@ -1,5 +1,5 @@
 'use client';
-import React from "react";
+import React, { Suspense } from "react";
 import FooterDefault from "../../components/footer/common-footer";
 import Breadcrumb from "../../components/common/Breadcrumb";
 import DefaulHeader2 from "../../components/header/DefaulHeader2";
@@ -22,7 +22,9 @@ const FavoriteJobsPage = () => {
             </div>
             <div className="content-column col-lg-8 col-md-12 col-sm-12">
               <div className="ls-outer">
-                <FavoriteJobsBox />
+                <Suspense fallback={<div>Loading...</div>}>
+                  <FavoriteJobsBox />
+                </Suspense>
               </div>
             </div>
           </div>

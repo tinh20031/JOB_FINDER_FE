@@ -195,10 +195,10 @@ const CvMatchingTool = ({ jobId, jobTitle }) => {
           <h2 style={{fontWeight: 700, fontSize: 28, marginBottom: 18, color: '#222', letterSpacing: 0.5}}>CV Match Result</h2>
           <div className="score-section" style={{display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: 24}}>
             <div className="score-circle" style={{width: 120, height: 120, borderRadius: '50%', background: '#f5f8ff', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 12, boxShadow: '0 2px 8px rgba(102,126,234,0.08)'}}>
-              <div className="score-progress" style={{width: 100, height: 100, borderRadius: '50%', background: `conic-gradient(${getScoreColor(matchingResult.similarityScore)} ${matchingResult.similarityScore * 3.6}deg, #e9ecef 0deg)`, display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative'}}>
+              <div className="score-progress" style={{width: 100, height: 100, borderRadius: '50%', background: `conic-gradient(${getScoreColor(matchingResult.similarityScore)} ${(typeof matchingResult.similarityScore === 'number' ? matchingResult.similarityScore * 100 : 0) * 3.6}deg, #e9ecef 0deg)`, display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative'}}>
                 <div className="score-content" style={{
                   textAlign: 'center',
-                  background: '#fff', // Nền trắng cho số
+                  background: '#fff',
                   width: 70, height: 70, borderRadius: '50%',
                   display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
                   boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
@@ -209,31 +209,25 @@ const CvMatchingTool = ({ jobId, jobTitle }) => {
                   <span className="score-number" style={{
                     fontSize: 32, fontWeight: 700, color: getScoreColor(matchingResult.similarityScore),
                     textShadow: '0 1px 2px #fff'
-                  }}>{Math.round(matchingResult.similarityScore)}%</span>
+                  }}>{typeof matchingResult.similarityScore === 'number' ? Math.round(matchingResult.similarityScore * 100) + '%' : matchingResult.similarityScore}</span>
                   <div className="score-text" style={{fontSize: 16, color: '#888', fontWeight: 500, marginTop: 2}}>
-                    {matchingResult.similarityScore >= 80 ? 'Excellent' : matchingResult.similarityScore >= 60 ? 'Good' : matchingResult.similarityScore >= 40 ? 'Average' : 'Low'}
+                    {(typeof matchingResult.similarityScore === 'number' ? matchingResult.similarityScore * 100 : matchingResult.similarityScore) >= 80 ? 'Excellent' : (typeof matchingResult.similarityScore === 'number' ? matchingResult.similarityScore * 100 : matchingResult.similarityScore) >= 60 ? 'Good' : (typeof matchingResult.similarityScore === 'number' ? matchingResult.similarityScore * 100 : matchingResult.similarityScore) >= 40 ? 'Average' : 'Low'}
                   </div>
                 </div>
               </div>
             </div>
           </div>
-          {matchingResult.suggestions && matchingResult.suggestions.length > 0 && (
+          {/* Suggestions rendering: chỉ hiển thị 1 tiêu đề, sau đó liệt kê các dòng */}
+          {matchingResult.suggestions && Array.isArray(matchingResult.suggestions) && matchingResult.suggestions.length > 0 && (
             <div className="suggestions-section" style={{marginTop: 12}}>
               <h4 style={{fontWeight: 700, fontSize: 20, color: '#222', marginBottom: 10}}>Suggestions to Improve</h4>
-              {matchingResult.suggestions.map((suggestion, idx) => (
+              {matchingResult.suggestions.map((s, idx) => (
                 <div key={idx} className="suggestion-item" style={{marginBottom: 18, background: '#f8f9ff', borderRadius: 8, padding: 16, boxShadow: '0 2px 8px rgba(102,126,234,0.04)'}}>
-                  <div className="suggestion-header" style={{display: 'flex', alignItems: 'center', gap: 8, fontWeight: 600, color: '#2563eb', fontSize: 16, marginBottom: 4}}>
-                    <i className="flaticon-lightbulb"></i>
-                    <span>{suggestion.category}</span>
-                  </div>
-                  <p className="suggestion-description" style={{margin: 0, color: '#444', fontSize: 15, lineHeight: 1.7}}>{suggestion.description}</p>
-                  {suggestion.specificActions && (
-                    <ul className="suggestion-actions" style={{margin: '10px 0 0 0', paddingLeft: 18, color: '#555', fontSize: 14, lineHeight: 1.6}}>
-                      {suggestion.specificActions.map((action, i) => (
-                        <li key={i}><i className="flaticon-check" style={{marginRight: 6, color: '#28a745'}}></i>{action}</li>
-                      ))}
-                    </ul>
-                  )}
+                  <div
+                    className="suggestion-description"
+                    style={{margin: 0, color: '#444', fontSize: 15, lineHeight: 1.7}}
+                    dangerouslySetInnerHTML={{ __html: typeof s === 'string' ? s : (s.description || '') }}
+                  />
                 </div>
               ))}
             </div>

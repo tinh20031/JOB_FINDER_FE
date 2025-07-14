@@ -25,9 +25,9 @@ const ExperienceLevel = ({ experienceLevels, onSelectExperienceLevel }) => {
                     <label className="switch">
                         <input
                             type="checkbox"
-                            checked={selectedExperienceLevels.includes(item.id)}
-                            value={item.id}
-                            onChange={(e) => experienceHandler(e, item.id)}
+                            checked={selectedExperienceLevels.includes(item.experienceLevelid)}
+                            value={item.experienceLevelid}
+                            onChange={(e) => experienceHandler(e, item.experienceLevelid)}
                         />
                         <span className="slider round"></span>
                         <span className="title">{item.name}</span>
