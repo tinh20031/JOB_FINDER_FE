@@ -343,7 +343,7 @@ const DefaulHeader2 = () => {
                         )}
                       </div>
                       <div style={{ textAlign: 'center', padding: 8 }}>
-                        <Link href={role === 'Company' ? "/employers-dashboard/resume-alerts" : "/candidates-dashboard/cv-matching-history"} style={{ fontSize: 13, color: '#1967d2' }}>View all notifications</Link>
+                        <Link href={role === 'Company' ? "/employers-dashboard/resume-alerts" : "/candidates-dashboard/job-alerts"} style={{ fontSize: 13, color: '#1967d2' }}>View all notifications</Link>
                       </div>
                     </div>
                   )}
