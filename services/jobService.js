@@ -3,8 +3,8 @@
 import axios from "axios";
 import Cookies from "js-cookie";
 
-const API_URL = "http://localhost:5194/api";
-// const API_URL = "https://job-finder-kjt2.onrender.com/api";
+// const API_URL = "http://localhost:5194/api";
+const API_URL = "https://job-finder-kjt2.onrender.com/api";
 
 // Cấu hình axios
 axios.defaults.headers.common["Content-Type"] = "application/json";
