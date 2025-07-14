@@ -1,7 +1,7 @@
 import axios from "axios";
 import { authService } from "./authService";
-const API_URL = "http://localhost:5194/api/Message";
-// const API_URL = "https://job-finder-kjt2.onrender.com/api/Message";
+// const API_URL = "http://localhost:5194/api/Message";
+const API_URL = "https://job-finder-kjt2.onrender.com/api/Message";
 
 const getToken = () => authService.getToken();
 

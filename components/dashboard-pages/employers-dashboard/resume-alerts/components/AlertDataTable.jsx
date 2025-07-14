@@ -31,17 +31,17 @@ const AlertDataTable = () => {
     <table className="default-table manage-job-table">
       <thead>
         <tr>
-          <th>Tiêu đề</th>
-          <th>Nội dung</th>
-          <th>Thời gian</th>
+          <th>Title</th>
+          <th>Content</th>
+          <th>Time</th>
           <th>Link</th>
         </tr>
       </thead>
       <tbody>
         {loading ? (
-          <tr><td colSpan={4} style={{ textAlign: 'center' }}>Đang tải...</td></tr>
+          <tr><td colSpan={4} style={{ textAlign: 'center' }}>Loading...</td></tr>
         ) : notifications.length === 0 ? (
-          <tr><td colSpan={4} style={{ textAlign: 'center', color: '#888' }}>Không có thông báo nào</td></tr>
+          <tr><td colSpan={4} style={{ textAlign: 'center', color: '#888' }}>No notifications</td></tr>
         ) : (
           notifications.map((n) => (
             <tr key={n.notificationId} style={{
@@ -54,7 +54,7 @@ const AlertDataTable = () => {
               <td>{n.message}</td>
               <td>{n.createdAt ? new Date(n.createdAt).toLocaleString() : ''}</td>
               <td>
-                {n.link ? <Link href={n.link} style={{ color: '#1967d2' }} target="_blank">Xem</Link> : ''}
+                {n.link ? <Link href={n.link} style={{ color: '#1967d2' }} target="_blank">View</Link> : ''}
               </td>
             </tr>
           ))
