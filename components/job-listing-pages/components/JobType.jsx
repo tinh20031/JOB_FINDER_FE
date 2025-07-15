@@ -11,12 +11,15 @@ const JobType = ({ jobTypes, onSelectJobType }) => {
 
     // dispatch job-type handler
     const jobTypeHandler = (e, value) => {
-        console.log('jobTypeHandler called with value:', value);
-        // Dispatch giá trị (value) của loại công việc được chọn
-        dispatch(addJobType(value));
-        // Call the handler passed from parent with item.id
-        if (onSelectJobType) {
-            onSelectJobType(e.target.checked ? value : null); // Pass value (item.id) if checked, or null if unchecked
+        if (selectedJobTypes.includes(value)) {
+            // Nếu click lại loại đang chọn thì tắt hết
+            dispatch({ type: 'filter/clearJobType' });
+            if (onSelectJobType) onSelectJobType(null);
+        } else {
+            // Chỉ chọn 1 loại, tắt các loại khác
+            dispatch({ type: 'filter/clearJobType' });
+            dispatch(addJobType(value));
+            if (onSelectJobType) onSelectJobType(value);
         }
     };
 

@@ -13,12 +13,11 @@ import {
   addSalary,
   addSort,
   addTag,
-  clearExperience,
+  addLevel,
   clearJobType,
 } from "../../../features/filter/filterSlice";
 import {
   clearDatePostToggle,
-  clearExperienceToggle,
   clearJobTypeToggle,
 } from "../../../features/job/jobSlice";
 import Image from "next/image";
@@ -89,9 +88,9 @@ const FilterJobsBox = () => {
     category,
     jobType,
     datePosted,
-    experience,
     salary,
     tag,
+    levelId, // Thêm dòng này
   } = jobList || {};
 
   const { sort } = jobSort;
@@ -101,9 +100,7 @@ const FilterJobsBox = () => {
   const searchParams = useSearchParams();
   const industryId = searchParams.get("industryId");
   const provinceName = searchParams.get("provinceName");
-  const levelId = searchParams.get("levelId");
   const jobTypeId = searchParams.get("jobTypeId");
-  const experienceLevelId = searchParams.get("experienceLevelId");
   const excludeJobId = searchParams.get("excludeJobId");
 
   const { favoriteJobIds, updateFavoriteJobs, fetchFavoriteJobs } =
@@ -179,7 +176,6 @@ const FilterJobsBox = () => {
     category,
     jobType,
     datePosted,
-    experience,
     salary,
     tag,
     sort,
@@ -189,7 +185,6 @@ const FilterJobsBox = () => {
     provinceName,
     levelId,
     jobTypeId,
-    experienceLevelId,
     excludeJobId,
   ]);
 
@@ -295,10 +290,6 @@ const FilterJobsBox = () => {
     }
   };
 
-  // experience level filter
-  const experienceFilter = (item) =>
-    experience?.length ? experience.includes(item.experienceLevelId) : true;
-
   // salary filter
   const salaryFilter = (item) =>
     salary?.min === 0 && salary?.max === 20000
@@ -353,11 +344,6 @@ const FilterJobsBox = () => {
     .filter((job) => !provinceName || job.provinceName === provinceName)
     .filter((job) => !levelId || String(job.levelId) === String(levelId))
     .filter((job) => !jobTypeId || String(job.jobTypeId) === String(jobTypeId))
-    .filter(
-      (job) =>
-        !experienceLevelId ||
-        String(job.experienceLevelId) === String(experienceLevelId)
-    )
     // Filter từ Redux state
     .filter(keywordFilter)
     .filter(locationFilter)
@@ -365,7 +351,6 @@ const FilterJobsBox = () => {
     .filter(categoryFilter)
     .filter(jobTypeFilter)
     .filter(datePostedFilter)
-    .filter(experienceFilter)
     .filter(salaryFilter)
     .filter(tagFilter)
     // Sort
@@ -409,25 +394,24 @@ const FilterJobsBox = () => {
           category !== "" ||
           jobType?.length !== 0 ||
           datePosted !== "" ||
-          experience?.length !== 0 ||
           salary?.min !== 0 ||
           salary?.max !== 20000 ||
           tag !== "" ||
           sort !== "" ||
           currentPage !== 1 ||
-          itemsPerPage !== 8 ? (
+          itemsPerPage !== 8 ||
+          levelId !== null ? (
             <button
               onClick={() => {
                 dispatch(addKeyword(""));
                 dispatch(addLocation(""));
                 dispatch(addDestination({ min: 0, max: 100 }));
                 dispatch(addCategory(""));
-                dispatch(clearJobType());
+                dispatch(clearJobType()); // Reset filter jobType trong redux
                 dispatch(clearJobTypeToggle());
                 dispatch(addDatePosted(""));
                 dispatch(clearDatePostToggle());
-                dispatch(clearExperience());
-                dispatch(clearExperienceToggle());
+                dispatch(addLevel(null));
                 dispatch(addSalary({ min: 0, max: 20000 }));
                 dispatch(addTag(""));
                 dispatch(addSort(""));

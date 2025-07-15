@@ -5,7 +5,7 @@ import CallToActions from "../components/CallToActions";
 import Categories from "../components/Categories";
 import DatePosted from "../components/DatePosted";
 import DestinationRangeSlider from "../components/DestinationRangeSlider";
-import ExperienceLevel from "../components/ExperienceLevel";
+import Level from "../components/Level";
 import JobType from "../components/JobType";
 import LocationBox from "../components/LocationBox";
 import SalaryRangeSlider from "../components/SalaryRangeSlider";
@@ -13,70 +13,48 @@ import SearchBox from "../components/SearchBox";
 import Tag from "../components/Tag";
 import { jobService } from "@/services/jobService";
 import locationService from "@/services/locationService";
+import { useDispatch } from "react-redux";
+import {
+  addCategory,
+  addDatePosted,
+  addDestination,
+  addKeyword,
+  addLocation,
+  addPerPage,
+  addSalary,
+  addSort,
+  addTag,
+  addLevel,
+  clearJobType,
+} from "../../../features/filter/filterSlice";
+import { clearDatePostToggle, clearJobTypeToggle } from "../../../features/job/jobSlice";
 
 const FilterSidebar = () => {
   // Thêm state để lưu dữ liệu lookup trong FilterSidebar
   const [jobTypesData, setJobTypesData] = useState([]);
-  const [experienceLevels, setExperienceLevels] = useState([]);
+  const [levels, setLevels] = useState([]);
   const [industries, setIndustries] = useState([]);
   // Add state for provinces
   const [provinces, setProvinces] = useState([]);
 
-  // Add state for filter selections
-  const [selectedJobTypes, setSelectedJobTypes] = useState([]);
-  const [selectedDatePosted, setSelectedDatePosted] = useState(null);
-  const [selectedExperienceLevels, setSelectedExperienceLevels] = useState([]);
-  const [selectedIndustry, setSelectedIndustry] = useState(null);
-  const [selectedSalaryRange, setSelectedSalaryRange] = useState([0, 20000]); // Default salary range
-
   // Add state for loading lookup data
   const [loadingLookupData, setLoadingLookupData] = useState(true);
 
-  // Handler functions for filter changes
-  const handleJobTypeChange = (jobTypeId) => {
-    // Example handler: toggle job type selection
-    setSelectedJobTypes((prev) =>
-      prev.includes(jobTypeId)
-        ? prev.filter((id) => id !== jobTypeId)
-        : [...prev, jobTypeId]
-    );
-    console.log("Job Type selected:", jobTypeId);
-  };
-
-  const handleDatePostedChange = (dateValue) => {
-    setSelectedDatePosted(dateValue);
-  };
-
-  const handleExperienceLevelChange = (expLevelId) => {
-    // Example handler: toggle experience level selection
-    setSelectedExperienceLevels((prev) =>
-      prev.includes(expLevelId)
-        ? prev.filter((id) => id !== expLevelId)
-        : [...prev, expLevelId]
-    );
-  };
-
-  const handleIndustryChange = (industryId) => {
-    setSelectedIndustry(industryId);
-  };
-
-  const handleSalaryRangeChange = (range) => {
-    setSelectedSalaryRange(range);
-  };
+  const dispatch = useDispatch();
 
   // Fetch dữ liệu lookup khi component mount
   useEffect(() => {
     const fetchLookupData = async () => {
       try {
-        const [jobTypesRes, expLevelsRes, industriesRes, provincesRes] =
+        const [jobTypesRes, levelsRes, industriesRes, provincesRes] =
           await Promise.all([
             jobService.getJobTypes(),
-            jobService.getExperienceLevels(),
+            jobService.getJobLevels(),
             jobService.getIndustries(),
             locationService.getProvinces(),
           ]);
         setJobTypesData(jobTypesRes);
-        setExperienceLevels(expLevelsRes);
+        setLevels(levelsRes);
         setIndustries(industriesRes);
         setProvinces(provincesRes);
       } catch (err) {
@@ -133,7 +111,6 @@ const FilterSidebar = () => {
             ) : (
               <Categories
                 industries={industries}
-                onSelectIndustry={handleIndustryChange}
                 disabled={loadingLookupData}
               />
             )}
@@ -151,7 +128,6 @@ const FilterSidebar = () => {
           ) : (
             <JobType
               jobTypes={jobTypesData}
-              onSelectJobType={handleJobTypeChange}
               disabled={loadingLookupData}
             />
           )}
@@ -166,25 +142,21 @@ const FilterSidebar = () => {
               style={{ width: "100%", height: 32, borderRadius: 6 }}
             />
           ) : (
-            <DatePosted
-              onSelectDatePosted={handleDatePostedChange}
-              disabled={loadingLookupData}
-            />
+            <DatePosted disabled={loadingLookupData} />
           )}
         </div>
         {/* <!-- Checkboxes Ouer --> */}
 
         <div className="checkbox-outer">
-          <h4>Experience Level</h4>
+          <h4>Level</h4>
           {loadingLookupData ? (
             <div
               className="skeleton"
               style={{ width: "100%", height: 32, borderRadius: 6 }}
             />
           ) : (
-            <ExperienceLevel
-              experienceLevels={experienceLevels}
-              onSelectExperienceLevel={handleExperienceLevelChange}
+            <Level
+              levels={levels}
               disabled={loadingLookupData}
             />
           )}
@@ -199,10 +171,7 @@ const FilterSidebar = () => {
               style={{ width: "100%", height: 32, borderRadius: 6 }}
             />
           ) : (
-            <SalaryRangeSlider
-              onChange={handleSalaryRangeChange}
-              disabled={loadingLookupData}
-            />
+            <SalaryRangeSlider disabled={loadingLookupData} />
           )}
         </div>
         {/* <!-- Filter Block --> */}
