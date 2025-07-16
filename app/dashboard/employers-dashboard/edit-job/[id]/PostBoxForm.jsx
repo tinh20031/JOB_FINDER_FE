@@ -11,6 +11,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { jobService } from "../../../../../services/jobService";
 import Modal from "@/components/common/Modal";
 import "@/styles/modal.css";
+import { companyService } from "@/services/companyService";
 
 const ReactQuill = dynamic(() => import('react-quill'), { ssr: false });
 
@@ -40,7 +41,7 @@ const PostBoxForm = ({ initialData, isEditing }) => {
     expiryDate: '',
     levelId: 0,
     jobTypeId: 0,
-    experienceLevelId: 0,
+    quantity: 1, // Thêm quantity
     timeStart: '',
     timeEnd: '',
     provinceName: '',
@@ -58,7 +59,6 @@ const PostBoxForm = ({ initialData, isEditing }) => {
   const [levels, setLevels] = useState([]);
   const [industries, setIndustries] = useState([]);
   const [jobTypes, setJobTypes] = useState([]);
-  const [experienceLevels, setExperienceLevels] = useState([]);
   const [provinces, setProvinces] = useState([]);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [error, setError] = useState("");
@@ -69,6 +69,7 @@ const PostBoxForm = ({ initialData, isEditing }) => {
   const [isClient, setIsClient] = useState(false);
   const [errors, setErrors] = useState({});
   const [showExpiredModal, setShowExpiredModal] = useState(false);
+  const [userIndustry, setUserIndustry] = useState(null); // Lưu industry của công ty
 
   useEffect(() => {
     setIsClient(true);
@@ -77,7 +78,6 @@ const PostBoxForm = ({ initialData, isEditing }) => {
   useEffect(() => {
     ApiService.get(API_CONFIG.ENDPOINTS.LEVEL).then(setLevels);
     ApiService.get(API_CONFIG.ENDPOINTS.JOB_TYPE).then(setJobTypes);
-    ApiService.get(API_CONFIG.ENDPOINTS.EXPERIENCE_LEVEL).then(setExperienceLevels);
     ApiService.get(API_CONFIG.ENDPOINTS.INDUSTRY).then(setIndustries);
     axios.get("https://provinces.open-api.vn/api/p/")
       .then(res => setProvinces(res.data))
@@ -85,6 +85,20 @@ const PostBoxForm = ({ initialData, isEditing }) => {
     const userId = localStorage.getItem('userId') || Cookies.get('userId');
     const userRole = localStorage.getItem('role') || Cookies.get('role');
     setUser({ userId, role: userRole });
+    // Lấy industry của công ty qua companyService
+    if (userRole === 'Company' && userId) {
+      companyService.getCompanyProfile(userId)
+        .then((companyProfile) => {
+          if (companyProfile && companyProfile.industryId && companyProfile.industryName) {
+            setUserIndustry({
+              industryId: companyProfile.industryId,
+              industryName: companyProfile.industryName
+            });
+            setFormData(prev => ({ ...prev, industryId: companyProfile.industryId }));
+          }
+        })
+        .catch(() => {});
+    }
     if (isEditing && initialData) {
       setFormData({
         ...initialData,
@@ -97,7 +111,7 @@ const PostBoxForm = ({ initialData, isEditing }) => {
         industryId: initialData.industryId || 0,
         levelId: initialData.levelId || 0,
         jobTypeId: initialData.jobTypeId || 0,
-        experienceLevelId: initialData.experienceLevelId || 0,
+        quantity: initialData.quantity != null ? initialData.quantity : 1, // Sửa lại lấy đúng quantity
         expiryDate: initialData.expiryDate ? initialData.expiryDate.split('T')[0] : '',
         timeStart: initialData.timeStart ? initialData.timeStart.split('T')[0] : '',
         timeEnd: initialData.timeEnd ? initialData.timeEnd.split('T')[0] : '',
@@ -130,10 +144,12 @@ const PostBoxForm = ({ initialData, isEditing }) => {
       if (!formData.maxSalary || formData.maxSalary.trim() === '' || isNaN(formData.maxSalary)) newErrors.maxSalary = 'Max Salary is required';
       if (formData.minSalary && formData.maxSalary && parseFloat(formData.minSalary) > parseFloat(formData.maxSalary)) newErrors.maxSalary = 'Max Salary must be greater than Min Salary';
     }
-    if (!formData.industryId) newErrors.industryId = 'Industry is required';
+    if (!formData.quantity || formData.quantity < 1) {
+      newErrors.quantity = 'The number of positions to be filled must be greater than 0';
+    }
+    // BỎ validate industryId
     if (!formData.levelId) newErrors.levelId = 'Job level is required';
     if (!formData.jobTypeId) newErrors.jobTypeId = 'Job type is required';
-    if (!formData.experienceLevelId) newErrors.experienceLevelId = 'Experience level is required';
     if (!formData.expiryDate) newErrors.expiryDate = 'Application deadline is required';
     if (!formData.timeStart) newErrors.timeStart = 'Start date is required';
     if (!formData.timeEnd) newErrors.timeEnd = 'End date is required';
@@ -171,7 +187,7 @@ const PostBoxForm = ({ initialData, isEditing }) => {
     }
     setFormData(prev => ({
       ...prev,
-      [name]: ["industryId", "levelId", "jobTypeId", "experienceLevelId"].includes(name) ? Number(value) : value
+      [name]: ["industryId", "levelId", "jobTypeId", "quantity"].includes(name) ? Number(value) : value
     }));
     if (errors[name]) setErrors(prev => ({ ...prev, [name]: '' }));
   };
@@ -326,13 +342,15 @@ const PostBoxForm = ({ initialData, isEditing }) => {
         )}
         <div className="form-group col-lg-6 col-md-12">
           <label>Industry</label>
-          <select name="industryId" className="chosen-single form-select" value={formData.industryId} onChange={handleInputChange}>
-            <option value="">Select Industry</option>
-            {industries.map(industry => (
-              <option key={industry.industryId} value={industry.industryId}>{industry.industryName}</option>
-            ))}
-          </select>
-          {errors.industryId && <span className="error-message">{errors.industryId}</span>}
+          <input
+            type="text"
+            name="industryName"
+            value={userIndustry ? userIndustry.industryName : ''}
+            className="form-control"
+            disabled
+            readOnly
+            placeholder="Industry"
+          />
         </div>
         <div className="form-group col-lg-6 col-md-12">
           <label>Job Level</label>
@@ -355,14 +373,18 @@ const PostBoxForm = ({ initialData, isEditing }) => {
           {errors.jobTypeId && <span className="error-message">{errors.jobTypeId}</span>}
         </div>
         <div className="form-group col-lg-6 col-md-12">
-          <label>Experience Level</label>
-          <select name="experienceLevelId" className="chosen-single form-select" value={formData.experienceLevelId} onChange={handleInputChange}>
-            <option value="">Select Experience Level</option>
-            {experienceLevels.map(level => (
-              <option key={level.experienceLevelid} value={level.experienceLevelid}>{level.name}</option>
-            ))}
-          </select>
-          {errors.experienceLevelId && <span className="error-message">{errors.experienceLevelId}</span>}
+          <label>Number of hires needed</label>
+          <input
+            type="number"
+            name="quantity"
+            min={1}
+            value={formData.quantity}
+            onChange={handleInputChange}
+            className={`form-control${errors.quantity ? ' is-invalid' : ''}`}
+            placeholder="Enter number of hires needed"
+            disabled={isLoading}
+          />
+          {errors.quantity && <span className="error-message">{errors.quantity}</span>}
         </div>
         {/* Date Fields */}
         <div className="form-group col-lg-12 col-md-12">

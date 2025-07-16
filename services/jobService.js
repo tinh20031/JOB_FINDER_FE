@@ -17,15 +17,6 @@ const JOB_TYPES = {
   4: "Internship",
 };
 
-// Map experience levels
-const EXPERIENCE_LEVELS = {
-  1: "Entry Level",
-  2: "Junior",
-  3: "Mid Level",
-  4: "Senior",
-  5: "Lead",
-};
-
 // Map industries
 const INDUSTRIES = {
   1: "Technology",
@@ -179,14 +170,7 @@ export const jobService = {
             levelName: job.level.levelName,
           }
         : null,
-      experienceLevelId: job.experienceLevelId,
-      experienceLevel: job.experienceLevel
-        ? {
-            id: job.experienceLevel.id,
-            name: job.experienceLevel.name,
-          }
-        : null,
-
+      quantity: job.quantity ?? 1,
       // Time fields
       expiryDate: job.expiryDate,
       timeStart: job.timeStart,
@@ -248,10 +232,8 @@ export const jobService = {
       );
     }
 
-    if (filters.experience?.length) {
-      filteredJobs = filteredJobs.filter((job) =>
-        filters.experience.includes(job.experienceLevelId)
-      );
+    if (filters.quantity) {
+      filteredJobs = filteredJobs.filter((job) => job.quantity === parseInt(filters.quantity));
     }
 
     // Pagination
@@ -333,14 +315,7 @@ export const jobService = {
               levelName: job.level.levelName,
             }
           : null,
-        experienceLevelId: job.experienceLevelId,
-        experienceLevel: job.experienceLevel
-          ? {
-              id: job.experienceLevel.id,
-              name: job.experienceLevel.name,
-            }
-          : null,
-
+        quantity: job.quantity ?? 1,
         // Time fields
         expiryDate: job.expiryDate,
         timeStart: job.timeStart,
@@ -382,7 +357,7 @@ export const jobService = {
         expiryDate: jobData.expiryDate,
         levelId: jobData.levelId,
         jobTypeId: jobData.jobTypeId,
-        experienceLevelId: jobData.experienceLevelId,
+        quantity: jobData.quantity,
         timeStart: jobData.timeStart,
         timeEnd: jobData.timeEnd,
         provinceName: jobData.provinceName,
@@ -437,7 +412,7 @@ export const jobService = {
         expiryDate: jobData.expiryDate,
         levelId: jobData.levelId,
         jobTypeId: jobData.jobTypeId,
-        experienceLevelId: jobData.experienceLevelId,
+        quantity: jobData.quantity,
         timeStart: jobData.timeStart,
         timeEnd: jobData.timeEnd,
         provinceName: jobData.provinceName,
@@ -523,8 +498,8 @@ export const jobService = {
         queryParams.append("LevelId", filterParams.levelId);
       if (filterParams.jobTypeId)
         queryParams.append("JobTypeId", filterParams.jobTypeId);
-      if (filterParams.experienceLevelId)
-        queryParams.append("ExperienceLevelId", filterParams.experienceLevelId);
+      if (filterParams.quantity)
+        queryParams.append("Quantity", filterParams.quantity);
       if (filterParams.minSalary)
         queryParams.append("MinSalary", filterParams.minSalary);
       if (filterParams.maxSalary)
@@ -577,17 +552,6 @@ export const jobService = {
       return response.data;
     } catch (error) {
       console.error("Error fetching job levels:", error);
-      throw error;
-    }
-  },
-
-  // GET: Lấy experience levels
-  async getExperienceLevels() {
-    try {
-      const response = await axios.get(`${API_URL}/ExperienceLevels`);
-      return response.data;
-    } catch (error) {
-      console.error("Error fetching experience levels:", error);
       throw error;
     }
   },

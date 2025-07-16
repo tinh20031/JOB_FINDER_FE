@@ -17,6 +17,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import Modal from "@/components/common/Modal";
 import "@/styles/modal.css";
 import locationService from "../../../../../services/locationService";
+import { companyService } from "../../../../../services/companyService";
 
 const ReactQuill = dynamic(() => import('react-quill'), { ssr: false });
 
@@ -45,7 +46,7 @@ const PostBoxForm = ({ cloneData, isClone }) => {
     expiryDate: '',
     levelId: 0,
     jobTypeId: 0,
-    experienceLevelId: 0,
+    quantity: 1, // Thêm quantity
     timeStart: '',
     timeEnd: '',
     provinceName: '',
@@ -63,8 +64,8 @@ const PostBoxForm = ({ cloneData, isClone }) => {
   const [levels, setLevels] = useState([]);
   const [industries, setIndustries] = useState([]);
   const [jobTypes, setJobTypes] = useState([]);
-  const [experienceLevels, setExperienceLevels] = useState([]);
   const [provinces, setProvinces] = useState([]);
+  const [userIndustry, setUserIndustry] = useState(null); // Lưu industry của công ty
 
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [error, setError] = useState("");
@@ -134,14 +135,12 @@ const PostBoxForm = ({ cloneData, isClone }) => {
     Promise.allSettled([
       ApiService.get(API_CONFIG.ENDPOINTS.LEVEL),
       ApiService.get(API_CONFIG.ENDPOINTS.JOB_TYPE),
-      ApiService.get(API_CONFIG.ENDPOINTS.EXPERIENCE_LEVEL),
       ApiService.get(API_CONFIG.ENDPOINTS.INDUSTRY),
       locationService.getProvinces()
     ]).then((results) => {
-      const [levelsRes, jobTypesRes, experienceLevelsRes, industriesRes, provincesRes] = results;
+      const [levelsRes, jobTypesRes, industriesRes, provincesRes] = results;
       setLevels(levelsRes.status === 'fulfilled' ? levelsRes.value : []);
       setJobTypes(jobTypesRes.status === 'fulfilled' ? jobTypesRes.value : []);
-      setExperienceLevels(experienceLevelsRes.status === 'fulfilled' ? experienceLevelsRes.value : []);
       setIndustries(industriesRes.status === 'fulfilled' ? industriesRes.value : []);
       setProvinces(provincesRes.status === 'fulfilled' ? (provincesRes.value || []) : []);
       setIsLoading(false);
@@ -153,6 +152,21 @@ const PostBoxForm = ({ cloneData, isClone }) => {
     const userRole = localStorage.getItem('role') || Cookies.get('role');
     setUser({ userId: userId ? parseInt(userId, 10) : 0, role: userRole });
     setIsClient(true);
+
+    // Lấy industry của công ty qua companyService
+    if (userRole === 'Company' && userId) {
+      companyService.getCompanyProfile(userId)
+        .then((companyProfile) => {
+          if (companyProfile && companyProfile.industryId && companyProfile.industryName) {
+            setUserIndustry({
+              industryId: companyProfile.industryId,
+              industryName: companyProfile.industryName
+            });
+            setFormData(prev => ({ ...prev, industryId: companyProfile.industryId }));
+          }
+        })
+        .catch(() => {});
+    }
   }, []);
 
   // Cleanup the image preview URL when component unmounts or image changes
@@ -189,7 +203,7 @@ const PostBoxForm = ({ cloneData, isClone }) => {
            formData.industryId || 
            formData.levelId || 
            formData.jobTypeId || 
-           formData.experienceLevelId || 
+           formData.quantity || // Thay experienceLevelId bằng quantity
            formData.expiryDate || 
            formData.timeStart || 
            formData.timeEnd || 
@@ -250,7 +264,7 @@ const PostBoxForm = ({ cloneData, isClone }) => {
       expiryDate: '',
       levelId: 0,
       jobTypeId: 0,
-      experienceLevelId: 0,
+      quantity: 1, // Thêm quantity
       timeStart: '',
       timeEnd: '',
       provinceName: '',
@@ -319,17 +333,14 @@ const PostBoxForm = ({ cloneData, isClone }) => {
       newErrors.minSalary = 'Min salary cannot be greater than Max salary';
       newErrors.maxSalary = 'Max salary cannot be less than Min salary';
     }
-    if (!formData.industryId) {
-      newErrors.industryId = 'Industry is required';
-    }
     if (!formData.levelId) {
       newErrors.levelId = 'Job level is required';
     }
     if (!formData.jobTypeId) {
       newErrors.jobTypeId = 'Job type is required';
     }
-    if (!formData.experienceLevelId) {
-      newErrors.experienceLevelId = 'Experience level is required';
+    if (!formData.quantity || formData.quantity < 1) {
+      newErrors.quantity = 'The number of positions to be filled must be greater than 0';
     }
     if (!formData.expiryDate) {
       newErrors.expiryDate = 'Application deadline is required';
@@ -441,7 +452,7 @@ const PostBoxForm = ({ cloneData, isClone }) => {
         "industryId",
         "levelId",
         "jobTypeId",
-        "experienceLevelId"
+        "quantity" // Thay experienceLevelId bằng quantity
       ].includes(name)
         ? Number(value)
         : value
@@ -509,7 +520,7 @@ const PostBoxForm = ({ cloneData, isClone }) => {
         title: formData.title,
         description: formData.description,
         education: formData.education,
-        companyId: parseInt(user.userId, 10), // Ensure companyId is an integer here
+        companyId: parseInt(user.userId, 10),
         isSalaryNegotiable: formData.isSalaryNegotiable,
         minSalary: formData.minSalary,
         maxSalary: formData.maxSalary,
@@ -517,7 +528,7 @@ const PostBoxForm = ({ cloneData, isClone }) => {
         expiryDate: formData.expiryDate,
         levelId: formData.levelId,
         jobTypeId: formData.jobTypeId,
-        experienceLevelId: formData.experienceLevelId,
+        quantity: formData.quantity, // Thay experienceLevelId bằng quantity
         timeStart: formData.timeStart,
         timeEnd: formData.timeEnd,
         provinceName: formData.provinceName,
@@ -550,7 +561,7 @@ const PostBoxForm = ({ cloneData, isClone }) => {
         expiryDate: '',
         levelId: 0,
         jobTypeId: 0,
-        experienceLevelId: 0,
+        quantity: 1, // Thêm quantity
         timeStart: '',
         timeEnd: '',
         provinceName: '',
@@ -595,7 +606,7 @@ const PostBoxForm = ({ cloneData, isClone }) => {
         industryId: cloneData.industryId || 0,
         levelId: cloneData.levelId || 0,
         jobTypeId: cloneData.jobTypeId || 0,
-        experienceLevelId: cloneData.experienceLevelId || 0,
+        quantity: cloneData.quantity || 1, // Thêm quantity
         provinceName: cloneData.provinceName || "",
         addressDetail: cloneData.addressDetail || "",
         YourSkill: cloneData.yourSkill || "",
@@ -1072,20 +1083,15 @@ const PostBoxForm = ({ cloneData, isClone }) => {
           {/* Industry */}
           <motion.div className="form-group col-lg-6 col-md-12" variants={itemVariants}>
             <label htmlFor="industryId">Industry</label>
-            <select 
-              id="industryId"
-              name="industryId" 
-              value={formData.industryId}
-              onChange={handleInputChange}
-              className={`chosen-single form-select ${errors.industryId ? 'is-invalid' : ''}`}
-              disabled={isLoading}
-            >
-              <option value="">Select Industry</option>
-              {industries.map(ind => (
-                <option key={ind.industryId} value={ind.industryId}>{ind.industryName}</option>
-              ))}
-            </select>
-            {errors.industryId && <div className="invalid-feedback">{errors.industryId}</div>}
+            <input
+              type="text"
+              name="industryName"
+              value={userIndustry ? userIndustry.industryName : ''}
+              className="form-control"
+              disabled
+              readOnly
+              placeholder="Industry"
+            />
           </motion.div>
 
           {/* Job Level */}
@@ -1126,23 +1132,21 @@ const PostBoxForm = ({ cloneData, isClone }) => {
             {errors.jobTypeId && <div className="invalid-feedback">{errors.jobTypeId}</div>}
           </motion.div>
 
-          {/* Experience Level */}
+          {/* Số lượng cần tuyển */}
           <motion.div className="form-group col-lg-6 col-md-12" variants={itemVariants}>
-            <label htmlFor="experienceLevelId">Experience Level</label>
-            <select 
-              id="experienceLevelId"
-              name="experienceLevelId" 
-              value={formData.experienceLevelId}
+            <label htmlFor="quantity">Number of hires needed</label>
+            <input
+              type="number"
+              name="quantity"
+              id="quantity"
+              min={1}
+              value={formData.quantity}
               onChange={handleInputChange}
-              className={`chosen-single form-select ${errors.experienceLevelId ? 'is-invalid' : ''}`}
+              className={`form-control${errors.quantity ? ' is-invalid' : ''}`}
+              placeholder="Nhập số lượng cần tuyển"
               disabled={isLoading}
-            >
-              <option value="">Select Experience Level</option>
-              {experienceLevels.map(level => (
-                <option key={level.experienceLevelid} value={level.experienceLevelid}>{level.name}</option>
-              ))}
-            </select>
-            {errors.experienceLevelId && <div className="invalid-feedback">{errors.experienceLevelId}</div>}
+            />
+            {errors.quantity && <div className="invalid-feedback">{errors.quantity}</div>}
           </motion.div>
 
           {/* Time Start */}
