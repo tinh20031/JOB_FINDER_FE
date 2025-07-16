@@ -16,12 +16,16 @@ import apiService from "@/services/api.service";
 
 const Index = () => {
   const [fullName, setFullName] = useState("");
+  const [candidateProfileId, setCandidateProfileId] = useState(null);
+  const [videoUrl, setVideoUrl] = useState(null);
 
   useEffect(() => {
     const fetchProfile = async () => {
       try {
         const profile = await apiService.get('/CandidateProfile/me');
         setFullName(profile.fullName || "Candidate");
+        setCandidateProfileId(profile.id);
+        setVideoUrl(profile.videoUrl || null);
       } catch {
         setFullName("Candidate");
       }

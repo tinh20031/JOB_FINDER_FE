@@ -63,6 +63,13 @@ module.exports = [
     active: "",
   },
   {
+    id: 10,
+    name: "Profile Video",
+    icon: "la-video-camera",
+    routePath: "/candidates-dashboard/profile-video",
+    active: "",
+  },
+  {
     id: 13,
     name: "Favorite Companies",
     icon: "la-star",

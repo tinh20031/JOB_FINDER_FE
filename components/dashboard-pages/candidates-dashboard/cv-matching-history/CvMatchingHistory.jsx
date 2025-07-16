@@ -102,7 +102,7 @@ const CvMatchingHistory = () => {
                           className="score-badge"
                           style={{ backgroundColor: getScoreColor(record.similarityScore), color: '#fff', fontWeight: 700, fontSize: 22, width: 54, height: 54, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 2 }}
                         >
-                          {Math.round(record.similarityScore)}%
+                          {Math.round(record.similarityScore * 100)}%
                         </div>
                         <span className="score-text" style={{fontSize: 14, color: getScoreColor(record.similarityScore), fontWeight: 600}}>{getScoreText(record.similarityScore)}</span>
                       </div>

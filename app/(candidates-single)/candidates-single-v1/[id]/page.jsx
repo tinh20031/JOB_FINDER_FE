@@ -224,8 +224,6 @@ const CandidateSingleDynamicV1 = ({ params }) => {
                 <div className="content">
                   <figure className="image">
                     <Image
-                      // width={100}
-                      // height={100}
                       src={user.image || "/images/resource/default-avatar.png"}
                       alt="avatar"
                       fill
@@ -281,6 +279,18 @@ const CandidateSingleDynamicV1 = ({ params }) => {
                       <div dangerouslySetInnerHTML={{ __html: aboutMe.aboutMeDescription }} />
                     ) : (
                       <p>No information</p>
+                    )}
+                    {/* Hiển thị video profile nếu có */}
+                    {candidateProfile?.videoUrl && (
+                      <div style={{ margin: '18px 0', textAlign: 'center' }}>
+                        <video
+                          src={candidateProfile.videoUrl}
+                          controls
+                          style={{ width: 400, maxWidth: '100%', borderRadius: 12, boxShadow: '0 2px 12px rgba(0,0,0,0.08)' }}
+                        >
+                          Your browser does not support the video tag.
+                        </video>
+                      </div>
                     )}
                   </div>
 
