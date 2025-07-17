@@ -1,6 +1,7 @@
 import Cookies from "js-cookie";
 import ApiService from "./api.service";
 import { jwtDecode } from "jwt-decode";
+import API_CONFIG from "../config/api.config";
 
 export const authService = {
   async login(email, password) {
@@ -288,11 +289,7 @@ export const authService = {
 
   // Update the Google login URL function in authService.js
   getGoogleLoginUrl() {
-    return (
-      process.env.NEXT_PUBLIC_GOOGLE_LOGIN_URL ||
-      "http://localhost:5194/api/auth/login-google"
-      // "https://job-finder-kjt2.onrender.com/api/auth/login-google"
-    );
+    return API_CONFIG.getGoogleLoginUrl();
   },
 
   // Forgot Password APIs

@@ -16,6 +16,7 @@ const API_CONFIG = {
       CHANGE_PASSWORD: "auth/change-password",
       FORGOT_PASSWORD: "auth/forgot-password",
       RESET_PASSWORD: "auth/reset-password",
+      GOOGLE_LOGIN: "auth/login-google", 
     },
     USER: {
       BASE: "User",
@@ -143,6 +144,11 @@ const API_CONFIG = {
 
   // Helper functions để tạo URL đầy đủ
   getUrl: (endpoint) => `${API_CONFIG.BASE_URL}/${endpoint}`,
+
+  // Thêm hàm lấy Google login URL
+  getGoogleLoginUrl: () =>
+    process.env.NEXT_PUBLIC_GOOGLE_LOGIN_URL ||
+    `${API_CONFIG.BASE_URL}/${API_CONFIG.ENDPOINTS.AUTH.GOOGLE_LOGIN}`,
 
   // Helper function để tạo URL với query params
   getUrlWithParams: (endpoint, params) => {
