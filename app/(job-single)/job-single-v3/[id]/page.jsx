@@ -310,7 +310,6 @@ const JobSingleDynamicV3 = ({ params }) => {
                     industryName={industryName}
                     levelName={levelName}
                     jobTypeName={jobTypeName}
-                    experienceLevelName={experienceLevelName}
                   />
                 </div>
                 {/* <!-- job-overview-two --> */}

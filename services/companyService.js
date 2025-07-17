@@ -98,6 +98,28 @@ export const companyService = {
     }
   },
 
+  getCompanyProfile: async (userId) => {
+    try {
+      const token = getToken();
+      const config = {
+        headers: {
+          "Content-Type": "application/json",
+        },
+      };
+      if (token) {
+        config.headers["Authorization"] = `Bearer ${token}`;
+      }
+      const response = await axios.get(
+        `${API_URL}/CompanyProfile/${userId}`,
+        config
+      );
+      return response.data;
+    } catch (error) {
+      console.error("Error fetching company profile:", error);
+      throw error;
+    }
+  },
+
   async filterCompanies(params = {}) {
     try {
       const queryParams = new URLSearchParams();

@@ -4,7 +4,7 @@ import { authService } from "./authService";
 
 
 const API_URL = "http://localhost:5194/api/UserFavoriteJob"; 
-//const API_URL = "https://job-finder-kjt2.onrender.com/api/UserFavoriteJob";
+// const API_URL = "https://job-finder-kjt2.onrender.com/api/UserFavoriteJob";
 // Lấy config chứa token từ authService
 const getAuthConfig = () => {
   const token = authService.getToken();

@@ -8,6 +8,7 @@ export function startNotificationHub(token, userId, onReceiveNotification) {
   connection = new HubConnectionBuilder()
     .withUrl(
       process.env.NEXT_PUBLIC_SIGNALR_HUB_URL || "http://localhost:5194/notificationHub",
+      //  process.env.NEXT_PUBLIC_SIGNALR_HUB_URL || "https://job-finder-kjt2.onrender.com/notificationHub",
       {
         accessTokenFactory: () => token,
         skipNegotiation: true,

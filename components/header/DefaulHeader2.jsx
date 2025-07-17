@@ -51,6 +51,10 @@ const DefaulHeader2 = () => {
   const [isFavoriteLoading, setIsFavoriteLoading] = useState(true);
   const userId = typeof window !== 'undefined' ? Number(localStorage.getItem('userId')) : null;
 
+  // Thêm khai báo cho notifications và unreadCount
+  const [notifications, setNotifications] = useState([]);
+  const [unreadCount, setUnreadCount] = useState(0);
+
   const [showDropdown, setShowDropdown] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef(null);
@@ -129,31 +133,32 @@ const DefaulHeader2 = () => {
     fetchProfile();
   }, [isLoggedIn, role, profileUpdated, user]);
 
-  // Thêm logic fetch notification/unreadCount và SignalR cho company
+  // Fetch notifications/unread count cho cả Candidate và Company
   useEffect(() => {
     const fetchNotifications = async () => {
-      if (!userId || role !== 'Company') return;
+      if (!userId || !(role === 'Company' || role === 'Candidate')) return;
       try {
         const res = await apiService.get(`/notification?page=1&pageSize=5`);
         setNotifications(Array.isArray(res) ? res : []);
       } catch {}
     };
     const fetchUnreadCount = async () => {
-      if (!userId || role !== 'Company') return;
+      if (!userId || !(role === 'Company' || role === 'Candidate')) return;
       try {
         const res = await apiService.get(`/notification/unread-count`);
         setUnreadCount(res?.count || 0);
       } catch {}
     };
-    if (isLoggedIn && role === 'Company') {
+    if (isLoggedIn && (role === 'Company' || role === 'Candidate')) {
       fetchNotifications();
       fetchUnreadCount();
     }
   }, [isLoggedIn, userId, profileUpdated, role]);
 
+  // SignalR notification realtime cho cả Candidate và Company
   useEffect(() => {
     const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
-    if (isLoggedIn && userId && token && role === 'Company') {
+    if (isLoggedIn && userId && token && (role === 'Company' || role === 'Candidate')) {
       const connection = startNotificationHub(token, userId, (notification) => {
         setNotifications((prev) => [notification, ...prev]);
         setUnreadCount((prev) => prev + 1);
@@ -300,6 +305,49 @@ const DefaulHeader2 = () => {
                     <span className="icon la la-heart-o"></span>
                   </button>
                 </Link>
+              )}
+              {/* Notification Bell giống DashboardHeader */}
+              {(role === 'Candidate' || role === 'Company') && (
+                <div style={{ position: 'relative', marginRight: 16 }}>
+                  <button className="menu-btn" onClick={handleBellClick} style={{ position: 'relative' }}>
+                    <span className="icon la la-bell"></span>
+                    {unreadCount > 0 && (
+                      <span style={{ position: 'absolute', top: 0, right: 0, background: '#e74c3c', color: '#fff', borderRadius: '50%', fontSize: 12, minWidth: 18, height: 18, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 5px', fontWeight: 600 }}>{unreadCount}</span>
+                    )}
+                  </button>
+                  {showDropdown && (
+                    <div ref={dropdownRef} style={{ position: 'absolute', right: 0, top: 36, width: 340, background: '#fff', boxShadow: '0 2px 8px rgba(0,0,0,0.15)', borderRadius: 8, zIndex: 1000 }}>
+                      <div style={{ padding: 12, borderBottom: '1px solid #eee', fontWeight: 600 }}>New announcement</div>
+                      <div style={{ maxHeight: 350, overflowY: 'auto' }}>
+                        {notifications.length === 0 ? (
+                          <div style={{ padding: 16, textAlign: 'center', color: '#888' }}>No new notifications</div>
+                        ) : (
+                          notifications.map((n, idx) => (
+                            <Link key={n.notificationId || idx} href={n.link || '#'} style={{ textDecoration: 'none', color: n.isRead ? '#aaa' : '#222' }}>
+                              <div
+                                style={{
+                                  padding: '12px 16px',
+                                  borderBottom: '1px solid #f3f3f3',
+                                  cursor: 'pointer',
+                                  background: n.isRead ? '#fff' : '#f1f6fd',
+                                  fontWeight: n.isRead ? 400 : 600,
+                                  opacity: n.isRead ? 0.7 : 1,
+                                }}
+                              >
+                                <div style={{ fontWeight: n.isRead ? 400 : 600 }}>{n.title || n.message || 'Notification'}</div>
+                                <div style={{ fontSize: 13, color: n.isRead ? '#bbb' : '#1967d2', margin: '4px 0 2px 0' }}>{n.message}</div>
+                                <div style={{ fontSize: 12, color: '#888' }}>{n.createdAt ? new Date(n.createdAt).toLocaleString() : ''}</div>
+                              </div>
+                            </Link>
+                          ))
+                        )}
+                      </div>
+                      <div style={{ textAlign: 'center', padding: 8 }}>
+                        <Link href={role === 'Company' ? "/employers-dashboard/resume-alerts" : "/candidates-dashboard/job-alerts"} style={{ fontSize: 13, color: '#1967d2' }}>View all notifications</Link>
+                      </div>
+                    </div>
+                  )}
+                </div>
               )}
               <div className="dropdown dashboard-option" ref={dropdownRef}>
                 <button

@@ -1,6 +1,6 @@
 import React from "react";
 
-const JobOverView2 = ({ job, industryName, levelName, jobTypeName, experienceLevelName }) => {
+const JobOverView2 = ({ job, industryName, levelName, jobTypeName }) => {
   if (!job) return null;
 
   const formatDate = (dateStr) =>
@@ -29,8 +29,8 @@ const JobOverView2 = ({ job, industryName, levelName, jobTypeName, experienceLev
       </li>
       <li>
         <span className="icon icon-user-2"></span>
-        <h5>Experience Level:</h5>
-        <span>{experienceLevelName}</span>
+        <h5>Number of positions:</h5>
+        <span>{job.quantity}</span>
       </li>
       <li>
         <span className="icon icon-clock"></span>
