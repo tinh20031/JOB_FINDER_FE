@@ -79,13 +79,20 @@ const SoftSkillsModal = ({ open, onClose, initialSkills }) => {
 
       await Promise.all([
         ...skillsToDelete.map((s) => deleteSkill(s.skillId)),
-        ...skillsToAdd.map((s) =>
-          createSkill({ ...s, groupName, skillId: 0, experience: "" })
-        ),
+        skillsToAdd.length > 0
+          ? createSkill(
+              skillsToAdd.map((s) => ({
+                ...s,
+                groupName,
+                skillId: 0,
+                experience: "",
+              }))
+            )
+          : null,
         ...skillsToUpdate.map((s) =>
           updateSkill(s.skillId, { ...s, groupName, experience: "" })
         ),
-      ]);
+      ].filter(Boolean));
 
       toast.success("Skills updated successfully!");
       handleClose();

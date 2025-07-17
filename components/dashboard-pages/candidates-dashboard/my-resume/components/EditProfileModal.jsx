@@ -170,10 +170,14 @@ const EditProfileModal = ({ open, onClose, onSubmit, profile }) => {
     // Convert date back to ISO string for API
     const formatDobForAPI = (dob) => {
       if (!dob) return null;
+      // Nếu dob là yyyy-mm-dd thì trả về `${dob}T00:00:00.000Z` để không bị lệch múi giờ
+      if (/^\d{4}-\d{2}-\d{2}$/.test(dob)) {
+        return `${dob}T00:00:00.000Z`;
+      }
       try {
         const date = new Date(dob);
         if (isNaN(date.getTime())) return null;
-        // Create date at midnight local time to avoid timezone issues
+        // Fallback: vẫn tạo ISO string nếu không đúng định dạng
         const year = date.getFullYear();
         const month = date.getMonth();
         const day = date.getDate();

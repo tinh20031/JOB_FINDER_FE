@@ -111,7 +111,7 @@ export default function CVTemplatesPage() {
   // Chuẩn hóa dữ liệu cho CVClassic
   const resume = {
     ...profile,
-    aboutme: aboutme,
+    aboutme: Array.isArray(aboutme) ? aboutme : (aboutme ? [aboutme] : []),
     educations: education,
     workExperiences: experiences,
     awards: awards,
