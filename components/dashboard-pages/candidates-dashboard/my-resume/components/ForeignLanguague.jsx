@@ -1,17 +1,30 @@
 import { FiEdit2 } from "react-icons/fi";
-import React, { useEffect } from "react";
+import React, { useState, useEffect } from "react";
+import ForeignLanguageModal from "./ForeignLanguageModal";
+import { toast } from "react-toastify";
 
 const ForeignLanguague = ({
   foreignlanguage = [],
-  onEdit,
+  refetch,
   openExternal,
   setOpenExternal,
 }) => {
-  useEffect(() => {
-    if (openExternal && onEdit) onEdit();
-  }, [openExternal, onEdit]);
+  const [modalOpen, setModalOpen] = useState(false);
 
-  // When modal closes, parent should call setOpenExternal(false)
+  useEffect(() => {
+    if (openExternal) setModalOpen(true);
+  }, [openExternal]);
+
+  const handleOpenModal = () => {
+    setModalOpen(true);
+    if (setOpenExternal) setOpenExternal(true);
+  };
+
+  const handleCloseModal = () => {
+    setModalOpen(false);
+    if (setOpenExternal) setOpenExternal(false);
+    if (typeof refetch === "function") refetch();
+  };
 
   return (
     <div
@@ -21,6 +34,7 @@ const ForeignLanguague = ({
         boxShadow: "0 2px 8px #0001",
         padding: 24,
         marginBottom: 24,
+        position: "relative",
       }}
     >
       <div
@@ -33,7 +47,7 @@ const ForeignLanguague = ({
       >
         <span style={{ fontWeight: 700, fontSize: 24 }}>Foreign Language</span>
         <button
-          onClick={onEdit}
+          onClick={handleOpenModal}
           style={{
             background: "none",
             border: "none",
@@ -49,9 +63,9 @@ const ForeignLanguague = ({
       <hr style={{ margin: "8px 0 16px 0" }} />
       <div style={{ display: "flex", gap: 16, flexWrap: "wrap" }}>
         {foreignlanguage && foreignlanguage.length > 0 ? (
-          foreignlanguage.map((l) => (
+          foreignlanguage.map((l, idx) => (
             <span
-              key={l.foreignLanguageId || l.languageName}
+              key={l.foreignLanguageId || `${l.languageName}-${l.languageLevel}-${idx}`}
               style={{
                 background: "#f3f3f3",
                 borderRadius: 20,
@@ -75,6 +89,14 @@ const ForeignLanguague = ({
           </span>
         )}
       </div>
+      {modalOpen && (
+        <ForeignLanguageModal
+          open={modalOpen}
+          onClose={handleCloseModal}
+          initialLanguages={foreignlanguage}
+          refetch={refetch}
+        />
+      )}
     </div>
   );
 };

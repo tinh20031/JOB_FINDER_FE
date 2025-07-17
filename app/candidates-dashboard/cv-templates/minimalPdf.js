@@ -68,7 +68,18 @@ export default async function generateMinimalPDF(resume, accentColor) {
 
   // Text processing functions
   const stripHtml = (html) =>
-    html ? String(html).replace(/<[^>]+>/g, "") : "";
+    html
+      ? String(html)
+          .replace(/<p[^>]*>/gi, "")
+          .replace(/<\/p>/gi, "\n")
+          .replace(/<br\s*\/?/gi, "\n")
+          .replace(/<li[^>]*>/gi, "- ")
+          .replace(/<\/li>/gi, "\n")
+          .replace(/<ul[^>]*>|<ol[^>]*>|<\/ul>|<\/ol>/gi, "")
+          .replace(/<[^>]+>/g, "")
+          .replace(/\n{2,}/g, "\n")
+          .trim()
+      : "";
 
   const formatDate = (dateStr) => {
     if (!dateStr) return "";

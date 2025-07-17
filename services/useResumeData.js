@@ -311,13 +311,14 @@ export async function deleteWorkExperience(id) {
 export async function createSkill(skill) {
   const token = getToken();
   if (!token) throw new Error("No token found");
+  // skill có thể là 1 object hoặc 1 array object
   const response = await fetch(`${API_URL}/Skill/me`, {
     method: "POST",
     headers: {
       Authorization: `Bearer ${token}`,
       "Content-Type": "application/json",
     },
-    body: JSON.stringify(skill),
+    body: JSON.stringify(skill), // skill là 1 object hoặc 1 array
   });
   if (!response.ok) {
     console.error("Create skill failed:", await response.text());
@@ -348,7 +349,7 @@ export async function updateSkill(skillId, skill) {
 export async function deleteSkill(skillId) {
   const token = getToken();
   if (!token) throw new Error("No token found");
-  const response = await fetch(`${API_URL}/Skill/${skillId}`, {
+  const response = await fetch(`${API_URL}/Skill/me/${skillId}`, {
     method: "DELETE",
     headers: {
       Authorization: `Bearer ${token}`,

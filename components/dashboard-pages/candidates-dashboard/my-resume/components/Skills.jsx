@@ -30,55 +30,46 @@ const Skills = ({
     }
   }, [openExternal, forceCoreSkillModal]);
 
+  const normalizedSkills = useMemo(
+    () =>
+      (initialSkills || []).map((s) => ({
+        ...s,
+        skillId: s.skillId ?? s.id ?? s.Id, // Ưu tiên skillId, fallback sang id hoặc Id
+      })),
+    [initialSkills]
+  );
+
   // Group by unique group (groupName + min skillId)
   const groups = useMemo(() => {
     // Sort skills by createdAt or skillId to keep order
-    const sorted = [...initialSkills].sort((a, b) => {
+    const sorted = [...normalizedSkills].sort((a, b) => {
       if (a.type !== b.type) return a.type - b.type;
+      if (a.groupName && b.groupName) {
+        if (a.groupName < b.groupName) return -1;
+        if (a.groupName > b.groupName) return 1;
+      }
       if (a.createdAt && b.createdAt)
         return new Date(a.createdAt) - new Date(b.createdAt);
       return a.skillId - b.skillId;
     });
-    // Group all soft skills (type 1) into one group
-    const softSkills = sorted.filter((s) => s.type === 1);
-    const coreSkills = sorted.filter((s) => s.type === 0);
-    const result = [];
-    // Group core skills by groupKey
-    let used = new Set();
-    for (let i = 0; i < coreSkills.length; ++i) {
-      const s = coreSkills[i];
-      if (used.has(s.skillId)) continue;
-      const key = s.groupKey || s.createdAt || s.groupName + "_" + s.skillId;
-      let group = [s];
-      used.add(s.skillId);
-      for (let j = i + 1; j < coreSkills.length; ++j) {
-        const t = coreSkills[j];
-        const tKey = t.groupKey || t.createdAt || t.groupName + "_" + t.skillId;
-        if (tKey === key) {
-          group.push(t);
-          used.add(t.skillId);
-        }
+
+    // Group by groupName + type
+    const groupMap = new Map();
+    for (const s of sorted) {
+      const key = `${s.groupName || ""}_${s.type}`;
+      if (!groupMap.has(key)) {
+        groupMap.set(key, {
+          groupName: s.groupName,
+          type: s.type,
+          skills: [],
+          groupKey: key,
+          createdAt: s.createdAt,
+        });
       }
-      result.push({
-        groupName: s.groupName,
-        type: 0,
-        skills: group,
-        groupKey: key,
-        createdAt: s.createdAt,
-      });
+      groupMap.get(key).skills.push(s);
     }
-    // Add all soft skills as one group (if any)
-    if (softSkills.length > 0) {
-      result.push({
-        groupName: softSkills[0].groupName || "Soft Skills",
-        type: 1,
-        skills: softSkills,
-        groupKey: "soft-skills-group",
-        createdAt: softSkills[0].createdAt,
-      });
-    }
-    return result;
-  }, [initialSkills]);
+    return Array.from(groupMap.values());
+  }, [normalizedSkills]);
 
   const hasSoftSkillsGroup = useMemo(
     () => groups.some((g) => g.type === 1),
@@ -115,9 +106,11 @@ const Skills = ({
     try {
       const skillsToRestore = group.skills.map((s) => {
         const { skillId, ...rest } = s;
-        return { ...rest, skillId: 0 }; // Ensure skillId is 0 for creation
+        return { ...rest, skillId: 0, id: 0, Id: 0 }; // Đảm bảo không gửi id cũ lên BE
       });
-      await Promise.all(skillsToRestore.map((s) => createSkill(s)));
+      if (skillsToRestore.length > 0) {
+        await createSkill(skillsToRestore);
+      }
       toast.success("Group restored successfully!");
       if (typeof refetch === "function") refetch();
       setLastDeletedGroup(null);
@@ -132,9 +125,10 @@ const Skills = ({
 
     setDeletingId(groupKey);
     try {
-      await Promise.all(
-        groupToDelete.skills.map((s) => deleteSkill(s.skillId))
-      );
+      // Xóa tuần tự từng skill trong group để tránh lỗi bất đồng bộ
+      for (const s of groupToDelete.skills) {
+        await deleteSkill(s.skillId);
+      }
       setLastDeletedGroup(groupToDelete);
       if (typeof refetch === "function") {
         refetch();
@@ -308,7 +302,7 @@ const Skills = ({
             handleOpenModal(group.type === 0 ? "core" : "soft", group.groupKey);
           }}
         >
-          {/* Chỉ còn nút edit/delete căn phải, KHÔNG có nút add skill */}
+          {/* Nút edit và delete group căn phải */}
           <div
             style={{
               position: "absolute",
@@ -337,6 +331,7 @@ const Skills = ({
             >
               <span className="la la-pencil"></span>
             </button>
+            {/* Nút delete group - chỉ xuất hiện 1 lần cho mỗi group */}
             <button
               onClick={() => handleDeleteGroup(group.groupKey)}
               disabled={deletingId === group.groupKey}

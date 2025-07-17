@@ -213,6 +213,7 @@ const index = () => {
             <div className="form-group col-12">
               <ForeignLanguague
                 foreignlanguage={foreignlanguage}
+                refetch={refetch}
                 onEdit={() => setOpenFL(true)}
                 openExternal={openForeignLangModal}
                 setOpenExternal={setOpenForeignLangModal}
