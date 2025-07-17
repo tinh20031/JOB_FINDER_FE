@@ -1,14 +1,16 @@
 import { HubConnectionBuilder, LogLevel } from "@microsoft/signalr";
+import API_CONFIG from "../config/api.config";
 
 let connection = null;
 
 export function startNotificationHub(token, userId, onReceiveNotification) {
   if (connection) return connection;
 
+  const SIGNALR_HUB_URL = API_CONFIG.SIGNALR_HUB_URL;
+
   connection = new HubConnectionBuilder()
     .withUrl(
-      // process.env.NEXT_PUBLIC_SIGNALR_HUB_URL || "http://localhost:5194/notificationHub",
-       process.env.NEXT_PUBLIC_SIGNALR_HUB_URL || "https://job-finder-kjt2.onrender.com/notificationHub",
+      SIGNALR_HUB_URL,
       {
         accessTokenFactory: () => token,
         skipNegotiation: true,

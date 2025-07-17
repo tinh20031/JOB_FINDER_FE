@@ -36,7 +36,6 @@ const JobSingleDynamicV3 = ({ params }) => {
   const [industries, setIndustries] = useState([]);
   const [levels, setLevels] = useState([]);
   const [jobTypes, setJobTypes] = useState([]);
-  const [experienceLevels, setExperienceLevels] = useState([]);
   const [company, setCompany] = useState(null);
   const [fetchError, setFetchError] = useState(null);
   const { favoriteJobIds, updateFavoriteJobs } = useFavoriteJobs();
@@ -52,12 +51,11 @@ const JobSingleDynamicV3 = ({ params }) => {
     
     const fetchData = async () => {
       try {
-        const [jobResponse, industriesResponse, levelsResponse, jobTypesResponse, experienceLevelsResponse] = await Promise.all([
+        const [jobResponse, industriesResponse, levelsResponse, jobTypesResponse] = await Promise.all([
           jobService.getJobById(params.id),
           ApiService.get(API_CONFIG.ENDPOINTS.INDUSTRY),
           ApiService.get(API_CONFIG.ENDPOINTS.LEVEL),
           ApiService.get(API_CONFIG.ENDPOINTS.JOB_TYPE),
-          ApiService.get(API_CONFIG.ENDPOINTS.EXPERIENCE_LEVEL),
         ]);
 
         if (!jobResponse) {
@@ -69,7 +67,6 @@ const JobSingleDynamicV3 = ({ params }) => {
         setIndustries(industriesResponse);
         setLevels(levelsResponse);
         setJobTypes(jobTypesResponse);
-        setExperienceLevels(experienceLevelsResponse);
         setFetchError(null);
 
         if (jobResponse?.companyId) {
@@ -91,7 +88,6 @@ const JobSingleDynamicV3 = ({ params }) => {
         setIndustries([]);
         setLevels([]);
         setJobTypes([]);
-        setExperienceLevels([]);
         setCompany(null);
       }
     };
@@ -112,7 +108,6 @@ const JobSingleDynamicV3 = ({ params }) => {
   const getIndustryName = (id) => industries.find(i => i.industryId === id)?.industryName || "N/A";
   const getLevelName = (id) => levels.find(l => l.id === id)?.levelName || "N/A";
   const getJobTypeName = (id) => jobTypes.find(jt => jt.id === id)?.jobTypeName || "N/A";
-  const getExperienceLevelName = (id) => experienceLevels.find(el => el.id === id)?.name || "N/A";  
   const getCompanyName = (companyId) => {
     // Ensure companies data is available and then find the company
     // This will likely need to be fetched separately if `companies` is not a global state.
@@ -139,7 +134,6 @@ const JobSingleDynamicV3 = ({ params }) => {
     : [];
 
   const levelName = job?.level?.levelName || "N/A";
-  const experienceLevelName = job?.experienceLevel?.name || "N/A";
   const industryName = job?.industry?.industryName || "N/A";
   const jobTypeName = job?.jobType?.jobTypeName || 'N/A';
 
@@ -292,7 +286,6 @@ const JobSingleDynamicV3 = ({ params }) => {
               jobTypeName,
               industryName,
               levelName,
-              experienceLevelName,
               addressDetail: job?.addressDetail,
               provinceName: job?.provinceName,
               minSalary: job?.minSalary,
