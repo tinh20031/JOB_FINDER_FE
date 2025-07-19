@@ -9,8 +9,10 @@ import MenuToggler from "@/components/dashboard-pages/MenuToggler";
 import VideoProfileUploader from "@/components/candidates/VideoProfileUploader";
 import apiService from "@/services/api.service";
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 
 const ProfileVideoPage = () => {
+  const router = useRouter();
   const [candidateProfileId, setCandidateProfileId] = useState(null);
   const [videoUrl, setVideoUrl] = useState(null);
 
@@ -55,6 +57,27 @@ const ProfileVideoPage = () => {
         </div>
       </section>
       <CopyrightFooter />
+      <style jsx>{`
+        .back-btn {
+          display: inline-flex;
+          align-items: center;
+          background: #f5f8ff;
+          color: #2563eb;
+          border: none;
+          border-radius: 6px;
+          font-size: 15px;
+          font-weight: 600;
+          padding: 8px 18px;
+          margin-bottom: 18px;
+          margin-left: 0;
+          cursor: pointer;
+          transition: background 0.2s, color 0.2s;
+        }
+        .back-btn:hover {
+          background: #e3f2fd;
+          color: #1976d2;
+        }
+      `}</style>
     </div>
   );
 };
