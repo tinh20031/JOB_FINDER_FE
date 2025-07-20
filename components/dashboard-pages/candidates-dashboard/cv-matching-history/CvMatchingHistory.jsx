@@ -41,13 +41,33 @@ const CvMatchingHistory = () => {
     return 'Low';
   };
 
-  const formatDate = (dateString) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
+  // Parse chuỗi ngày/giờ dạng '2025-07-20 18:25:18.2477163' hoặc '2025-07-20 18:25:18' thành Date đúng giờ Việt Nam
+  const parseVietnamDatetime = (str) => {
+    if (!str) return null;
+    const [datePart, timePart] = str.split(' ');
+    if (!datePart || !timePart) return null;
+    const [year, month, day] = datePart.split('-').map(Number);
+    const timeParts = timePart.split(':');
+    const hour = Number(timeParts[0]);
+    const minute = Number(timeParts[1]);
+    const second = Number(timeParts[2]?.split('.')[0]) || 0; // Lấy phần giây, bỏ mili giây nếu có
+    // Tạo Date theo giờ Việt Nam (GMT+7), sau đó chuyển về UTC để JS hiểu đúng
+    return new Date(Date.UTC(year, month - 1, day, hour - 7, minute, second));
+  };
+
+  // Định dạng ngày/giờ: HH:mm dd/MM/yyyy theo giờ Việt Nam, cộng thêm 7 tiếng nếu backend trả về giờ không có offset
+  const formatDate = (str) => {
+    if (!str) return '';
+    const dateObj = new Date(str);
+    dateObj.setHours(dateObj.getHours() + 7); // Cộng thêm 7 tiếng
+    return dateObj.toLocaleString('vi-VN', {
+      timeZone: 'Asia/Ho_Chi_Minh',
       hour: '2-digit',
-      minute: '2-digit'
+      minute: '2-digit',
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour12: false
     });
   };
 

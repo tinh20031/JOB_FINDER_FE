@@ -7,6 +7,19 @@ function stripHtmlTags(str) {
   return str.replace(/<[^>]*>?/gm, '');
 }
 
+// Định dạng ngày/giờ: dd/MM/yyyy theo giờ Việt Nam, cộng thêm 7 tiếng nếu backend trả về giờ không có offset
+const formatDateVN = (str) => {
+  if (!str) return '';
+  const dateObj = new Date(str);
+  dateObj.setHours(dateObj.getHours() + 7);
+  return dateObj.toLocaleDateString('vi-VN', {
+    timeZone: 'Asia/Ho_Chi_Minh',
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric'
+  });
+};
+
 const CandidateAppliedJobsTable = ({ jobs, loading, error, onJobClick }) => {
   const router = useRouter();
   // Lọc unique theo JobId hoặc jobId để tránh duplicate key
@@ -110,7 +123,7 @@ const CandidateAppliedJobsTable = ({ jobs, loading, error, onJobClick }) => {
                     </td>
                     <td>
                       {lastApplication && (lastApplication.SubmittedAt || lastApplication.submittedAt)
-                        ? new Date(lastApplication.SubmittedAt || lastApplication.submittedAt).toLocaleDateString()
+                        ? formatDateVN(lastApplication.SubmittedAt || lastApplication.submittedAt)
                         : 'N/A'}
                     </td>
                   </tr>

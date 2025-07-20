@@ -36,6 +36,23 @@ const getValidImageUrl = (url) => {
   return null; // Invalid URL
 };
 
+// Định dạng ngày/giờ: HH:mm:ss dd/MM/yyyy theo giờ Việt Nam, cộng thêm 7 tiếng nếu backend trả về giờ không có offset
+const formatDateVN = (str) => {
+  if (!str) return '';
+  const dateObj = new Date(str);
+  dateObj.setHours(dateObj.getHours() + 7);
+  return dateObj.toLocaleString('vi-VN', {
+    timeZone: 'Asia/Ho_Chi_Minh',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour12: false
+  });
+};
+
 const DashboardCandidatesHeader = () => {
   const [navbar, setNavbar] = useState(false);
   const [fullName, setFullName] = useState("My Account");
@@ -237,7 +254,7 @@ const DashboardCandidatesHeader = () => {
                           >
                             <div style={{ fontWeight: n.isRead ? 400 : 600 }}>{n.title}</div>
                             <div style={{ fontSize: 13, color: n.isRead ? '#bbb' : '#666', marginTop: 2 }}>{n.message}</div>
-                            <div style={{ fontSize: 11, color: '#aaa', marginTop: 4 }}>{n.createdAt ? new Date(n.createdAt).toLocaleString() : ''}</div>
+                            <div style={{ fontSize: 11, color: '#aaa', marginTop: 4 }}>{n.createdAt ? formatDateVN(n.createdAt) : ''}</div>
                           </div>
                         </Link>
                       ))

@@ -109,6 +109,19 @@ const JobListingsTable = () => {
     router.push(`/job-single-v3/${jobId}`);
   };
 
+  // Định dạng ngày/giờ: dd/MM/yyyy theo giờ Việt Nam, cộng thêm 7 tiếng nếu backend trả về giờ không có offset
+  const formatDateVN = (str) => {
+    if (!str) return '';
+    const dateObj = new Date(str);
+    dateObj.setHours(dateObj.getHours() + 7);
+    return dateObj.toLocaleDateString('vi-VN', {
+      timeZone: 'Asia/Ho_Chi_Minh',
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric'
+    });
+  };
+
   // Pagination logic
   const totalPages = Math.ceil(filteredJobs.length / jobsPerPage);
   const paginatedJobs = filteredJobs.slice((currentPage-1)*jobsPerPage, currentPage*jobsPerPage);
@@ -210,9 +223,9 @@ const JobListingsTable = () => {
                         <Link href="#" style={{ color: '#1967d2', fontWeight: 500, textDecoration: 'underline' }} onClick={e => { e.preventDefault(); e.stopPropagation(); router.push(`/candidates-dashboard/applied-jobs/${job.jobId}`); }}>{item.count} Applied</Link>
                       </td>
                       <td>
-                        {job.timeStart ? new Date(job.timeStart).toLocaleDateString() : ''}
+                        {job.timeStart ? formatDateVN(job.timeStart) : ''}
                         {job.timeStart && job.timeEnd ? ' - ' : ''}
-                        {job.timeEnd ? new Date(job.timeEnd).toLocaleDateString() : ''}
+                        {job.timeEnd ? formatDateVN(job.timeEnd) : ''}
                       </td>
                     </tr>
                   );

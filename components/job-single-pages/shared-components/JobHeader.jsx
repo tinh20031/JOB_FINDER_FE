@@ -20,6 +20,19 @@ const JobHeader = ({ job, company }) => {
     return `${years} years ago`;
   };
 
+  // Định dạng ngày/giờ: dd/MM/yyyy theo giờ Việt Nam, cộng thêm 7 tiếng nếu backend trả về giờ không có offset
+  const formatDateVN = (dateStr) => {
+    if (!dateStr) return '';
+    const dateObj = new Date(dateStr);
+    dateObj.setHours(dateObj.getHours() + 7);
+    return dateObj.toLocaleDateString('vi-VN', {
+      timeZone: 'Asia/Ho_Chi_Minh',
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric'
+    });
+  };
+
   // Lương
   const renderSalary = () => {
     if (job.isSalaryNegotiable) return "Negotiable Salary";
@@ -53,7 +66,7 @@ const JobHeader = ({ job, company }) => {
             </li>
             <li>
               <span className="icon flaticon-clock-3"></span>
-              {formatDate(job.createdAt)}
+              {formatDateVN(job.createdAt)}
             </li>
             <li>
               <span className="icon flaticon-money"></span>

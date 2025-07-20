@@ -32,6 +32,23 @@ const getValidAvatarPath = (user) => {
     return "/images/resource/company-6.png";
 };
 
+// Định dạng ngày/giờ: HH:mm:ss dd/MM/yyyy theo giờ Việt Nam, cộng thêm 7 tiếng nếu backend trả về giờ không có offset
+const formatDateVN = (str) => {
+  if (!str) return '';
+  const dateObj = new Date(str);
+  dateObj.setHours(dateObj.getHours() + 7);
+  return dateObj.toLocaleString('vi-VN', {
+    timeZone: 'Asia/Ho_Chi_Minh',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour12: false
+  });
+};
+
 
 const DashboardHeader = () => {
     const [navbar, setNavbar] = useState(false);
@@ -266,7 +283,7 @@ const DashboardHeader = () => {
                                                         >
                                                             <div style={{ fontWeight: n.isRead ? 400 : 600 }}>{n.title}</div>
                                                             <div style={{ fontSize: 13, color: n.isRead ? '#bbb' : '#1967d2', margin: '4px 0 2px 0' }}>{n.message}</div>
-                                                            <div style={{ fontSize: 12, color: '#888' }}>{n.createdAt ? new Date(n.createdAt).toLocaleString() : ''}</div>
+                                                            <div style={{ fontSize: 12, color: '#888' }}>{n.createdAt ? formatDateVN(n.createdAt) : ''}</div>
                                                         </div>
                                                     </Link>
                                                 ))

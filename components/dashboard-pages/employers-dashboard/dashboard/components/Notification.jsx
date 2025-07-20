@@ -23,6 +23,22 @@ const jobAlerts = [
   },
 ];
 
+// Định dạng ngày/giờ: HH:mm dd/MM/yyyy theo giờ Việt Nam, cộng thêm 7 tiếng nếu backend trả về giờ không có offset
+const formatDateVN = (str) => {
+  if (!str) return '';
+  const dateObj = new Date(str);
+  dateObj.setHours(dateObj.getHours() + 7);
+  return dateObj.toLocaleString('vi-VN', {
+    timeZone: 'Asia/Ho_Chi_Minh',
+    hour: '2-digit',
+    minute: '2-digit',
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour12: false
+  });
+};
+
 const Notification = () => {
   const [activeTab, setActiveTab] = useState("job");
   const [applicantAlerts, setApplicantAlerts] = useState([]);
@@ -169,7 +185,7 @@ const Notification = () => {
                   <strong>{alert.fullName}</strong> applied for a job
                   <span className="colored"> {alert.jobTitle}</span>
                   <span style={{ color: "#888", fontSize: 12, marginLeft: 8 }}>
-                    {alert.submittedAt ? new Date(alert.submittedAt).toLocaleString() : ""}
+                    {alert.submittedAt ? formatDateVN(alert.submittedAt) : ""}
                   </span>
                 </li>
               ))}

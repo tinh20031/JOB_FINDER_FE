@@ -363,6 +363,19 @@ const FilterJobsBox = () => {
     currentPage * itemsPerPage
   );
 
+  // Định dạng ngày/giờ: dd/MM/yyyy theo giờ Việt Nam, cộng thêm 7 tiếng nếu backend trả về giờ không có offset
+  const formatDateVN = (dateStr) => {
+    if (!dateStr) return 'N/A';
+    const dateObj = new Date(dateStr);
+    dateObj.setHours(dateObj.getHours() + 7);
+    return dateObj.toLocaleDateString('vi-VN', {
+      timeZone: 'Asia/Ho_Chi_Minh',
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric'
+    });
+  };
+
   return (
     <>
       <div className="ls-switcher">

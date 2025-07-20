@@ -29,6 +29,22 @@ const JobAlertsTable = () => {
     fetchNotifications();
   }, []);
 
+  // Định dạng ngày/giờ: HH:mm dd/MM/yyyy theo giờ Việt Nam, cộng thêm 7 tiếng nếu backend trả về giờ không có offset
+  const formatDateVN = (str) => {
+    if (!str) return '';
+    const dateObj = new Date(str);
+    dateObj.setHours(dateObj.getHours() + 7);
+    return dateObj.toLocaleString('vi-VN', {
+      timeZone: 'Asia/Ho_Chi_Minh',
+      hour: '2-digit',
+      minute: '2-digit',
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour12: false
+    });
+  };
+
   return (
     <div className="tabs-box">
       <div className="widget-title">
@@ -41,7 +57,7 @@ const JobAlertsTable = () => {
               <tr>
                 <th>Title</th>
                 <th>Content</th>
-                <th>Time</th>
+                <th>Notification Time</th>
                 <th>Action</th>
               </tr>
             </thead>
@@ -60,7 +76,7 @@ const JobAlertsTable = () => {
                   }}>
                     <td>{n.title}</td>
                     <td>{n.message}</td>
-                    <td>{n.createdAt ? new Date(n.createdAt).toLocaleString() : ''}</td>
+                    <td>{n.createdAt ? formatDateVN(n.createdAt) : ''}</td>
                     <td>
                       {n.link ? (
                         <Link href={n.link} legacyBehavior>

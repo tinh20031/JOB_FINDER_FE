@@ -29,6 +29,22 @@ const Notification = () => {
     };
   }, []);
 
+  // Định dạng ngày/giờ: HH:mm dd/MM/yyyy theo giờ Việt Nam, cộng thêm 7 tiếng nếu backend trả về giờ không có offset
+  const formatDateVN = (str) => {
+    if (!str) return '';
+    const dateObj = new Date(str);
+    dateObj.setHours(dateObj.getHours() + 7);
+    return dateObj.toLocaleString('vi-VN', {
+      timeZone: 'Asia/Ho_Chi_Minh',
+      hour: '2-digit',
+      minute: '2-digit',
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour12: false
+    });
+  };
+
   return (
     <ul className="notification-list">
       {notifications.length === 0 && <li>No notifications yet.</li>}
@@ -39,7 +55,7 @@ const Notification = () => {
           <span className="colored"> {n.message}</span>
           {n.createdAt && (
             <span style={{ color: "#888", fontSize: 12, marginLeft: 8 }}>
-              {new Date(n.createdAt).toLocaleString()}
+              {formatDateVN(n.createdAt)}
             </span>
           )}
       </li>
