@@ -4,9 +4,9 @@ const API_CONFIG = {
 
   // BASE_URL: process.env.NEXT_PUBLIC_API_URL || 'https://job-finder-kjt2.onrender.com/api',
   // SIGNALR_HUB_URL: process.env.NEXT_PUBLIC_SIGNALR_HUB_URL || 'https://job-finder-kjt2.onrender.com/chathub',
-  BASE_URL: process.env.NEXT_PUBLIC_API_URL || "http://localhost:5194/api",
-  SIGNALR_HUB_URL:
-    process.env.NEXT_PUBLIC_SIGNALR_HUB_URL || "http://localhost:5194/chathub",
+  BASE_URL: process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5194/api",
+  SIGNALR_CHAT_HUB_URL: process.env.NEXT_PUBLIC_SIGNALR_CHAT_HUB_URL || "http://localhost:5194/chathub",
+  SIGNALR_NOTIFICATION_HUB_URL: process.env.NEXT_PUBLIC_SIGNALR_NOTIFICATION_HUB_URL || "http://localhost:5194/notificationHub",
   ENDPOINTS: {
     AUTH: {
       LOGIN: "auth/login",

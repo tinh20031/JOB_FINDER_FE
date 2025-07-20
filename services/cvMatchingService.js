@@ -38,7 +38,6 @@ export const cvMatchingService = {
         return await ApiService.post('/application/try-match', formData);
       }
     } catch (error) {
-      console.error('Error in CV matching:', error);
       throw error;
     }
   },

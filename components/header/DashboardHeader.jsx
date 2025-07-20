@@ -13,7 +13,7 @@ import { clearLoginState } from "../../features/auth/authSlice";
 import { useRouter } from "next/navigation";
 import { useDispatch } from "react-redux";
 import apiService from '@/services/api.service';
-import { startNotificationHub, stopNotificationHub } from "@/services/notificationHub";
+import notificationHubService from "@/services/notificationHub";
 
 
 const getValidAvatarPath = (user) => {
@@ -138,11 +138,11 @@ const DashboardHeader = () => {
     useEffect(() => {
         const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
         if (role === 'Company' && isLoggedIn && userId && token) {
-            const connection = startNotificationHub(token, userId, (notification) => {
+            notificationHubService.start(token, userId, (notification) => {
                 setNotifications((prev) => [notification, ...prev]);
                 setUnreadCount((prev) => prev + 1);
             });
-            return () => stopNotificationHub();
+            return () => notificationHubService.stop();
         }
     }, [isLoggedIn, userId, role]);
 

@@ -40,7 +40,6 @@ const CvMatchingTool = ({ jobId, jobTitle }) => {
         setSelectedCvId(data[0].cvId || data[0].CVId);
       }
     } catch (err) {
-      console.error('Error fetching CV list:', err);
       setCvListError("Failed to load saved CVs. Please try uploading a new CV.");
       setCvList([]);
     } finally {
@@ -248,16 +247,16 @@ const CvMatchingTool = ({ jobId, jobTitle }) => {
                 <div style={{fontWeight: 700, fontSize: 17, color: '#222'}}>Upload New CV</div>
                 <div style={{fontSize: 15, color: '#888', marginTop: 2}}>PDF file, max 5MB</div>
                 {!useExistingCv && (
-                  <div className="file-upload-area" onClick={()=>fileInputRef.current?.click()} style={{border: '2px dashed #b3b8d0', borderRadius: 10, padding: 20, textAlign: 'center', cursor: 'pointer', background: '#f8faff', transition: 'border 0.2s'}}>
-                    <i className="flaticon-upload" style={{fontSize: 24, color: '#667eea', marginBottom: 8}}></i>
-                    <p style={{margin: 0, color: '#222', fontWeight: 500}}>Click to select PDF file</p>
-                    <small style={{color: '#888'}}>Or drag and drop here</small>
-                    {selectedFile && (
-                      <div className="selected-file" style={{marginTop: 12, padding: 10, background: '#e8f5e8', borderRadius: 6, display: 'flex', alignItems: 'center', gap: 8, color: '#28a745'}}>
-                        <i className="flaticon-file"></i>
-                        <span>{selectedFile.name}</span>
-                      </div>
-                    )}
+                    <div className="file-upload-area" onClick={()=>fileInputRef.current?.click()} style={{border: '2px dashed #b3b8d0', borderRadius: 10, padding: 20, textAlign: 'center', cursor: 'pointer', background: '#f8faff', transition: 'border 0.2s'}}>
+                      <i className="flaticon-upload" style={{fontSize: 24, color: '#667eea', marginBottom: 8}}></i>
+                      <p style={{margin: 0, color: '#222', fontWeight: 500}}>Click to select PDF file</p>
+                      <small style={{color: '#888'}}>Or drag and drop here</small>
+                      {selectedFile && (
+                        <div className="selected-file" style={{marginTop: 12, padding: 10, background: '#e8f5e8', borderRadius: 6, display: 'flex', alignItems: 'center', gap: 8, color: '#28a745'}}>
+                          <i className="flaticon-file"></i>
+                          <span>{selectedFile.name}</span>
+                        </div>
+                      )}
                   </div>
                 )}
                 <input ref={fileInputRef} type="file" accept=".pdf" onChange={handleFileChange} style={{display:'none'}} />
@@ -287,7 +286,12 @@ const CvMatchingTool = ({ jobId, jobTitle }) => {
         <i className="flaticon-search" style={{marginRight: 8}}></i> Try CV Match
       </button>
       <Modal open={showModal} onClose={handleCloseModal} title="Try CV Match">
-        <div style={{maxWidth: 650, margin: '0 auto', padding: 0}}>
+        <>
+          {isLoading && (
+            <div className="modal-loading-overlay">
+              <span className="spinner-border spinner-border-lg" role="status" aria-hidden="true"></span>
+            </div>
+          )}
           <div style={{textAlign: 'center', margin: '32px 0 24px 0'}}>
             <div style={{display: 'flex', justifyContent: 'center', alignItems: 'center', marginBottom: 16}}>
               <span style={{display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 64, height: 64, borderRadius: '50%', background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', color: '#fff', fontSize: 32, boxShadow: '0 4px 16px rgba(102,126,234,0.10)'}}>
@@ -309,7 +313,7 @@ const CvMatchingTool = ({ jobId, jobTitle }) => {
             </p>
           </div>
           {renderModalContent()}
-        </div>
+        </>
       </Modal>
       {/* Modal xác nhận hủy Try Match */}
       <Modal
@@ -577,6 +581,9 @@ const CvMatchingTool = ({ jobId, jobTitle }) => {
           .cv-match-modal-content { padding: 16px 4px; }
           .intro-section { margin-bottom: 20px; }
         }
+      `}</style>
+      <style jsx global>{`
+        .modal-body { position: relative; }
       `}</style>
     </>
   );

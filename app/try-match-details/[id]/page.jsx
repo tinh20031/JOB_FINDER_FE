@@ -9,6 +9,7 @@ import LoginPopup from "@/components/common/form/login/LoginPopup";
 import MobileMenu from "@/components/header/MobileMenu";
 import CopyrightFooter from "@/components/dashboard-pages/CopyrightFooter";
 import { useRouter } from "next/navigation";
+import notificationHubService from "@/services/notificationHub";
 
 export default function TryMatchDetailPage() {
   const router = useRouter();
@@ -33,6 +34,29 @@ export default function TryMatchDetailPage() {
       }
     };
     fetchDetail();
+
+    // Lắng nghe notification real-time + polling lại sau notification
+    let token = null;
+    let userId = null;
+    if (typeof window !== "undefined") {
+      const userStr = localStorage.getItem("user");
+      if (userStr) {
+        try {
+          const user = JSON.parse(userStr);
+          token = user.token || user.accessToken;
+          userId = user.id || user.userId;
+        } catch {}
+      }
+    }
+    if (token && userId) {
+      notificationHubService.start(token, userId, (notification) => {
+        if (notification && (String(notification.tryMatchId) === String(id) || String(notification.TryMatchId) === String(id))) {
+          fetchDetail(); // Gọi ngay khi nhận notification
+          setTimeout(fetchDetail, 1500); // Gọi lại sau 1.5s để chắc chắn lấy được data mới nhất
+        }
+      });
+      // Không stop notificationHubService ở đây nếu đã được start ở layout/header
+    }
   }, [id]);
 
   const getStatusColor = (status) => {

@@ -14,7 +14,7 @@ import { useFavoriteJobs } from "../../contexts/FavoriteJobsContext";
 import { clearLoginState } from "@/features/auth/authSlice";
 import Cookies from "js-cookie";
 import apiService from "@/services/api.service";
-import { startNotificationHub, stopNotificationHub } from "@/services/notificationHub";
+import notificationHubService from "@/services/notificationHub";
 
 // Helper function to validate image URLs
 const getValidImageUrl = (url) => {
@@ -99,11 +99,11 @@ const DashboardCandidatesHeader = () => {
   useEffect(() => {
     const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
     if (isLoggedIn && userId && token) {
-      const connection = startNotificationHub(token, userId, (notification) => {
+      notificationHubService.start(token, userId, (notification) => {
         setNotifications((prev) => [notification, ...prev]);
         setUnreadCount((prev) => prev + 1);
       });
-      return () => stopNotificationHub();
+      return () => notificationHubService.stop();
     }
   }, [isLoggedIn, userId]);
 

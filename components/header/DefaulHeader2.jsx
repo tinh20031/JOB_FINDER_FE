@@ -17,7 +17,7 @@ import BecomeRecruiterModal from '../common/form/shared/BecomeRecruiterModal';
 import { useFavoriteJobs } from "../../contexts/FavoriteJobsContext";
 
 import apiService from '@/services/api.service';
-import { startNotificationHub, stopNotificationHub } from "@/services/notificationHub";
+import notificationHubService from "@/services/notificationHub";
 
 // Helper function to validate image URLs
 const getValidImageUrl = (url) => {
@@ -159,11 +159,11 @@ const DefaulHeader2 = () => {
   useEffect(() => {
     const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
     if (isLoggedIn && userId && token && (role === 'Company' || role === 'Candidate')) {
-      const connection = startNotificationHub(token, userId, (notification) => {
+      notificationHubService.start(token, userId, (notification) => {
         setNotifications((prev) => [notification, ...prev]);
         setUnreadCount((prev) => prev + 1);
       });
-      return () => stopNotificationHub();
+      return () => notificationHubService.stop();
     }
   }, [isLoggedIn, userId, role]);
 

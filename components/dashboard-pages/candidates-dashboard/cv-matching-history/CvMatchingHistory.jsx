@@ -21,7 +21,6 @@ const CvMatchingHistory = () => {
       const response = await cvMatchingService.getMyTryMatchHistory();
       setHistory(response || []);
     } catch (error) {
-      console.error('Error fetching history:', error);
       toast.error('Failed to load CV match history');
     } finally {
       setLoading(false);

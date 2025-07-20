@@ -1,42 +1,55 @@
-import { HubConnectionBuilder, LogLevel } from "@microsoft/signalr";
+import { HubConnectionBuilder, LogLevel, HubConnectionState } from "@microsoft/signalr";
 import API_CONFIG from "../config/api.config";
 
-let connection = null;
+class NotificationHubService {
+  constructor() {
+    this.connection = null;
+    this.token = null;
+    this.userId = null;
+    this.onReceiveNotification = null;
+    this.isStarting = false;
+  }
 
-export function startNotificationHub(token, userId, onReceiveNotification) {
-  if (connection) return connection;
+  async start(token, userId, onReceiveNotification) {
+    if (this.connection && this.connection.state !== HubConnectionState.Disconnected) {
+      return this.connection;
+    }
+    if (this.isStarting) return;
+    this.isStarting = true;
+    this.token = token;
+    this.userId = userId;
+    this.onReceiveNotification = onReceiveNotification;
 
-  const SIGNALR_HUB_URL = API_CONFIG.SIGNALR_HUB_URL;
-
-  connection = new HubConnectionBuilder()
-    .withUrl(
-      SIGNALR_HUB_URL,
-      {
-        accessTokenFactory: () => token,
+    this.connection = new HubConnectionBuilder()
+      .withUrl(API_CONFIG.SIGNALR_NOTIFICATION_HUB_URL, {
+        accessTokenFactory: () => this.token,
         skipNegotiation: true,
         transport: 1, // WebSockets
-      }
-    )
+      })
     .configureLogging(LogLevel.Information)
     .withAutomaticReconnect()
     .build();
 
-  connection.on("ReceiveNotification", (notification) => {
-    if (onReceiveNotification) onReceiveNotification(notification);
+    this.connection.on("ReceiveNotification", (notification) => {
+      if (this.onReceiveNotification) this.onReceiveNotification(notification);
   });
 
-  connection.start()
-    .then(() => {
-      connection.invoke("JoinUserGroup", String(userId));
-    })
-    .catch(console.error);
-
-  return connection;
+    try {
+      await this.connection.start();
+      await this.connection.invoke("JoinUserGroup", String(this.userId));
+    } finally {
+      this.isStarting = false;
+    }
+    return this.connection;
 }
 
-export function stopNotificationHub() {
-  if (connection) {
-    connection.stop();
-    connection = null;
+  stop() {
+    if (this.connection && this.connection.state === HubConnectionState.Connected) {
+      this.connection.stop();
+      this.connection = null;
   }
-} 
+  }
+}
+
+const notificationHubService = new NotificationHubService();
+export default notificationHubService; 
