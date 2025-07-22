@@ -135,8 +135,7 @@ const CvMatchingHistory = () => {
                           </div>
                         ) : (
                           <div className="score-completed">
-                            <div className="score-badge">{Math.round(record.similarityScore * 100)}%</div>
-                            <span className="score-text">{getScoreText(record.similarityScore)}</span>
+                            <div className="score-badge" style={{ backgroundColor: Math.round(record.similarityScore) >= 50 ? '#28a745' : '#e53935' }}>{Math.round(record.similarityScore)}</div>
                         </div>
                         )}
                         <div className={`status-badge status-${record.status?.toLowerCase() || ''}`}>{record.status}</div>

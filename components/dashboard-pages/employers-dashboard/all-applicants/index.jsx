@@ -12,18 +12,26 @@ import MenuToggler from "../../MenuToggler";
 import { useState, useEffect } from "react";
 import { useSearchParams } from 'next/navigation';
 
-const Index = () => {
+const Index = ({ showMatchingInfo = false, useMatchingApi = false }) => {
   const searchParams = useSearchParams();
   const [jobIdFromUrl, setJobIdFromUrl] = useState(null);
   const [candidateName, setCandidateName] = useState("");
 
   useEffect(() => {
     const jobId = searchParams.get('jobId');
-    // Chuyển jobId sang kiểu number nếu cần, vì API có thể mong đợi number
     if (jobId) {
       setJobIdFromUrl(jobId);
     }
   }, [searchParams]);
+
+  // Build link with jobId if present
+  const jobId = searchParams.get('jobId');
+  const matchingUrl = jobId
+    ? `/employers-dashboard/all-applicants-matching?jobId=${jobId}`
+    : '/employers-dashboard/all-applicants-matching';
+  const allUrl = jobId
+    ? `/employers-dashboard/all-applicants?jobId=${jobId}`
+    : '/employers-dashboard/all-applicants';
 
   return (
     <div className="page-wrapper dashboard">
@@ -56,17 +64,21 @@ const Index = () => {
               {/* <!-- Ls widget --> */}
               <div className="ls-widget">
                 <div className="tabs-box">
-                  <div className="widget-title">
+                  <div className="widget-title" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <h4>Applicant</h4>
-                    <WidgetTopFilterBox
-                      candidateName={candidateName}
-                      onCandidateNameChange={setCandidateName}
-                    />
+                    {useMatchingApi ? (
+                      <a href={allUrl} style={{ color: '#1967d2', fontWeight: 600, fontSize: 14, textDecoration: 'underline', cursor: 'pointer' }}>Go to All Applicants</a>
+                    ) : (
+                      <a href={matchingUrl} style={{ color: '#1967d2', fontWeight: 600, fontSize: 14, textDecoration: 'underline', cursor: 'pointer' }}>Go to Matching Applicants</a>
+                    )}
                   </div>
                   {/* End top widget filter bar */}
-
-                  <WidgetContentBox jobId={jobIdFromUrl} candidateName={candidateName} />
+                  {/* <WidgetTopFilterBox
+                    candidateName={candidateName}
+                    onCandidateNameChange={setCandidateName}
+                  /> */}
                   {/* End widget-content */}
+                  <WidgetContentBox jobId={jobIdFromUrl} candidateName={candidateName} showMatchingInfo={showMatchingInfo} useMatchingApi={useMatchingApi} />
                 </div>
               </div>
             </div>

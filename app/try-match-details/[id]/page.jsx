@@ -128,8 +128,8 @@ export default function TryMatchDetailPage() {
                   {data.similarityScore !== null && data.similarityScore !== undefined && (
                     <div className="trymatch-score-section">
                       <div className="score-label">Similarity Score</div>
-                      <div className="score-circle" style={{background:getStatusColor(data.status)}}>
-                        <span>{Math.round(data.similarityScore * 100)}%</span>
+                      <div className="score-circle" style={{ background: Math.round(data.similarityScore) >= 50 ? '#28a745' : '#e53935' }}>
+                        <span>{Math.round(data.similarityScore)}</span>
                       </div>
                     </div>
                   )}
@@ -144,7 +144,7 @@ export default function TryMatchDetailPage() {
                       <div className="suggestions-title">Suggestions</div>
                       <ul className="suggestions-list">
                         {data.suggestions.map((s, idx) => (
-                          <li key={idx}><i className="flaticon-lightbulb"></i> {s}</li>
+                          <li key={idx}><i className="flaticon-lightbulb"></i> <span dangerouslySetInnerHTML={{ __html: s.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>') }} /></li>
                         ))}
                       </ul>
                     </div>

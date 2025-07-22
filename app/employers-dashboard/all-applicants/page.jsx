@@ -9,7 +9,7 @@ export const metadata = {
 const index = () => {
   return (
     <>
-      <AllApplicants />
+      <AllApplicants showMatchingInfo={false} />
     </>
   );
 };

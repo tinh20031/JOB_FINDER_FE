@@ -282,7 +282,11 @@ const DashboardHeader = () => {
                                                             }}
                                                         >
                                                             <div style={{ fontWeight: n.isRead ? 400 : 600 }}>{n.title}</div>
-                                                            <div style={{ fontSize: 13, color: n.isRead ? '#bbb' : '#1967d2', margin: '4px 0 2px 0' }}>{n.message}</div>
+                                                            <div style={{ fontSize: 13, color: n.isRead ? '#bbb' : '#1967d2', margin: '4px 0 2px 0' }}>
+                                                                {n.message && n.message.includes('Similarity Score:')
+                                                                    ? n.message.replace(/Similarity Score: ([0-9]+\.[0-9]+)/g, (match, p1) => `Similarity Score: ${Math.round(Number(p1))}`)
+                                                                    : n.message}
+                                                            </div>
                                                             <div style={{ fontSize: 12, color: '#888' }}>{n.createdAt ? formatDateVN(n.createdAt) : ''}</div>
                                                         </div>
                                                     </Link>

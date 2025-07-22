@@ -229,5 +229,58 @@ export const applicationService = {
       { params: { take } }
     );
     return response.data;
+  },
+
+  // Export applications to Excel
+  exportApplications: async (applicationIds, selectedColumns) => {
+    try {
+      const token = getToken();
+      if (!token) {
+        throw new Error('No authentication token found');
+      }
+      // Đảm bảo các trường matching sẽ được format đúng khi export
+      // (Backend đã xử lý, FE chỉ cần gửi đúng selectedColumns)
+      const response = await axios.post(
+        `${API_URL}/Application/export-applications`,
+        {
+          applicationIds,
+          selectedColumns
+        },
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          responseType: 'blob' // Để nhận file excel
+        }
+      );
+      return response;
+    } catch (error) {
+      console.error('Error exporting applications:', error);
+      throw error;
+    }
+  },
+
+  // Get matching applicants for a job (matching_job API)
+  getMatchingJobApplicants: async (jobId) => {
+    try {
+      const token = getToken();
+      if (!token) {
+        throw new Error('No authentication token found');
+      }
+      const response = await axios.get(
+        `${API_URL}/Application/matching_job/${jobId}`,
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching matching job applicants:', error);
+      throw error;
+    }
   }
 }; 
