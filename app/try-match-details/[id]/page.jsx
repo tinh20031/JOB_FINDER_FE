@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import ApiService from "@/services/api.service";
-import DashboardCandidatesHeader from "@/components/header/DashboardCandidatesHeader";
+import MainHeader from "@/components/header/MainHeader";
 import DashboardCandidatesSidebar from "@/components/header/DashboardCandidatesSidebar";
 import BreadCrumb from "@/components/dashboard-pages/BreadCrumb";
 import LoginPopup from "@/components/common/form/login/LoginPopup";
@@ -104,7 +104,7 @@ export default function TryMatchDetailPage() {
     <div className="page-wrapper dashboard">
       <span className="header-span"></span>
       <LoginPopup />
-      <DashboardCandidatesHeader />
+      <MainHeader />
       <MobileMenu />
       <DashboardCandidatesSidebar />
       <section className="user-dashboard">

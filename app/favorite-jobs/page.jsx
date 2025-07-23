@@ -2,7 +2,7 @@
 import React, { Suspense } from "react";
 import FooterDefault from "../../components/footer/common-footer";
 import Breadcrumb from "../../components/common/Breadcrumb";
-import DefaulHeader2 from "../../components/header/DefaulHeader2";
+import MainHeader from "@/components/header/MainHeader";
 import MobileMenu from "../../components/header/MobileMenu";
 import FavoriteJobsBox from "../../components/job-listing-pages/favorite-jobs/FavoriteJobsBox";
 import FilterSidebar from "../../components/job-listing-pages/job-list-v1/FilterSidebar";
@@ -11,7 +11,7 @@ const FavoriteJobsPage = () => {
   return (
     <>
       <span className="header-span"></span>
-      <DefaulHeader2 />
+      <MainHeader />
       <MobileMenu />
       <Breadcrumb title="Favorite Jobs" meta="Favorite Jobs" />
       <section className="ls-section">

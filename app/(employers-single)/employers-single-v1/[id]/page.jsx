@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import ApiService from "@/services/api.service";
 import LoginPopup from "@/components/common/form/login/LoginPopup";
 import FooterDefault from "@/components/footer/common-footer";
-import DefaulHeader2 from "@/components/header/DefaulHeader2";
+import MainHeader from "@/components/header/MainHeader";
 import MobileMenu from "@/components/header/MobileMenu";
 import JobDetailsDescriptions from "@/components/employer-single-pages/shared-components/JobDetailsDescriptions";
 import RelatedJobs from "@/components/employer-single-pages/related-jobs/RelatedJobs";
@@ -91,7 +91,7 @@ const EmployersSingleV1 = ({ params }) => {
       <LoginPopup />
       {/* End Login Popup Modal */}
 
-      <DefaulHeader2 />
+      <MainHeader />
       {/* <!--End Main Header --> */}
 
       <MobileMenu />

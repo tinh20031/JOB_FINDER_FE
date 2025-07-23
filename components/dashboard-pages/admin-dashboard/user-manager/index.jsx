@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import DashboardAdminSidebar from "../../../header/DashboardAdminSidebar";
 import BreadCrumb from "../../BreadCrumb";
 import MenuToggler from "../../MenuToggler";
-import DashboardHeader from "../../../header/DashboardHeaderAdmin";
+import MainHeader from "../../../header/MainHeader";
 import Link from "next/link";
 import "./user-manager-animations.css";
 import ApiService from "../../../../services/api.service";
@@ -313,7 +313,7 @@ const UserManager = () => {
       <ToastContainer position="top-right" autoClose={3000} />
       <div className="page-wrapper dashboard">
         <span className="header-span"></span>
-        <DashboardHeader />
+        <MainHeader />
         <DashboardAdminSidebar />
         <section className="user-dashboard">
           <div className="dashboard-outer">

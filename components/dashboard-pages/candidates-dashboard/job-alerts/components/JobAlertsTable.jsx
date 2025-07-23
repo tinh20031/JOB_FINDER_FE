@@ -2,6 +2,7 @@
 
 import Link from "next/link.js";
 import { useEffect, useState } from "react";
+import notificationService from "@/services/notification.service";
 
 const JobAlertsTable = () => {
   const [notifications, setNotifications] = useState([]);
@@ -11,14 +12,7 @@ const JobAlertsTable = () => {
     const fetchNotifications = async () => {
       setLoading(true);
       try {
-        // Lấy tối đa 1000 thông báo, tuỳ backend hỗ trợ
-        const res = await fetch("/api/notification?page=1&pageSize=1000", {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-            Accept: "application/json",
-          },
-        });
-        const data = await res.json();
+        const data = await notificationService.getAllNotifications(1, 1000);
         setNotifications(Array.isArray(data) ? data : []);
       } catch {
         setNotifications([]);
@@ -45,6 +39,19 @@ const JobAlertsTable = () => {
     });
   };
 
+  // Hàm hiển thị thời gian kiểu 'x phút trước', 'x giờ trước', ...
+  function timeAgo(dateString) {
+    const now = new Date();
+    const date = new Date(dateString);
+    const diff = Math.floor((now - date) / 1000);
+    if (diff < 60) return "Vừa xong";
+    if (diff < 3600) return `${Math.floor(diff / 60)} phút trước`;
+    if (diff < 86400) return `${Math.floor(diff / 3600)} giờ trước`;
+    if (diff < 604800) return `${Math.floor(diff / 86400)} ngày trước`;
+    if (diff < 2592000) return `${Math.floor(diff / 604800)} tuần trước`;
+    return date.toLocaleDateString("vi-VN");
+  }
+
   return (
     <div className="tabs-box">
       <div className="widget-title">
@@ -67,7 +74,7 @@ const JobAlertsTable = () => {
               ) : notifications.length === 0 ? (
                 <tr><td colSpan={4} style={{textAlign:'center'}}>No notifications</td></tr>
               ) : (
-                notifications.map((n) => (
+                notifications.slice(0, 5).map((n) => (
                   <tr key={n.notificationId} style={{
                     fontWeight: n.isRead ? 400 : 600,
                     color: n.isRead ? '#aaa' : '#222',
@@ -76,7 +83,7 @@ const JobAlertsTable = () => {
                   }}>
                     <td>{n.title}</td>
                     <td>{n.message}</td>
-                    <td>{n.createdAt ? formatDateVN(n.createdAt) : ''}</td>
+                    <td>{n.createdAt ? timeAgo(n.createdAt) : ''}</td>
                     <td>
                       {n.link ? (
                         <Link href={n.link} legacyBehavior>

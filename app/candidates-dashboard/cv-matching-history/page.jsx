@@ -1,6 +1,6 @@
 'use client';
 import { useEffect, useRef } from "react";
-import DashboardCandidatesHeader from "../../../components/header/DashboardCandidatesHeader";
+import MainHeader from "../../../components/header/MainHeader";
 import DashboardCandidatesSidebar from "../../../components/header/DashboardCandidatesSidebar";
 import BreadCrumb from "../../../components/dashboard-pages/BreadCrumb";
 import CvMatchingHistory from "../../../components/dashboard-pages/candidates-dashboard/cv-matching-history/CvMatchingHistory";
@@ -22,7 +22,7 @@ const CvMatchingHistoryPage = () => {
     <div className="page-wrapper dashboard">
       <span className="header-span"></span>
       <LoginPopup />
-      <DashboardCandidatesHeader />
+      <MainHeader />
       <MobileMenu />
       <DashboardCandidatesSidebar />
       

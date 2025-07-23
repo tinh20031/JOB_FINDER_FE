@@ -3,7 +3,7 @@ import dynamic from "next/dynamic";
 import candidateResume from "@/data/candidateResume";
 import LoginPopup from "@/components/common/form/login/LoginPopup";
 import FooterDefault from "@/components/footer/common-footer";
-import DefaulHeader2 from "@/components/header/DefaulHeader2";
+import MainHeader from "@/components/header/MainHeader";
 import MobileMenu from "@/components/header/MobileMenu";
 import Image from "next/image";
 import { useEffect, useState } from "react";
@@ -118,7 +118,7 @@ const CandidateSingleDynamicV1 = ({ params }) => {
     <>
       <span className="header-span"></span>
       <LoginPopup />
-      <DefaulHeader2 />
+      <MainHeader />
       <MobileMenu />
       <section className="candidate-detail-section">
         <div className="upper-box">
@@ -209,7 +209,7 @@ const CandidateSingleDynamicV1 = ({ params }) => {
       <LoginPopup />
       {/* End Login Popup Modal */}
 
-      <DefaulHeader2 />
+      <MainHeader />
       {/* <!--End Main Header --> */}
 
       <MobileMenu />

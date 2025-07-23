@@ -1,7 +1,7 @@
 'use client';
 import { useEffect, useState, useRef } from "react";
 import { useParams } from "next/navigation";
-import DashboardHeader from "../../../../components/header/DashboardHeader";
+import MainHeader from "../../../../components/header/MainHeader";
 import DashboardEmployerSidebar from "../../../../components/header/DashboardEmployerSidebar";
 import BreadCrumb from "../../../../components/dashboard-pages/BreadCrumb";
 import PostJobSteps from "../../../../components/dashboard-pages/employers-dashboard/post-jobs/components/PostJobSteps";
@@ -36,7 +36,7 @@ const CloneJobPage = () => {
     <div className="page-wrapper dashboard">
       <span className="header-span"></span>
       <LoginPopup />
-      <DashboardHeader />
+      <MainHeader />
       <MobileMenu />
       <DashboardEmployerSidebar />
       <section className="user-dashboard">

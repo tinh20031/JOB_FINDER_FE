@@ -1,7 +1,7 @@
 import dynamic from "next/dynamic";
 import LoginPopup from "@/components/common/form/login/LoginPopup";
 import FooterDefault from "@/components/footer/common-footer";
-import DefaulHeader from "@/components/header/DefaulHeader";
+import MainHeader from "@/components/header/MainHeader";
 import MobileMenu from "@/components/header/MobileMenu";
 import DetailsContent from "@/components/blog-meu-pages/blog-details/details-content";
 import blogs from "@/data/blogs";
@@ -25,7 +25,7 @@ const BlogDetailsDynamic = ({ params }) => {
       <LoginPopup />
       {/* End Login Popup Modal */}
 
-      <DefaulHeader />
+      <MainHeader />
       {/* <!--End Main Header --> */}
 
       <MobileMenu />

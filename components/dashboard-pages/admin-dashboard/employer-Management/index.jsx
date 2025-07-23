@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import DashboardAdminSidebar from "../../../header/DashboardAdminSidebar";
 import BreadCrumb from "../../BreadCrumb";
 import MenuToggler from "../../MenuToggler";
-import DashboardHeader from "../../../header/DashboardHeaderAdmin";
+import MainHeader from "../../../header/MainHeader";
 import MobileMenu from "../../../header/MobileMenu";
 import "../user-manager/user-manager-animations.css";
 import ApiService from "../../../../services/api.service";
@@ -326,7 +326,7 @@ const EmployerManagement = () => {
         `}</style>
 
         <span className="header-span"></span>
-        <DashboardHeader />
+        <MainHeader />
 
         <MobileMenu />
         {/* <!-- End MobileMenu --> */}

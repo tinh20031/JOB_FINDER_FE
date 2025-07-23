@@ -6,7 +6,7 @@ import DashboardCandidatesSidebar from "../../../header/DashboardCandidatesSideb
 import BreadCrumb from "../../BreadCrumb";
 import CopyrightFooter from "../../CopyrightFooter";
 import ChatBox from "./components";
-import DashboardCandidatesHeader from "../../../header/DashboardCandidatesHeader";
+import MainHeader from "../../../header/MainHeader";
 import MenuToggler from "../../MenuToggler";
 import { useSelector } from "react-redux";
 
@@ -21,7 +21,7 @@ const Index = () => {
       <LoginPopup />
       {/* End Login Popup Modal */}
 
-      <DashboardCandidatesHeader />
+      <MainHeader />
       {/* End Header */}
 
       <MobileMenu />

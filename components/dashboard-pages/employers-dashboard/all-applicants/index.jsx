@@ -1,7 +1,7 @@
 'use client';
 
 import MobileMenu from "../../../header/MobileMenu";
-import DashboardHeader from "../../../header/DashboardHeader";
+import MainHeader from "../../../header/MainHeader";
 import LoginPopup from "../../../common/form/login/LoginPopup";
 import DashboardEmployerSidebar from "../../../header/DashboardEmployerSidebar";
 import BreadCrumb from "../../BreadCrumb";
@@ -41,7 +41,7 @@ const Index = ({ showMatchingInfo = false, useMatchingApi = false }) => {
       <LoginPopup />
       {/* End Login Popup Modal */}
 
-      <DashboardHeader />
+      <MainHeader />
       {/* End Header */}
 
       <MobileMenu />

@@ -1,5 +1,5 @@
 import MobileMenu from "../../../header/MobileMenu";
-import DashboardHeader from "../../../header/DashboardHeaderAdmin";
+import MainHeader from "../../../header/MainHeader";
 import LoginPopup from "../../../common/form/login/LoginPopup";
 import DashboardAdminSidebar from "../../../header/DashboardAdminSidebar";
 import BreadCrumb from "../../BreadCrumb";
@@ -19,7 +19,7 @@ const Index = () => {
       <LoginPopup />
       {/* End Login Popup Modal */}
 
-      <DashboardHeader />
+      <MainHeader />
       {/* End Header */}
 
       <MobileMenu />

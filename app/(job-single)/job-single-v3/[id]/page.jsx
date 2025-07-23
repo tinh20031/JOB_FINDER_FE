@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { jobService } from "@/services/jobService";
 import LoginPopup from "@/components/common/form/login/LoginPopup";
 import FooterDefault from "@/components/footer/common-footer";
-import DefaulHeader from "@/components/header/DefaulHeader";
+import MainHeader from "@/components/header/MainHeader";
 import MobileMenu from "@/components/header/MobileMenu";
 import CompnayInfo from "@/components/job-single-pages/shared-components/CompanyInfo";
 import SocialTwo from "@/components/job-single-pages/social/SocialTwo";
@@ -16,7 +16,6 @@ import ApplyJobModalContent from "@/components/job-single-pages/shared-component
 import Image from "next/image";
 import { companyService } from "@/services/companyService";
 import { companyProfileService } from "@/services/companyProfileService";
-import DefaulHeader2 from "@/components/header/DefaulHeader2";
 import ApiService from "@/services/api.service";
 import API_CONFIG from "@/config/api.config";
 import { notFound } from 'next/navigation';
@@ -160,7 +159,7 @@ const JobSingleDynamicV3 = ({ params }) => {
       <>
         <span className="header-span"></span>
         <LoginPopup />
-        <DefaulHeader2 />
+        <MainHeader />
         <MobileMenu />
         <section className="job-detail-section">
           <div className="job-detail-outer">
@@ -271,7 +270,7 @@ const JobSingleDynamicV3 = ({ params }) => {
       <LoginPopup />
       {/* End Login Popup Modal */}
 
-      <DefaulHeader2 />
+      <MainHeader />
       {/* <!--End Main Header --> */}
 
       <MobileMenu />

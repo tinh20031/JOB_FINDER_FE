@@ -18,7 +18,7 @@ import { authService } from "../../../../services/authService";
 import DashboardAdminSidebar from "../../../header/DashboardAdminSidebar";
 import BreadCrumb from "../../BreadCrumb";
 import MenuToggler from "../../MenuToggler";
-import DashboardHeader from "../../../header/DashboardHeaderAdmin";
+import MainHeader from "../../../header/MainHeader";
 import MobileMenu from "../../../header/MobileMenu";
 import Modal from "@/components/common/Modal";
 import "@/styles/modal.css";
@@ -263,7 +263,7 @@ const JobPostManagement = () => {
     return (
       <div className="page-wrapper dashboard" style={{background:'#f7f8fa', minHeight:'100vh'}}>
         <span className="header-span"></span>
-        <DashboardHeader />
+        <MainHeader />
         <MobileMenu />
         <DashboardAdminSidebar />
 
@@ -323,7 +323,7 @@ const JobPostManagement = () => {
     <ToastContainer position="top-right" autoClose={3000} />
     <div className={`page-wrapper dashboard`} style={{background:'#f7f8fa', minHeight:'100vh'}}>
       <span className="header-span"></span>
-      <DashboardHeader />
+      <MainHeader />
       <MobileMenu />
       <DashboardAdminSidebar />
 

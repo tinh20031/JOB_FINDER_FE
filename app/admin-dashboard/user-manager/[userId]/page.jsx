@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
-import DashboardHeaderAdmin from "@/components/header/DashboardHeaderAdmin";
+import MainHeader from "@/components/header/MainHeader";
 import DashboardAdminSidebar from "@/components/header/DashboardAdminSidebar";
 import Image from "next/image";
 import ApiService from "@/services/api.service";
@@ -127,7 +127,7 @@ const UserDetailPage = () => {
   return (
     <div className="page-wrapper dashboard">
       <span className="header-span"></span>
-      <DashboardHeaderAdmin />
+      <MainHeader />
       <DashboardAdminSidebar />
       <section className="candidate-detail-section">
         <div className="upper-box">

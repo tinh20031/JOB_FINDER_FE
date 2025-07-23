@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { applicationService } from "@/services/applicationService";
 import MobileMenu from "../../../../header/MobileMenu";
-import DashboardCandidatesHeader from "../../../../header/DashboardCandidatesHeader";
+import MainHeader from "../../../../header/MainHeader";
 import LoginPopup from "../../../../common/form/login/LoginPopup";
 import DashboardCandidatesSidebar from "../../../../header/DashboardCandidatesSidebar";
 import BreadCrumb from "../../../BreadCrumb";
@@ -132,7 +132,7 @@ const AppliedListByJob = () => {
     <div className="page-wrapper dashboard">
       <span className="header-span"></span>
       <LoginPopup />
-      <DashboardCandidatesHeader />
+      <MainHeader />
       <MobileMenu />
       <DashboardCandidatesSidebar />
       <section className="user-dashboard">

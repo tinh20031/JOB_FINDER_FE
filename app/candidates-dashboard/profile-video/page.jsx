@@ -4,7 +4,7 @@ import LoginPopup from "@/components/common/form/login/LoginPopup";
 import DashboardCandidatesSidebar from "@/components/header/DashboardCandidatesSidebar";
 import BreadCrumb from "@/components/dashboard-pages/BreadCrumb";
 import CopyrightFooter from "@/components/dashboard-pages/CopyrightFooter";
-import DashboardCandidatesHeader from "@/components/header/DashboardCandidatesHeader";
+import MainHeader from "@/components/header/MainHeader";
 import MenuToggler from "@/components/dashboard-pages/MenuToggler";
 import VideoProfileUploader from "@/components/candidates/VideoProfileUploader";
 import apiService from "@/services/api.service";
@@ -31,7 +31,7 @@ const ProfileVideoPage = () => {
     <div className="page-wrapper dashboard">
       <span className="header-span"></span>
       <LoginPopup />
-      <DashboardCandidatesHeader />
+      <MainHeader />
       <MobileMenu />
       <DashboardCandidatesSidebar />
       <section className="user-dashboard">

@@ -9,7 +9,7 @@ import ProfileChart from "./components/ProfileChart";
 import Notification from "./components/Notification";
 import CopyrightFooter from "../../CopyrightFooter";
 import JobApplied from "./components/JobApplied";
-import DashboardCandidatesHeader from "../../../header/DashboardCandidatesHeader";
+import MainHeader from "../../../header/MainHeader";
 import MenuToggler from "../../MenuToggler";
 import { useEffect, useState } from "react";
 import apiService from "@/services/api.service";
@@ -41,7 +41,7 @@ const Index = () => {
       <LoginPopup />
       {/* End Login Popup Modal */}
 
-      <DashboardCandidatesHeader />
+      <MainHeader />
       {/* End Header */}
 
       <MobileMenu />
