@@ -19,7 +19,7 @@ async function svgUrlToBase64Png(svgUrl, size = 24) {
   });
 }
 
-export default async function generateCubicPDF(resume, accentColor) {
+export default async function generateCubicPDF(resume, accentColor, removeLogo = false) {
   const pdf = new jsPDF("p", "mm", "a4");
   const pageWidth = pdf.internal.pageSize.getWidth();
   const pageHeight = pdf.internal.pageSize.getHeight();
@@ -588,5 +588,19 @@ export default async function generateCubicPDF(resume, accentColor) {
     y += 8;
   }
 
+  // Thêm logo JobFinder ở góc phải dưới PDF nếu không removeLogo
+  if (!removeLogo) {
+    const logoUrl = "/images/jobfinder-logo.png";
+    const logoImg = await svgUrlToBase64Png(logoUrl, 120); // 120px ~ 12mm
+    const logoWidth = 24; // mm
+    const logoHeight = 12; // mm
+    const logoX = pageWidth - logoWidth - 10;
+    let logoY = pdf.internal.pageSize.getHeight() - logoHeight - 10;
+    if (y > logoY) {
+      pdf.addPage();
+      logoY = pdf.internal.pageSize.getHeight() - logoHeight - 10;
+    }
+    pdf.addImage(logoImg, "PNG", logoX, logoY, logoWidth, logoHeight);
+  }
   pdf.save(`${resume?.fullName || "resume"}-cubic.pdf`);
 }

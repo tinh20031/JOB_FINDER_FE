@@ -32,7 +32,7 @@ function formatDateRange(start, end, isWorking) {
   return `${startStr} - ${endStr}`;
 }
 
-export default function CVMinimal({ resume, accentColor }) {
+export default function CVMinimal({ resume, accentColor, removeLogo, setRemoveLogo }) {
   const coreSkills = Array.isArray(resume?.skills)
     ? resume.skills.filter((s) => s.groupName === "Core Skills")
     : [];
@@ -687,6 +687,18 @@ export default function CVMinimal({ resume, accentColor }) {
               <div style={{ fontSize: 14, color: "#666" }}>No award.</div>
             )}
           </Section>
+          {/* Logo JobFinder */}
+          {!removeLogo && (
+            <div style={{textAlign: 'right', marginTop: 32}}>
+              <img
+                src="/images/jobfinder-logo.png"
+                alt="JobFinder Logo"
+                style={{height: 32, cursor: 'pointer'}}
+                onClick={() => setRemoveLogo && setRemoveLogo(true)}
+                title="Click để ẩn logo"
+              />
+            </div>
+          )}
         </div>
       </div>
     </div>

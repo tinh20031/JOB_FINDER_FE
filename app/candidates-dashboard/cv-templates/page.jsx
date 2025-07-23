@@ -12,6 +12,7 @@ import generateClassicPDF from "./classicPdf";
 import generateElegantPDF from "./elegantPdf";
 import generateCubicPDF from "./cubicPdf";
 import generateMinimalPDF from "./minimalPdf";
+import axios from "axios";
 
 // Mockup các template CV
 const templates = [
@@ -46,18 +47,18 @@ const templates = [
 ];
 
 // Component preview template (mockup)
-function CVPreview({ template, resume, accentColor }) {
+function CVPreview({ template, resume, accentColor, removeLogo, setRemoveLogo }) {
   if (template.id === "classic") {
-    return <CVClassic resume={resume} accentColor={accentColor} />;
+    return <CVClassic resume={resume} accentColor={accentColor} removeLogo={removeLogo} setRemoveLogo={setRemoveLogo} />;
   }
   if (template.id === "elegant") {
-    return <CVElegant resume={resume} accentColor={accentColor} />;
+    return <CVElegant resume={resume} accentColor={accentColor} removeLogo={removeLogo} setRemoveLogo={setRemoveLogo} />;
   }
   if (template.id === "cubic") {
-    return <CVCubic resume={resume} accentColor={accentColor} />;
+    return <CVCubic resume={resume} accentColor={accentColor} removeLogo={removeLogo} setRemoveLogo={setRemoveLogo} />;
   }
   if (template.id === "minimal") {
-    return <CVMinimal resume={resume} accentColor={accentColor} />;
+    return <CVMinimal resume={resume} accentColor={accentColor} removeLogo={removeLogo} setRemoveLogo={setRemoveLogo} />;
   }
   return (
     <div
@@ -92,7 +93,40 @@ export default function CVTemplatesPage() {
   const [selected, setSelected] = useState(templates[0].id);
   const [accentColor, setAccentColor] = useState(templates[0].defaultColor);
   const [colorManuallyChanged, setColorManuallyChanged] = useState(false);
+  const [packageType, setPackageType] = useState(null);
+  const [removeLogo, setRemoveLogo] = useState(false);
+  const [errorMsg, setErrorMsg] = useState("");
+  const [tryMatchRemaining, setTryMatchRemaining] = useState(null); // Thêm state cho try-match
   const cvPreviewRef = useRef(null);
+
+  // Lấy userId từ localStorage
+  const userId = typeof window !== 'undefined' ? localStorage.getItem('userId') : null;
+
+  // Lấy packageType khi vào trang
+  React.useEffect(() => {
+    async function fetchPackageType() {
+      try {
+        const token = localStorage.getItem('token');
+        const res = await axios.get('/api/payment/my-subscription', {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        let type = 'Free';
+        if (res.data?.isSubscribed && res.data?.subscription?.packageName) {
+          type = res.data.subscription.packageName;
+          setTryMatchRemaining(res.data.subscription?.remainingTryMatches ?? null); // Lấy số lượt try-match còn lại nếu có
+        } else if (res.data?.freePackage) {
+          setTryMatchRemaining(res.data.freePackage?.tryMatchLimit ?? null); // Lấy số lượt try-match free nếu có
+        } else {
+          setTryMatchRemaining(null);
+        }
+        setPackageType(type);
+      } catch (e) {
+        setPackageType('Free');
+        setTryMatchRemaining(null);
+      }
+    }
+    fetchPackageType();
+  }, [userId]);
 
   // Lấy dữ liệu resume từ API
   const {
@@ -131,17 +165,58 @@ export default function CVTemplatesPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selected]);
 
+  // Quota download CV đồng bộ với trang quản lý gói
+  const keyMax = userId ? `cv_download_max_${userId}` : null;
+  const keyCount = userId ? `cv_download_count_${userId}` : null;
+
+  // Hàm lấy quota theo loại gói
+  function getQuotaByPackage(packageName) {
+    if (!packageName) return 0;
+    if (packageName.toLowerCase() === 'free') return 1;
+    if (packageName.toLowerCase() === 'basic') return 3;
+    if (packageName.toLowerCase() === 'premium') return Infinity;
+    return 0;
+  }
+
+  // Khi user có gói mới, cộng quota vào localStorage
+  React.useEffect(() => {
+    if (!packageType || !userId) return;
+    let lastPackage = localStorage.getItem('cv_last_package_' + userId);
+    if (lastPackage !== packageType) {
+      // Cộng quota mới
+      const add = getQuotaByPackage(packageType);
+      const currentMax = localStorage.getItem(keyMax) === 'Infinity' ? Infinity : parseInt(localStorage.getItem(keyMax) || '0', 10);
+      let newMax = add === Infinity || currentMax === Infinity ? Infinity : currentMax + add;
+      localStorage.setItem(keyMax, newMax);
+      localStorage.setItem('cv_last_package_' + userId, packageType);
+    }
+  }, [packageType, userId]);
+
+  // Lấy số lượt download còn lại
+  const maxDownloads = keyMax && localStorage.getItem(keyMax) === 'Infinity' ? Infinity : parseInt(localStorage.getItem(keyMax) || '0', 10);
+  const downloadCount = keyCount ? parseInt(localStorage.getItem(keyCount) || '0', 10) : 0;
+  const downloadRemaining = maxDownloads === Infinity ? 'Unlimited' : Math.max(0, maxDownloads - downloadCount);
+
   const handleDownload = () => {
+    setErrorMsg("");
+    if (maxDownloads !== Infinity && downloadCount >= maxDownloads) {
+      setErrorMsg("You have reached the download limit for your package.");
+      return;
+    }
+    if (removeLogo && !(packageType === 'Basic' || packageType === 'Premium')) {
+      setErrorMsg("Your package does not support removing the logo.");
+      return;
+    }
+    // Gọi hàm export PDF, truyền removeLogo
     if (selected === "classic") {
-      generateClassicPDF(resume, accentColor);
+      generateClassicPDF(resume, accentColor, removeLogo);
     } else if (selected === "elegant") {
-      generateElegantPDF(resume, accentColor);
+      generateElegantPDF(resume, accentColor, removeLogo);
     } else if (selected === "cubic") {
-      generateCubicPDF(resume, accentColor);
+      generateCubicPDF(resume, accentColor, removeLogo);
     } else if (selected === "minimal") {
-      generateMinimalPDF(resume, accentColor);
+      generateMinimalPDF(resume, accentColor, removeLogo);
     } else {
-      // Fallback to image-based PDF for other templates
       if (cvPreviewRef.current) {
         html2canvas(cvPreviewRef.current, {
           scale: 2,
@@ -155,6 +230,11 @@ export default function CVTemplatesPage() {
           pdf.save(`${resume.fullName || "resume"}-cv.pdf`);
         });
       }
+    }
+    // Tăng biến đếm download
+    if (userId && maxDownloads !== Infinity) {
+      const newCount = downloadCount + 1;
+      localStorage.setItem(keyCount, newCount);
     }
   };
 
@@ -350,6 +430,8 @@ export default function CVTemplatesPage() {
               template={template}
               resume={resume}
               accentColor={accentColor}
+              removeLogo={removeLogo}
+              setRemoveLogo={setRemoveLogo}
             />
           </div>
         </div>
@@ -392,22 +474,56 @@ export default function CVTemplatesPage() {
                 />
               ))}
             </div>
+            {/* Quyền xóa logo và lượt download */}
+            {packageType === 'Free' ? (
+              <>
+                <span style={{ marginLeft: 24, color: '#bbb', fontSize: 13 }}>
+                  (Free package: cannot remove logo)
+                </span>
+                <span style={{ marginLeft: 24, color: '#fff', fontSize: 13 }}>
+                  Try-match left: {tryMatchRemaining !== null ? tryMatchRemaining : '-'}
+                </span>
+                <span style={{ marginLeft: 24, color: '#fff', fontSize: 13 }}>
+                  Download left: {downloadRemaining} {maxDownloads === Infinity ? '' : `/ ${maxDownloads}`}
+                </span>
+              </>
+            ) : (
+              <>
+                <label style={{ marginLeft: 24, display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <input
+                    type="checkbox"
+                    checked={removeLogo}
+                    onChange={e => setRemoveLogo(e.target.checked)}
+                    style={{ width: 18, height: 18 }}
+                  />
+                  Remove logo
+                </label>
+                <span style={{ marginLeft: 24, color: '#fff', fontSize: 13 }}>
+                  Try-match left: {tryMatchRemaining !== null ? tryMatchRemaining : '-'}
+                </span>
+                <span style={{ marginLeft: 24, color: '#fff', fontSize: 13 }}>
+                  Download left: {downloadRemaining} {maxDownloads === Infinity ? '' : `/ ${maxDownloads}`}
+                </span>
+              </>
+            )}
           </div>
           <button
             onClick={handleDownload}
             style={{
-              background: "#0c55ba",
+              background: maxDownloads !== Infinity && downloadCount >= maxDownloads ? '#aaa' : '#0c55ba',
               color: "#fff",
               border: "none",
               borderRadius: 6,
               padding: "12px 28px",
               fontWeight: 600,
               fontSize: 16,
-              cursor: "pointer",
+              cursor: maxDownloads !== Infinity && downloadCount >= maxDownloads ? 'not-allowed' : 'pointer',
             }}
+            disabled={maxDownloads !== Infinity && downloadCount >= maxDownloads}
           >
             Download CV
           </button>
+          {errorMsg && <span style={{ color: 'red', marginLeft: 24 }}>{errorMsg}</span>}
         </div>
       </div>
     </div>

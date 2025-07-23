@@ -1,7 +1,7 @@
 import API_CONFIG from "../config/api.config";
 
-// const BASE_URL = "http://localhost:5194/api";
-const BASE_URL = "https://job-finder-kjt2.onrender.com/api";
+const BASE_URL = "http://localhost:5194/api";
+// const BASE_URL = "https://job-finder-kjt2.onrender.com/api";
 // Định nghĩa class trước
 class ApiServiceClass {
   // Auth APIs
@@ -397,6 +397,11 @@ const ApiService = {
   uploadCV: ApiServiceClass.uploadCV,
   getMyCVs: ApiServiceClass.getMyCVs,
   deleteCV: ApiServiceClass.deleteCV,
+  // Subscription/Payment APIs for Candidate
+  getSubscriptionPackages: () => ApiService.get('/payment/packages'),
+  getMySubscription: () => ApiService.get('/payment/my-subscription'),
+  createPayment: (subscriptionTypeId) => ApiService.post('/payment/create-payment', { subscriptionTypeId }),
+  checkPaymentStatus: (orderCode) => ApiService.get(`/payment/payment-status/${orderCode}`),
 };
 
 export default ApiService;

@@ -28,7 +28,7 @@ function formatMonthYear(dateStr) {
   return `${String(d.getMonth() + 1).padStart(2, "0")}/${d.getFullYear()}`;
 }
 
-export default function CVClassic({ resume, accentColor }) {
+export default function CVClassic({ resume, accentColor, removeLogo, setRemoveLogo }) {
   // Phân loại kỹ năng
   const coreSkills = Array.isArray(resume?.skills)
     ? resume.skills.filter((s) => s.groupName === "Core Skills")
@@ -402,6 +402,18 @@ export default function CVClassic({ resume, accentColor }) {
           <div>No awards yet.</div>
         )}
       </Section>
+      {/* Logo JobFinder */}
+      {!removeLogo && (
+        <div style={{textAlign: 'right', marginTop: 32}}>
+          <img
+            src="/images/jobfinder-logo.png"
+            alt="JobFinder Logo"
+            style={{height: 32, cursor: 'pointer'}}
+            onClick={() => setRemoveLogo && setRemoveLogo(true)}
+            title="Click để ẩn logo"
+          />
+        </div>
+      )}
     </div>
   );
 }
