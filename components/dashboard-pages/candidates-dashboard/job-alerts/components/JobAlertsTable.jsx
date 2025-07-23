@@ -90,7 +90,7 @@ const JobAlertsTable = () => {
                     <td>
                       {n.link ? (
                         <Link href={n.link} legacyBehavior>
-                          <a style={{ color: '#1967d2', fontWeight: 500 }}>See details</a>
+                          <a style={{ color: '#1967d2', fontWeight: 500 }}>View</a>
                         </Link>
                       ) : '-'}
                     </td>

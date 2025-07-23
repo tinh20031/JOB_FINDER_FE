@@ -48,7 +48,7 @@ const AlertDataTable = () => {
     if (!dateString) return '';
     const now = new Date();
     const date = new Date(dateString);
-    // Luôn cộng 7 tiếng để chuyển sang giờ Việt Nam
+    // Luôn cộng 7 tiếng để chuyển sang giờ Việt Namyarn 
     date.setHours(date.getHours() + 7);
     const diff = Math.floor((now - date) / 1000);
     if (diff < 60) return "just now";
@@ -66,7 +66,7 @@ const AlertDataTable = () => {
           <th>Title</th>
           <th>Content</th>
           <th>Notification Time</th>
-          <th>Link</th>
+          <th>Action</th>
         </tr>
       </thead>
       <tbody>

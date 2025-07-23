@@ -29,7 +29,7 @@ module.exports = [
   },
   {
     id: 5,
-    name: "Job Alerts",
+    name: "Notification",
     icon: "la la-bell",
     routePath: "/candidates-dashboard/job-alerts",
     active: "",
