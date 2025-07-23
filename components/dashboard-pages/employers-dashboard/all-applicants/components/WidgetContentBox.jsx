@@ -608,45 +608,21 @@ const WidgetContentBox = ({ jobId, candidateName, showMatchingInfo, useMatchingA
         show={showModal}
         onClose={() => setShowModal(false)}
       />
-      {showDownloadConfirm && (
-        <div style={{
-          position: 'fixed',
-          top: 0, left: 0, width: '100vw', height: '100vh',
-          background: 'rgba(0,0,0,0.18)',
-          zIndex: 2000,
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-        }}>
-          <div className="modal-content" style={{
-            background: '#fff',
-            borderRadius: 12,
-            boxShadow: '0 8px 32px rgba(0,0,0,0.18)',
-            maxWidth: 420,
-            width: '100%',
-            padding: '32px 28px 24px 28px',
-            position: 'relative',
-            textAlign: 'center',
-          }}>
-            <button
-              onClick={() => setShowDownloadConfirm(false)}
-              className="modal-close"
-              style={{
-                position: 'absolute', top: 16, right: 18, border: 'none', background: 'transparent', fontSize: 22, color: '#888', cursor: 'pointer', fontWeight: 400
-              }}
-              aria-label="Close"
-            >
-              ×
-            </button>
-            <h3 style={{fontWeight: 700, fontSize: 22, marginBottom: 18, color: '#222'}}>Download CVs?</h3>
-            <div style={{fontSize: 16, color: '#444', marginBottom: 28}}>
-              Are you sure you want to download the selected CV(s) as a ZIP file?
-            </div>
-            <div className="modal-footer" style={{display: 'flex', justifyContent: 'center', gap: 16}}>
-              <button className="btn-cancel" onClick={() => setShowDownloadConfirm(false)}>No</button>
-              <button className="btn-confirm" onClick={() => { setShowDownloadConfirm(false); handleExport(); }}>Yes</button>
-            </div>
-          </div>
+      <Modal
+        open={showDownloadConfirm}
+        onClose={() => setShowDownloadConfirm(false)}
+        title="Download CVs?"
+        footer={
+          <>
+            <button className="btn-cancel" onClick={() => setShowDownloadConfirm(false)}>No</button>
+            <button className="btn-confirm" onClick={() => { setShowDownloadConfirm(false); handleExport(); }}>Yes</button>
+          </>
+        }
+      >
+        <div style={{textAlign: 'center', fontSize: 17, color: '#444', padding: '12px 0 4px 0'}}>
+          Are you sure you want to download the selected CV(s) as a ZIP file?
         </div>
-      )}
+      </Modal>
       <style jsx global>{`
         .CircularProgressbar-text {
           font-weight: 700 !important;
