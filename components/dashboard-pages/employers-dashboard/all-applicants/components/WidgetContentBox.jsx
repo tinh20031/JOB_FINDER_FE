@@ -12,6 +12,8 @@ import 'react-circular-progressbar/dist/styles.css';
 import { useRouter, useSearchParams } from "next/navigation";
 import { useRef } from "react";
 import { saveAs } from 'file-saver';
+import Modal from '@/components/common/Modal';
+import "@/styles/modal.css";
 
 // Helper function to validate image URLs
 const getValidImageUrl = (url) => {
@@ -161,6 +163,7 @@ const WidgetContentBox = ({ jobId, candidateName, showMatchingInfo, useMatchingA
   const [selectedFields, setSelectedFields] = useState([]);
   const [searchText, setSearchText] = useState("");
   const exportBtnRef = useRef();
+  const [showDownloadConfirm, setShowDownloadConfirm] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -427,37 +430,14 @@ const WidgetContentBox = ({ jobId, candidateName, showMatchingInfo, useMatchingA
               className="btn btn-primary btn-sm"
               style={{ padding: '6px 18px', fontWeight: 600 }}
               disabled={selectedIds.length === 0}
-              onClick={openExportModal}
+              onClick={() => setShowDownloadConfirm(true)}
             >
-              Export Excel
+              Download CVs
             </button>
           </div>
         </div>
         {/* Modal chọn trường export */}
-        {showExportModal && (
-          <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.2)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <div style={{ background: '#fff', borderRadius: 8, padding: 32, minWidth: 320, boxShadow: '0 2px 16px #aaa' }}>
-              <h4>Select fields to export</h4>
-              <div style={{ margin: '16px 0' }}>
-                {(showMatchingInfo ? EXPORT_FIELDS : EXPORT_FIELDS.filter(f => f.key !== 'SimilarityScore')).map(field => (
-                  <div key={field.key} style={{ marginBottom: 8 }}>
-                    <input
-                      type="checkbox"
-                      id={`field-${field.key}`}
-                      checked={selectedFields.includes(field.key)}
-                      onChange={e => setSelectedFields(prev => e.target.checked ? [...prev, field.key] : prev.filter(x => x !== field.key))}
-                    />
-                    <label htmlFor={`field-${field.key}`} style={{ marginLeft: 8 }}>{field.label}</label>
-                  </div>
-                ))}
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12 }}>
-                <button onClick={() => setShowExportModal(false)} style={{ padding: '6px 18px' }}>Cancel</button>
-                <button className="btn btn-primary" style={{ padding: '6px 18px' }} onClick={handleExport} disabled={!selectedIds.length}>Download CVs (ZIP)</button>
-              </div>
-            </div>
-          </div>
-        )}
+        {/* Xóa toàn bộ phần showExportModal và selectedFields liên quan đến export fields */}
         <Tabs>
           <div className="aplicants-upper-bar">
             <h6>Applicants for Job: {jobTitle}</h6>
@@ -628,6 +608,45 @@ const WidgetContentBox = ({ jobId, candidateName, showMatchingInfo, useMatchingA
         show={showModal}
         onClose={() => setShowModal(false)}
       />
+      {showDownloadConfirm && (
+        <div style={{
+          position: 'fixed',
+          top: 0, left: 0, width: '100vw', height: '100vh',
+          background: 'rgba(0,0,0,0.18)',
+          zIndex: 2000,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+        }}>
+          <div className="modal-content" style={{
+            background: '#fff',
+            borderRadius: 12,
+            boxShadow: '0 8px 32px rgba(0,0,0,0.18)',
+            maxWidth: 420,
+            width: '100%',
+            padding: '32px 28px 24px 28px',
+            position: 'relative',
+            textAlign: 'center',
+          }}>
+            <button
+              onClick={() => setShowDownloadConfirm(false)}
+              className="modal-close"
+              style={{
+                position: 'absolute', top: 16, right: 18, border: 'none', background: 'transparent', fontSize: 22, color: '#888', cursor: 'pointer', fontWeight: 400
+              }}
+              aria-label="Close"
+            >
+              ×
+            </button>
+            <h3 style={{fontWeight: 700, fontSize: 22, marginBottom: 18, color: '#222'}}>Download CVs?</h3>
+            <div style={{fontSize: 16, color: '#444', marginBottom: 28}}>
+              Are you sure you want to download the selected CV(s) as a ZIP file?
+            </div>
+            <div className="modal-footer" style={{display: 'flex', justifyContent: 'center', gap: 16}}>
+              <button className="btn-cancel" onClick={() => setShowDownloadConfirm(false)}>No</button>
+              <button className="btn-confirm" onClick={() => { setShowDownloadConfirm(false); handleExport(); }}>Yes</button>
+            </div>
+          </div>
+        </div>
+      )}
       <style jsx global>{`
         .CircularProgressbar-text {
           font-weight: 700 !important;
