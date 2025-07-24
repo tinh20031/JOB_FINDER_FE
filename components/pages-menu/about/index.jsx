@@ -1,7 +1,7 @@
 import LoginPopup from "../../common/form/login/LoginPopup";
 import Partner from "../../common/partner/Partner";
 import FooterDefault from "../../footer/common-footer";
-import DefaulHeader from "../../header/DefaulHeader";
+import MainHeader from "../../header/MainHeader";
 import MobileMenu from "../../header/MobileMenu";
 import Funfact from "../../fun-fact-counter/Funfact";
 import ImgBox from "./ImgBox";
@@ -21,7 +21,7 @@ const index = () => {
       <LoginPopup />
       {/* End Login Popup Modal */}
 
-      <DefaulHeader />
+      <MainHeader />
       {/* <!--End Main Header --> */}
 
       <MobileMenu />

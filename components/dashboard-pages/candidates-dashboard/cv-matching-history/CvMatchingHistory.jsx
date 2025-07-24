@@ -2,12 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { cvMatchingService } from '@/services/cvMatchingService';
 import { toast } from 'react-toastify';
 import { getToken } from '@/services/authService';
+import { useRouter } from 'next/navigation';
 
 const CvMatchingHistory = () => {
   const [history, setHistory] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedRecord, setSelectedRecord] = useState(null);
   const [showDetail, setShowDetail] = useState(false);
+  const router = useRouter();
 
   useEffect(() => {
     fetchHistory();
@@ -19,7 +21,6 @@ const CvMatchingHistory = () => {
       const response = await cvMatchingService.getMyTryMatchHistory();
       setHistory(response || []);
     } catch (error) {
-      console.error('Error fetching history:', error);
       toast.error('Failed to load CV match history');
     } finally {
       setLoading(false);
@@ -40,13 +41,33 @@ const CvMatchingHistory = () => {
     return 'Low';
   };
 
-  const formatDate = (dateString) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
+  // Parse chuỗi ngày/giờ dạng '2025-07-20 18:25:18.2477163' hoặc '2025-07-20 18:25:18' thành Date đúng giờ Việt Nam
+  const parseVietnamDatetime = (str) => {
+    if (!str) return null;
+    const [datePart, timePart] = str.split(' ');
+    if (!datePart || !timePart) return null;
+    const [year, month, day] = datePart.split('-').map(Number);
+    const timeParts = timePart.split(':');
+    const hour = Number(timeParts[0]);
+    const minute = Number(timeParts[1]);
+    const second = Number(timeParts[2]?.split('.')[0]) || 0; // Lấy phần giây, bỏ mili giây nếu có
+    // Tạo Date theo giờ Việt Nam (GMT+7), sau đó chuyển về UTC để JS hiểu đúng
+    return new Date(Date.UTC(year, month - 1, day, hour - 7, minute, second));
+  };
+
+  // Định dạng ngày/giờ: HH:mm dd/MM/yyyy theo giờ Việt Nam, cộng thêm 7 tiếng nếu backend trả về giờ không có offset
+  const formatDate = (str) => {
+    if (!str) return '';
+    const dateObj = new Date(str);
+    dateObj.setHours(dateObj.getHours() + 7); // Cộng thêm 7 tiếng
+    return dateObj.toLocaleString('vi-VN', {
+      timeZone: 'Asia/Ho_Chi_Minh',
       hour: '2-digit',
-      minute: '2-digit'
+      minute: '2-digit',
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour12: false
     });
   };
 
@@ -90,54 +111,35 @@ const CvMatchingHistory = () => {
             ) : (
               <div className="history-list">
                 {history.map((record) => (
-                  <div key={record.tryMatchId || record.tryMatchID || record.id} className="history-item">
-                    <div className="history-header">
-                      <div className="job-info">
-                        <h5 style={{fontWeight: 700, fontSize: 20, marginBottom: 2}}>{record.job?.title || record.jobTitle}</h5>
-                        {/* Company name or other info can go here if needed */}
-                        <span className="date" style={{fontSize: 14, color: '#888'}}>{formatDate(record.createdAt)}</span>
+                  <div
+                    key={record.tryMatchId || record.tryMatchID || record.id}
+                    className="history-item modern-card"
+                    onClick={() => router.push(`/try-match-details/${record.tryMatchId || record.tryMatchID || record.id}`)}
+                    style={{cursor:'pointer'}}
+                  >
+                    <div className="history-row">
+                      <div className="history-left">
+                        <h5 className="job-title">{record.job?.title || record.jobTitle}</h5>
+                        <span className="date">{formatDate(record.createdAt)}</span>
                       </div>
-                      <div className="score-info" style={{display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4}}>
-                        <div 
-                          className="score-badge"
-                          style={{ backgroundColor: getScoreColor(record.similarityScore), color: '#fff', fontWeight: 700, fontSize: 22, width: 54, height: 54, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 2 }}
-                        >
-                          {Math.round(record.similarityScore * 100)}%
+                      <div className="history-right">
+                        {record.status === "Processing" ? (
+                          <div className="score-processing">
+                            <div className="spinner"></div>
+                            <span>Processing...</span>
+                          </div>
+                        ) : record.status === "Failed" ? (
+                          <div className="score-failed">
+                            <i className="flaticon-close"></i>
+                            Failed
+                          </div>
+                        ) : (
+                          <div className="score-completed">
+                            <div className="score-badge" style={{ backgroundColor: Math.round(record.similarityScore) >= 50 ? '#28a745' : '#e53935' }}>{Math.round(record.similarityScore)}</div>
                         </div>
-                        <span className="score-text" style={{fontSize: 14, color: getScoreColor(record.similarityScore), fontWeight: 600}}>{getScoreText(record.similarityScore)}</span>
+                        )}
+                        <div className={`status-badge status-${record.status?.toLowerCase() || ''}`}>{record.status}</div>
                       </div>
-                    </div>
-                    <div className="history-actions" style={{display: 'flex', gap: 10, marginTop: 8}}>
-                      <button
-                        className="theme-btn btn-style-one"
-                        style={{fontWeight: 600, fontSize: 16, padding: '8px 20px', borderRadius: 6}}
-                        onClick={() => handleViewDetail(record)}
-                      >
-                        <i className="flaticon-eye" style={{marginRight: 6}}></i>
-                        View Details
-                      </button>
-                      <a
-                        href={`/job-single-v3/${record.jobId || record.job?.jobId}`}
-                        className="theme-btn btn-style-three"
-                        style={{fontWeight: 500, fontSize: 15, borderRadius: 6, display: 'flex', alignItems: 'center', gap: 6, background: '#f5f8ff', color: '#2563eb', border: '1.5px solid #e3e6ee'}} 
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      >
-                        <i className="flaticon-briefcase"></i>
-                        View Job
-                      </a>
-                      {record.cv && record.cv.fileUrl && (
-                        <a
-                          href={record.cv.fileUrl}
-                          className="theme-btn btn-style-three"
-                          style={{fontWeight: 500, fontSize: 15, borderRadius: 6, display: 'flex', alignItems: 'center', gap: 6, background: '#f5f8ff', color: '#2563eb', border: '1.5px solid #e3e6ee'}} 
-                          target="_blank"
-                          rel="noopener noreferrer"
-                        >
-                          <i className="flaticon-file"></i>
-                          View CV
-                        </a>
-                      )}
                     </div>
                   </div>
                 ))}
@@ -146,85 +148,6 @@ const CvMatchingHistory = () => {
           </div>
         </div>
       </div>
-
-      {/* Detail Modal */}
-      {showDetail && selectedRecord && (
-        <div className="modal-overlay" onClick={() => setShowDetail(false)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{maxWidth: 600, width: '95vw'}}>
-            <div className="modal-header">
-              <h4>CV Match Details</h4>
-              <button 
-                className="close-btn"
-                onClick={() => setShowDetail(false)}
-              >
-                <i className="flaticon-close"></i>
-              </button>
-            </div>
-            <div className="modal-body">
-              <div className="detail-header" style={{marginBottom: 18, textAlign: 'center'}}>
-                <h5 style={{marginBottom: 4, fontWeight: 700, fontSize: 22}}>{selectedRecord.job?.title || selectedRecord.jobTitle}</h5>
-                <div style={{fontSize: 14, color: '#888', marginBottom: 4}}>{formatDate(selectedRecord.createdAt)}</div>
-              </div>
-              <div className="score-section" style={{display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, marginBottom: 18}}>
-                <div className="score-badge" style={{background: getScoreColor(selectedRecord.similarityScore), fontSize: 32, width: 70, height: 70, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 700, marginBottom: 2}}>
-                  {/* Hiển thị % đúng chuẩn */}
-                  {typeof selectedRecord.similarityScore === 'number' ? Math.round(selectedRecord.similarityScore * 100) + '%' : selectedRecord.similarityScore}
-                </div>
-                <div style={{fontSize: 16, color: getScoreColor(selectedRecord.similarityScore), fontWeight: 600}}>{getScoreText(typeof selectedRecord.similarityScore === 'number' ? selectedRecord.similarityScore * 100 : selectedRecord.similarityScore)}</div>
-              </div>
-              <div className="suggestions-section">
-                <h5 style={{fontWeight: 700, fontSize: 18, marginBottom: 10}}>Suggestions to Improve</h5>
-                {/* Xử lý suggestions là mảng string hoặc mảng object */}
-                {(() => {
-                  let suggestions = selectedRecord.suggestions;
-                  if (typeof suggestions === 'string') {
-                    try {
-                      suggestions = JSON.parse(suggestions);
-                    } catch (e) {
-                      // Nếu không parse được thì để nguyên
-                    }
-                  }
-                  if (Array.isArray(suggestions) && suggestions.length > 0) {
-                    // Nếu là mảng string
-                    if (typeof suggestions[0] === 'string') {
-                      return suggestions.map((s, idx) => (
-                        <div key={idx} className="suggestion-item" style={{marginBottom: 16, background: '#f8f9ff', borderRadius: 8, padding: 14, boxShadow: '0 2px 8px rgba(102,126,234,0.04)'}}>
-                          <div className="suggestion-header" style={{display: 'flex', alignItems: 'center', gap: 8, fontWeight: 600, color: '#2563eb', fontSize: 15, marginBottom: 4}}>
-                            <i className="flaticon-lightbulb"></i>
-                            <span>Suggestion</span>
-                          </div>
-                          <p className="suggestion-description" style={{margin: 0, color: '#444', fontSize: 15, lineHeight: 1.7}}>{s}</p>
-                        </div>
-                      ));
-                    } else {
-                      // Nếu là mảng object như cũ
-                      return suggestions.map((suggestion, idx) => (
-                        <div key={idx} className="suggestion-item" style={{marginBottom: 16, background: '#f8f9ff', borderRadius: 8, padding: 14, boxShadow: '0 2px 8px rgba(102,126,234,0.04)'}}>
-                          <div className="suggestion-header" style={{display: 'flex', alignItems: 'center', gap: 8, fontWeight: 600, color: '#2563eb', fontSize: 15, marginBottom: 4}}>
-                            <i className="flaticon-lightbulb"></i>
-                            <span>{suggestion.category}</span>
-                          </div>
-                          <p className="suggestion-description" style={{margin: 0, color: '#444', fontSize: 15, lineHeight: 1.7}}>{suggestion.description}</p>
-                          {suggestion.specificActions && (
-                            <ul className="suggestion-actions" style={{margin: '10px 0 0 0', paddingLeft: 18, color: '#555', fontSize: 14, lineHeight: 1.6}}>
-                              {suggestion.specificActions.map((action, i) => (
-                                <li key={i}><i className="flaticon-check" style={{marginRight: 6, color: '#28a745'}}></i>{action}</li>
-                              ))}
-                            </ul>
-                          )}
-                        </div>
-                      ));
-                    }
-                  } else {
-                    return <div style={{color: '#888'}}>No suggestions available.</div>;
-                  }
-                })()}
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
       <style jsx>{`
         .history-list {
           display: flex;
@@ -332,13 +255,13 @@ const CvMatchingHistory = () => {
         }
 
         .spinner {
-          width: 32px;
-          height: 32px;
-          border: 3px solid #f3f3f3;
-          border-top: 3px solid #667eea;
+          width: 18px;
+          height: 18px;
+          border: 2px solid #f3f3f3;
+          border-top: 2px solid #667eea;
           border-radius: 50%;
           animation: spin 1s linear infinite;
-          margin: 0 auto 16px;
+          margin: 0 auto 8px;
         }
 
         @keyframes spin {
@@ -516,26 +439,218 @@ const CvMatchingHistory = () => {
           margin-top: 2px;
         }
 
+        .status-badge {
+          display: inline-block;
+          padding: 2px 10px;
+          border-radius: 6px;
+          font-size: 13px;
+          font-weight: 500;
+          color: #888;
+          background: #f5f8ff;
+        }
+
+        .status-badge.status-processing {
+          background: #e3f2fd;
+          color: #1976d2;
+        }
+
+        .status-badge.status-completed {
+          background: #e8f5e9;
+          color: #2e7d32;
+        }
+
+        .status-badge.status-failed {
+          background: #ffebee;
+          color: #c62828;
+        }
+
+        .modern-card {
+          background: #fff;
+          border-radius: 16px;
+          margin-bottom: 18px;
+          padding: 18px 16px 12px 16px;
+          border: none;
+          box-shadow: 0 2px 12px rgba(102,126,234,0.07);
+          transition: box-shadow 0.2s, background 0.2s;
+        }
+        .modern-card:hover {
+          box-shadow: 0 6px 32px rgba(102,126,234,0.13);
+          background: #f5f8ff;
+        }
+        .status-badge {
+          font-size: 13px;
+          font-weight: 600;
+          padding: 5px 16px;
+          border-radius: 8px;
+          background: #f5f8ff;
+          color: #2563eb;
+          min-width: 70px;
+          text-align: center;
+        }
+        .status-badge.status-completed {
+          background: #e8f5e9;
+          color: #2e7d32;
+        }
+        .status-badge.status-processing {
+          background: #e3f2fd;
+          color: #1976d2;
+        }
+        .status-badge.status-failed {
+          background: #ffebee;
+          color: #c62828;
+        }
+        .score-row {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          margin-top: 4px;
+        }
+        .score-completed {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+        }
+        .score-badge {
+          background: #dc3545;
+          color: #fff;
+          font-weight: 700;
+          font-size: 20px;
+          width: 38px;
+          height: 38px;
+          border-radius: 50%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          box-shadow: 0 2px 8px rgba(220,53,69,0.08);
+        }
+        .score-text {
+          font-size: 13px;
+          color: #dc3545;
+          font-weight: 600;
+        }
+        .score-processing {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          color: #2563eb;
+          font-weight: 600;
+          font-size: 13px;
+        }
+        .score-failed {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          color: #c62828;
+          font-weight: 600;
+          font-size: 13px;
+        }
+        .spinner {
+          width: 18px;
+          height: 18px;
+          border: 2px solid #f3f3f3;
+          border-top: 2px solid #2563eb;
+          border-radius: 50%;
+          animation: spin 1s linear infinite;
+          }
+        @keyframes spin {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
+        }
+        .history-row {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 12px;
+        }
+        .history-left {
+          flex: 1;
+          display: flex;
+            flex-direction: column;
+          gap: 2px;
+        }
+        .history-right {
+          display: flex;
+          flex-direction: column;
+          align-items: flex-end;
+          gap: 6px;
+          min-width: 90px;
+        }
+        .job-title {
+          font-weight: 700;
+          font-size: 16px;
+          margin: 0;
+          color: #222;
+        }
+        .date {
+          font-size: 12px;
+          color: #888;
+        }
+        .score-completed {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+        }
+        .score-badge {
+          background: #dc3545;
+          color: #fff;
+          font-weight: 700;
+          font-size: 20px;
+          width: 38px;
+          height: 38px;
+          border-radius: 50%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          box-shadow: 0 2px 8px rgba(220,53,69,0.08);
+          }
+        .score-text {
+          font-size: 13px;
+          color: #dc3545;
+          font-weight: 600;
+        }
+        .score-processing {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          color: #2563eb;
+          font-weight: 600;
+          font-size: 13px;
+        }
+        .score-failed {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          color: #c62828;
+          font-weight: 600;
+          font-size: 13px;
+        }
+        .status-badge {
+          font-size: 13px;
+          font-weight: 600;
+          padding: 5px 16px;
+          border-radius: 8px;
+          background: #f5f8ff;
+          color: #2563eb;
+          min-width: 70px;
+          text-align: center;
+        }
+        .status-badge.status-completed {
+          background: #e8f5e9;
+          color: #2e7d32;
+        }
+        .status-badge.status-processing {
+          background: #e3f2fd;
+          color: #1976d2;
+        }
+        .status-badge.status-failed {
+          background: #ffebee;
+          color: #c62828;
+        }
         @media (max-width: 768px) {
-          .history-header {
-            flex-direction: column;
-            gap: 12px;
-            align-items: flex-start;
-          }
-
-          .history-actions {
-            flex-direction: column;
-          }
-
-          .modal-content {
-            margin: 10px;
-            max-height: 90vh;
-          }
-
-          .modal-header,
-          .modal-body {
-            padding: 16px;
-          }
+          .modern-card { padding: 8px 2px; }
+          .job-title { font-size: 13px; }
+          .score-badge { width: 22px; height: 22px; font-size: 11px; }
+          .history-right { min-width: 60px; }
         }
       `}</style>
     </>

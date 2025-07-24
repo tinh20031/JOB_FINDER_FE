@@ -4,11 +4,13 @@ import React, { useEffect, useState } from "react";
 import ApiService from "../../../../services/api.service";
 import Link from "next/link";
 import LoginPopup from "../../../common/form/login/LoginPopup";
-import DashboardCandidatesHeader from "../../../header/DashboardCandidatesHeader";
 import MobileMenu from "../../../header/MobileMenu";
 import DashboardCandidatesSidebar from "../../../header/DashboardCandidatesSidebar";
 import BreadCrumb from "../../BreadCrumb";
 import CopyrightFooter from "../../CopyrightFooter";
+
+import PackageDataTable from "./components/PackageDataTable";
+import MainHeader from "../../../header/MainHeader";
 import MenuToggler from "../../MenuToggler";
 import axios from "axios";
 
@@ -62,6 +64,17 @@ const PackagesPage = () => {
     if (!mySubscription) return;
     let packageName = mySubscription.isSubscribed ? mySubscription.subscription?.packageName : mySubscription.freePackage?.name;
     if (!packageName) return;
+    // Nếu là Free và chưa từng mua gói nào, chỉ reset quota về 1/1 nếu chưa từng set hoặc chuyển từ gói khác về Free
+    if (
+      !mySubscription.isSubscribed &&
+      packageName.toLowerCase() === 'free' &&
+      (localStorage.getItem(keyMax) === null || localStorage.getItem('cv_last_package_' + userId) !== 'Free')
+    ) {
+      localStorage.setItem(keyMax, '1');
+      localStorage.setItem(keyCount, '0');
+      localStorage.setItem('cv_last_package_' + userId, 'Free');
+      return;
+    }
     // Đã từng cộng quota chưa?
     let lastPackage = localStorage.getItem('cv_last_package_' + userId);
     if (lastPackage !== packageName) {
@@ -82,7 +95,12 @@ const PackagesPage = () => {
     <div className="page-wrapper dashboard">
       <span className="header-span"></span>
       <LoginPopup />
-      <DashboardCandidatesHeader />
+
+      {/* End Login Popup Modal */}
+
+      <MainHeader />
+      {/* End Header */}
+
       <MobileMenu />
       <DashboardCandidatesSidebar />
       <section className="user-dashboard">

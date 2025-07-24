@@ -7,7 +7,7 @@ import LoginPopup from "../common/form/login/LoginPopup";
 // import Partner from "../common/partner/Partner";
 import FooterDefault from "../footer/common-footer";
 import Funfact from "../fun-fact-counter/Funfact";
-import DefaulHeader2 from "../header/DefaulHeader2";
+import MainHeader from "@/components/header/MainHeader";
 import MobileMenu from "../header/MobileMenu";
 import Hero1 from "../hero/hero-1";
 import JobCategorie1 from "../job-categories/JobCategorie1";
@@ -20,7 +20,7 @@ const index = () => {
       <LoginPopup />
       {/* End Login Popup Modal */}
 
-      <DefaulHeader2 />
+      <MainHeader />
       {/* End Header with upload cv btn */}
 
       <MobileMenu />

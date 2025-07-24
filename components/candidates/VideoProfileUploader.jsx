@@ -220,6 +220,34 @@ const VideoProfileUploader = ({ candidateProfileId, onUploadSuccess, initialVide
           <video src={videoUrl} controls style={{ width: VIDEO_WIDTH, height: VIDEO_HEIGHT, borderRadius: 16, boxShadow: '0 4px 24px rgba(0,0,0,0.13)' }} />
         </div>
       )}
+      {(showPreview || mode === "record") && (
+        <button
+          style={{
+            alignSelf: 'flex-start',
+            marginBottom: 8,
+            background: '#f5f8ff',
+            color: '#2563eb',
+            border: 'none',
+            borderRadius: 6,
+            fontWeight: 600,
+            padding: '6px 18px',
+            fontSize: 15,
+            cursor: 'pointer',
+            transition: 'background 0.2s, color 0.2s',
+            position: 'relative',
+            zIndex: 10
+          }}
+          onClick={() => {
+            setShowPreview(false);
+            setMode(null);
+            setSelectedFile(null);
+            setRecordedBlob(null);
+          }}
+          className="back-btn"
+        >
+          <i className="flaticon-left-arrow" style={{marginRight:6}}></i> Back
+        </button>
+      )}
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: 18 }}>
         {/* Webcam Preview khi record */}
         {mode === "record" && !showPreview && (

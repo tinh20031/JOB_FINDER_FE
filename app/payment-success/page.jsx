@@ -4,7 +4,7 @@ import { useSearchParams } from "next/navigation";
 import ApiService from "../../services/api.service";
 import LoginPopup from "../../components/common/form/login/LoginPopup";
 import FooterDefault from "../../components/footer/common-footer";
-import DefaulHeader2 from "../../components/header/DefaulHeader2";
+import MainHeader from "@/components/header/MainHeader";
 import MobileMenu from "../../components/header/MobileMenu";
 import Breadcrumb from "../../components/dashboard-pages/BreadCrumb";
 
@@ -45,7 +45,7 @@ const PaymentSuccessPage = () => {
     <>
       <span className="header-span"></span>
       <LoginPopup />
-      <DefaulHeader2 />
+      <MainHeader />
       <MobileMenu />
       {/* Breadcrumb căn giữa */}
       <div style={{ textAlign: 'center' }}>

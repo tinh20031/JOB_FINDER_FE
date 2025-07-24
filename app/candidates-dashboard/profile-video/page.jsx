@@ -4,13 +4,15 @@ import LoginPopup from "@/components/common/form/login/LoginPopup";
 import DashboardCandidatesSidebar from "@/components/header/DashboardCandidatesSidebar";
 import BreadCrumb from "@/components/dashboard-pages/BreadCrumb";
 import CopyrightFooter from "@/components/dashboard-pages/CopyrightFooter";
-import DashboardCandidatesHeader from "@/components/header/DashboardCandidatesHeader";
+import MainHeader from "@/components/header/MainHeader";
 import MenuToggler from "@/components/dashboard-pages/MenuToggler";
 import VideoProfileUploader from "@/components/candidates/VideoProfileUploader";
 import apiService from "@/services/api.service";
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 
 const ProfileVideoPage = () => {
+  const router = useRouter();
   const [candidateProfileId, setCandidateProfileId] = useState(null);
   const [videoUrl, setVideoUrl] = useState(null);
 
@@ -29,7 +31,7 @@ const ProfileVideoPage = () => {
     <div className="page-wrapper dashboard">
       <span className="header-span"></span>
       <LoginPopup />
-      <DashboardCandidatesHeader />
+      <MainHeader />
       <MobileMenu />
       <DashboardCandidatesSidebar />
       <section className="user-dashboard">
@@ -55,6 +57,27 @@ const ProfileVideoPage = () => {
         </div>
       </section>
       <CopyrightFooter />
+      <style jsx>{`
+        .back-btn {
+          display: inline-flex;
+          align-items: center;
+          background: #f5f8ff;
+          color: #2563eb;
+          border: none;
+          border-radius: 6px;
+          font-size: 15px;
+          font-weight: 600;
+          padding: 8px 18px;
+          margin-bottom: 18px;
+          margin-left: 0;
+          cursor: pointer;
+          transition: background 0.2s, color 0.2s;
+        }
+        .back-btn:hover {
+          background: #e3f2fd;
+          color: #1976d2;
+        }
+      `}</style>
     </div>
   );
 };

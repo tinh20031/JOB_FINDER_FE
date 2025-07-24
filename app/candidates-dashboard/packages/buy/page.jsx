@@ -1,8 +1,9 @@
 'use client';
+
 import React, { useEffect, useState } from "react";
 import ApiService from "../../../../services/api.service";
 import LoginPopup from "../../../../components/common/form/login/LoginPopup";
-import DashboardCandidatesHeader from "../../../../components/header/DashboardCandidatesHeader";
+import MainHeader from "../../../../components/header/MainHeader";
 import MobileMenu from "../../../../components/header/MobileMenu";
 import DashboardCandidatesSidebar from "../../../../components/header/DashboardCandidatesSidebar";
 import CopyrightFooter from "../../../../components/dashboard-pages/CopyrightFooter";
@@ -62,7 +63,7 @@ const BuyPackagePage = () => {
     <div className="page-wrapper dashboard">
       <span className="header-span"></span>
       <LoginPopup />
-      <DashboardCandidatesHeader />
+      <MainHeader />
       <MobileMenu />
       <DashboardCandidatesSidebar />
       <section className="user-dashboard">

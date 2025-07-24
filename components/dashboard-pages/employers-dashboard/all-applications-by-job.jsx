@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { applicationService } from "@/services/applicationService";
 import MobileMenu from "@/components/header/MobileMenu";
-import DashboardHeader from "@/components/header/DashboardHeader";
+import MainHeader from "@/components/header/MainHeader";
 import LoginPopup from "@/components/common/form/login/LoginPopup";
 import DashboardEmployerSidebar from "@/components/header/DashboardEmployerSidebar";
 import BreadCrumb from "../BreadCrumb";
@@ -104,7 +104,7 @@ const AllApplicationsByJob = () => {
     <div className="page-wrapper dashboard">
       <span className="header-span"></span>
       <LoginPopup />
-      <DashboardHeader />
+      <MainHeader />
       <MobileMenu />
       <DashboardEmployerSidebar />
       <section className="user-dashboard">

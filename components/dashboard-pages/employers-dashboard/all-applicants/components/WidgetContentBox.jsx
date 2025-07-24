@@ -10,6 +10,10 @@ import Image from "next/image";
 import { CircularProgressbar, buildStyles } from 'react-circular-progressbar';
 import 'react-circular-progressbar/dist/styles.css';
 import { useRouter, useSearchParams } from "next/navigation";
+import { useRef } from "react";
+import { saveAs } from 'file-saver';
+import Modal from '@/components/common/Modal';
+import "@/styles/modal.css";
 
 // Helper function to validate image URLs
 const getValidImageUrl = (url) => {
@@ -125,7 +129,20 @@ const ApplicantModal = ({ applicationId, show, onClose }) => {
   );
 };
 
-const WidgetContentBox = ({ jobId, candidateName }) => {
+const EXPORT_FIELDS = [
+  { key: "ApplicationId", label: "Application ID" },
+  { key: "FullName", label: "Candidate Name" },
+  { key: "Email", label: "Email" },
+  { key: "JobTitle", label: "Job Title" },
+  { key: "CompanyName", label: "Company" },
+  { key: "Status", label: "Status" },
+  { key: "SubmittedAt", label: "Submitted At" },
+  { key: "ResumeUrl", label: "CV URL" },
+  { key: "CoverLetter", label: "Cover Letter" },
+  { key: "SimilarityScore", label: "Matching Score" },
+];
+
+const WidgetContentBox = ({ jobId, candidateName, showMatchingInfo, useMatchingApi }) => {
   const searchParams = useSearchParams();
   const router = useRouter();
   const [applicants, setApplicants] = useState([]);
@@ -139,6 +156,14 @@ const WidgetContentBox = ({ jobId, candidateName }) => {
   const itemsPerPage = 10;
   const totalPages = Math.ceil(applicants.length / itemsPerPage);
   const [jobCounts, setJobCounts] = useState({});
+
+  // State cho export
+  const [selectedIds, setSelectedIds] = useState([]);
+  const [showExportModal, setShowExportModal] = useState(false);
+  const [selectedFields, setSelectedFields] = useState([]);
+  const [searchText, setSearchText] = useState("");
+  const exportBtnRef = useRef();
+  const [showDownloadConfirm, setShowDownloadConfirm] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -157,7 +182,13 @@ const WidgetContentBox = ({ jobId, candidateName }) => {
           setJobDetails(null);
         }
 
-        const response = await applicationService.getJobApplicants(jobId);
+        let response;
+        if (useMatchingApi) {
+          // Gọi API matching_job
+          response = await applicationService.getMatchingJobApplicants(jobId);
+        } else {
+          response = await applicationService.getJobApplicants(jobId);
+        }
 
         if (response && response.length > 0) {
           const applicantsWithAllDetails = await Promise.allSettled(
@@ -211,7 +242,7 @@ const WidgetContentBox = ({ jobId, candidateName }) => {
     };
 
     fetchData();
-  }, [jobId]);
+  }, [jobId, useMatchingApi]);
 
   useEffect(() => {
     const fetchJobCounts = async () => {
@@ -252,12 +283,12 @@ const WidgetContentBox = ({ jobId, candidateName }) => {
   const approvedApplicants = applicants.filter(app => (app.status === 'Approved' || app.status === 1) && app.candidateProfile).length;
   const rejectedApplicants = applicants.filter(app => (app.status === 'Rejected' || app.status === 2) && app.candidateProfile).length;
 
-  // Thêm filter theo tên ứng viên
-  const filteredApplicants = candidateName
+  // Lọc theo tên ứng viên
+  const filteredApplicants = searchText
     ? applicants.filter(app =>
         (app.candidateProfile?.fullName || app.user?.fullName || "")
           .toLowerCase()
-          .includes(candidateName.toLowerCase())
+          .includes(searchText.toLowerCase())
       )
     : applicants;
 
@@ -269,6 +300,51 @@ const WidgetContentBox = ({ jobId, candidateName }) => {
     let url = `/employers-dashboard/shortlisted-resumes?userId=${userId}`;
     if (companyId) url += `&companyId=${companyId}`;
     router.push(url);
+  };
+
+  // Chọn tất cả
+  const handleSelectAll = (checked) => {
+    if (checked) {
+      setSelectedIds(applicantsToShow.map(a => a.applicationId));
+    } else {
+      setSelectedIds([]);
+    }
+  };
+  // Chọn từng ứng viên
+  const handleSelectOne = (id, checked) => {
+    setSelectedIds(prev => checked ? [...prev, id] : prev.filter(x => x !== id));
+  };
+  // Mở modal export
+  const openExportModal = () => {
+    setSelectedFields([]);
+    setShowExportModal(true);
+  };
+  // Gửi export
+  const handleExport = async () => {
+    if (!selectedIds.length) return;
+    try {
+      const response = await fetch('/api/application/export-applications', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token') || ''}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          ApplicationIds: selectedIds
+        })
+      });
+      if (!response.ok) {
+        throw new Error(`Failed to fetch: ${response.statusText}`);
+      }
+      const contentDisposition = response.headers.get('content-disposition');
+      const fileNameMatch = contentDisposition && contentDisposition.match(/filename="(.+)"/);
+      const fileName = fileNameMatch ? fileNameMatch[1] : `CVs_${new Date().toISOString().replace(/[:.]/g, '-')}.zip`;
+      const blob = await response.blob();
+      saveAs(blob, fileName);
+      setShowExportModal(false);
+    } catch (e) {
+      alert('Export failed!');
+    }
   };
 
   if (loading) {
@@ -330,6 +406,38 @@ const WidgetContentBox = ({ jobId, candidateName }) => {
   return (
     <div className="widget-content">
       <div className="tabs-box">
+        {/* Thanh tiêu đề (chỉ giữ 1 lần) */}
+        {/* ĐÃ XOÁ tiêu đề Applicant ở dưới */}
+        {/* Thanh công cụ search, select all, export Excel */}
+        <div style={{ display: 'flex', alignItems: 'center', marginBottom: 16, gap: 12, justifyContent: 'space-between' }}>
+          <input
+            type="text"
+            placeholder="Enter Candidate name..."
+            value={searchText}
+            onChange={e => setSearchText(e.target.value)}
+            style={{ flex: 1, maxWidth: 320, background: '#f5f8fa', border: '1px solid #e5e9ec', borderRadius: 8, fontSize: 14, fontFamily: 'inherit', height: 44, boxShadow: 'none', outline: 'none', color: '#6f6f6f', fontWeight: 400, paddingLeft: 16 }}
+          />
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <input
+              type="checkbox"
+              checked={selectedIds.length === applicantsToShow.length && applicantsToShow.length > 0}
+              onChange={e => handleSelectAll(e.target.checked)}
+              style={{ marginRight: 4 }}
+            />
+            <span style={{ marginRight: 8 }}>Select all</span>
+            <button
+              ref={exportBtnRef}
+              className="btn btn-primary btn-sm"
+              style={{ padding: '6px 18px', fontWeight: 600 }}
+              disabled={selectedIds.length === 0}
+              onClick={() => setShowDownloadConfirm(true)}
+            >
+              Download CVs
+            </button>
+          </div>
+        </div>
+        {/* Modal chọn trường export */}
+        {/* Xóa toàn bộ phần showExportModal và selectedFields liên quan đến export fields */}
         <Tabs>
           <div className="aplicants-upper-bar">
             <h6>Applicants for Job: {jobTitle}</h6>
@@ -353,19 +461,30 @@ const WidgetContentBox = ({ jobId, candidateName }) => {
                       key={applicant.applicationId}
                     >
                       <div className="inner-box" style={{ position: 'relative', padding: 24, borderRadius: 16, background: '#fff', boxShadow: '0 2px 8px #eee', minHeight: 180 }}>
-                        <div style={{ position: 'absolute', top: 16, right: 16, width: 48, height: 48, zIndex: 2 }}>
-                          <CircularProgressbar
-                            value={percent}
-                            text={`${percent}%`}
-                            styles={buildStyles({
-                              textColor: color,
-                              pathColor: color,
-                              trailColor: '#e0e0e0',
-                              textSize: '26px',
-                              strokeLinecap: 'round',
-                            })}
-                          />
-                        </div>
+                        {/* Checkbox chọn ứng viên */}
+                        <input
+                          type="checkbox"
+                          checked={selectedIds.includes(applicant.applicationId)}
+                          onChange={e => handleSelectOne(applicant.applicationId, e.target.checked)}
+                          style={{ position: 'absolute', left: 16, top: 16, zIndex: 2 }}
+                          title="Select this applicant"
+                        />
+                        {/* Hiển thị similarity score chỉ khi showMatchingInfo là true */}
+                        {showMatchingInfo && (
+                          <div style={{ position: 'absolute', top: 16, right: 16, width: 48, height: 48, zIndex: 2 }}>
+                            <CircularProgressbar
+                              value={Math.round(applicant.similarityScore)}
+                              text={`${Math.round(applicant.similarityScore)}`}
+                              styles={buildStyles({
+                                textColor: Math.round(applicant.similarityScore) >= 50 ? '#1967d2' : '#e53935',
+                                pathColor: Math.round(applicant.similarityScore) >= 50 ? '#1967d2' : '#e53935',
+                                trailColor: '#e0e0e0',
+                                textSize: '26px',
+                                strokeLinecap: 'round',
+                              })}
+                            />
+                          </div>
+                        )}
                         <div className="content">
                           <figure className="image">
                             <Image
@@ -403,13 +522,17 @@ const WidgetContentBox = ({ jobId, candidateName }) => {
                             </li>
                           </ul>
 
-                          <ul className="post-tags">
-                            {applicant.candidateProfile?.skills?.map((skill, i) => (
-                              <li key={i}>
-                                <a href="#">{skill.id || skill}</a>
-                              </li>
-                            ))}
-                          </ul>
+                          {/* Hiển thị skills, education, experience, description % chỉ khi showMatchingInfo là true */}
+                          {showMatchingInfo && (
+                            <>
+                              <div style={{ fontSize: 13, color: '#555', margin: '12px 0', display: 'flex', flexDirection: 'column', gap: 4 }}>
+                                <div><b>Education Match:</b> {formatScore(applicant.similarityEducation)}</div>
+                                <div><b>Experience Match:</b> {formatScore(applicant.similarityExperience)}</div>
+                                <div><b>Skills Match:</b> {formatScore(applicant.similaritySkills)}</div>
+                                <div><b>Description Match:</b> {formatScore(applicant.similarityDescription)}</div>
+                              </div>
+                            </>
+                          )}
 
                           <div style={{ margin: '8px 0', fontSize: 14, color: '#1967d2', fontWeight: 500 }}>
                             Applied for <b>{jobCounts[applicant.userId] ?? '-'}</b> job(s) at your company
@@ -485,6 +608,21 @@ const WidgetContentBox = ({ jobId, candidateName }) => {
         show={showModal}
         onClose={() => setShowModal(false)}
       />
+      <Modal
+        open={showDownloadConfirm}
+        onClose={() => setShowDownloadConfirm(false)}
+        title="Download CVs?"
+        footer={
+          <>
+            <button className="btn-cancel" onClick={() => setShowDownloadConfirm(false)}>No</button>
+            <button className="btn-confirm" onClick={() => { setShowDownloadConfirm(false); handleExport(); }}>Yes</button>
+          </>
+        }
+      >
+        <div style={{textAlign: 'center', fontSize: 17, color: '#444', padding: '12px 0 4px 0'}}>
+          Are you sure you want to download the selected CV(s) as a ZIP file?
+        </div>
+      </Modal>
       <style jsx global>{`
         .CircularProgressbar-text {
           font-weight: 700 !important;
@@ -495,3 +633,10 @@ const WidgetContentBox = ({ jobId, candidateName }) => {
 };
 
 export default WidgetContentBox;
+
+// Helper function
+function formatScore(scoreStr) {
+  if (!scoreStr) return '';
+  const [num, denom] = scoreStr.split('/');
+  return `${Math.round(parseFloat(num))}/${Math.round(parseFloat(denom))}`;
+}

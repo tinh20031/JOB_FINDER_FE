@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { useSelector } from "react-redux";
 import CVClassic from "@/components/cv-templates/CVClassic";
 import CVElegant from "@/components/cv-templates/CVElegant";
@@ -101,6 +101,10 @@ export default function CVTemplatesPage() {
   const cvPreviewRef = useRef(null);
   const router = useRouter();
   const [showUpgradeModal, setShowUpgradeModal] = React.useState(false);
+  const [maxDownloads, setMaxDownloads] = useState(0);
+  const [downloadCount, setDownloadCount] = useState(0);
+  const [downloadRemaining, setDownloadRemaining] = useState(0);
+  const [tryMatchLimit, setTryMatchLimit] = useState(1); // Thêm state cho tryMatchLimit
 
   // Lấy userId từ localStorage
   const userId = typeof window !== 'undefined' ? localStorage.getItem('userId') : null;
@@ -114,18 +118,23 @@ export default function CVTemplatesPage() {
           headers: { Authorization: `Bearer ${token}` }
         });
         let type = 'Free';
+        let limit = 1;
         if (res.data?.isSubscribed && res.data?.subscription?.packageName) {
           type = res.data.subscription.packageName;
           setTryMatchRemaining(res.data.subscription?.remainingTryMatches ?? null); // Lấy số lượt try-match còn lại nếu có
+          limit = res.data.subscription?.tryMatchLimit ?? 1;
         } else if (res.data?.freePackage) {
           setTryMatchRemaining(res.data.freePackage?.remainingFreeMatches ?? null); // Lấy số lượt try-match free còn lại
+          limit = res.data.freePackage?.tryMatchLimit ?? 1;
         } else {
           setTryMatchRemaining(null);
         }
+        setTryMatchLimit(limit);
         setPackageType(type);
       } catch (e) {
         setPackageType('Free');
         setTryMatchRemaining(null);
+        setTryMatchLimit(1);
       }
     }
     fetchPackageType();
@@ -172,6 +181,27 @@ export default function CVTemplatesPage() {
   const keyMax = userId ? `cv_download_max_${userId}` : null;
   const keyCount = userId ? `cv_download_count_${userId}` : null;
 
+  useEffect(() => {
+    if (typeof window !== 'undefined' && keyMax && keyCount) {
+      // Nếu là Free, chỉ reset quota về 1/1 nếu chưa từng set hoặc chuyển từ gói khác về Free
+      if (
+        packageType &&
+        packageType.toLowerCase() === 'free' &&
+        (localStorage.getItem(keyMax) === null || localStorage.getItem('cv_last_package_' + userId) !== 'Free')
+      ) {
+        localStorage.setItem(keyMax, '1');
+        localStorage.setItem(keyCount, '0');
+        localStorage.setItem('cv_last_package_' + userId, 'Free');
+      }
+      const keyMaxValue = localStorage.getItem(keyMax);
+      const max = keyMaxValue === 'Infinity' ? Infinity : parseInt(keyMaxValue || '0', 10);
+      const count = parseInt(localStorage.getItem(keyCount) || '0', 10);
+      setMaxDownloads(max);
+      setDownloadCount(count);
+      setDownloadRemaining(max === Infinity ? 'Unlimited' : Math.max(0, max - count));
+    }
+  }, [keyMax, keyCount, packageType, userId]);
+
   // Hàm lấy quota theo loại gói
   function getQuotaByPackage(packageName) {
     if (!packageName) return 0;
@@ -195,11 +225,6 @@ export default function CVTemplatesPage() {
     }
   }, [packageType, userId]);
 
-  // Lấy số lượt download còn lại
-  const maxDownloads = keyMax && localStorage.getItem(keyMax) === 'Infinity' ? Infinity : parseInt(localStorage.getItem(keyMax) || '0', 10);
-  const downloadCount = keyCount ? parseInt(localStorage.getItem(keyCount) || '0', 10) : 0;
-  const downloadRemaining = maxDownloads === Infinity ? 'Unlimited' : Math.max(0, maxDownloads - downloadCount);
-
   const handleDownload = () => {
     setErrorMsg("");
     if (maxDownloads !== Infinity && downloadCount >= maxDownloads) {
@@ -219,7 +244,6 @@ export default function CVTemplatesPage() {
       generateCubicPDF(resume, accentColor, removeLogo);
     } else if (selected === "minimal") {
       generateMinimalPDF(resume, accentColor, removeLogo);
-    } else {
       if (cvPreviewRef.current) {
         html2canvas(cvPreviewRef.current, {
           scale: 2,
@@ -234,10 +258,12 @@ export default function CVTemplatesPage() {
         });
       }
     }
-    // Tăng biến đếm download
-    if (userId && maxDownloads !== Infinity) {
+    // Tăng biến đếm download (chỉ khi còn lượt)
+    if (userId && maxDownloads !== Infinity && downloadCount < maxDownloads) {
       const newCount = downloadCount + 1;
       localStorage.setItem(keyCount, newCount);
+      setDownloadCount(newCount);
+      setDownloadRemaining(maxDownloads === Infinity ? 'Unlimited' : Math.max(0, maxDownloads - newCount));
     }
   };
 
@@ -483,9 +509,10 @@ export default function CVTemplatesPage() {
                 <span style={{ marginLeft: 24, color: '#bbb', fontSize: 13 }}>
                   (Free package: cannot remove logo)
                 </span>
-                <span style={{ marginLeft: 24, color: '#fff', fontSize: 13 }}>
-                  Try-match left: {tryMatchRemaining !== null ? tryMatchRemaining + '/1' : '-'}
-                </span>
+                {/* Bỏ hiển thị try-match */}
+                {/* <span style={{ marginLeft: 24, color: '#fff', fontSize: 13 }}>
+                  Try-match left: {tryMatchRemaining !== null ? tryMatchRemaining + '/' + tryMatchLimit : '-'}
+                </span> */}
                 <span style={{ marginLeft: 24, color: '#fff', fontSize: 13 }}>
                   Download left: {downloadRemaining} {maxDownloads === Infinity ? '' : `/ ${maxDownloads}`}
                 </span>
@@ -501,9 +528,10 @@ export default function CVTemplatesPage() {
                   />
                   Remove logo
                 </label>
-                <span style={{ marginLeft: 24, color: '#fff', fontSize: 13 }}>
-                  Try-match left: {tryMatchRemaining !== null ? tryMatchRemaining + '/' + (res.data?.subscription?.tryMatchLimit || '1') : '-'}
-                </span>
+                {/* Bỏ hiển thị try-match */}
+                {/* <span style={{ marginLeft: 24, color: '#fff', fontSize: 13 }}>
+                  Try-match left: {tryMatchRemaining !== null ? tryMatchRemaining + '/' + tryMatchLimit : '-'}
+                </span> */}
                 <span style={{ marginLeft: 24, color: '#fff', fontSize: 13 }}>
                   Download left: {downloadRemaining} {maxDownloads === Infinity ? '' : `/ ${maxDownloads}`}
                 </span>
@@ -568,7 +596,7 @@ export default function CVTemplatesPage() {
                       router.push('/candidates-dashboard/packages/buy');
                     }}
                   >
-                    Có
+                    Yes
                   </button>
                   <button
                     style={{
@@ -583,7 +611,7 @@ export default function CVTemplatesPage() {
                     }}
                     onClick={() => setShowUpgradeModal(false)}
                   >
-                    Không
+                    No
                   </button>
                 </div>
               </div>

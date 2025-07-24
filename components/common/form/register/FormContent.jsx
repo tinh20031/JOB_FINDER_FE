@@ -95,6 +95,16 @@ const FormContent = ({ onRegistrationSuccess }) => {
         formData.password,
         "string"
       );
+      // Set quota download CV cho account mới
+      let newUserId = res.userId || (res.user && (res.user.id || res.user.userId));
+      if (!newUserId && typeof window !== 'undefined') {
+        newUserId = localStorage.getItem('userId');
+      }
+      if (newUserId && typeof window !== 'undefined') {
+        localStorage.setItem(`cv_download_max_${newUserId}`, '1');
+        localStorage.setItem(`cv_download_count_${newUserId}`, '0');
+        localStorage.setItem(`cv_last_package_${newUserId}`, 'Free');
+      }
       setShowVerification(true);
       setRegisteredEmail(res.email || formData.email);
       setUserId(res.userId);

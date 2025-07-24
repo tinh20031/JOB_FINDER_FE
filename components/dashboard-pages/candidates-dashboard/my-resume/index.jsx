@@ -6,7 +6,7 @@ import DashboardCandidatesSidebar from "../../../header/DashboardCandidatesSideb
 import BreadCrumb from "../../BreadCrumb";
 import CopyrightFooter from "../../CopyrightFooter";
 import Resume from "./components";
-import DashboardCandidatesHeader from "../../../header/DashboardCandidatesHeader";
+import MainHeader from "../../../header/MainHeader";
 import MenuToggler from "../../MenuToggler";
 import Link from "next/link";
 import useResumeData from "@/services/useResumeData";
@@ -22,7 +22,7 @@ const index = () => {
       <LoginPopup />
       {/* End Login Popup Modal */}
 
-      <DashboardCandidatesHeader />
+      <MainHeader />
       {/* End Header */}
 
       <MobileMenu />

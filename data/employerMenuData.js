@@ -57,7 +57,7 @@ module.exports = [
   },
   {
     id: 9,
-    name: "Resume Alerts",
+    name: "Notification",
     icon: "la-bell",
     routePath: "/employers-dashboard/resume-alerts",
     active: "",

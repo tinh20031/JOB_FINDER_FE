@@ -3,8 +3,18 @@ import React from "react";
 const JobOverView2 = ({ job, industryName, levelName, jobTypeName }) => {
   if (!job) return null;
 
-  const formatDate = (dateStr) =>
-    dateStr ? new Date(dateStr).toLocaleDateString("vi-VN") : "N/A";
+  // Định dạng ngày/giờ: dd/MM/yyyy theo giờ Việt Nam, cộng thêm 7 tiếng nếu backend trả về giờ không có offset
+  const formatDateVN = (dateStr) => {
+    if (!dateStr) return 'N/A';
+    const dateObj = new Date(dateStr);
+    dateObj.setHours(dateObj.getHours() + 7);
+    return dateObj.toLocaleDateString('vi-VN', {
+      timeZone: 'Asia/Ho_Chi_Minh',
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric'
+    });
+  };
 
   const renderSalary = () => {
     if (job.isSalaryNegotiable) return "Negotiable Salary";
@@ -35,17 +45,17 @@ const JobOverView2 = ({ job, industryName, levelName, jobTypeName }) => {
       <li>
         <span className="icon icon-clock"></span>
         <h5>Start Date:</h5>
-        <span>{formatDate(job.timeStart)}</span>
+        <span>{formatDateVN(job.timeStart)}</span>
       </li>
       <li>
         <span className="icon icon-clock"></span>
         <h5>End Date:</h5>
-        <span>{formatDate(job.timeEnd)}</span>
+        <span>{formatDateVN(job.timeEnd)}</span>
       </li>
       <li>
         <span className="icon icon-expiry"></span>
         <h5>Application Deadline:</h5>
-        <span>{formatDate(job.expiryDate)}</span>
+        <span>{formatDateVN(job.expiryDate)}</span>
       </li>
       <li>
         <span className="icon icon-salary"></span>

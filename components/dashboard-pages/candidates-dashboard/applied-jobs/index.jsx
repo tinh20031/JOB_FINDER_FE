@@ -1,7 +1,7 @@
 'use client';
 
 import MobileMenu from "../../../header/MobileMenu";
-import DashboardCandidatesHeader from "../../../header/DashboardCandidatesHeader";
+import MainHeader from "../../../header/MainHeader";
 import LoginPopup from "../../../common/form/login/LoginPopup";
 import DashboardCandidatesSidebar from "../../../header/DashboardCandidatesSidebar";
 import BreadCrumb from "../../BreadCrumb";
@@ -18,7 +18,7 @@ const index = () => {
       <LoginPopup />
       {/* End Login Popup Modal */}
 
-      <DashboardCandidatesHeader />
+      <MainHeader />
       {/* End Header */}
 
       <MobileMenu />

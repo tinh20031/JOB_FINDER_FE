@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { applicationService } from "@/services/applicationService";
 import MobileMenu from "../../../../header/MobileMenu";
-import DashboardCandidatesHeader from "../../../../header/DashboardCandidatesHeader";
+import MainHeader from "../../../../header/MainHeader";
 import LoginPopup from "../../../../common/form/login/LoginPopup";
 import DashboardCandidatesSidebar from "../../../../header/DashboardCandidatesSidebar";
 import BreadCrumb from "../../../BreadCrumb";
@@ -50,6 +50,22 @@ const statusMap = {
   1: "Interview",
   2: "Rejected",
   3: "Accepted"
+};
+
+// Định dạng ngày/giờ: HH:mm dd/MM/yyyy theo giờ Việt Nam, cộng thêm 7 tiếng nếu backend trả về giờ không có offset
+const formatDateVN = (str) => {
+  if (!str) return '';
+  const dateObj = new Date(str);
+  dateObj.setHours(dateObj.getHours() + 7);
+  return dateObj.toLocaleString('vi-VN', {
+    timeZone: 'Asia/Ho_Chi_Minh',
+    hour: '2-digit',
+    minute: '2-digit',
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour12: false
+  });
 };
 
 const AppliedListByJob = () => {
@@ -116,7 +132,7 @@ const AppliedListByJob = () => {
     <div className="page-wrapper dashboard">
       <span className="header-span"></span>
       <LoginPopup />
-      <DashboardCandidatesHeader />
+      <MainHeader />
       <MobileMenu />
       <DashboardCandidatesSidebar />
       <section className="user-dashboard">
@@ -142,7 +158,7 @@ const AppliedListByJob = () => {
                         <table className="default-table manage-job-table">
                           <thead>
                             <tr>
-                              <th>Date</th>
+                              <th>Submission Date</th>
                               <th>Cover Letter</th>
                               <th>CV</th>
                             </tr>
@@ -151,7 +167,7 @@ const AppliedListByJob = () => {
                             {paginatedApplications.map(app => (
                               <tr key={app.applicationId}>
                                 <td>
-                                  {new Date(app.submittedAt).toLocaleTimeString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh', hour12: false })} {new Date(app.submittedAt).toLocaleDateString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh' })}
+                                  {formatDateVN(app.submittedAt)}
                                 </td>
                                 <td>
                                   <span

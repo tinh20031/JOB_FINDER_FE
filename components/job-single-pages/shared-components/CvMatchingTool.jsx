@@ -23,6 +23,7 @@ const CvMatchingTool = ({ jobId, jobTitle }) => {
   const fileInputRef = useRef(null);
   const [tryMatchRemaining, setTryMatchRemaining] = useState(null);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+
   const router = useRouter();
 
   // Fetch CV list when modal opens
@@ -50,7 +51,6 @@ const CvMatchingTool = ({ jobId, jobTitle }) => {
         setSelectedCvId(data[0].cvId || data[0].CVId);
       }
     } catch (err) {
-      console.error('Error fetching CV list:', err);
       setCvListError("Failed to load saved CVs. Please try uploading a new CV.");
       setCvList([]);
     } finally {
@@ -145,49 +145,37 @@ const CvMatchingTool = ({ jobId, jobTitle }) => {
       setIsAuthenticated(false);
       return;
     }
-
     if (useExistingCv && !selectedCvId) {
       toast.error('Please select a saved CV.');
       return;
     }
-
     if (!useExistingCv && !selectedFile) {
       toast.error('Please upload a PDF CV file.');
       return;
     }
-
     setIsLoading(true);
     setShowResult(false);
     setMatchingResult(null);
-    
     try {
       const formData = new FormData();
       formData.append('JobId', jobId);
-      
       if (useExistingCv) {
         formData.append('CvId', selectedCvId);
       } else {
         formData.append('CvFile', selectedFile);
       }
-
-      // Log toàn bộ FormData trước khi gửi
-      for (let pair of formData.entries()) {
-        console.log('FormData:', pair[0], pair[1]);
-      }
-
       const response = await cvMatchingService.tryMatch(formData);
-      
       if (response.success) {
-        toast.success('CV match analysis completed successfully!');
-        setMatchingResult(response);
-        setShowResult(true);
+        toast.success('Your request is being processed. The result will appear in your try-match history.');
+        setTimeout(() => {
+          setShowModal(false);
+          router.push('/candidates-dashboard/cv-matching-history');
+        }, 1000);
       } else {
-        toast.error(response.errorMessage || 'An error occurred during CV matching');
+        toast.error(response.errorMessage || 'An error occurred, please try again.');
       }
     } catch (error) {
-      console.error('CV matching error:', error);
-      const errorMessage = error.response?.data?.errorMessage || error.response?.data?.message || error.message || 'An error occurred during CV matching';
-      toast.error(errorMessage);
+      toast.error(error.message || 'An error occurred, please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -222,66 +210,12 @@ const CvMatchingTool = ({ jobId, jobTitle }) => {
         </div>
       );
     }
-
-    if (showResult && matchingResult) {
-      return (
-        <div className="cv-match-modal-content">
-          <h2 style={{fontWeight: 700, fontSize: 28, marginBottom: 18, color: '#222', letterSpacing: 0.5}}>CV Match Result</h2>
-          <div className="score-section" style={{display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: 24}}>
-            <div className="score-circle" style={{width: 120, height: 120, borderRadius: '50%', background: '#f5f8ff', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 12, boxShadow: '0 2px 8px rgba(102,126,234,0.08)'}}>
-              <div className="score-progress" style={{width: 100, height: 100, borderRadius: '50%', background: `conic-gradient(${getScoreColor(matchingResult.similarityScore)} ${(typeof matchingResult.similarityScore === 'number' ? matchingResult.similarityScore * 100 : 0) * 3.6}deg, #e9ecef 0deg)`, display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative'}}>
-                <div className="score-content" style={{
-                  textAlign: 'center',
-                  background: '#fff',
-                  width: 70, height: 70, borderRadius: '50%',
-                  display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-                  boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
-                  position: 'absolute',
-                  top: '50%', left: '50%', transform: 'translate(-50%, -50%)',
-                  zIndex: 2
-                }}>
-                  <span className="score-number" style={{
-                    fontSize: 32, fontWeight: 700, color: getScoreColor(matchingResult.similarityScore),
-                    textShadow: '0 1px 2px #fff'
-                  }}>{typeof matchingResult.similarityScore === 'number' ? Math.round(matchingResult.similarityScore * 100) + '%' : matchingResult.similarityScore}</span>
-                  <div className="score-text" style={{fontSize: 16, color: '#888', fontWeight: 500, marginTop: 2}}>
-                    {(typeof matchingResult.similarityScore === 'number' ? matchingResult.similarityScore * 100 : matchingResult.similarityScore) >= 80 ? 'Excellent' : (typeof matchingResult.similarityScore === 'number' ? matchingResult.similarityScore * 100 : matchingResult.similarityScore) >= 60 ? 'Good' : (typeof matchingResult.similarityScore === 'number' ? matchingResult.similarityScore * 100 : matchingResult.similarityScore) >= 40 ? 'Average' : 'Low'}
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-          {/* Suggestions rendering: chỉ hiển thị 1 tiêu đề, sau đó liệt kê các dòng */}
-          {matchingResult.suggestions && Array.isArray(matchingResult.suggestions) && matchingResult.suggestions.length > 0 && (
-            <div className="suggestions-section" style={{marginTop: 12}}>
-              <h4 style={{fontWeight: 700, fontSize: 20, color: '#222', marginBottom: 10}}>Suggestions to Improve</h4>
-              {matchingResult.suggestions.map((s, idx) => (
-                <div key={idx} className="suggestion-item" style={{marginBottom: 18, background: '#f8f9ff', borderRadius: 8, padding: 16, boxShadow: '0 2px 8px rgba(102,126,234,0.04)'}}>
-                  <div
-                    className="suggestion-description"
-                    style={{margin: 0, color: '#444', fontSize: 15, lineHeight: 1.7}}
-                    dangerouslySetInnerHTML={{ __html: typeof s === 'string' ? s : (s.description || '') }}
-                  />
-                </div>
-              ))}
-            </div>
-          )}
-          <button className="theme-btn btn-style-three" style={{marginTop: 24}} onClick={()=>{setShowResult(false); setMatchingResult(null);}}>Try Again</button>
-        </div>
-      );
-    }
-
     return (
       <div className="cv-match-modal-content" style={{maxWidth: 540, margin: '0 auto', padding: '0 12px'}}>
         <div className="intro-section">
           <div className="intro-icon"><i className="flaticon-search"></i></div>
           <h2>Try CV Match</h2>
-          <p className="intro-desc">Discover how well your CV matches the job requirements for <b>{jobTitle}</b>. Upload your CV or use a saved one to get instant feedback and suggestions to improve your chances!</p>
-          <ol className="intro-steps">
-            <li>Choose a saved CV or upload a new PDF CV.</li>
-            <li>Click <b>Analyze</b> to see your match score.</li>
-            <li>Read suggestions to improve your CV for this job.</li>
-          </ol>
+          <p className="intro-desc">Choose a saved CV or upload a PDF file to check how well it matches this job.</p>
         </div>
         <div style={{margin: '32px 0 0 0'}}>
           <h3 style={{fontWeight: 600, fontSize: 24, marginBottom: 20, color: '#222', textAlign: 'left'}}>Choose your CV</h3>
@@ -346,7 +280,6 @@ const CvMatchingTool = ({ jobId, jobTitle }) => {
                 <div style={{fontWeight: 700, fontSize: 17, color: '#222'}}>Upload New CV</div>
                 <div style={{fontSize: 15, color: '#888', marginTop: 2}}>PDF file, max 5MB</div>
                 {!useExistingCv && (
-                  <div className="file-upload-section" style={{marginTop: 12}}>
                     <div className="file-upload-area" onClick={()=>fileInputRef.current?.click()} style={{border: '2px dashed #b3b8d0', borderRadius: 10, padding: 20, textAlign: 'center', cursor: 'pointer', background: '#f8faff', transition: 'border 0.2s'}}>
                       <i className="flaticon-upload" style={{fontSize: 24, color: '#667eea', marginBottom: 8}}></i>
                       <p style={{margin: 0, color: '#222', fontWeight: 500}}>Click to select PDF file</p>
@@ -357,10 +290,9 @@ const CvMatchingTool = ({ jobId, jobTitle }) => {
                           <span>{selectedFile.name}</span>
                         </div>
                       )}
-                    </div>
-                    <input ref={fileInputRef} type="file" accept=".pdf" onChange={handleFileChange} style={{display:'none'}} />
                   </div>
                 )}
+                <input ref={fileInputRef} type="file" accept=".pdf" onChange={handleFileChange} style={{display:'none'}} />
               </div>
             </label>
           </div>
@@ -387,7 +319,12 @@ const CvMatchingTool = ({ jobId, jobTitle }) => {
         <i className="flaticon-search" style={{marginRight: 8}}></i> Try CV Match
       </button>
       <Modal open={showModal} onClose={handleCloseModal} title="Try CV Match">
-        <div style={{maxWidth: 650, margin: '0 auto', padding: 0}}>
+        <>
+          {isLoading && (
+            <div className="modal-loading-overlay">
+              <span className="spinner-border spinner-border-lg" role="status" aria-hidden="true"></span>
+            </div>
+          )}
           <div style={{textAlign: 'center', margin: '32px 0 24px 0'}}>
             <div style={{display: 'flex', justifyContent: 'center', alignItems: 'center', marginBottom: 16}}>
               <span style={{display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 64, height: 64, borderRadius: '50%', background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', color: '#fff', fontSize: 32, boxShadow: '0 4px 16px rgba(102,126,234,0.10)'}}>
@@ -409,7 +346,7 @@ const CvMatchingTool = ({ jobId, jobTitle }) => {
             </p>
           </div>
           {renderModalContent()}
-        </div>
+        </>
       </Modal>
       {/* Modal xác nhận hủy Try Match */}
       <Modal
@@ -692,6 +629,9 @@ const CvMatchingTool = ({ jobId, jobTitle }) => {
           .cv-match-modal-content { padding: 16px 4px; }
           .intro-section { margin-bottom: 20px; }
         }
+      `}</style>
+      <style jsx global>{`
+        .modal-body { position: relative; }
       `}</style>
     </>
   );

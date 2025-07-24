@@ -1,81 +1,103 @@
-'use client'
+'use client';
 
 import Link from "next/link";
-import { useRouter, usePathname } from "next/navigation";
-import { useEffect, useState, useRef } from "react";
-
-import { useSelector, useDispatch } from 'react-redux';
-import { clearLoginState, setLoginState } from '@/features/auth/authSlice';
-import { authService } from "@/services/authService";
-import HeaderNavContent from "./HeaderNavContent";
 import Image from "next/image";
+import { useSelector, useDispatch } from "react-redux";
+import { useEffect, useState, useRef } from "react";
+import { useRouter, usePathname } from "next/navigation";
+import HeaderNavContent from "./HeaderNavContent";
+import notificationService from "@/services/notification.service";
+import { clearLoginState } from "@/features/auth/authSlice";
+import { authService } from "@/services/authService";
 import employerMenuData from "../../data/employerHeaderMenuData";
-import { isActiveLink } from "../../utils/linkActiveChecker";
 import candidatesMenuData from "../../data/candidatesHeaderMenuData";
 import adminMenuData from "../../data/adminHeadedrMenuData";
-import BecomeRecruiterModal from '../common/form/shared/BecomeRecruiterModal';
 import { useFavoriteJobs } from "../../contexts/FavoriteJobsContext";
-
+import BecomeRecruiterModal from '../common/form/shared/BecomeRecruiterModal';
 import apiService from '@/services/api.service';
-import { startNotificationHub, stopNotificationHub } from "@/services/notificationHub";
+import { isActiveLink } from "../../utils/linkActiveChecker";
+import notificationHubService from "@/services/notificationHub";
 
 // Helper function to validate image URLs
 const getValidImageUrl = (url) => {
   if (!url || typeof url !== 'string') {
     return "/images/resource/candidate-1.png";
   }
-  // Check if it's "string" literal or invalid
   if (url === "string") {
     return "/images/resource/candidate-1.png";
   }
-  // Check if it's an absolute URL or a relative path starting with /
   if (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('/')) {
     return url;
   }
-  return "/images/resource/candidate-1.png"; // Invalid URL
+  return "/images/resource/candidate-1.png";
 };
 
-const DefaulHeader2 = () => {
+// Định dạng ngày/giờ: HH:mm:ss dd/MM/yyyy theo giờ Việt Nam
+const formatDateVN = (str) => {
+  if (!str) return '';
+  const dateObj = new Date(str);
+  dateObj.setHours(dateObj.getHours() + 7);
+  return dateObj.toLocaleString('vi-VN', {
+    timeZone: 'Asia/Ho_Chi_Minh',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour12: false
+  });
+};
+
+// Hàm hiển thị thời gian kiểu 'x phút trước', 'x giờ trước', ...
+function timeAgo(dateString) {
+  if (!dateString) return '';
+  const now = new Date();
+  const date = new Date(dateString);
+  // Luôn cộng 7 tiếng để chuyển sang giờ Việt Nam
+  date.setHours(date.getHours() + 7);
+  const diff = Math.floor((now - date) / 1000);
+  if (diff < 60) return "just now";
+  if (diff < 3600) return `${Math.floor(diff / 60)} minutes ago`;
+  if (diff < 86400) return `${Math.floor(diff / 3600)} hours ago`;
+  if (diff < 604800) return `${Math.floor(diff / 86400)} days ago`;
+  if (diff < 2592000) return `${Math.floor(diff / 604800)} weeks ago`;
+  return date.toLocaleDateString("en-US");
+}
+
+const MainHeader = () => {
   const router = useRouter();
   const pathname = usePathname();
-  const [navbar, setNavbar] = useState(false);
-
   const { isLoggedIn, user, role, profileUpdated } = useSelector((state) => state.auth);
   const dispatch = useDispatch();
-
+  const [navbar, setNavbar] = useState(false);
   const [openRecruiterModal, setOpenRecruiterModal] = useState(false);
   const [displayUserName, setDisplayUserName] = useState("My Account");
   const [displayAvatar, setDisplayAvatar] = useState("/images/resource/candidate-1.png");
   const [currentUserId, setCurrentUserId] = useState(null);
   const { favoriteCount } = useFavoriteJobs();
-  const [isFavoriteLoading, setIsFavoriteLoading] = useState(true);
-  const userId = typeof window !== 'undefined' ? Number(localStorage.getItem('userId')) : null;
-
-  // Thêm khai báo cho notifications và unreadCount
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
-
   const [showDropdown, setShowDropdown] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef(null);
-
-  const handleDropdownToggle = () => setDropdownOpen((open) => !open);
-  const handleDropdownClose = () => setDropdownOpen(false);
+  const userId = typeof window !== 'undefined' ? Number(localStorage.getItem('userId')) : null;
 
   // Đóng dropdown khi click ra ngoài
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
         setDropdownOpen(false);
+        setShowDropdown(false);
       }
     };
-    if (dropdownOpen) {
+    if (dropdownOpen || showDropdown) {
       document.addEventListener('mousedown', handleClickOutside);
     }
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
-  }, [dropdownOpen]);
+  }, [dropdownOpen, showDropdown]);
 
   useEffect(() => {
     if (typeof window !== 'undefined' && isLoggedIn) {
@@ -159,11 +181,11 @@ const DefaulHeader2 = () => {
   useEffect(() => {
     const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
     if (isLoggedIn && userId && token && (role === 'Company' || role === 'Candidate')) {
-      const connection = startNotificationHub(token, userId, (notification) => {
+      notificationHubService.start(token, userId, (notification) => {
         setNotifications((prev) => [notification, ...prev]);
         setUnreadCount((prev) => prev + 1);
       });
-      return () => stopNotificationHub();
+      return () => notificationHubService.stop();
     }
   }, [isLoggedIn, userId, role]);
 
@@ -193,27 +215,7 @@ const DefaulHeader2 = () => {
     }
   };
 
-  const changeBackground = () => {
-    if (typeof window !== 'undefined' && window.scrollY >= 10) {
-      setNavbar(true);
-    } else {
-      setNavbar(false);
-    }
-  };
-
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      window.addEventListener("scroll", changeBackground);
-    }
-    return () => {
-      if (typeof window !== 'undefined') {
-        window.removeEventListener("scroll", changeBackground);
-      }
-    };
-  }, []);
-
   const handleLogout = () => {
-    // Xóa tất cả dữ liệu authentication
     authService.logout();
     localStorage.removeItem('user');
     localStorage.removeItem('userId');
@@ -322,7 +324,7 @@ const DefaulHeader2 = () => {
                         {notifications.length === 0 ? (
                           <div style={{ padding: 16, textAlign: 'center', color: '#888' }}>No new notifications</div>
                         ) : (
-                          notifications.map((n, idx) => (
+                          notifications.slice(0, 5).map((n, idx) => (
                             <Link key={n.notificationId || idx} href={n.link || '#'} style={{ textDecoration: 'none', color: n.isRead ? '#aaa' : '#222' }}>
                               <div
                                 style={{
@@ -336,7 +338,7 @@ const DefaulHeader2 = () => {
                               >
                                 <div style={{ fontWeight: n.isRead ? 400 : 600 }}>{n.title || n.message || 'Notification'}</div>
                                 <div style={{ fontSize: 13, color: n.isRead ? '#bbb' : '#1967d2', margin: '4px 0 2px 0' }}>{n.message}</div>
-                                <div style={{ fontSize: 12, color: '#888' }}>{n.createdAt ? new Date(n.createdAt).toLocaleString() : ''}</div>
+                                <div style={{ fontSize: 12, color: '#888' }}>{n.createdAt ? timeAgo(n.createdAt) : ''}</div>
                               </div>
                             </Link>
                           ))
@@ -354,7 +356,7 @@ const DefaulHeader2 = () => {
                   className="dropdown-toggle"
                   type="button"
                   aria-expanded={dropdownOpen}
-                  onClick={handleDropdownToggle}
+                  onClick={() => setDropdownOpen((open) => !open)}
                   style={{ background: 'none', border: 'none', padding: 0, display: 'flex', alignItems: 'center', cursor: 'pointer' }}
                 >
                   <Image
@@ -452,4 +454,4 @@ const DefaulHeader2 = () => {
   );
 };
 
-export default DefaulHeader2;
+export default MainHeader; 

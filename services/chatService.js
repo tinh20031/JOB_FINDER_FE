@@ -4,7 +4,7 @@ import { authService } from './authService';
 
 class ChatService {
   constructor() {
-    this.hubUrl = `${API_CONFIG.BASE_URL.replace('/api', '')}/chatHub`;
+    this.hubUrl = API_CONFIG.SIGNALR_CHAT_HUB_URL;
     this.connection = null;
   }
 
