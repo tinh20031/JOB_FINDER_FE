@@ -74,6 +74,20 @@ const notificationService = {
     if (!res.ok) throw new Error("Failed to send notification");
     return res.json();
   },
+
+  getUpcomingJobAlerts: async (daysBefore = 2) => {
+    const token = localStorage.getItem("token");
+    const url = `${API_CONFIG.BASE_URL}/job/notify-upcoming-start-new?daysBefore=${daysBefore}`;
+    const res = await fetch(url, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        Accept: "application/json",
+      },
+    });
+    if (!res.ok) throw new Error("Failed to fetch upcoming job alerts");
+    const data = await res.json();
+    return Array.isArray(data.jobs) ? data.jobs : [];
+  },
 };
 
 export default notificationService; 

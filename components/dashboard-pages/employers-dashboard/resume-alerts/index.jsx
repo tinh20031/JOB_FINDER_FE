@@ -4,7 +4,7 @@ import LoginPopup from "../../../common/form/login/LoginPopup";
 import DashboardEmployerSidebar from "../../../header/DashboardEmployerSidebar";
 import BreadCrumb from "../../BreadCrumb";
 import CopyrightFooter from "../../CopyrightFooter";
-import AlertDataTable from "./components/AlertDataTable";
+import UpcomingJobAlertsTable from "./components/AlertDataTable";
 import MenuToggler from "../../MenuToggler";
 
 const index = () => {
@@ -45,7 +45,7 @@ const index = () => {
 
                   <div className="widget-content">
                     <div className="table-outer">
-                      <AlertDataTable />
+                      <UpcomingJobAlertsTable />
                     </div>
                   </div>
                   {/* End widget-content */}
