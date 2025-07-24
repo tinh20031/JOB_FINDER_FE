@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { useSelector, useDispatch } from "react-redux";
 import { useEffect, useState, useRef } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import HeaderNavContent from "./HeaderNavContent";
@@ -68,12 +67,12 @@ function timeAgo(dateString) {
 const MainHeader = () => {
   const router = useRouter();
   const pathname = usePathname();
-  const { isLoggedIn, user, role, profileUpdated } = useSelector((state) => state.auth);
-  const dispatch = useDispatch();
-  const [navbar, setNavbar] = useState(false);
-  const [openRecruiterModal, setOpenRecruiterModal] = useState(false);
   const [displayUserName, setDisplayUserName] = useState("My Account");
   const [displayAvatar, setDisplayAvatar] = useState("/images/resource/candidate-1.png");
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [role, setRole] = useState(null);
+  const [navbar, setNavbar] = useState(false);
+  const [openRecruiterModal, setOpenRecruiterModal] = useState(false);
   const [currentUserId, setCurrentUserId] = useState(null);
   const { favoriteCount } = useFavoriteJobs();
   const [notifications, setNotifications] = useState([]);
@@ -83,21 +82,29 @@ const MainHeader = () => {
   const dropdownRef = useRef(null);
   const userId = typeof window !== 'undefined' ? Number(localStorage.getItem('userId')) : null;
 
-  // Đóng dropdown khi click ra ngoài
   useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
-        setDropdownOpen(false);
-        setShowDropdown(false);
+    if (typeof window !== 'undefined') {
+      const userString = localStorage.getItem('user');
+      const roleString = localStorage.getItem('role');
+      if (userString && roleString) {
+        setIsLoggedIn(true);
+        setRole(roleString);
+        try {
+          const user = JSON.parse(userString);
+          setDisplayUserName(user.fullName || user.name || "My Account");
+          setDisplayAvatar(user.avatar || user.image || "/images/resource/candidate-1.png");
+        } catch {
+          setDisplayUserName("My Account");
+          setDisplayAvatar("/images/resource/candidate-1.png");
+        }
+      } else {
+        setIsLoggedIn(false);
+        setRole(null);
+        setDisplayUserName("My Account");
+        setDisplayAvatar("/images/resource/candidate-1.png");
       }
-    };
-    if (dropdownOpen || showDropdown) {
-      document.addEventListener('mousedown', handleClickOutside);
     }
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, [dropdownOpen, showDropdown]);
+  }, []);
 
   useEffect(() => {
     if (typeof window !== 'undefined' && isLoggedIn) {
@@ -118,7 +125,7 @@ const MainHeader = () => {
           setDisplayAvatar("/images/resource/candidate-1.png");
         }
       } else if (role === 'Company' && isLoggedIn) {
-        let id = user?.userId || user?.id || (typeof window !== 'undefined' ? localStorage.getItem('userId') : null);
+        let id = typeof window !== 'undefined' ? localStorage.getItem('userId') : null;
         if (id) {
           try {
             const profile = await apiService.get(`/CompanyProfile/${id}`);
@@ -127,13 +134,14 @@ const MainHeader = () => {
           } catch (e) {
             setDisplayUserName("My Account");
             setDisplayAvatar("/images/resource/company-6.png");
+            console.error("Lỗi lấy CompanyProfile:", e);
           }
         } else {
           setDisplayUserName("My Account");
           setDisplayAvatar("/images/resource/company-6.png");
         }
       } else if (role === 'Admin' && isLoggedIn) {
-        let id = user?.userId || user?.id || (typeof window !== 'undefined' ? localStorage.getItem('userId') : null);
+        let id = typeof window !== 'undefined' ? localStorage.getItem('userId') : null;
         if (id) {
           try {
             const profile = await apiService.get(`/User/${id}`);
@@ -153,7 +161,7 @@ const MainHeader = () => {
       }
     };
     fetchProfile();
-  }, [isLoggedIn, role, profileUpdated, user]);
+  }, [isLoggedIn, role]);
 
   // Fetch notifications/unread count cho cả Candidate và Company
   useEffect(() => {
@@ -175,7 +183,7 @@ const MainHeader = () => {
       fetchNotifications();
       fetchUnreadCount();
     }
-  }, [isLoggedIn, userId, profileUpdated, role]);
+  }, [isLoggedIn, userId, role]);
 
   // SignalR notification realtime cho cả Candidate và Company
   useEffect(() => {
@@ -219,7 +227,7 @@ const MainHeader = () => {
     authService.logout();
     localStorage.removeItem('user');
     localStorage.removeItem('userId');
-    dispatch(clearLoginState());
+
     window.location.href = '/';
   };
 
@@ -231,9 +239,7 @@ const MainHeader = () => {
 
   return (
     <header
-      className={`main-header  ${
-        navbar ? "fixed-header animated slideInDown" : ""
-      }`}
+      className={`main-header main-header-always-fixed`}
     >
       <div className="main-box">
         <div className="nav-outer">

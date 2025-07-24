@@ -23,6 +23,12 @@ const ROLE_MAP = [
   { id: 3, name: "Admin" }
 ];
 
+const FALLBACK_ROLES = [
+  { id: 1, name: "Candidate" },
+  { id: 2, name: "Company" },
+  { id: 3, name: "Admin" }
+];
+
 const UserManager = () => {
   const [users, setUsers] = useState([]);
   const [roles, setRoles] = useState([]);
@@ -90,10 +96,11 @@ const UserManager = () => {
           }));
       } else {
         // API did not return an array for roles
+        processedRoles = FALLBACK_ROLES;
       }
-      setRoles(processedRoles);
+      setRoles(processedRoles.length > 0 ? processedRoles : FALLBACK_ROLES);
     } catch (error) {
-      setRoles([]);
+      setRoles(FALLBACK_ROLES);
     }
   };
 
