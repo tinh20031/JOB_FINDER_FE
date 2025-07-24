@@ -1,5 +1,4 @@
 'use client';
-<<<<<<< HEAD
 import React, { useEffect, useState } from "react";
 import ApiService from "../../../../services/api.service";
 import LoginPopup from "../../../../components/common/form/login/LoginPopup";
@@ -128,19 +127,3 @@ const BuyPackagePage = () => {
 };
 
 export default BuyPackagePage; 
-=======
-import Pricing from '@/components/pricing/Pricing';
-
-export default function BuyPackagePage() {
-  return (
-    <div className="page-wrapper dashboard">
-      <section className="user-dashboard">
-        <div className="dashboard-outer">
-          <h2 style={{marginBottom: 24}}>Mua gói dịch vụ</h2>
-          <Pricing />
-        </div>
-      </section>
-    </div>
-  );
-} 
->>>>>>> a59b23c7f53dad12b94785f2687f50832e3bc8d9
