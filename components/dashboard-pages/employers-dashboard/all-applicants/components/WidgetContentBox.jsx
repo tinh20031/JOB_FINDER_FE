@@ -14,6 +14,8 @@ import { useRef } from "react";
 import { saveAs } from 'file-saver';
 import Modal from '@/components/common/Modal';
 import "@/styles/modal.css";
+import axios from "axios";
+import API_CONFIG from "@/config/api.config";
 
 // Helper function to validate image URLs
 const getValidImageUrl = (url) => {
@@ -164,6 +166,8 @@ const WidgetContentBox = ({ jobId, candidateName, showMatchingInfo, useMatchingA
   const [searchText, setSearchText] = useState("");
   const exportBtnRef = useRef();
   const [showDownloadConfirm, setShowDownloadConfirm] = useState(false);
+  const [updatingId, setUpdatingId] = useState(null);
+  const [confirmModal, setConfirmModal] = useState({ open: false, applicationId: null, status: null });
 
   useEffect(() => {
     const fetchData = async () => {
@@ -344,6 +348,41 @@ const WidgetContentBox = ({ jobId, candidateName, showMatchingInfo, useMatchingA
       setShowExportModal(false);
     } catch (e) {
       alert('Export failed!');
+    }
+  };
+
+  // Thêm hàm xác nhận/từ chối
+  const handleConfirm = async (applicationId, status) => {
+    try {
+      setUpdatingId(applicationId + status);
+      const token = localStorage.getItem("token");
+      const res = await axios.put(
+        `${API_CONFIG.BASE_URL}/application/confirm/${applicationId}`,
+        { status },
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      if (res.status === 200) {
+        // Thành công, refetch lại danh sách
+        let response;
+        if (useMatchingApi) {
+          response = await applicationService.getMatchingJobApplicants(jobId);
+        } else {
+          response = await applicationService.getJobApplicants(jobId);
+        }
+        // ... mapping lại profile như fetchData ở trên (nếu cần)
+        window.location.reload(); // hoặc cập nhật lại state nếu muốn tối ưu
+      } else {
+        alert("Có lỗi xảy ra!");
+      }
+    } catch (e) {
+      alert("Có lỗi xảy ra!");
+    } finally {
+      setUpdatingId(null);
     }
   };
 
@@ -549,9 +588,20 @@ const WidgetContentBox = ({ jobId, candidateName, showMatchingInfo, useMatchingA
                             <li>
                               <button
                                 data-text="Approve Applicant"
-                                className={applicant.status === 'Approved' ? 'approved' : (applicant.status === 1 ? 'approved' : '')}
+                                className={applicant.status === 2 ? 'approved' : ''}
+                                onClick={() => setConfirmModal({ open: true, applicationId: applicant.applicationId, status: 2 })}
+                                disabled={applicant.status !== 0 || updatingId === applicant.applicationId + "2"}
                               >
                                 <span className="la la-check"></span>
+                              </button>
+                            </li>
+                            <li>
+                              <button
+                                data-text="Reject Applicant"
+                                onClick={() => setConfirmModal({ open: true, applicationId: applicant.applicationId, status: 1 })}
+                                disabled={applicant.status !== 0 || updatingId === applicant.applicationId + "1"}
+                              >
+                                <span className="la la-times"></span>
                               </button>
                             </li>
                             <li>
@@ -563,6 +613,12 @@ const WidgetContentBox = ({ jobId, candidateName, showMatchingInfo, useMatchingA
                               </button>
                             </li>
                           </ul>
+                          {/* Hiển thị trạng thái rõ ràng */}
+                          <div style={{marginTop: 8}}>
+                            {applicant.status === 2 && <span className="status-badge status-accepted">Accepted</span>}
+                            {applicant.status === 1 && <span className="status-badge status-rejected">Rejected</span>}
+                            {applicant.status === 0 && <span className="status-badge status-pending">Pending</span>}
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -623,10 +679,38 @@ const WidgetContentBox = ({ jobId, candidateName, showMatchingInfo, useMatchingA
           Are you sure you want to download the selected CV(s) as a ZIP file?
         </div>
       </Modal>
+      {/* Modal xác nhận Accept/Reject */}
+      <Modal
+        open={confirmModal.open}
+        onClose={() => setConfirmModal({ open: false, applicationId: null, status: null })}
+        title={confirmModal.status === 2 ? "Confirm Accept" : "Confirm Reject"}
+        footer={
+          <>
+            <button className="btn-cancel" onClick={() => setConfirmModal({ open: false, applicationId: null, status: null })}>No</button>
+            <button className="btn-confirm" onClick={async () => {
+              await handleConfirm(confirmModal.applicationId, confirmModal.status);
+              setConfirmModal({ open: false, applicationId: null, status: null });
+            }}>Yes</button>
+          </>
+        }
+      >
+        {confirmModal.status === 2 ? "Are you sure you want to accept this applicant?" : "Are you sure you want to reject this applicant?"}
+      </Modal>
       <style jsx global>{`
         .CircularProgressbar-text {
           font-weight: 700 !important;
         }
+        .status-badge {
+          display: inline-block;
+          padding: 4px 12px;
+          border-radius: 12px;
+          font-size: 13px;
+          font-weight: 600;
+          margin-right: 6px;
+        }
+        .status-accepted { background: #e6f4ea; color: #219653; }
+        .status-rejected { background: #fdeaea; color: #d32f2f; }
+        .status-pending { background: #e3eafc; color: #1967d2; }
       `}</style>
     </div>
   );
