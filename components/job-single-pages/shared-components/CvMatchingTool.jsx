@@ -1,9 +1,11 @@
+"use client";
 import React, { useState, useRef, useEffect } from 'react';
 import { toast } from 'react-toastify';
 import { cvMatchingService } from '@/services/cvMatchingService';
 import { authService } from '@/services/authService';
 import ApiService from '@/services/api.service';
 import Modal from '@/components/common/Modal';
+import { useRouter } from 'next/navigation';
 
 const CvMatchingTool = ({ jobId, jobTitle }) => {
   const [showModal, setShowModal] = useState(false);
@@ -19,6 +21,9 @@ const CvMatchingTool = ({ jobId, jobTitle }) => {
   const [loadingCvList, setLoadingCvList] = useState(false);
   const [cvListError, setCvListError] = useState("");
   const fileInputRef = useRef(null);
+  const [tryMatchRemaining, setTryMatchRemaining] = useState(null);
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  const router = useRouter();
 
   // Fetch CV list when modal opens
   useEffect(() => {
@@ -26,6 +31,13 @@ const CvMatchingTool = ({ jobId, jobTitle }) => {
       fetchCvList();
     }
   }, [showModal, isAuthenticated, useExistingCv]);
+
+  // Lấy số lượt try-match còn lại khi mở modal
+  useEffect(() => {
+    if (showModal) {
+      fetchTryMatchRemaining();
+    }
+  }, [showModal]);
 
   const fetchCvList = async () => {
     try {
@@ -43,6 +55,22 @@ const CvMatchingTool = ({ jobId, jobTitle }) => {
       setCvList([]);
     } finally {
       setLoadingCvList(false);
+    }
+  };
+
+  const fetchTryMatchRemaining = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const res = await ApiService.getMySubscription(token);
+      if (res?.isSubscribed && res?.subscription?.remainingTryMatches !== undefined) {
+        setTryMatchRemaining(res.subscription.remainingTryMatches);
+      } else if (res?.freePackage?.remainingFreeMatches !== undefined) {
+        setTryMatchRemaining(res.freePackage.remainingFreeMatches);
+      } else {
+        setTryMatchRemaining(null);
+      }
+    } catch {
+      setTryMatchRemaining(null);
     }
   };
 
@@ -106,6 +134,12 @@ const CvMatchingTool = ({ jobId, jobTitle }) => {
   };
 
   const handleTryMatch = async () => {
+    // Kiểm tra số lượt còn lại trước khi thực hiện
+    if (tryMatchRemaining !== null && tryMatchRemaining <= 0) {
+      setShowUpgradeModal(true);
+      return;
+    }
+
     if (!authService.getToken()) {
       toast.error('Please login to use this feature');
       setIsAuthenticated(false);
@@ -391,6 +425,21 @@ const CvMatchingTool = ({ jobId, jobTitle }) => {
       >
         <div style={{textAlign: 'center', fontSize: 17, color: '#444', padding: '12px 0 4px 0'}}>
           Are you sure you want to cancel CV Match? Your progress will be lost.
+        </div>
+      </Modal>
+      <Modal
+        open={showUpgradeModal}
+        onClose={() => setShowUpgradeModal(false)}
+        title="Out of Try-match Attempts"
+        footer={
+          <>
+            <button className="btn-cancel" onClick={() => setShowUpgradeModal(false)}>Cancel</button>
+            <button className="btn-confirm" onClick={() => { setShowUpgradeModal(false); router.push('/candidates-dashboard/packages/buy'); }}>Buy Package</button>
+          </>
+        }
+      >
+        <div style={{textAlign: 'center', fontSize: 17, color: '#444', padding: '12px 0 4px 0'}}>
+          You have used up all your try-match attempts. Would you like to upgrade your package to continue using try-match?
         </div>
       </Modal>
       <style jsx>{`

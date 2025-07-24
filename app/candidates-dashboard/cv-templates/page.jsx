@@ -13,6 +13,7 @@ import generateElegantPDF from "./elegantPdf";
 import generateCubicPDF from "./cubicPdf";
 import generateMinimalPDF from "./minimalPdf";
 import axios from "axios";
+import { useRouter } from 'next/navigation';
 
 // Mockup các template CV
 const templates = [
@@ -98,6 +99,8 @@ export default function CVTemplatesPage() {
   const [errorMsg, setErrorMsg] = useState("");
   const [tryMatchRemaining, setTryMatchRemaining] = useState(null); // Thêm state cho try-match
   const cvPreviewRef = useRef(null);
+  const router = useRouter();
+  const [showUpgradeModal, setShowUpgradeModal] = React.useState(false);
 
   // Lấy userId từ localStorage
   const userId = typeof window !== 'undefined' ? localStorage.getItem('userId') : null;
@@ -115,7 +118,7 @@ export default function CVTemplatesPage() {
           type = res.data.subscription.packageName;
           setTryMatchRemaining(res.data.subscription?.remainingTryMatches ?? null); // Lấy số lượt try-match còn lại nếu có
         } else if (res.data?.freePackage) {
-          setTryMatchRemaining(res.data.freePackage?.tryMatchLimit ?? null); // Lấy số lượt try-match free nếu có
+          setTryMatchRemaining(res.data.freePackage?.remainingFreeMatches ?? null); // Lấy số lượt try-match free còn lại
         } else {
           setTryMatchRemaining(null);
         }
@@ -200,7 +203,7 @@ export default function CVTemplatesPage() {
   const handleDownload = () => {
     setErrorMsg("");
     if (maxDownloads !== Infinity && downloadCount >= maxDownloads) {
-      setErrorMsg("You have reached the download limit for your package.");
+      setShowUpgradeModal(true);
       return;
     }
     if (removeLogo && !(packageType === 'Basic' || packageType === 'Premium')) {
@@ -481,7 +484,7 @@ export default function CVTemplatesPage() {
                   (Free package: cannot remove logo)
                 </span>
                 <span style={{ marginLeft: 24, color: '#fff', fontSize: 13 }}>
-                  Try-match left: {tryMatchRemaining !== null ? tryMatchRemaining : '-'}
+                  Try-match left: {tryMatchRemaining !== null ? tryMatchRemaining + '/1' : '-'}
                 </span>
                 <span style={{ marginLeft: 24, color: '#fff', fontSize: 13 }}>
                   Download left: {downloadRemaining} {maxDownloads === Infinity ? '' : `/ ${maxDownloads}`}
@@ -499,7 +502,7 @@ export default function CVTemplatesPage() {
                   Remove logo
                 </label>
                 <span style={{ marginLeft: 24, color: '#fff', fontSize: 13 }}>
-                  Try-match left: {tryMatchRemaining !== null ? tryMatchRemaining : '-'}
+                  Try-match left: {tryMatchRemaining !== null ? tryMatchRemaining + '/' + (res.data?.subscription?.tryMatchLimit || '1') : '-'}
                 </span>
                 <span style={{ marginLeft: 24, color: '#fff', fontSize: 13 }}>
                   Download left: {downloadRemaining} {maxDownloads === Infinity ? '' : `/ ${maxDownloads}`}
@@ -510,20 +513,82 @@ export default function CVTemplatesPage() {
           <button
             onClick={handleDownload}
             style={{
-              background: maxDownloads !== Infinity && downloadCount >= maxDownloads ? '#aaa' : '#0c55ba',
+              background: '#0c55ba',
               color: "#fff",
               border: "none",
               borderRadius: 6,
               padding: "12px 28px",
               fontWeight: 600,
               fontSize: 16,
-              cursor: maxDownloads !== Infinity && downloadCount >= maxDownloads ? 'not-allowed' : 'pointer',
+              cursor: 'pointer',
             }}
-            disabled={maxDownloads !== Infinity && downloadCount >= maxDownloads}
           >
             Download CV
           </button>
-          {errorMsg && <span style={{ color: 'red', marginLeft: 24 }}>{errorMsg}</span>}
+          {errorMsg && <span style={{ color: '#d32f2f', marginLeft: 24, fontWeight: 600 }}>{errorMsg}</span>}
+          {/* Modal xác nhận nâng cấp gói */}
+          {showUpgradeModal && (
+            <div style={{
+              position: 'fixed',
+              top: 0,
+              left: 0,
+              width: '100vw',
+              height: '100vh',
+              background: 'rgba(0,0,0,0.35)',
+              zIndex: 9999,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}>
+              <div style={{
+                background: '#fff',
+                borderRadius: 12,
+                padding: 32,
+                minWidth: 340,
+                boxShadow: '0 2px 16px rgba(0,0,0,0.15)',
+                textAlign: 'center',
+              }}>
+                <div style={{ fontSize: 18, fontWeight: 600, marginBottom: 16, color: '#222' }}>
+                 You have used up all your CV downloads.<br/>Do you want to upgrade your package to continue downloading?
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'center', gap: 24, marginTop: 24 }}>
+                  <button
+                    style={{
+                      background: '#0c55ba',
+                      color: '#fff',
+                      border: 'none',
+                      borderRadius: 6,
+                      padding: '10px 24px',
+                      fontWeight: 600,
+                      fontSize: 16,
+                      cursor: 'pointer',
+                    }}
+                    onClick={() => {
+                      setShowUpgradeModal(false);
+                      router.push('/candidates-dashboard/packages/buy');
+                    }}
+                  >
+                    Có
+                  </button>
+                  <button
+                    style={{
+                      background: '#aaa',
+                      color: '#fff',
+                      border: 'none',
+                      borderRadius: 6,
+                      padding: '10px 24px',
+                      fontWeight: 600,
+                      fontSize: 16,
+                      cursor: 'pointer',
+                    }}
+                    onClick={() => setShowUpgradeModal(false)}
+                  >
+                    Không
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>

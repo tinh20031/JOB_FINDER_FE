@@ -176,8 +176,8 @@ const PackagesPage = () => {
                                 <div className="detail-content">
                                   <p className="detail-label">Free try-match</p>
                                   <p className="detail-value">{
-                                    (mySubscription.freePackage?.tryMatchLimit !== undefined)
-                                      ? `${mySubscription.freePackage.tryMatchLimit} / ${mySubscription.freePackage.tryMatchLimit === Infinity ? 'Unlimited' : mySubscription.freePackage.tryMatchLimit}`
+                                    (mySubscription.freePackage?.remainingFreeMatches !== undefined && mySubscription.freePackage?.tryMatchLimit !== undefined)
+                                      ? `${mySubscription.freePackage.remainingFreeMatches} / ${mySubscription.freePackage.tryMatchLimit === Infinity ? 'Unlimited' : mySubscription.freePackage.tryMatchLimit}`
                                       : (mySubscription.freePackage?.tryMatchLimit !== undefined ? mySubscription.freePackage.tryMatchLimit : '-')
                                   }</p>
                                 </div>
