@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { useSelector, useDispatch } from "react-redux";
 import { clearLoginState } from '@/features/auth/authSlice';
@@ -16,6 +16,7 @@ import { useFavoriteJobs } from "../../contexts/FavoriteJobsContext";
 import apiService from '@/services/api.service';
 import Cookies from 'js-cookie';
 import { isActiveLink } from "../../utils/linkActiveChecker";
+import notificationHubService from "@/services/notificationHub";
 
 // Helper function to validate image URLs
 const getValidImageUrl = (url, fallback = "/images/resource/candidate-1.png") => {
@@ -36,6 +37,10 @@ const MainHeader = () => {
   const [displayAvatar, setDisplayAvatar] = useState("/images/resource/candidate-1.png");
   const [openRecruiterModal, setOpenRecruiterModal] = useState(false);
   const [currentUserId, setCurrentUserId] = useState(null);
+  const [notifications, setNotifications] = useState([]);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [showDropdown, setShowDropdown] = useState(false);
+  const dropdownRef = useRef(null);
 
   // Sticky header effect
   useEffect(() => {
@@ -48,7 +53,20 @@ const MainHeader = () => {
       return () => window.removeEventListener("scroll", changeBackground);
     }
   }, []);
-
+  function timeAgo(dateString) {
+    if (!dateString) return '';
+    const now = new Date();
+    const date = new Date(dateString);
+    // Luôn cộng 7 tiếng để chuyển sang giờ Việt Nam
+    date.setHours(date.getHours() + 7);
+    const diff = Math.floor((now - date) / 1000);
+    if (diff < 60) return "just now";
+    if (diff < 3600) return `${Math.floor(diff / 60)} minutes ago`;
+    if (diff < 86400) return `${Math.floor(diff / 3600)} hours ago`;
+    if (diff < 604800) return `${Math.floor(diff / 86400)} days ago`;
+    if (diff < 2592000) return `${Math.floor(diff / 604800)} weeks ago`;
+    return date.toLocaleDateString("en-US");
+  }
   // Fetch profile by role
   useEffect(() => {
     const fetchProfile = async () => {
@@ -87,6 +105,66 @@ const MainHeader = () => {
     };
     if (isLoggedIn) fetchProfile();
   }, [isLoggedIn, role, profileUpdated, user, userId]);
+
+  // Fetch notifications/unread count cho cả Candidate và Company
+  useEffect(() => {
+    const fetchNotifications = async () => {
+      if (!userId || !(role === 'Company' || role === 'Candidate')) return;
+      try {
+        const res = await apiService.get(`/notification?page=1&pageSize=5`);
+        setNotifications(Array.isArray(res) ? res : []);
+      } catch {}
+    };
+    const fetchUnreadCount = async () => {
+      if (!userId || !(role === 'Company' || role === 'Candidate')) return;
+      try {
+        const res = await apiService.get(`/notification/unread-count`);
+        setUnreadCount(res?.count || 0);
+      } catch {}
+    };
+    if (isLoggedIn && (role === 'Company' || role === 'Candidate')) {
+      fetchNotifications();
+      fetchUnreadCount();
+    }
+  }, [isLoggedIn, userId, role]);
+
+  // SignalR notification realtime cho cả Candidate và Company
+  useEffect(() => {
+    const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
+    if (isLoggedIn && userId && token && (role === 'Company' || role === 'Candidate')) {
+      notificationHubService.start(token, userId, (notification) => {
+        setNotifications((prev) => [notification, ...prev]);
+        setUnreadCount((prev) => prev + 1);
+      });
+      return () => notificationHubService.stop();
+    }
+  }, [isLoggedIn, userId, role]);
+
+  // Đóng dropdown khi click ngoài
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setShowDropdown(false);
+      }
+    }
+    if (showDropdown) {
+      document.addEventListener("mousedown", handleClickOutside);
+    } else {
+      document.removeEventListener("mousedown", handleClickOutside);
+    }
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [showDropdown]);
+
+  // Đánh dấu đã đọc khi mở dropdown
+  const handleBellClick = async () => {
+    setShowDropdown((prev) => !prev);
+    if (unreadCount > 0) {
+      try {
+        await apiService.put(`/Notification/read-all`);
+        setUnreadCount(0);
+      } catch {}
+    }
+  };
 
   // Logout logic
   const handleLogout = () => {
@@ -184,6 +262,48 @@ const MainHeader = () => {
                   </button>
                 </Link>
               )}
+              {(role === 'Candidate' || role === 'Company') && (
+                <div style={{ position: 'relative', marginRight: 16 }}>
+                  <button className="menu-btn" onClick={handleBellClick} style={{ position: 'relative' }}>
+                    <span className="icon la la-bell"></span>
+                    {unreadCount > 0 && (
+                      <span style={{ position: 'absolute', top: 0, right: 0, background: '#e74c3c', color: '#fff', borderRadius: '50%', fontSize: 12, minWidth: 18, height: 18, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 5px', fontWeight: 600 }}>{unreadCount}</span>
+                    )}
+                  </button>
+                  {showDropdown && (
+                    <div ref={dropdownRef} style={{ position: 'absolute', right: 0, top: 36, width: 340, background: '#fff', boxShadow: '0 2px 8px rgba(0,0,0,0.15)', borderRadius: 8, zIndex: 1000 }}>
+                      <div style={{ padding: 12, borderBottom: '1px solid #eee', fontWeight: 600 }}>New announcement</div>
+                      <div style={{ maxHeight: 350, overflowY: 'auto' }}>
+                        {notifications.length === 0 ? (
+                          <div style={{ padding: 16, textAlign: 'center', color: '#888' }}>No new notifications</div>
+                        ) : (
+                          notifications.slice(0, 5).map((n, idx) => (
+                            <Link key={n.notificationId || idx} href={n.link || '#'} style={{ textDecoration: 'none', color: n.isRead ? '#aaa' : '#222' }}>
+                              <div
+                                style={{
+                                  padding: '12px 16px',
+                                  borderBottom: '1px solid #f3f3f3',
+                                  cursor: 'pointer',
+                                  background: n.isRead ? '#fff' : '#f1f6fd',
+                                  fontWeight: n.isRead ? 400 : 600,
+                                  opacity: n.isRead ? 0.7 : 1,
+                                }}
+                              >
+                                <div style={{ fontWeight: n.isRead ? 400 : 600 }}>{n.title || n.message || 'Notification'}</div>
+                                <div style={{ fontSize: 13, color: n.isRead ? '#bbb' : '#1967d2', margin: '4px 0 2px 0' }}>{n.message}</div>
+                                <div style={{ fontSize: 12, color: '#888' }}>{n.createdAt ? timeAgo(n.createdAt) : ''}</div>
+                              </div>
+                            </Link>
+                          ))
+                        )}
+                      </div>
+                      <div style={{ textAlign: 'center', padding: 8 }}>
+                        <Link href={role === 'Company' ? "/employers-dashboard/resume-alerts" : "/candidates-dashboard/job-alerts"} style={{ fontSize: 13, color: '#1967d2' }}>View all notifications</Link>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
               <div className="dropdown dashboard-option">
                 <a className="dropdown-toggle" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                   <Image
@@ -280,4 +400,4 @@ const MainHeader = () => {
   );
 };
 
-export default MainHeader; 
+export default MainHeader;
