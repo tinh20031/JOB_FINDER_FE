@@ -7,16 +7,32 @@ import FooterDefault from "../../../components/footer/common-footer";
 import MainHeader from "@/components/header/MainHeader";
 import MobileMenu from "@/components/header/MobileMenu";
 import Breadcrumb from "../../../components/dashboard-pages/BreadCrumb";
+import { useRouter } from "next/navigation";
 
 const PaymentCancelledPage = () => {
   const searchParams = useSearchParams();
+  const router = useRouter();
   let orderCode = searchParams.get("orderCode");
   const error = searchParams.get("error");
+  let type = searchParams.get("type");
 
-  // Đảm bảo orderCode luôn có tiền tố SUB-
-  if (orderCode && !orderCode.startsWith("SUB-")) {
+  // Auto-detect company if orderCode starts with COMPSUB-
+  if (!type && orderCode && orderCode.startsWith("COMPSUB-")) {
+    type = "company";
+  }
+
+  // Đảm bảo orderCode luôn có tiền tố SUB- nếu là candidate
+  if (orderCode && type !== "company" && !orderCode.startsWith("SUB-")) {
     orderCode = "SUB-" + orderCode;
   }
+
+  const handleReturn = () => {
+    if (type === "company") {
+      router.push("/employers-dashboard/packages");
+    } else {
+      router.push("/candidates-dashboard/packages");
+    }
+  };
 
   return (
     <>
@@ -70,9 +86,12 @@ const PaymentCancelledPage = () => {
           </div>
           <p style={{ color: '#e53935', marginTop: 24 }}>If you want to continue purchasing the package, please re-select the service package and make the payment again.</p>
           <div style={{ marginTop: 24, textAlign: 'center' }}>
-            <a href="/candidates-dashboard/packages" style={{ display: 'inline-block', padding: '8px 20px', background: '#e53935', color: '#fff', borderRadius: 4, textDecoration: 'none', fontWeight: 500 }}>
-              Return to Packages page
-            </a>
+            <button
+              onClick={handleReturn}
+              style={{ display: 'inline-block', padding: '8px 20px', background: '#e53935', color: '#fff', borderRadius: 4, textDecoration: 'none', fontWeight: 500, border: 'none', cursor: 'pointer' }}
+            >
+              {type === "company" ? "Return to Company Packages" : "Return to Packages page"}
+            </button>
           </div>
         </div>
       </section>

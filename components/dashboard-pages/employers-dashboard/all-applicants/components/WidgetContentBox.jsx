@@ -1,5 +1,6 @@
 "use client";
 
+
 import { useEffect, useState } from "react";
 import { applicationService } from "@/services/applicationService";
 import ApiService from "@/services/api.service";
@@ -14,6 +15,9 @@ import { useRef } from "react";
 import { saveAs } from 'file-saver';
 import Modal from '@/components/common/Modal';
 import "@/styles/modal.css";
+import axios from "axios";
+import API_CONFIG from "@/config/api.config";
+
 
 // Helper function to validate image URLs
 const getValidImageUrl = (url) => {
@@ -26,6 +30,7 @@ const getValidImageUrl = (url) => {
   }
   return null; // Invalid URL
 };
+
 
 const ApplicantModal = ({ applicationId, show, onClose }) => {
   const [application, setApplication] = useState(null);
@@ -129,6 +134,7 @@ const ApplicantModal = ({ applicationId, show, onClose }) => {
   );
 };
 
+
 const EXPORT_FIELDS = [
   { key: "ApplicationId", label: "Application ID" },
   { key: "FullName", label: "Candidate Name" },
@@ -141,6 +147,7 @@ const EXPORT_FIELDS = [
   { key: "CoverLetter", label: "Cover Letter" },
   { key: "SimilarityScore", label: "Matching Score" },
 ];
+
 
 const WidgetContentBox = ({ jobId, candidateName, showMatchingInfo, useMatchingApi }) => {
   const searchParams = useSearchParams();
@@ -157,6 +164,7 @@ const WidgetContentBox = ({ jobId, candidateName, showMatchingInfo, useMatchingA
   const totalPages = Math.ceil(applicants.length / itemsPerPage);
   const [jobCounts, setJobCounts] = useState({});
 
+
   // State cho export
   const [selectedIds, setSelectedIds] = useState([]);
   const [showExportModal, setShowExportModal] = useState(false);
@@ -164,6 +172,16 @@ const WidgetContentBox = ({ jobId, candidateName, showMatchingInfo, useMatchingA
   const [searchText, setSearchText] = useState("");
   const exportBtnRef = useRef();
   const [showDownloadConfirm, setShowDownloadConfirm] = useState(false);
+  const [updatingId, setUpdatingId] = useState(null);
+  const [confirmModal, setConfirmModal] = useState({ open: false, applicationId: null, status: null });
+
+
+  // New state for 'View More Top CVs'
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  const [cvViewLimit, setCvViewLimit] = useState(null); // limit from package
+  const [cvViewed, setCvViewed] = useState(0); // how many CVs viewed
+  const [viewMoreLoading, setViewMoreLoading] = useState(false);
+
 
   useEffect(() => {
     const fetchData = async () => {
@@ -182,6 +200,7 @@ const WidgetContentBox = ({ jobId, candidateName, showMatchingInfo, useMatchingA
           setJobDetails(null);
         }
 
+
         let response;
         if (useMatchingApi) {
           // Gọi API matching_job
@@ -190,28 +209,34 @@ const WidgetContentBox = ({ jobId, candidateName, showMatchingInfo, useMatchingA
           response = await applicationService.getJobApplicants(jobId);
         }
 
+
         if (response && response.length > 0) {
           const applicantsWithAllDetails = await Promise.allSettled(
             response.map(async (applicant) => {
               let candidateProfileDetails = null;
               let userDetails = null;
 
+
               try {
                 candidateProfileDetails = await ApiService.getCandidateProfileById(applicant.userId);
+
 
                 if (candidateProfileDetails && candidateProfileDetails.avatar === "string") {
                   candidateProfileDetails.avatar = null;
                 }
 
+
               } catch (profileError) {
                 console.error("Error fetching candidate profile:", profileError);
               }
+
 
               try {
                 userDetails = await ApiService.getUserById(applicant.userId);
               } catch (userError) {
                 console.error("Error fetching user details:", userError);
               }
+
 
               return {
                 ...applicant,
@@ -221,13 +246,16 @@ const WidgetContentBox = ({ jobId, candidateName, showMatchingInfo, useMatchingA
             })
           );
 
+
           const fulfilledApplicants = applicantsWithAllDetails
             .filter(result => result.status === 'fulfilled')
             .map(result => result.value);
 
+
           const sortedApplicants = fulfilledApplicants.slice().sort(
             (a, b) => (b.similarityScore ?? 0) - (a.similarityScore ?? 0)
           );
+
 
           setApplicants(sortedApplicants);
         } else {
@@ -241,8 +269,10 @@ const WidgetContentBox = ({ jobId, candidateName, showMatchingInfo, useMatchingA
       }
     };
 
+
     fetchData();
   }, [jobId, useMatchingApi]);
+
 
   useEffect(() => {
     const fetchJobCounts = async () => {
@@ -261,6 +291,40 @@ const WidgetContentBox = ({ jobId, candidateName, showMatchingInfo, useMatchingA
     fetchJobCounts();
   }, [applicants, jobDetails?.companyId]);
 
+
+  // Fetch employer's package info (cvMatchLimit)
+  useEffect(() => {
+    const fetchPackage = async () => {
+      try {
+        const sub = await ApiService.getMyCompanySubscription();
+        setCvViewLimit(sub?.cvMatchLimit ?? null);
+      } catch (e) {
+        setCvViewLimit(null);
+      }
+    };
+    fetchPackage();
+  }, []);
+
+  // Track how many CVs are being shown (simulate view count)
+  useEffect(() => {
+    setCvViewed(currentPage * itemsPerPage);
+  }, [currentPage, itemsPerPage]);
+
+  // Handler for 'View More Top CVs'
+  const handleViewMoreTopCVs = () => {
+    // Nếu là premium hoặc không giới hạn thì cho xem tiếp
+    if (!cvViewLimit || cvViewLimit === Number.MAX_SAFE_INTEGER) {
+      setCurrentPage(currentPage + 1);
+      return;
+    }
+    // Nếu đã hết lượt thì hiện modal
+    if (cvViewed >= cvViewLimit) {
+      setShowUpgradeModal(true);
+    } else {
+      setCurrentPage(currentPage + 1);
+    }
+  };
+
   // Khi mount, đọc page từ query string
   useEffect(() => {
     const pageParam = searchParams.get('page');
@@ -271,6 +335,7 @@ const WidgetContentBox = ({ jobId, candidateName, showMatchingInfo, useMatchingA
     }
   }, [searchParams]);
 
+
   // Khi đổi trang, cập nhật query string
   const handleSetPage = (page) => {
     const params = new URLSearchParams(Array.from(searchParams.entries()));
@@ -279,9 +344,11 @@ const WidgetContentBox = ({ jobId, candidateName, showMatchingInfo, useMatchingA
     setCurrentPage(page);
   };
 
+
   const totalApplicants = applicants.length;
   const approvedApplicants = applicants.filter(app => (app.status === 'Approved' || app.status === 1) && app.candidateProfile).length;
   const rejectedApplicants = applicants.filter(app => (app.status === 'Rejected' || app.status === 2) && app.candidateProfile).length;
+
 
   // Lọc theo tên ứng viên
   const filteredApplicants = searchText
@@ -292,7 +359,9 @@ const WidgetContentBox = ({ jobId, candidateName, showMatchingInfo, useMatchingA
       )
     : applicants;
 
+
   const applicantsToShow = filteredApplicants.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+
 
   // Định nghĩa hàm chuyển trang khi nhấn icon list
   const handleShowAppliedJobs = (userId) => {
@@ -301,6 +370,7 @@ const WidgetContentBox = ({ jobId, candidateName, showMatchingInfo, useMatchingA
     if (companyId) url += `&companyId=${companyId}`;
     router.push(url);
   };
+
 
   // Chọn tất cả
   const handleSelectAll = (checked) => {
@@ -347,6 +417,43 @@ const WidgetContentBox = ({ jobId, candidateName, showMatchingInfo, useMatchingA
     }
   };
 
+
+  // Thêm hàm xác nhận/từ chối
+  const handleConfirm = async (applicationId, status) => {
+    try {
+      setUpdatingId(applicationId + status);
+      const token = localStorage.getItem("token");
+      const res = await axios.put(
+        `${API_CONFIG.BASE_URL}/application/confirm/${applicationId}`,
+        { status },
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      if (res.status === 200) {
+        // Thành công, refetch lại danh sách
+        let response;
+        if (useMatchingApi) {
+          response = await applicationService.getMatchingJobApplicants(jobId);
+        } else {
+          response = await applicationService.getJobApplicants(jobId);
+        }
+        // ... mapping lại profile như fetchData ở trên (nếu cần)
+        window.location.reload(); // hoặc cập nhật lại state nếu muốn tối ưu
+      } else {
+        alert("An error occurred!");
+      }
+    } catch (e) {
+      alert("An error occurred!");
+    } finally {
+      setUpdatingId(null);
+    }
+  };
+
+
   if (loading) {
     return (
       <div className="row">
@@ -391,17 +498,21 @@ const WidgetContentBox = ({ jobId, candidateName, showMatchingInfo, useMatchingA
     );
   }
 
+
   if (!jobId) {
     return <div className="text-center py-5">No job selected</div>;
   }
+
 
   if (error) {
     return <div className="text-center py-5 text-danger">{error}</div>;
   }
 
+
   if (totalApplicants === 0 && !loading) {
     return <div className="text-center py-5">No applicants found for this job</div>;
   }
+
 
   return (
     <div className="widget-content">
@@ -439,15 +550,32 @@ const WidgetContentBox = ({ jobId, candidateName, showMatchingInfo, useMatchingA
         {/* Modal chọn trường export */}
         {/* Xóa toàn bộ phần showExportModal và selectedFields liên quan đến export fields */}
         <Tabs>
-          <div className="aplicants-upper-bar">
-            <h6>Applicants for Job: {jobTitle}</h6>
-
-            <TabList className="aplicantion-status tab-buttons clearfix">
-              <Tab className="tab-btn totals"> Total(s): {totalApplicants}</Tab>
-              {/* <Tab className="tab-btn approved"> Approved: {approvedApplicants}</Tab>
-              <Tab className="tab-btn rejected"> Rejected(s): {rejectedApplicants}</Tab> */}
-            </TabList>
+          <div className="aplicants-upper-bar" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <h6 style={{ margin: 0, fontWeight: 600, fontSize: 18 }}>Applicants for Job: {jobTitle}</h6>
+              <span style={{
+                display: 'inline-block',
+                background: '#e3eafc',
+                color: '#1967d2',
+                borderRadius: 12,
+                fontSize: 15,
+                fontWeight: 600,
+                padding: '2px 14px',
+                marginLeft: 4
+              }}>Total(s): {totalApplicants}</span>
+            </div>
+            {showMatchingInfo && (
+              <button
+                className="btn btn-primary btn-sm"
+                style={{ marginLeft: 24, padding: '8px 24px', fontWeight: 600, fontSize: 16 }}
+                onClick={handleViewMoreTopCVs}
+                disabled={viewMoreLoading}
+              >
+                See more top CVs
+              </button>
+            )}
           </div>
+
 
           <div className="tabs-content">
             <TabPanel>
@@ -500,6 +628,7 @@ const WidgetContentBox = ({ jobId, candidateName, showMatchingInfo, useMatchingA
                             </Link>
                           </h4>
 
+
                           <ul className="candidate-info">
                             <li className="designation">
                               {applicant.candidateProfile?.jobTitle || applicant.user?.designation || `Job ID: ${applicant.jobId}`}
@@ -510,17 +639,18 @@ const WidgetContentBox = ({ jobId, candidateName, showMatchingInfo, useMatchingA
                             </li>
                             <li>
                               <span className="icon flaticon-map-locator"></span>{" "}
-                              { 
-                                [ 
+                              {
+                                [
                                   applicant.candidateProfile?.address,
                                   applicant.candidateProfile?.city,
                                   applicant.candidateProfile?.province
-                                ].filter(Boolean).join(', ') || 
-                                applicant.user?.location || 
+                                ].filter(Boolean).join(', ') ||
+                                applicant.user?.location ||
                                 `Status: ${applicant.status}`
                               }
                             </li>
                           </ul>
+
 
                           {/* Hiển thị skills, education, experience, description % chỉ khi showMatchingInfo là true */}
                           {showMatchingInfo && (
@@ -534,10 +664,12 @@ const WidgetContentBox = ({ jobId, candidateName, showMatchingInfo, useMatchingA
                             </>
                           )}
 
+
                           <div style={{ margin: '8px 0', fontSize: 14, color: '#1967d2', fontWeight: 500 }}>
                             Applied for <b>{jobCounts[applicant.userId] ?? '-'}</b> job(s) at your company
                           </div>
                         </div>
+
 
                         <div className="option-box">
                           <ul className="option-list">
@@ -549,9 +681,20 @@ const WidgetContentBox = ({ jobId, candidateName, showMatchingInfo, useMatchingA
                             <li>
                               <button
                                 data-text="Approve Applicant"
-                                className={applicant.status === 'Approved' ? 'approved' : (applicant.status === 1 ? 'approved' : '')}
+                                className={applicant.status === 2 ? 'approved' : ''}
+                                onClick={() => setConfirmModal({ open: true, applicationId: applicant.applicationId, status: 2 })}
+                                disabled={applicant.status !== 0 || updatingId === applicant.applicationId + "2"}
                               >
                                 <span className="la la-check"></span>
+                              </button>
+                            </li>
+                            <li>
+                              <button
+                                data-text="Reject Applicant"
+                                onClick={() => setConfirmModal({ open: true, applicationId: applicant.applicationId, status: 1 })}
+                                disabled={applicant.status !== 0 || updatingId === applicant.applicationId + "1"}
+                              >
+                                <span className="la la-times"></span>
                               </button>
                             </li>
                             <li>
@@ -563,6 +706,12 @@ const WidgetContentBox = ({ jobId, candidateName, showMatchingInfo, useMatchingA
                               </button>
                             </li>
                           </ul>
+                          {/* Hiển thị trạng thái rõ ràng */}
+                          <div style={{marginTop: 8}}>
+                            {applicant.status === 2 && <span className="status-badge status-accepted">Accepted</span>}
+                            {applicant.status === 1 && <span className="status-badge status-rejected">Rejected</span>}
+                            {applicant.status === 0 && <span className="status-badge status-pending">Pending</span>}
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -623,16 +772,61 @@ const WidgetContentBox = ({ jobId, candidateName, showMatchingInfo, useMatchingA
           Are you sure you want to download the selected CV(s) as a ZIP file?
         </div>
       </Modal>
+      {/* Modal xác nhận Accept/Reject */}
+      <Modal
+        open={confirmModal.open}
+        onClose={() => setConfirmModal({ open: false, applicationId: null, status: null })}
+        title={confirmModal.status === 2 ? "Confirm Accept" : "Confirm Reject"}
+        footer={
+          <>
+            <button className="btn-cancel" onClick={() => setConfirmModal({ open: false, applicationId: null, status: null })}>No</button>
+            <button className="btn-confirm" onClick={async () => {
+              await handleConfirm(confirmModal.applicationId, confirmModal.status);
+              setConfirmModal({ open: false, applicationId: null, status: null });
+            }}>Yes</button>
+          </>
+        }
+      >
+        {confirmModal.status === 2 ? "Are you sure you want to accept this applicant?" : "Are you sure you want to reject this applicant?"}
+      </Modal>
+      <Modal
+        open={showUpgradeModal}
+        onClose={() => setShowUpgradeModal(false)}
+        title="You have reached your limit of viewing top CVs."
+        footer={
+          <>
+            <button className="btn-cancel" onClick={() => setShowUpgradeModal(false)}>Close</button>
+            <button className="btn-confirm" onClick={() => { setShowUpgradeModal(false); window.location.href = '/employers-dashboard/packages/buy'; }}>Upgrade package</button>
+          </>
+        }
+      >
+        <div style={{textAlign: 'center', fontSize: 17, color: '#444', padding: '12px 0 4px 0'}}>
+        You have reached the limit of the number of top CV views in your current package. Do you want to upgrade your package to see more top CVs?
+        </div>
+      </Modal>
       <style jsx global>{`
         .CircularProgressbar-text {
           font-weight: 700 !important;
         }
+        .status-badge {
+          display: inline-block;
+          padding: 4px 12px;
+          border-radius: 12px;
+          font-size: 13px;
+          font-weight: 600;
+          margin-right: 6px;
+        }
+        .status-accepted { background: #e6f4ea; color: #219653; }
+        .status-rejected { background: #fdeaea; color: #d32f2f; }
+        .status-pending { background: #e3eafc; color: #1967d2; }
       `}</style>
     </div>
   );
 };
 
+
 export default WidgetContentBox;
+
 
 // Helper function
 function formatScore(scoreStr) {

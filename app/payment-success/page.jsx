@@ -14,15 +14,17 @@ const PaymentSuccessPage = () => {
   const [status, setStatus] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const type = searchParams.get("type");
+  
 
-  // Đảm bảo orderCode luôn có tiền tố SUB-
-  if (orderCode && !orderCode.startsWith("SUB-")) {
+  // Only prepend SUB- for candidate, not for company
+  if (orderCode && type !== 'company' && !orderCode.startsWith("SUB-")) {
     orderCode = "SUB-" + orderCode;
   }
 
   useEffect(() => {
     if (orderCode) {
-      ApiService.checkPaymentStatus(orderCode)
+      ApiService.checkPaymentStatus(orderCode, type)
         .then((res) => {
           setStatus(res);
           setLoading(false);
@@ -33,9 +35,9 @@ const PaymentSuccessPage = () => {
         });
     } else {
       setLoading(false);
-      setError("Missing order code!");
+      setError("Missing or invalid order code!");
     }
-  }, [orderCode]);
+  }, [orderCode, type]);
 
   if (loading) return <div>Checking payment status...</div>;
   if (error) return <div style={{color: 'red'}}>{error}</div>;
@@ -105,8 +107,11 @@ const PaymentSuccessPage = () => {
             <p style={{ color: "red", marginTop: 24 }}>Payment not completed or failed.</p>
           )}
           <div style={{ marginTop: 24, textAlign: 'center' }}>
-            <a href="/candidates-dashboard/packages" style={{ display: 'inline-block', padding: '8px 20px', background: '#1976d2', color: '#fff', borderRadius: 4, textDecoration: 'none', fontWeight: 500 }}>
-              Return My Package
+            <a
+              href={type === "company" ? "/employers-dashboard/packages" : "/candidates-dashboard/packages"}
+              style={{ display: 'inline-block', padding: '8px 20px', background: '#1976d2', color: '#fff', borderRadius: 4, textDecoration: 'none', fontWeight: 500 }}
+            >
+              {type === "company" ? "Return to My Company Packages" : "Return My Package"}
             </a>
           </div>
         </div>

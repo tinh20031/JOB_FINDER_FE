@@ -18,6 +18,7 @@ import Modal from "@/components/common/Modal";
 import "@/styles/modal.css";
 import locationService from "../../../../../services/locationService";
 import { companyService } from "../../../../../services/companyService";
+import Link from "next/link";
 
 const ReactQuill = dynamic(() => import('react-quill'), { ssr: false });
 
@@ -83,6 +84,8 @@ const PostBoxForm = ({ cloneData, isClone }) => {
   const [showLeaveConfirmation, setShowLeaveConfirmation] = useState(false);
   const [intendedPath, setIntendedPath] = useState(null);
   const DRAFT_KEY = 'job_post_draft';
+  const [mySubscription, setMySubscription] = useState(null);
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
 
   // Animation variants
   const formVariants = {
@@ -167,6 +170,8 @@ const PostBoxForm = ({ cloneData, isClone }) => {
         })
         .catch(() => {});
     }
+    // Fetch employer subscription info
+    ApiService.getMyCompanySubscription().then(setMySubscription).catch(() => setMySubscription(null));
   }, []);
 
   // Cleanup the image preview URL when component unmounts or image changes
@@ -504,6 +509,12 @@ const PostBoxForm = ({ cloneData, isClone }) => {
     setError("");
     setSuccess(false);
 
+    // Check job post limit
+    if (mySubscription && typeof mySubscription.remainingJobPosts === 'number' && mySubscription.remainingJobPosts <= 0) {
+      setShowUpgradeModal(true);
+      return;
+    }
+
     if (!validateForm()) {
       setError("Please fill in all required fields!");
       return;
@@ -716,6 +727,21 @@ const PostBoxForm = ({ cloneData, isClone }) => {
         }
       >
         <p>Job posted successfully!</p>
+      </Modal>
+
+      {/* Upgrade Modal */}
+      <Modal
+        open={showUpgradeModal}
+        onClose={() => setShowUpgradeModal(false)}
+        title="Job Post Limit Reached"
+        footer={
+          <>
+            <button className="btn-cancel" onClick={() => setShowUpgradeModal(false)}>Cancel</button>
+            <button className="btn-confirm" style={{ marginLeft: 8 }} onClick={() => { router.push('/employers-dashboard/packages'); }}>Upgrade Package</button>
+          </>
+        }
+      >
+        <p>You have used all your job post slots for this package. Would you like to upgrade your package to post more jobs?</p>
       </Modal>
 
       {/* Form chính */}

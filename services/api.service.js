@@ -401,7 +401,27 @@ const ApiService = {
   getSubscriptionPackages: () => ApiService.get('/payment/packages'),
   getMySubscription: () => ApiService.get('/payment/my-subscription'),
   createPayment: (subscriptionTypeId) => ApiService.post('/payment/create-payment', { subscriptionTypeId }),
-  checkPaymentStatus: (orderCode) => ApiService.get(`/payment/payment-status/${orderCode}`),
+  // Update your frontend code for the checkPaymentStatus function
+
+checkPaymentStatus: (orderCode, type) => {
+  let code = orderCode;
+  let endpoint = '';
+  if (type === 'company') {
+    // For company, always strip COMPSUB- prefix if present
+    if (code && code.startsWith('COMPSUB-')) code = code.replace('COMPSUB-', '');
+    endpoint = `/companysubscription/payment-status/${code}`;
+  } else {
+    // For candidate, strip SUB- prefix if present
+    if (code && code.startsWith('SUB-')) code = code.replace('SUB-', '');
+    endpoint = `/payment/payment-status/${code}`;
+  }
+  return ApiService.get(endpoint);
+},
+
+  // Subscription/Payment APIs for Company
+  getCompanySubscriptionPackages: () => ApiService.get('/companysubscription/packages'),
+  getMyCompanySubscription: () => ApiService.get('/companysubscription/my-subscription'),
+  createCompanySubscriptionPayment: (subscriptionTypeId) => ApiService.post('/companysubscription/create-payment', { subscriptionTypeId }),
 };
 
 export default ApiService;

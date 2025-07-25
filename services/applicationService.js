@@ -2,8 +2,10 @@ import axios from 'axios';
 import Cookies from 'js-cookie';
 import API_CONFIG from "../config/api.config";
 
+
 const API_URL = API_CONFIG.BASE_URL;
 // const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://job-finder-kjt2.onrender.com/api';
+
 
 // Helper function to get token
 const getToken = () => {
@@ -14,6 +16,7 @@ const getToken = () => {
   return token;
 };
 
+
 export const applicationService = {
   // Apply for a job
   apply: async (jobId, formData) => {
@@ -22,6 +25,7 @@ export const applicationService = {
       if (!token) {
         throw new Error('No authentication token found');
       }
+
 
       const response = await axios.post(
         `${API_URL}/Application/apply`,
@@ -40,6 +44,7 @@ export const applicationService = {
     }
   },
 
+
   // Get applied jobs for current user
   getAppliedJobs: async () => {
     try {
@@ -47,6 +52,7 @@ export const applicationService = {
       if (!token) {
         throw new Error('No authentication token found');
       }
+
 
       const response = await axios.get(
         `${API_URL}/Application/my-applications`,
@@ -65,6 +71,7 @@ export const applicationService = {
     }
   },
 
+
   // Get job applicants for a specific job
   getJobApplicants: async (jobId) => {
     try {
@@ -72,6 +79,7 @@ export const applicationService = {
       if (!token) {
         throw new Error('No authentication token found');
       }
+
 
       const response = await axios.get(
         `${API_URL}/Application/job/${jobId}`,
@@ -89,6 +97,7 @@ export const applicationService = {
     }
   },
 
+
   // Update application status
   updateStatus: async (applicationId, status) => {
     try {
@@ -96,6 +105,7 @@ export const applicationService = {
       if (!token) {
         throw new Error('No authentication token found');
       }
+
 
       const response = await axios.put(
         `${API_URL}/Application/${applicationId}/status`,
@@ -114,6 +124,7 @@ export const applicationService = {
     }
   },
 
+
   // Withdraw application
   withdraw: async (applicationId) => {
     try {
@@ -121,6 +132,7 @@ export const applicationService = {
       if (!token) {
         throw new Error('No authentication token found');
       }
+
 
       const response = await axios.put(
         `${API_URL}/Application/${applicationId}/withdraw`,
@@ -138,6 +150,7 @@ export const applicationService = {
       throw error;
     }
   },
+
 
   // Get distinct job count by user in company
   getDistinctJobCountByUserInCompany: async (userId, companyId) => {
@@ -163,6 +176,7 @@ export const applicationService = {
     }
   },
 
+
   // Get jobs applied by user in company
   getJobsAppliedByUserInCompany: async (userId, companyId) => {
     try {
@@ -187,6 +201,7 @@ export const applicationService = {
     }
   },
 
+
   // Get all applications for a specific job (for employer)
   getApplicationsByJob: async (jobId) => {
     try {
@@ -210,17 +225,20 @@ export const applicationService = {
     }
   },
 
+
   // Lấy tất cả application (tất cả applicant trong hệ thống)
   getAllApplications: async () => {
     const response = await axios.get(`${API_URL}/Application`);
     return response.data;
   },
 
+
   // Lấy số lượng candidate đã apply vào company (không trùng lặp)
   getUniqueCandidatesByCompany: async (companyId) => {
     const response = await axios.get(`${API_URL}/Application/company/${companyId}/unique-candidates`);
     return response.data.count;
   },
+
 
   // Lấy danh sách recent applicants của công ty
   getRecentApplicantsByCompany: async (companyId, take = 10) => {
@@ -230,6 +248,7 @@ export const applicationService = {
     );
     return response.data;
   },
+
 
   // Export applications to Excel
   exportApplications: async (applicationIds, selectedColumns) => {
@@ -261,6 +280,7 @@ export const applicationService = {
     }
   },
 
+
   // Get matching applicants for a job (matching_job API)
   getMatchingJobApplicants: async (jobId) => {
     try {
@@ -277,10 +297,11 @@ export const applicationService = {
           }
         }
       );
-      return response.data;
+      return response.data.applications || [];
     } catch (error) {
       console.error('Error fetching matching job applicants:', error);
       throw error;
     }
   }
-}; 
+};
+

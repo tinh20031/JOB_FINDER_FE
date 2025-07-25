@@ -1,16 +1,19 @@
 "use client";
 
+
 import Link from "next/link";
 import Image from "next/image";
 import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { applicationService } from "@/services/applicationService";
 
+
 const Applicants = () => {
   const [applicants, setApplicants] = useState([]);
   const [loading, setLoading] = useState(true);
   const searchParams = useSearchParams();
   const jobId = searchParams.get('jobId');
+
 
   useEffect(() => {
     const fetchApplicants = async () => {
@@ -25,22 +28,27 @@ const Applicants = () => {
       }
     };
 
+
     if (jobId) {
       fetchApplicants();
     }
   }, [jobId]);
 
+
   if (loading) {
     return <div className="text-center py-5">Loading applicants...</div>;
   }
+
 
   if (!jobId) {
     return <div className="text-center py-5">No job selected</div>;
   }
 
+
   if (applicants.length === 0) {
     return <div className="text-center py-5">No applicants found for this job</div>;
   }
+
 
   return (
     <div className="applicants-list">
@@ -63,9 +71,9 @@ const Applicants = () => {
               <p>{applicant.coverLetter}</p>
             </div>
             <div className="cv-link">
-              <a 
-                href={applicant.resumeUrl} 
-                target="_blank" 
+              <a
+                href={applicant.resumeUrl}
+                target="_blank"
                 rel="noopener noreferrer"
                 className="btn btn-primary btn-sm"
               >
@@ -78,5 +86,6 @@ const Applicants = () => {
     </div>
   );
 };
+
 
 export default Applicants;

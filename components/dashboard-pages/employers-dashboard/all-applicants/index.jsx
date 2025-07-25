@@ -1,5 +1,6 @@
 'use client';
 
+
 import MobileMenu from "../../../header/MobileMenu";
 import MainHeader from "../../../header/MainHeader";
 import LoginPopup from "../../../common/form/login/LoginPopup";
@@ -12,10 +13,12 @@ import MenuToggler from "../../MenuToggler";
 import { useState, useEffect } from "react";
 import { useSearchParams } from 'next/navigation';
 
+
 const Index = ({ showMatchingInfo = false, useMatchingApi = false }) => {
   const searchParams = useSearchParams();
   const [jobIdFromUrl, setJobIdFromUrl] = useState(null);
   const [candidateName, setCandidateName] = useState("");
+
 
   useEffect(() => {
     const jobId = searchParams.get('jobId');
@@ -23,6 +26,7 @@ const Index = ({ showMatchingInfo = false, useMatchingApi = false }) => {
       setJobIdFromUrl(jobId);
     }
   }, [searchParams]);
+
 
   // Build link with jobId if present
   const jobId = searchParams.get('jobId');
@@ -33,22 +37,28 @@ const Index = ({ showMatchingInfo = false, useMatchingApi = false }) => {
     ? `/employers-dashboard/all-applicants?jobId=${jobId}`
     : '/employers-dashboard/all-applicants';
 
+
   return (
     <div className="page-wrapper dashboard">
       <span className="header-span"></span>
       {/* <!-- Header Span for hight --> */}
 
+
       <LoginPopup />
       {/* End Login Popup Modal */}
+
 
       <MainHeader />
       {/* End Header */}
 
+
       <MobileMenu />
       {/* End MobileMenu */}
 
+
       <DashboardEmployerSidebar />
       {/* <!-- End User Sidebar Menu --> */}
+
 
       {/* <!-- Dashboard --> */}
       <section className="user-dashboard">
@@ -56,8 +66,10 @@ const Index = ({ showMatchingInfo = false, useMatchingApi = false }) => {
           <BreadCrumb title="All Applicants!" />
           {/* breadCrumb */}
 
+
           <MenuToggler />
           {/* Collapsible sidebar button */}
+
 
           <div className="row">
             <div className="col-lg-12">
@@ -89,11 +101,13 @@ const Index = ({ showMatchingInfo = false, useMatchingApi = false }) => {
       </section>
       {/* <!-- End Dashboard --> */}
 
+
       <CopyrightFooter />
       {/* <!-- End Copyright --> */}
     </div>
     // End page-wrapper
   );
 };
+
 
 export default Index;
