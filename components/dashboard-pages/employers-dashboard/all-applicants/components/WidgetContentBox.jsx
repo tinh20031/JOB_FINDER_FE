@@ -17,8 +17,6 @@ import Modal from '@/components/common/Modal';
 import "@/styles/modal.css";
 import axios from "axios";
 import API_CONFIG from "@/config/api.config";
-
-
 // Helper function to validate image URLs
 const getValidImageUrl = (url) => {
   if (!url || typeof url !== 'string') {
@@ -181,7 +179,6 @@ const WidgetContentBox = ({ jobId, candidateName, showMatchingInfo, useMatchingA
   const [cvViewLimit, setCvViewLimit] = useState(null); // limit from package
   const [cvViewed, setCvViewed] = useState(0); // how many CVs viewed
   const [viewMoreLoading, setViewMoreLoading] = useState(false);
-
 
   useEffect(() => {
     const fetchData = async () => {
@@ -416,44 +413,40 @@ const WidgetContentBox = ({ jobId, candidateName, showMatchingInfo, useMatchingA
       alert('Export failed!');
     }
   };
-
-
-  // Thêm hàm xác nhận/từ chối
-  const handleConfirm = async (applicationId, status) => {
-    try {
-      setUpdatingId(applicationId + status);
-      const token = localStorage.getItem("token");
-      const res = await axios.put(
-        `${API_CONFIG.BASE_URL}/application/confirm/${applicationId}`,
-        { status },
-        {
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-      if (res.status === 200) {
-        // Thành công, refetch lại danh sách
-        let response;
-        if (useMatchingApi) {
-          response = await applicationService.getMatchingJobApplicants(jobId);
-        } else {
-          response = await applicationService.getJobApplicants(jobId);
-        }
-        // ... mapping lại profile như fetchData ở trên (nếu cần)
-        window.location.reload(); // hoặc cập nhật lại state nếu muốn tối ưu
-      } else {
-        alert("An error occurred!");
+ // Thêm hàm xác nhận/từ chối
+ const handleConfirm = async (applicationId, status) => {
+  try {
+    setUpdatingId(applicationId + status);
+    const token = localStorage.getItem("token");
+    const res = await axios.put(
+      `${API_CONFIG.BASE_URL}/application/confirm/${applicationId}`,
+      { status },
+      {
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
       }
-    } catch (e) {
+    );
+    if (res.status === 200) {
+      // Thành công, refetch lại danh sách
+      let response;
+      if (useMatchingApi) {
+        response = await applicationService.getMatchingJobApplicants(jobId);
+      } else {
+        response = await applicationService.getJobApplicants(jobId);
+      }
+      // ... mapping lại profile như fetchData ở trên (nếu cần)
+      window.location.reload(); // hoặc cập nhật lại state nếu muốn tối ưu
+    } else {
       alert("An error occurred!");
-    } finally {
-      setUpdatingId(null);
     }
-  };
-
-
+  } catch (e) {
+    alert("An error occurred!");
+  } finally {
+    setUpdatingId(null);
+  }
+};
   if (loading) {
     return (
       <div className="row">
@@ -772,8 +765,8 @@ const WidgetContentBox = ({ jobId, candidateName, showMatchingInfo, useMatchingA
           Are you sure you want to download the selected CV(s) as a ZIP file?
         </div>
       </Modal>
-      {/* Modal xác nhận Accept/Reject */}
-      <Modal
+       {/* Modal xác nhận Accept/Reject */}
+       <Modal
         open={confirmModal.open}
         onClose={() => setConfirmModal({ open: false, applicationId: null, status: null })}
         title={confirmModal.status === 2 ? "Confirm Accept" : "Confirm Reject"}

@@ -12,6 +12,7 @@ import Applicants from "./components/Applicants";
 import CopyrightFooter from "../../CopyrightFooter";
 import MenuToggler from "../../MenuToggler";
 import { useState } from "react";
+import UniqueApplicantsChart from "./components/UniqueApplicantsChart";
 
 const Index = () => {
   const [candidateName, setCandidateName] = useState("");
@@ -69,6 +70,10 @@ const Index = () => {
                 <ProfileChart />
               </div>
               {/* End profile chart */}
+              {/* Unique Applicants Chart */}
+              <div className="graph-widget ls-widget" style={{ marginTop: 32 }}>
+                <UniqueApplicantsChart />
+              </div>
             </div>
             {/* End .col */}
 

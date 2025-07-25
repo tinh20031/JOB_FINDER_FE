@@ -8,6 +8,8 @@ import ApiService from "@/services/api.service";
 import { Modal, Button } from "antd";
 import { userService } from "@/services/userService";
 import useResumeData, { getAboutMeByUserId, getWorkExperienceByUserId, getHighlightProjectByUserId, getAwardByUserId, getSkillByUserId, getForeignLanguageByUserId, getEducationByUserId, getCandidateProfileByUserId } from "@/services/useResumeData";
+import { useDispatch } from 'react-redux';
+import { setLoginState } from '@/features/auth/authSlice';
 
 const skillColors = [
   { bg: "#eaf2fe", color: "#2563eb" },
@@ -61,6 +63,7 @@ const UserDetailPage = () => {
   const [confirmLoading, setConfirmLoading] = useState(false);
   const [successModalOpen, setSuccessModalOpen] = useState(false);
   const [errorModalOpen, setErrorModalOpen] = useState(false);
+  const dispatch = useDispatch();
 
   useEffect(() => {
     setLoading(true);
@@ -110,6 +113,7 @@ const UserDetailPage = () => {
     setConfirmLoading(true);
     try {
       await userService.verifyCandidate(UserIdInt);
+      // ĐÃ XÓA: KHÔNG cập nhật localStorage hoặc Redux ở đây!
       setConfirmModalOpen(false);
       setSuccessModalOpen(true);
     } catch (err) {
