@@ -28,9 +28,12 @@ Main Header
 
 .main-header.fixed-header {
   position: fixed;
-  background: #ffffff;
-  -webkit-box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  background: #fff;
+  box-shadow: 0 0 10px rgba(0,0,0,0.1);
+  z-index: 999;
+  -webkit-transition: all 300ms ease;
+  -o-transition: all 300ms ease;
+  transition: all 300ms ease;
 }
 
 .main-header.fixed-header .logo {
@@ -541,7 +544,8 @@ Header Style Five
 
 ***/
 
-
+.header-style-five {
+}
 
 .header-style-five .logo-box {
   position: absolute;
