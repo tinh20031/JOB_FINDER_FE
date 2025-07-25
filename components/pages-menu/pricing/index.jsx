@@ -3,7 +3,7 @@ import LoginPopup from "../../common/form/login/LoginPopup";
 import FooterDefault from "../../footer/common-footer";
 import MainHeader from "../../header/MainHeader";
 import MobileMenu from "../../header/MobileMenu";
-import Pricing from "../../pricing/Pricing";
+
 
 const index = () => {
   return (
@@ -32,7 +32,7 @@ const index = () => {
             </div>
           </div>
           {/* End title */}
-          <Pricing />
+          {/* <Pricing /> */}
           {/* End .{/* <!--Pricing Tabs--> */}
         </div>
       </section>

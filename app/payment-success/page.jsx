@@ -1,5 +1,5 @@
 'use client';
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import ApiService from "../../services/api.service";
 import LoginPopup from "../../components/common/form/login/LoginPopup";
@@ -8,7 +8,7 @@ import MainHeader from "@/components/header/MainHeader";
 import MobileMenu from "../../components/header/MobileMenu";
 import Breadcrumb from "../../components/dashboard-pages/BreadCrumb";
 
-const PaymentSuccessPage = () => {
+const PaymentSuccessPageContent = () => {
   const searchParams = useSearchParams();
   let orderCode = searchParams.get("orderCode");
   const [status, setStatus] = useState(null);
@@ -120,5 +120,11 @@ const PaymentSuccessPage = () => {
     </>
   );
 };
+
+const PaymentSuccessPage = () => (
+  <Suspense fallback={<div>Loading...</div>}>
+    <PaymentSuccessPageContent />
+  </Suspense>
+);
 
 export default PaymentSuccessPage; 
