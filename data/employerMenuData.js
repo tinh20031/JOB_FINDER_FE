@@ -55,13 +55,13 @@ module.exports = [
     routePath: "/employers-dashboard/messages",
     active: "",
   },
-  {
-    id: 9,
-    name: "Notification",
-    icon: "la-bell",
-    routePath: "/employers-dashboard/resume-alerts",
-    active: "",
-  },
+  // {
+  //   id: 9,
+  //   name: "Notification",
+  //   icon: "la-bell",
+  //   routePath: "/employers-dashboard/resume-alerts",
+  //   active: "",
+  // },
  
   
 ];

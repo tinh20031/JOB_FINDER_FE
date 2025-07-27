@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useEffect, useState, useRef } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { useSelector, useDispatch } from "react-redux";
-import { clearLoginState } from '@/features/auth/authSlice';
+import { clearLoginState, setLoginState } from '@/features/auth/authSlice';
 import { authService } from "../../services/authService";
 import HeaderNavContent from "./HeaderNavContent";
 import employerMenuData from "../../data/employerHeaderMenuData";
@@ -105,6 +105,24 @@ const MainHeader = () => {
     };
     if (isLoggedIn) fetchProfile();
   }, [isLoggedIn, role, profileUpdated, user, userId]);
+
+  // Fallback: nếu redux chưa có user, lấy lại từ localStorage
+  useEffect(() => {
+    if (!user && typeof window !== 'undefined') {
+      const userStr = localStorage.getItem('user');
+      const token = localStorage.getItem('token');
+      const role = localStorage.getItem('role');
+      const userId = localStorage.getItem('userId');
+      if (userStr && token && role && userId) {
+        dispatch(setLoginState({
+          user: JSON.parse(userStr),
+          isLoggedIn: true,
+          role,
+          userId,
+        }));
+      }
+    }
+  }, [user, dispatch]);
 
   // Fetch notifications/unread count cho cả Candidate và Company
   useEffect(() => {

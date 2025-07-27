@@ -1,4 +1,3 @@
-import dynamic from "next/dynamic";
 import UserManager from "@/components/dashboard-pages/admin-dashboard/user-manager";
 
 export const metadata = {
@@ -6,8 +5,6 @@ export const metadata = {
   description: "Quản lý người dùng hệ thống",
 };
 
-const index = () => {
+export default function Page() {
   return <UserManager />;
-};
-
-export default dynamic(() => Promise.resolve(index), { ssr: false }); 
+} 

@@ -4,7 +4,7 @@ import API_CONFIG from "../config/api.config";
 
 
 const API_URL = API_CONFIG.BASE_URL;
-// const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://job-finder-kjt2.onrender.com/api';
+
 
 
 // Helper function to get token
