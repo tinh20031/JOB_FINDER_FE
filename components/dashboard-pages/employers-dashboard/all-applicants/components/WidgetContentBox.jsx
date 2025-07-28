@@ -592,19 +592,20 @@ const WidgetContentBox = ({ jobId, candidateName, showMatchingInfo, useMatchingA
                         />
                         {/* Hiển thị similarity score chỉ khi showMatchingInfo là true */}
                         {showMatchingInfo && (
-                          <div style={{ position: 'absolute', top: 16, right: 16, width: 48, height: 48, zIndex: 2 }}>
-                            <CircularProgressbar
-                              value={Math.round(applicant.similarityScore)}
-                              text={`${Math.round(applicant.similarityScore)}`}
-                              styles={buildStyles({
-                                textColor: Math.round(applicant.similarityScore) >= 50 ? '#1967d2' : '#e53935',
-                                pathColor: Math.round(applicant.similarityScore) >= 50 ? '#1967d2' : '#e53935',
-                                trailColor: '#e0e0e0',
-                                textSize: '26px',
-                                strokeLinecap: 'round',
-                              })}
-                            />
-                          </div>
+                         <div style={{ position: 'absolute', top: 16, right: 16, width: 48, height: 48, zIndex: 2 }}>
+                         <CircularProgressbar
+                           value={Math.round(applicant.similarityScore)}
+                           text={`${Math.round(applicant.similarityScore)}%`}
+                           styles={buildStyles({
+                             textColor: Math.round(applicant.similarityScore) >= 50 ? '#1967d2' : '#e53935',
+                             pathColor: Math.round(applicant.similarityScore) >= 50 ? '#1967d2' : '#e53935',
+                             trailColor: '#e0e0e0',
+                             textSize: '26px',
+                             strokeLinecap: 'round',
+                           })}
+                         />
+                       </div>
+                       
                         )}
                         <div className="content">
                           <figure className="image">
