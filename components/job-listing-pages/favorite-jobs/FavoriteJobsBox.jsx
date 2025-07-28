@@ -16,7 +16,6 @@ import {
   addSalary,
   addSort,
   addTag,
-  clearExperience,
   clearJobType,
 } from "../../../features/filter/filterSlice";
 import {
