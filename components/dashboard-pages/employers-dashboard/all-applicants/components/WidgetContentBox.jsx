@@ -600,12 +600,12 @@ const WidgetContentBox = ({ jobId, candidateName, showMatchingInfo, useMatchingA
                          <div style={{ position: 'absolute', top: 16, right: 16, width: 48, height: 48, zIndex: 2 }}>
                          <CircularProgressbar
                            value={Math.round(applicant.similarityScore)}
-                           text={`${Math.round(applicant.similarityScore)}%`}
+                           text={`${(applicant.similarityScore || 0).toFixed(1)}%`}
                            styles={buildStyles({
                              textColor: Math.round(applicant.similarityScore) >= 50 ? '#1967d2' : '#e53935',
                              pathColor: Math.round(applicant.similarityScore) >= 50 ? '#1967d2' : '#e53935',
                              trailColor: '#e0e0e0',
-                             textSize: '26px',
+                             textSize: '22px',
                              strokeLinecap: 'round',
                            })}
                          />
@@ -655,10 +655,10 @@ const WidgetContentBox = ({ jobId, candidateName, showMatchingInfo, useMatchingA
                           {showMatchingInfo && (
                             <>
                               <div style={{ fontSize: 13, color: '#555', margin: '12px 0', display: 'flex', flexDirection: 'column', gap: 4 }}>
-                                <div><b>Education Match:</b> {formatScore(applicant.similarityEducation)}</div>
-                                <div><b>Experience Match:</b> {formatScore(applicant.similarityExperience)}</div>
-                                <div><b>Skills Match:</b> {formatScore(applicant.similaritySkills)}</div>
-                                <div><b>Description Match:</b> {formatScore(applicant.similarityDescription)}</div>
+                                <div><b>Education Match:</b> {formatScoreWithDecimal(applicant.similarityEducation)}</div>
+                                <div><b>Experience Match:</b> {formatScoreWithDecimal(applicant.similarityExperience)}</div>
+                                <div><b>Skills Match:</b> {formatScoreWithDecimal(applicant.similaritySkills)}</div>
+                                <div><b>Description Match:</b> {formatScoreWithDecimal(applicant.similarityDescription)}</div>
                               </div>
                             </>
                           )}
@@ -832,4 +832,11 @@ function formatScore(scoreStr) {
   if (!scoreStr) return '';
   const [num, denom] = scoreStr.split('/');
   return `${Math.round(parseFloat(num))}/${Math.round(parseFloat(denom))}`;
+}
+
+// Helper function to format score with 1 decimal place for numerator only
+function formatScoreWithDecimal(scoreStr) {
+  if (!scoreStr) return '';
+  const [num, denom] = scoreStr.split('/');
+  return `${parseFloat(num).toFixed(1)}/${Math.round(parseFloat(denom))}`;
 }
