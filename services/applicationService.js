@@ -280,7 +280,6 @@ export const applicationService = {
     }
   },
 
-
   // Get matching applicants for a job (matching_job API)
   getMatchingJobApplicants: async (jobId) => {
     try {

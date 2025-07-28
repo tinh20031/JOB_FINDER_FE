@@ -388,29 +388,28 @@ const WidgetContentBox = ({ jobId, candidateName, showMatchingInfo, useMatchingA
   };
   // Gửi export
   const handleExport = async () => {
-    if (!selectedIds.length) return;
+    if (!selectedIds.length) {
+      alert('Please select at least one applicant to export CVs!');
+      return;
+    }
     try {
-      const response = await fetch('/api/application/export-applications', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token') || ''}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          ApplicationIds: selectedIds
-        })
-      });
-      if (!response.ok) {
-        throw new Error(`Failed to fetch: ${response.statusText}`);
-      }
-      const contentDisposition = response.headers.get('content-disposition');
+      // Gọi applicationService.exportApplications chỉ với selectedIds
+      const response = await applicationService.exportApplications(selectedIds);
+  
+      // Xử lý response để tải file ZIP
+      const contentDisposition = response.headers['content-disposition'];
       const fileNameMatch = contentDisposition && contentDisposition.match(/filename="(.+)"/);
       const fileName = fileNameMatch ? fileNameMatch[1] : `CVs_${new Date().toISOString().replace(/[:.]/g, '-')}.zip`;
-      const blob = await response.blob();
+  
+      // Tạo blob và tải file
+      const blob = new Blob([response.data], { type: 'application/zip' });
       saveAs(blob, fileName);
-      setShowExportModal(false);
+  
+      // Đóng modal xác nhận
+      setShowDownloadConfirm(false);
     } catch (e) {
-      alert('Export failed!');
+      console.error('Error exporting CVs:', e.message, { selectedIds });
+      alert('Export failed! Please try again or contact support.');
     }
   };
  // Thêm hàm xác nhận/từ chối
