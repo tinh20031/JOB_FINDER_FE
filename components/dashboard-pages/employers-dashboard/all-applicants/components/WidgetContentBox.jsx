@@ -33,13 +33,19 @@ const getValidImageUrl = (url) => {
 const ApplicantModal = ({ applicationId, show, onClose }) => {
   const [application, setApplication] = useState(null);
   useEffect(() => {
-    if (show && applicationId) {
-      fetch(`/api/Application/${applicationId}`)
-        .then(res => res.json())
-        .then(data => setApplication(data))
-        .catch(() => setApplication(null));
-    }
+    const fetchApplication = async () => {
+      if (show && applicationId) {
+        try {
+          const data = await applicationService.getApplicationById(applicationId);
+          setApplication(data);
+        } catch {
+          setApplication(null);
+        }
+      }
+    };
+    fetchApplication();
   }, [show, applicationId]);
+
   if (!show) return null;
   return (
     <div className="modal-overlay">

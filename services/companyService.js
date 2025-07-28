@@ -3,7 +3,7 @@ import API_CONFIG from "../config/api.config";
 
 
 
-// const API_URL = "http://localhost:5194/api";
+
 const API_URL = API_CONFIG.BASE_URL;
 
 // Hàm lấy token từ localStorage hoặc cookie

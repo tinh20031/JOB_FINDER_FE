@@ -124,7 +124,28 @@ export const applicationService = {
     }
   },
 
-
+// Trong applicationService.js
+getApplicationById: async (applicationId) => {
+  try {
+    const token = getToken();
+    if (!token) {
+      throw new Error('No authentication token found');
+    }
+    const response = await axios.get(
+      `${API_URL}/Application/${applicationId}`,
+      {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching application details:', error);
+    throw error;
+  }
+},
   // Withdraw application
   withdraw: async (applicationId) => {
     try {

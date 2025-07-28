@@ -27,7 +27,7 @@ const JobAlertsTable = () => {
     if (!dateString) return '';
     const now = new Date();
     const date = new Date(dateString);
-    date.setHours(date.getHours() + 7);
+    date.setHours(date.getHours() + 7); // Điều chỉnh múi giờ +7
     const diff = Math.floor((now - date) / 1000);
     if (diff < 60) return "just now";
     if (diff < 3600) return `${Math.floor(diff / 60)} minutes ago`;
@@ -48,16 +48,15 @@ const JobAlertsTable = () => {
             <thead>
               <tr>
                 <th>Title</th>
-                
                 <th>Time</th>
                 <th>Action</th>
               </tr>
             </thead>
             <tbody>
               {loading ? (
-                <tr><td colSpan={4} style={{textAlign:'center'}}>Loading...</td></tr>
+                <tr><td colSpan={3} style={{ textAlign: 'center' }}>Loading...</td></tr>
               ) : notifications.length === 0 ? (
-                <tr><td colSpan={4} style={{textAlign:'center'}}>No notifications</td></tr>
+                <tr><td colSpan={3} style={{ textAlign: 'center' }}>No notifications</td></tr>
               ) : (
                 notifications.map((n, idx) => (
                   <tr key={n.notificationId || n.id || idx} style={{
@@ -66,9 +65,8 @@ const JobAlertsTable = () => {
                     opacity: n.isRead ? 0.7 : 1,
                     background: n.isRead ? '#fff' : '#f1f6fd',
                   }}>
-                    <td>{n.title}</td>
-                    <td>{n.message}</td>
-                    <td>{n.createdAt ? timeAgo(n.createdAt) : ''}</td>
+                    <td>{n.title || '-'}</td>
+                    <td>{n.createdAt ? timeAgo(n.createdAt) : '-'}</td>
                     <td>
                       <div className="option-box">
                         <ul className="option-list">
