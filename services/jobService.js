@@ -911,6 +911,17 @@ export const jobService = {
       throw error;
     }
   },
+
+  // Lấy job nổi bật (highlight) của company
+  async getCompanyHighlightJobs(companyId, limit = 5, timeRange = '7d') {
+    try {
+      const response = await axios.get(`${API_URL}/Job/company/${companyId}/highlight?limit=${limit}&timeRange=${timeRange}`);
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching highlight jobs:', error);
+      return { Jobs: [] };
+    }
+  },
 };
 
 export default jobService;

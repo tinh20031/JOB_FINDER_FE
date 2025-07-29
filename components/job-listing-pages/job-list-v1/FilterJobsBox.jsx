@@ -14,6 +14,7 @@ import {
   addSort,
   addTag,
   addLevel,
+  addJobType,
   clearJobType,
 } from "../../../features/filter/filterSlice";
 import {
@@ -23,7 +24,7 @@ import {
 import Image from "next/image";
 import { jobService } from "../../../services/jobService";
 import { toast } from "react-toastify";
-import "./FilterJobsBox.css"; // Thêm import CSS
+import "./FilterJobsBox.css";
 import { useSearchParams, useRouter } from "next/navigation";
 import {
   getUserFavorites,
@@ -77,8 +78,8 @@ const FilterJobsBox = () => {
   // Thêm state để lưu dữ liệu lookup
   const [companies, setCompanies] = useState([]);
   const [jobTypesData, setJobTypesData] = useState([]);
-  const [experienceLevels, setExperienceLevels] = useState([]);
   const [industries, setIndustries] = useState([]);
+  const [urlFiltersApplied, setUrlFiltersApplied] = useState(false);
 
   const { jobList, jobSort } = useSelector((state) => state.filter);
   const {
@@ -90,7 +91,7 @@ const FilterJobsBox = () => {
     datePosted,
     salary,
     tag,
-    levelId, // Thêm dòng này
+    levelId,
   } = jobList || {};
 
   const { sort } = jobSort;
@@ -126,12 +127,6 @@ const FilterJobsBox = () => {
           console.error("Failed to fetch job types data", err);
           return [];
         });
-        const expLevelsRes = await jobService
-          .getExperienceLevels()
-          .catch((err) => {
-            console.error("Failed to fetch experience levels data", err);
-            return [];
-          });
         const industriesRes = await jobService.getIndustries().catch((err) => {
           console.error("Failed to fetch industries data", err);
           return [];
@@ -139,7 +134,6 @@ const FilterJobsBox = () => {
 
         setCompanies(companiesRes);
         setJobTypesData(jobTypesRes);
-        setExperienceLevels(expLevelsRes);
         setIndustries(industriesRes);
       } catch (err) {
         console.error(
@@ -200,7 +194,7 @@ const FilterJobsBox = () => {
 
   // Đọc page từ query string khi mount
   useEffect(() => {
-    const pageParam = searchParams.get('page');
+    const pageParam = searchParams.get("page");
     if (pageParam && !isNaN(Number(pageParam)) && Number(pageParam) > 0) {
       setCurrentPage(Number(pageParam));
     } else {
@@ -208,10 +202,38 @@ const FilterJobsBox = () => {
     }
   }, [searchParams]);
 
+  // Đọc và áp dụng filter từ URL khi mount
+  useEffect(() => {
+    if (urlFiltersApplied) return; // Chỉ áp dụng một lần
+
+    const industryIdParam = searchParams.get("IndustryId");
+    const levelIdParam = searchParams.get("LevelId");
+    const jobTypeIdParam = searchParams.get("JobTypeId");
+    const provinceNameParam = searchParams.get("ProvinceName");
+    const skillIdsParam = searchParams.get("SkillIds");
+
+    // Áp dụng filter từ URL vào Redux state
+    if (industryIdParam) {
+      dispatch(addTag(industryIdParam));
+    }
+    if (levelIdParam) {
+      dispatch(addLevel(Number(levelIdParam)));
+    }
+    if (jobTypeIdParam) {
+      dispatch(addJobType(Number(jobTypeIdParam))); // Bỏ array wrapper
+    }
+    if (provinceNameParam) {
+      dispatch(addLocation(provinceNameParam));
+    }
+    // SkillIds có thể cần xử lý riêng tùy vào cấu trúc filter
+
+    setUrlFiltersApplied(true);
+  }, [searchParams, dispatch, urlFiltersApplied]);
+
   // Khi chuyển trang, cập nhật query string
   const handleSetPage = (page) => {
     const params = new URLSearchParams(Array.from(searchParams.entries()));
-    params.set('page', page);
+    params.set("page", page);
     router.replace(`?${params.toString()}`);
     setCurrentPage(page);
   };
@@ -235,12 +257,6 @@ const FilterJobsBox = () => {
     return industry ? industry.industryName : "N/A";
   };
 
-  const getExperienceLevelName = (expLevelId) => {
-    const level = experienceLevels.find((el) => el.id === expLevelId);
-    // Dữ liệu API ExperienceLevels có trường name
-    return level ? level.name : "N/A";
-  };
-
   // keyword filter on title
   const keywordFilter = (item) =>
     keyword ? item.jobTitle?.toLowerCase().includes(keyword.toLowerCase()) : true;
@@ -261,13 +277,13 @@ const FilterJobsBox = () => {
 
   // category filter
   const categoryFilter = (item) =>
-    category
-      ? String(item?.industryId) === String(category)
-      : true;
+    category ? String(item?.industryId) === String(category) : true;
 
   // job-type filter
-  const jobTypeFilter = (item) =>
-    jobType?.length ? jobType.includes(item.jobTypeId) : true;
+  const jobTypeFilter = (item) => {
+    const result = jobType?.length ? jobType.includes(item.jobTypeId) : true;
+    return result;
+  };
 
   // date-posted filter
   const datePostedFilter = (item) => {
@@ -297,7 +313,10 @@ const FilterJobsBox = () => {
       : item.minSalary >= salary?.min && item.maxSalary <= salary?.max;
 
   // tag filter
-  const tagFilter = (item) => (tag ? String(item?.industryId) === String(tag) : true);
+  const tagFilter = (item) => {
+    const result = tag ? String(item?.industryId) === String(tag) : true;
+    return result;
+  };
 
   // sort filter
   const sortFilter = (a, b) => {
@@ -337,13 +356,6 @@ const FilterJobsBox = () => {
   // Lọc job active và áp dụng tất cả các filter
   const filteredActiveJobs = jobs
     .filter((job) => job.status === 1)
-    // Filter từ query string
-    .filter(
-      (job) => !industryId || String(job.industryId) === String(industryId)
-    )
-    .filter((job) => !provinceName || job.provinceName === provinceName)
-    .filter((job) => !levelId || String(job.levelId) === String(levelId))
-    .filter((job) => !jobTypeId || String(job.jobTypeId) === String(jobTypeId))
     // Filter từ Redux state
     .filter(keywordFilter)
     .filter(locationFilter)
@@ -355,6 +367,7 @@ const FilterJobsBox = () => {
     .filter(tagFilter)
     // Sort
     .sort(sortFilter);
+
   const totalActiveJobs = filteredActiveJobs.length;
   const totalPages = Math.ceil(totalActiveJobs / itemsPerPage);
   // Phân trang trên mảng đã lọc
@@ -365,14 +378,14 @@ const FilterJobsBox = () => {
 
   // Định dạng ngày/giờ: dd/MM/yyyy theo giờ Việt Nam, cộng thêm 7 tiếng nếu backend trả về giờ không có offset
   const formatDateVN = (dateStr) => {
-    if (!dateStr) return 'N/A';
+    if (!dateStr) return "N/A";
     const dateObj = new Date(dateStr);
     dateObj.setHours(dateObj.getHours() + 7);
-    return dateObj.toLocaleDateString('vi-VN', {
-      timeZone: 'Asia/Ho_Chi_Minh',
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric'
+    return dateObj.toLocaleDateString("vi-VN", {
+      timeZone: "Asia/Ho_Chi_Minh",
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
     });
   };
 
@@ -642,7 +655,7 @@ const FilterJobsBox = () => {
                           fontWeight: 500,
                           fontSize: 14,
                         }}
-                        onClick={e => e.stopPropagation()}
+                        onClick={(e) => e.stopPropagation()}
                       >
                         {item.jobType.jobTypeName}
                       </span>
@@ -658,7 +671,7 @@ const FilterJobsBox = () => {
                           fontWeight: 500,
                           fontSize: 14,
                         }}
-                        onClick={e => e.stopPropagation()}
+                        onClick={(e) => e.stopPropagation()}
                       >
                         {item.industry.industryName}
                       </span>
@@ -674,7 +687,7 @@ const FilterJobsBox = () => {
                           fontWeight: 500,
                           fontSize: 14,
                         }}
-                        onClick={e => e.stopPropagation()}
+                        onClick={(e) => e.stopPropagation()}
                       >
                         {item.level.levelName}
                       </span>
@@ -684,7 +697,7 @@ const FilterJobsBox = () => {
                     className={`bookmark-btn ${
                       (favoriteJobIds || []).includes(item.id) ? "active" : ""
                     }`}
-                    onClick={e => {
+                    onClick={(e) => {
                       e.stopPropagation();
                       handleToggleFavorite(item.id);
                     }}
@@ -798,16 +811,3 @@ const FilterJobsBox = () => {
 };
 
 export default FilterJobsBox;
-
-<style jsx global>{`
-  .job-block-hover .inner-box {
-    transition: box-shadow 0.2s, border-color 0.2s;
-  }
-  .job-block-hover:hover .inner-box {
-    box-shadow: 0 4px 24px rgba(37,99,235,0.10), 0 1.5px 8px rgba(0,0,0,0.06);
-  }
-  .job-block-hover:hover h4 a {
-    color: #2563eb;
-    text-decoration: underline;
-  }
-`}</style>
