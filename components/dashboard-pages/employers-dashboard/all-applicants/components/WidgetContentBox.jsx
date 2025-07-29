@@ -527,13 +527,30 @@ const WidgetContentBox = ({ jobId, candidateName, showMatchingInfo, useMatchingA
             style={{ flex: 1, maxWidth: 320, background: '#f5f8fa', border: '1px solid #e5e9ec', borderRadius: 8, fontSize: 14, fontFamily: 'inherit', height: 44, boxShadow: 'none', outline: 'none', color: '#6f6f6f', fontWeight: 400, paddingLeft: 16 }}
           />
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <input
-              type="checkbox"
-              checked={selectedIds.length === applicantsToShow.length && applicantsToShow.length > 0}
-              onChange={e => handleSelectAll(e.target.checked)}
-              style={{ marginRight: 4 }}
-            />
-            <span style={{ marginRight: 8 }}>Select all</span>
+            <div 
+              style={{ 
+                display: 'flex', 
+                alignItems: 'center', 
+                gap: 4, 
+                cursor: 'pointer',
+                padding: '8px 12px',
+                borderRadius: '6px',
+                transition: 'background-color 0.2s ease',
+                userSelect: 'none'
+              }}
+              onClick={() => handleSelectAll(!(selectedIds.length === applicantsToShow.length && applicantsToShow.length > 0))}
+              onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f0f8ff'}
+              onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+            >
+              <input
+                type="checkbox"
+                checked={selectedIds.length === applicantsToShow.length && applicantsToShow.length > 0}
+                onChange={e => handleSelectAll(e.target.checked)}
+                style={{ marginRight: 4 }}
+                onClick={(e) => e.stopPropagation()}
+              />
+              <span style={{ marginRight: 8 }}>Select all</span>
+            </div>
             <button
               ref={exportBtnRef}
               className="btn btn-primary btn-sm"
@@ -586,7 +603,40 @@ const WidgetContentBox = ({ jobId, candidateName, showMatchingInfo, useMatchingA
                       className="candidate-block-three col-lg-6 col-md-12 col-sm-12"
                       key={applicant.applicationId}
                     >
-                      <div className="inner-box" style={{ position: 'relative', padding: 24, borderRadius: 16, background: '#fff', boxShadow: '0 2px 8px #eee', minHeight: 180 }}>
+                      <div 
+                        className="inner-box" 
+                        style={{ 
+                          position: 'relative', 
+                          padding: 24, 
+                          borderRadius: 16, 
+                          background: '#fff', 
+                          boxShadow: '0 2px 8px #eee', 
+                          minHeight: 180,
+                          cursor: 'pointer',
+                          transition: 'box-shadow 0.2s ease',
+                          border: selectedIds.includes(applicant.applicationId) ? '2px solid #1967d2' : '2px solid transparent'
+                        }}
+                        onClick={(e) => {
+                          // Không trigger nếu click vào checkbox hoặc các button action
+                          if (e.target.type === 'checkbox' || 
+                              e.target.closest('.option-list') || 
+                              e.target.closest('button') ||
+                              e.target.closest('a')) {
+                            return;
+                          }
+                          handleSelectOne(applicant.applicationId, !selectedIds.includes(applicant.applicationId));
+                        }}
+                        onMouseEnter={(e) => {
+                          if (!e.target.closest('.option-list') && !e.target.closest('button') && !e.target.closest('a')) {
+                            e.currentTarget.style.boxShadow = '0 4px 12px rgba(25, 103, 210, 0.15)';
+                          }
+                        }}
+                        onMouseLeave={(e) => {
+                          if (!e.target.closest('.option-list') && !e.target.closest('button') && !e.target.closest('a')) {
+                            e.currentTarget.style.boxShadow = '0 2px 8px #eee';
+                          }
+                        }}
+                      >
                         {/* Checkbox chọn ứng viên */}
                         <input
                           type="checkbox"
