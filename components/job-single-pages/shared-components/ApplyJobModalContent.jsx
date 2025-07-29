@@ -9,7 +9,7 @@ import 'react-toastify/dist/ReactToastify.css';
 import Modal from "@/components/common/Modal";
 import "@/styles/modal.css";
 
-const ApplyJobModalContent = ({ jobId }) => {
+const ApplyJobModalContent = ({ jobId, onClose }) => {
   const router = useRouter();
   const [formData, setFormData] = useState({
     coverLetter: "",
@@ -209,15 +209,11 @@ const ApplyJobModalContent = ({ jobId }) => {
       setSuccess("You have successfully applied for this job!");
       toast.success("You have successfully applied for this job!");
       setTimeout(() => {
-        setIsLoading(false);
-        const modal = document.getElementById("applyJobModal");
-        if (modal) {
-          const bootstrapModal = bootstrap.Modal.getInstance(modal);
-          if (bootstrapModal) {
-            bootstrapModal.hide();
-          }
-        }
-        router.push("/candidates-dashboard/applied-jobs");
+        setIsLoading(false); // Tắt loading trước
+        if (onClose) onClose(); // Đóng modal trước
+        setTimeout(() => {
+          router.push("/candidates-dashboard/applied-jobs");
+        }, 200); // Đợi modal đóng xong mới chuyển trang
       }, 1500);
     } catch (error) {
       // Lấy message từ nhiều key, ưu tiên errorMessage, ErrorMessage, message
