@@ -138,12 +138,15 @@ const ChatBoxContentField = ({
               }
               className="rounded-circle me-2"
               alt={currentChatPartner.name}
-              width={40}
-              height={40}
+              width={48}
+              height={48}
               style={{
                 objectFit: 'cover',
                 border: '2px solid #e0e0e0',
-                boxShadow: '0 2px 6px rgba(0,0,0,0.1)'
+                boxShadow: '0 2px 6px rgba(0,0,0,0.1)',
+                borderRadius: '50%',
+                width: '48px',
+                height: '48px'
               }}
               onError={(e) => {
                 e.target.src = '/images/resource/default-avatar.png';
