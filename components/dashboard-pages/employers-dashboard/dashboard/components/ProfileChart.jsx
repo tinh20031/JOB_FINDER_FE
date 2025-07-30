@@ -5,12 +5,13 @@ import {
   LinearScale,
   PointElement,
   LineElement,
+  BarElement,
   Title,
   Tooltip,
   Legend,
   Filler,
 } from "chart.js";
-import { Line } from "react-chartjs-2";
+import { Bar } from "react-chartjs-2";
 import { useEffect, useState } from "react";
 import jobService from "../../../../../services/jobService";
 import DatePicker from "react-datepicker";
@@ -21,6 +22,7 @@ ChartJS.register(
   LinearScale,
   PointElement,
   LineElement,
+  BarElement,
   Title,
   Tooltip,
   Legend,
@@ -74,6 +76,7 @@ export const options = {
         display: true,
         color: 'rgba(0, 0, 0, 0.05)',
       },
+      stacked: false,
       ticks: {
         font: {
           size: 11,
@@ -87,21 +90,13 @@ export const options = {
         display: true,
         color: 'rgba(0, 0, 0, 0.05)',
       },
+      stacked: false,
       ticks: {
         font: {
           size: 11,
         },
         color: '#666',
       },
-    },
-  },
-  elements: {
-    line: {
-      tension: 0.4,
-    },
-    point: {
-      radius: 4,
-      hoverRadius: 6,
     },
   },
 };
@@ -170,24 +165,18 @@ const ProfileChart = () => {
               {
                 label: "Views",
                 data: viewCounts,
-                borderColor: "#3b82f6",
-                backgroundColor: "rgba(59, 130, 246, 0.1)",
-                fill: true,
-                borderWidth: 2,
-                pointBackgroundColor: "#3b82f6",
-                pointBorderColor: "#ffffff",
-                pointBorderWidth: 2,
+                backgroundColor: "#3b82f6",
+                borderRadius: 6,
+                barPercentage: 0.45,
+                categoryPercentage: 0.6,
               },
               {
                 label: "Applications",
                 data: applyCounts,
-                borderColor: "#f59e0b",
-                backgroundColor: "rgba(245, 158, 11, 0.1)",
-                fill: true,
-                borderWidth: 2,
-                pointBackgroundColor: "#f59e0b",
-                pointBorderColor: "#ffffff",
-                pointBorderWidth: 2,
+                backgroundColor: "#f59e0b",
+                borderRadius: 6,
+                barPercentage: 0.45,
+                categoryPercentage: 0.6,
               },
             ],
           });
@@ -219,24 +208,18 @@ const ProfileChart = () => {
               {
                 label: "Views",
                 data: viewData,
-                borderColor: "#3b82f6",
-                backgroundColor: "rgba(59, 130, 246, 0.1)",
-                fill: true,
-                borderWidth: 2,
-                pointBackgroundColor: "#3b82f6",
-                pointBorderColor: "#ffffff",
-                pointBorderWidth: 2,
+                backgroundColor: "#3b82f6",
+                borderRadius: 6,
+                barPercentage: 0.45,
+                categoryPercentage: 0.6,
               },
               {
                 label: "Applications",
                 data: applyData,
-                borderColor: "#f59e0b",
-                backgroundColor: "rgba(245, 158, 11, 0.1)",
-                fill: true,
-                borderWidth: 2,
-                pointBackgroundColor: "#f59e0b",
-                pointBorderColor: "#ffffff",
-                pointBorderWidth: 2,
+                backgroundColor: "#f59e0b",
+                borderRadius: 6,
+                barPercentage: 0.45,
+                categoryPercentage: 0.6,
               },
             ],
           });
@@ -337,7 +320,7 @@ const ProfileChart = () => {
       </div>
 
       <div className="chart-content">
-        <Line options={options} data={chartData} />
+        <Bar options={options} data={chartData} />
       </div>
 
       <style jsx>{`

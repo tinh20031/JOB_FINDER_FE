@@ -18,6 +18,8 @@ const PackagesPage = () => {
   const [mySubscription, setMySubscription] = useState(null);
   const [loading, setLoading] = useState(true);
   const [packages, setPackages] = React.useState([]);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [confirmMessage, setConfirmMessage] = useState('');
 
   // Hàm cập nhật lại thông tin gói (bao gồm số lượt try-match, download...)
   const refreshSubscription = async () => {
@@ -64,6 +66,7 @@ const PackagesPage = () => {
     if (!mySubscription) return;
     let packageName = mySubscription.isSubscribed ? mySubscription.subscription?.packageName : mySubscription.freePackage?.name;
     if (!packageName) return;
+    
     // Nếu là Free và chưa từng mua gói nào, chỉ reset quota về 1/1 nếu chưa từng set hoặc chuyển từ gói khác về Free
     if (
       !mySubscription.isSubscribed &&
@@ -75,14 +78,25 @@ const PackagesPage = () => {
       localStorage.setItem('cv_last_package_' + userId, 'Free');
       return;
     }
-    // Đã từng cộng quota chưa?
-    let lastPackage = localStorage.getItem('cv_last_package_' + userId);
-    if (lastPackage !== packageName) {
-      // Cộng quota mới
+    
+    // Lấy updatedAt để đánh dấu khi gói được update
+    const updatedAt = mySubscription.isSubscribed ? 
+      mySubscription.subscription?.updatedAt :
+      mySubscription.freePackage?.updatedAt || new Date().toISOString();
+    
+    const lastUpdatedAt = localStorage.getItem('cv_last_updated_at_' + userId);
+    
+  
+    // Chỉ cộng quota khi có updatedAt mới (thực sự update gói)
+    if (lastUpdatedAt !== updatedAt) {
+      console.log('Adding quota for package update:', packageName);
       const add = getQuotaByPackage(packageName);
       const currentMax = parseInt(localStorage.getItem(keyMax) || '0', 10);
       localStorage.setItem(keyMax, currentMax + add);
       localStorage.setItem('cv_last_package_' + userId, packageName);
+      localStorage.setItem('cv_last_updated_at_' + userId, updatedAt);
+    } else {
+      console.log('Skipping quota addition - same update time');
     }
   }, [mySubscription, userId]);
 
@@ -90,6 +104,47 @@ const PackagesPage = () => {
   const maxDownloads = localStorage.getItem(keyMax) === 'Infinity' ? Infinity : parseInt(localStorage.getItem(keyMax) || '0', 10);
   const downloadCount = parseInt(localStorage.getItem(keyCount) || '0', 10);
   const downloadRemaining = maxDownloads === Infinity ? 'Unlimited' : Math.max(0, maxDownloads - downloadCount);
+
+  // Helper function to get progress percentage
+  const getProgressPercentage = (used, total) => {
+    if (total === Infinity || total === 'Unlimited') return 100;
+    if (total === 0) return 0;
+    return Math.min(100, ((total - used) / total) * 100);
+  };
+
+  // Hàm xử lý khi click vào button mua package
+  const handleBuyPackageClick = () => {
+    // Kiểm tra nếu user có gói hiện tại và chưa sử dụng hết
+    if (mySubscription?.isSubscribed && mySubscription.subscription) {
+      const currentPackage = mySubscription.subscription;
+      const remainingTryMatches = currentPackage.remainingTryMatches || 0;
+      const remainingDownloads = downloadRemaining;
+      
+      if (remainingTryMatches > 0 || (remainingDownloads !== 'Unlimited' && remainingDownloads > 0)) {
+        const message = `You have not used up all of your current ${currentPackage.packageName} package.\n\n` +
+          `- Remaining Try Matches: ${remainingTryMatches}\n` +
+          `- Remaining CV Downloads: ${remainingDownloads}\n` +
+        
+          `Are you sure you want to purchase a new package?`;
+        
+        setConfirmMessage(message);
+        setShowConfirmModal(true);
+        return;
+      }
+    }
+    
+    // Nếu không có gói hiện tại hoặc đã sử dụng hết, chuyển thẳng đến trang buy
+    window.location.href = "/candidates-dashboard/packages/buy";
+  };
+
+  const handleConfirmPurchase = () => {
+    setShowConfirmModal(false);
+    window.location.href = "/candidates-dashboard/packages/buy";
+  };
+
+  const handleCancelPurchase = () => {
+    setShowConfirmModal(false);
+  };
 
   return (
     <div className="page-wrapper dashboard">
@@ -113,13 +168,15 @@ const PackagesPage = () => {
               <div className="ls-widget package-widget">
                 <div className="tabs-box">
                   <div className="widget-title">
-                    <h4>My Current Package</h4>
+                    <div className="title-section">
+                      <h4 style={{ color: 'white' }}><i className="fas fa-box-open" style={{ color: 'white' }}></i> My Current Package</h4>
+                    </div>
                   </div>
                   <div className="widget-content">
                     {loading ? (
                       <div className="package-loading-state">
-                        <div className="spinner-border text-primary" role="status">
-                          <span className="visually-hidden">Loading...</span>
+                        <div className="loading-spinner">
+                          <div className="spinner"></div>
                         </div>
                         <p className="loading-text">Loading your package information...</p>
                       </div>
@@ -128,49 +185,89 @@ const PackagesPage = () => {
                         {mySubscription.isSubscribed ? (
                           <div className="premium-package">
                             <div className="package-header">
-                              <div className="package-icon">
-                                <i className="fas fa-crown"></i>
-                              </div>
-                              <div className="package-title">
-                                <h3>{mySubscription.subscription?.packageName || 'Free'}</h3>
-                                <span className="badge active-badge">Active</span>
+                              <div className="package-info">
+                                <h3 className="package-name">{mySubscription.subscription?.packageName || 'Premium'}</h3>
+                                <span className="status-badge active">
+                                  <i className="fas fa-check-circle"></i>
+                                  {mySubscription.subscription?.packageName || 'Active Subscription'}
+                                </span>
                               </div>
                             </div>
-                            <div className="package-details">
-                              <div className="detail-item">
-                                <div className="detail-icon">
-                                  <i className="fas fa-sync-alt"></i>
+                            
+                            <div className="package-stats">
+                              <div className="stat-card">
+                                <div className="stat-header">
+                                  <div className="stat-icon try-match">
+                                    <i className="fas fa-sync-alt"></i>
+                                  </div>
+                                  <div className="stat-info">
+                                    <h4>Try-Match Credits</h4>
+                                    <p className="stat-description">Find your perfect job matches</p>
+                                  </div>
                                 </div>
-                                <div className="detail-content">
-                                  <p className="detail-label">Remaining Try-match</p>
-                                  <p className="detail-value">{
-                                    (() => {
-                                      const remaining = mySubscription.subscription?.remainingTryMatches;
-                                      let limit = mySubscription.subscription?.tryMatchLimit;
-                                      if (limit === undefined && packages && packages.length > 0) {
-                                        const pkg = packages.find(p => (p.name || '').toLowerCase() === (mySubscription.subscription?.packageName || '').toLowerCase());
-                                        if (pkg && pkg.tryMatchLimit !== undefined) limit = pkg.tryMatchLimit;
-                                      }
-                                      if (remaining !== undefined && limit !== undefined) {
-                                        // Nếu số còn lại lớn hơn số tối đa mặc định, lấy số còn lại làm tổng số
-                                        const total = remaining > limit ? remaining : limit;
-                                        return `${remaining} / ${total === Infinity ? 'Unlimited' : total}`;
-                                      } else if (remaining !== undefined) {
-                                        return `${remaining}`;
-                                      } else {
-                                        return '-';
-                                      }
-                                    })()
-                                  }</p>
+                                <div className="stat-content">
+                                  {(() => {
+                                    const remaining = mySubscription.subscription?.remainingTryMatches;
+                                    let limit = mySubscription.subscription?.tryMatchLimit;
+                                    if (limit === undefined && packages && packages.length > 0) {
+                                      const pkg = packages.find(p => (p.name || '').toLowerCase() === (mySubscription.subscription?.packageName || '').toLowerCase());
+                                      if (pkg && pkg.tryMatchLimit !== undefined) limit = pkg.tryMatchLimit;
+                                    }
+                                    if (remaining !== undefined && limit !== undefined) {
+                                      const total = remaining > limit ? remaining : limit;
+                                      const percentage = getProgressPercentage(total - remaining, total);
+                                      return (
+                                        <>
+                                          <div className="stat-numbers">
+                                            <span className="current">{remaining}</span>
+                                            <span className="divider">/</span>
+                                            <span className="total">{total === Infinity ? 'Unlimited' : total}</span>
+                                          </div>
+                                          {total !== Infinity && (
+                                            <div className="progress-bar">
+                                              <div className="progress-fill" style={{ width: `${percentage}%` }}></div>
+                                            </div>
+                                          )}
+                                        </>
+                                      );
+                                    } else if (remaining !== undefined) {
+                                      return (
+                                        <div className="stat-numbers">
+                                          <span className="current">{remaining}</span>
+                                        </div>
+                                      );
+                                    } else {
+                                      return <div className="stat-numbers"><span className="current">-</span></div>;
+                                    }
+                                  })()}
                                 </div>
                               </div>
-                              <div className="detail-item">
-                                <div className="detail-icon">
-                                  <i className="fas fa-download"></i>
+
+                              <div className="stat-card">
+                                <div className="stat-header">
+                                  <div className="stat-icon download">
+                                    <i className="fas fa-download"></i>
+                                  </div>
+                                  <div className="stat-info">
+                                    <h4>CV Downloads</h4>
+                                    <p className="stat-description">Download candidate profiles</p>
+                                  </div>
                                 </div>
-                                <div className="detail-content">
-                                  <p className="detail-label">Download CV left</p>
-                                  <p className="detail-value">{downloadRemaining} {maxDownloads === Infinity ? '' : `/ ${maxDownloads}`}</p>
+                                <div className="stat-content">
+                                  <div className="stat-numbers">
+                                    <span className="current">{downloadRemaining}</span>
+                                    {maxDownloads !== Infinity && (
+                                      <>
+                                        <span className="divider">/</span>
+                                        <span className="total">{maxDownloads}</span>
+                                      </>
+                                    )}
+                                  </div>
+                                  {maxDownloads !== Infinity && (
+                                    <div className="progress-bar">
+                                      <div className="progress-fill" style={{ width: `${getProgressPercentage(downloadCount, maxDownloads)}%` }}></div>
+                                    </div>
+                                  )}
                                 </div>
                               </div>
                             </div>
@@ -178,35 +275,78 @@ const PackagesPage = () => {
                         ) : mySubscription.freePackage ? (
                           <div className="free-package">
                             <div className="package-header">
-                              <div className="package-icon">
-                                <i className="fas fa-gift"></i>
-                              </div>
-                              <div className="package-title">
-                                <h3>{mySubscription.freePackage.name}</h3>
-                                <span className="badge free-badge">Free</span>
+                              <div className="package-info">
+                                <h3 className="package-name">{mySubscription.freePackage.name}</h3>
+                                <span className="status-badge free">
+                                  <i className="fas fa-star"></i>
+                                  {mySubscription.freePackage.name ? `${mySubscription.freePackage.name} Plan` : 'Free Plan'}
+                                </span>
                               </div>
                             </div>
-                            <div className="package-details">
-                              <div className="detail-item">
-                                <div className="detail-icon">
-                                  <i className="fas fa-sync-alt"></i>
+                            
+                            <div className="package-stats">
+                              <div className="stat-card">
+                                <div className="stat-header">
+                                  <div className="stat-icon try-match free">
+                                    <i className="fas fa-sync-alt"></i>
+                                  </div>
+                                  <div className="stat-info">
+                                    <h4>Free Try-Match</h4>
+                                    <p className="stat-description">Limited job matching</p>
+                                  </div>
                                 </div>
-                                <div className="detail-content">
-                                  <p className="detail-label">Free try-match</p>
-                                  <p className="detail-value">{
-                                    (mySubscription.freePackage?.remainingFreeMatches !== undefined && mySubscription.freePackage?.tryMatchLimit !== undefined)
-                                      ? `${mySubscription.freePackage.remainingFreeMatches} / ${mySubscription.freePackage.tryMatchLimit === Infinity ? 'Unlimited' : mySubscription.freePackage.tryMatchLimit}`
-                                      : (mySubscription.freePackage?.tryMatchLimit !== undefined ? mySubscription.freePackage.tryMatchLimit : '-')
-                                  }</p>
+                                <div className="stat-content">
+                                  {(() => {
+                                    const remaining = mySubscription.freePackage?.remainingFreeMatches;
+                                    const limit = mySubscription.freePackage?.tryMatchLimit;
+                                    if (remaining !== undefined && limit !== undefined) {
+                                      const percentage = getProgressPercentage(limit - remaining, limit);
+                                      return (
+                                        <>
+                                          <div className="stat-numbers">
+                                            <span className="current">{remaining}</span>
+                                            <span className="divider">/</span>
+                                            <span className="total">{limit === Infinity ? 'Unlimited' : limit}</span>
+                                          </div>
+                                          {limit !== Infinity && (
+                                            <div className="progress-bar">
+                                              <div className="progress-fill" style={{ width: `${percentage}%` }}></div>
+                                            </div>
+                                          )}
+                                        </>
+                                      );
+                                    } else if (limit !== undefined) {
+                                      return (
+                                        <div className="stat-numbers">
+                                          <span className="current">{limit}</span>
+                                        </div>
+                                      );
+                                    } else {
+                                      return <div className="stat-numbers"><span className="current">-</span></div>;
+                                    }
+                                  })()}
                                 </div>
                               </div>
-                              <div className="detail-item">
-                                <div className="detail-icon">
-                                  <i className="fas fa-download"></i>
+
+                              <div className="stat-card">
+                                <div className="stat-header">
+                                  <div className="stat-icon download free">
+                                    <i className="fas fa-download"></i>
+                                  </div>
+                                  <div className="stat-info">
+                                    <h4>CV Downloads</h4>
+                                    <p className="stat-description">Basic download access</p>
+                                  </div>
                                 </div>
-                                <div className="detail-content">
-                                  <p className="detail-label">Download CV left</p>
-                                  <p className="detail-value">{downloadRemaining} / {maxDownloads}</p>
+                                <div className="stat-content">
+                                  <div className="stat-numbers">
+                                    <span className="current">{downloadRemaining}</span>
+                                    <span className="divider">/</span>
+                                    <span className="total">{maxDownloads}</span>
+                                  </div>
+                                  <div className="progress-bar">
+                                    <div className="progress-fill" style={{ width: `${getProgressPercentage(downloadCount, maxDownloads)}%` }}></div>
+                                  </div>
                                 </div>
                               </div>
                             </div>
@@ -214,32 +354,50 @@ const PackagesPage = () => {
                         ) : (
                           <div className="no-package">
                             <div className="empty-state">
-                              <i className="fas fa-exclamation-circle"></i>
-                              <p>No package information available</p>
+                              <div className="empty-icon">
+                                <i className="fas fa-inbox"></i>
+                              </div>
+                              <h3>No Package Information</h3>
+                              <p>Unable to load your package details at this time.</p>
                             </div>
                           </div>
                         )}
-                        <div className="package-action">
-                          <Link href="/candidates-dashboard/packages/buy">
-                            <button className="upgrade-button">
-                              <i className="fas fa-arrow-up"></i>
-                              {mySubscription.isSubscribed ? 'Upgrade Package' : 'Buy Package'}
-                            </button>
-                          </Link>
+                        
+                        <div className="package-actions">
+                          <button className="primary-button" onClick={handleBuyPackageClick}>
+                            <i className={mySubscription.isSubscribed ? "fas fa-arrow-up" : "fas fa-shopping-cart"}></i>
+                            <span>{mySubscription.isSubscribed ? 'Upgrade Package' : 'Buy Package'}</span>
+                          </button>
                         </div>
                       </div>
                     ) : (
                       <div className="no-subscription">
                         <div className="empty-state">
-                          <i className="fas fa-exclamation-triangle"></i>
-                          <h3>No subscription found</h3>
-                          <p>You haven't subscribed to any packages yet.</p>
+                          <div className="empty-icon">
+                            <i className="fas fa-shopping-bag"></i>
+                          </div>
+                          <h3>Welcome to Packages</h3>
+                          <p>Choose the perfect plan to unlock premium features and boost your job search experience.</p>
+                          <div className="benefits-list">
+                            <div className="benefit-item">
+                              <i className="fas fa-check"></i>
+                              <span>Advanced job matching</span>
+                            </div>
+                            <div className="benefit-item">
+                              <i className="fas fa-check"></i>
+                              <span>Unlimited CV downloads</span>
+                            </div>
+                            <div className="benefit-item">
+                              <i className="fas fa-check"></i>
+                              <span>Priority support</span>
+                            </div>
+                          </div>
                         </div>
-                        <div className="package-action">
+                        <div className="package-actions">
                           <Link href="/candidates-dashboard/packages/buy">
-                            <button className="upgrade-button">
-                              <i className="fas fa-shopping-cart"></i>
-                              Browse Packages
+                            <button className="primary-button large">
+                              <i className="fas fa-rocket"></i>
+                              <span>Explore Packages</span>
                             </button>
                           </Link>
                         </div>
@@ -254,43 +412,143 @@ const PackagesPage = () => {
       </section>
       <CopyrightFooter />
 
-      {/* Added CSS Styles */}
+      {/* Confirmation Modal */}
+      {showConfirmModal && (
+        <div className="modal-overlay">
+          <div className="modal-content">
+            <div className="modal-header">
+              <h3>Confirm package purchase</h3>
+              <button className="modal-close" onClick={handleCancelPurchase}>
+                <i className="fas fa-times"></i>
+              </button>
+            </div>
+            <div className="modal-body">
+              <div className="warning-icon">
+                <i className="fas fa-exclamation-triangle"></i>
+              </div>
+              <div className="message-content">
+                {confirmMessage.split('\n').map((line, index) => (
+                  <p key={index} className={line.startsWith('-') ? 'detail-line' : 'main-message'}>
+                    {line}
+                  </p>
+                ))}
+              </div>
+            </div>
+            <div className="modal-footer">
+              <button className="btn-cancel" onClick={handleCancelPurchase}>
+                <i className="fas fa-times"></i>
+                <span>Cancel</span>
+              </button>
+              <button className="btn-confirm" onClick={handleConfirmPurchase}>
+                <i className="fas fa-check"></i>
+                <span>Confirm</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Enhanced CSS Styles */}
       <style jsx>{`
         .package-widget {
-          border-radius: 12px;
+          border-radius: 20px;
           overflow: hidden;
-          box-shadow: 0 5px 20px rgba(0, 0, 0, 0.05);
+          box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
           margin-bottom: 30px;
           background: #fff;
+          border: 1px solid #f0f2f5;
+          transition: all 0.3s ease;
+        }
+
+        .package-widget:hover {
+          box-shadow: 0 15px 50px rgba(0, 0, 0, 0.12);
+          transform: translateY(-2px);
         }
 
         .widget-title {
-          padding: 20px 30px;
-          background: #f5f7fc;
-          border-bottom: 1px solid #ecedf2;
+          padding: 30px 35px 25px;
+          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+          color: white;
+          position: relative;
+          overflow: hidden;
         }
 
-        .widget-title h4 {
-          font-size: 18px;
-          font-weight: 600;
+        .widget-title::before {
+          content: '';
+          position: absolute;
+          top: -50%;
+          right: -50%;
+          width: 100%;
+          height: 200%;
+          background: linear-gradient(45deg, transparent, rgba(255,255,255,0.1), transparent);
+          transform: rotate(45deg);
+          animation: shimmer 3s infinite;
+        }
+
+        @keyframes shimmer {
+          0% { transform: translateX(-100%) translateY(-100%) rotate(45deg); }
+          100% { transform: translateX(100%) translateY(100%) rotate(45deg); }
+        }
+
+        .title-section {
+          position: relative;
+          z-index: 1;
+        }
+
+        .title-section h4 {
+          font-size: 24px;
+          font-weight: 700;
+          margin: 0 0 8px 0;
+          display: flex;
+          align-items: center;
+          gap: 12px;
+        }
+
+        .title-section h4 i {
+          font-size: 20px;
+          opacity: 0.9;
+        }
+
+        .subtitle {
           margin: 0;
-          color: #202124;
+          opacity: 0.9;
+          font-size: 14px;
+          font-weight: 400;
         }
 
         .widget-content {
-          padding: 30px;
+          padding: 35px;
         }
 
         .package-loading-state {
           display: flex;
           flex-direction: column;
           align-items: center;
-          padding: 40px 0;
+          padding: 60px 0;
+        }
+
+        .loading-spinner {
+          margin-bottom: 20px;
+        }
+
+        .spinner {
+          width: 50px;
+          height: 50px;
+          border: 4px solid #f3f4f6;
+          border-top: 4px solid #667eea;
+          border-radius: 50%;
+          animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
         }
 
         .loading-text {
-          margin-top: 15px;
-          color: #696969;
+          color: #6b7280;
+          font-size: 16px;
+          font-weight: 500;
         }
 
         .package-info-card {
@@ -298,192 +556,500 @@ const PackagesPage = () => {
         }
 
         .premium-package, .free-package {
-          border-radius: 10px;
-          padding: 25px;
-          transition: all 0.3s;
+          border-radius: 16px;
+          padding: 0;
+          transition: all 0.3s ease;
+          overflow: hidden;
+          position: relative;
         }
 
         .premium-package {
-          background: linear-gradient(135deg, #f5faff 0%, #eef6ff 100%);
-          border: 1px solid #e0edff;
+          background: linear-gradient(135deg, #f8faff 0%, #f0f4ff 100%);
+          border: 2px solid #e0edff;
+        }
+
+        .premium-package::before {
+          content: '';
+          position: absolute;
+          top: 0;
+          left: 0;
+          right: 0;
+          height: 4px;
+          background: linear-gradient(90deg, #667eea, #764ba2, #f093fb);
         }
 
         .free-package {
-          background: #f5f7fc;
-          border: 1px solid #ecedf2;
+          background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%);
+          border: 2px solid #e5e7eb;
         }
 
         .package-header {
+          padding: 30px 30px 25px;
+          display: flex;
+          align-items: flex-start;
+          gap: 20px;
+        }
+
+        .package-badge {
           display: flex;
           align-items: center;
-          margin-bottom: 20px;
-        }
-
-        .package-icon {
-          width: 50px;
-          height: 50px;
-          border-radius: 50%;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          margin-right: 15px;
-          font-size: 20px;
-        }
-
-        .premium-package .package-icon {
-          background: linear-gradient(135deg, #3a7bd5 0%, #00d2ff 100%);
-          color: white;
-        }
-
-        .free-package .package-icon {
-          background: linear-gradient(135deg, #f5f7fc 0%, #dfe3ef 100%);
-          color: #696969;
-        }
-
-        .package-title h3 {
-          margin: 0 0 5px 0;
-          font-size: 22px;
+          gap: 8px;
+          padding: 12px 20px;
+          border-radius: 50px;
           font-weight: 600;
+          font-size: 14px;
+          min-width: fit-content;
         }
 
-        .badge {
-          display: inline-block;
-          padding: 4px 12px;
-          font-size: 12px;
-          font-weight: 500;
-          border-radius: 30px;
-        }
-
-        .active-badge {
-          background-color: #e1f5ea;
-          color: #0ca750;
+        .premium-badge {
+          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+          color: white;
+          box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
         }
 
         .free-badge {
-          background-color: #f0f0f0;
-          color: #696969;
-        }
-
-        .package-details {
-          display: flex;
-          flex-direction: column;
-          gap: 15px;
-          margin-top: 20px;
-        }
-
-        .detail-item {
-          display: flex;
-          align-items: center;
-        }
-
-        .detail-icon {
-          width: 40px;
-          height: 40px;
-          border-radius: 8px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          margin-right: 15px;
-          font-size: 16px;
-        }
-
-        .premium-package .detail-icon {
-          background: rgba(58, 123, 213, 0.1);
-          color: #3a7bd5;
-        }
-
-        .free-package .detail-icon {
-          background: rgba(105, 105, 105, 0.1);
-          color: #696969;
-        }
-
-        .detail-label {
-          margin: 0;
-          font-size: 14px;
-          color: #696969;
-        }
-
-        .detail-value {
-          margin: 0;
-          font-size: 16px;
-          font-weight: 600;
-          color: #202124;
-        }
-
-        .package-action {
-          margin-top: 30px;
-          display: flex;
-          justify-content: center;
-        }
-
-        .upgrade-button {
-          padding: 12px 24px;
-          border-radius: 8px;
-          border: none;
-          background: linear-gradient(135deg, #3a7bd5 0%, #00d2ff 100%);
+          background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%);
           color: white;
+        }
+
+        .package-info {
+          flex: 1;
+        }
+
+        .package-name {
+          font-size: 28px;
+          font-weight: 700;
+          margin: 0 0 12px 0;
+          color: #1f2937;
+        }
+
+        .status-badge {
+          display: inline-flex;
+          align-items: center;
+          gap: 6px;
+          padding: 6px 14px;
+          border-radius: 20px;
+          font-size: 13px;
+          font-weight: 600;
+        }
+
+        .status-badge.active {
+          background: rgba(16, 185, 129, 0.1);
+          color: #059669;
+        }
+
+        .status-badge.free {
+          background: rgba(107, 114, 128, 0.1);
+          color: #4b5563;
+        }
+
+        .package-stats {
+          padding: 0 30px 30px;
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 25px;
+        }
+
+        .stat-card {
+          background: white;
+          border-radius: 16px;
+          padding: 25px;
+          box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+          border: 1px solid #f0f2f5;
+          transition: all 0.3s ease;
+        }
+
+        .stat-card:hover {
+          transform: translateY(-4px);
+          box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
+        }
+
+        .stat-header {
+          display: flex;
+          align-items: flex-start;
+          gap: 15px;
+          margin-bottom: 20px;
+        }
+
+        .stat-icon {
+          width: 50px;
+          height: 50px;
+          border-radius: 12px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 20px;
+        }
+
+        .stat-icon.try-match {
+          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+          color: white;
+        }
+
+        .stat-icon.download {
+          background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%);
+          color: white;
+        }
+
+        .stat-icon.try-match.free, .stat-icon.download.free {
+          background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%);
+          color: white;
+        }
+
+        .stat-info h4 {
+          font-size: 18px;
+          font-weight: 600;
+          margin: 0 0 6px 0;
+          color: #1f2937;
+        }
+
+        .stat-description {
+          font-size: 13px;
+          color: #6b7280;
+          margin: 0;
+        }
+
+        .stat-content {
+          text-align: center;
+        }
+
+        .stat-numbers {
+          display: flex;
+          align-items: baseline;
+          justify-content: center;
+          gap: 8px;
+          margin-bottom: 15px;
+        }
+
+        .stat-numbers .current {
+          font-size: 32px;
+          font-weight: 700;
+          color: #1f2937;
+        }
+
+        .stat-numbers .divider {
+          font-size: 20px;
+          color: #d1d5db;
+          font-weight: 500;
+        }
+
+        .stat-numbers .total {
+          font-size: 18px;
+          color: #6b7280;
+          font-weight: 600;
+        }
+
+        .progress-bar {
+          width: 100%;
+          height: 8px;
+          background: #f3f4f6;
+          border-radius: 4px;
+          overflow: hidden;
+        }
+
+        .progress-fill {
+          height: 100%;
+          background: linear-gradient(90deg, #10b981, #059669);
+          border-radius: 4px;
+          transition: width 0.5s ease;
+        }
+
+        .package-actions {
+          padding: 0 30px 30px;
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          gap: 0;
+          margin-top: 32px;
+        }
+
+        .primary-button, .secondary-button {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          padding: 14px 28px;
+          border-radius: 12px;
           font-weight: 600;
           font-size: 15px;
+          cursor: pointer;
+          transition: all 0.3s ease;
+          border: none;
+          text-decoration: none;
+          margin: 0 auto;
+        }
+
+        .primary-button {
+          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+          color: white;
+          box-shadow: 0 6px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .primary-button:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+        }
+
+        .primary-button.large {
+          padding: 16px 32px;
+          font-size: 16px;
+        }
+
+        .secondary-button {
+          background: white;
+          color: #6b7280;
+          border: 2px solid #e5e7eb;
+        }
+
+        .secondary-button:hover {
+          background: #f9fafb;
+          border-color: #d1d5db;
+          transform: translateY(-1px);
+        }
+
+        .no-subscription, .no-package {
+          text-align: center;
+          padding: 40px 20px;
+        }
+
+        .empty-state {
+          margin-bottom: 35px;
+        }
+
+        .empty-icon {
+          width: 80px;
+          height: 80px;
+          margin: 0 auto 25px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
+          border-radius: 50%;
+          font-size: 32px;
+          color: #9ca3af;
+        }
+
+        .empty-state h3 {
+          font-size: 24px;
+          font-weight: 700;
+          margin-bottom: 12px;
+          color: #1f2937;
+        }
+
+        .empty-state p {
+          font-size: 16px;
+          color: #6b7280;
+          max-width: 400px;
+          margin: 0 auto 25px;
+          line-height: 1.5;
+        }
+
+        .benefits-list {
+          display: flex;
+          flex-direction: column;
+          gap: 12px;
+          max-width: 300px;
+          margin: 0 auto;
+        }
+
+        .benefit-item {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          padding: 8px 0;
+          font-size: 15px;
+          color: #4b5563;
+        }
+
+        .benefit-item i {
+          color: #10b981;
+          font-size: 14px;
+          width: 16px;
+        }
+
+        /* Modal Styles */
+        .modal-overlay {
+          position: fixed;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          background: rgba(0, 0, 0, 0.5);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          z-index: 1050;
+        }
+
+        .modal-content {
+          background: white;
+          border-radius: 12px;
+          max-width: 500px;
+          width: 90%;
+          max-height: 80vh;
+          overflow-y: auto;
+          box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        .modal-header {
+          padding: 20px 24px;
+          border-bottom: 1px solid #e9ecef;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+        }
+
+        .modal-header h3 {
+          margin: 0;
+          font-size: 18px;
+          font-weight: 600;
+          color: #333;
+        }
+
+        .modal-close {
+          background: none;
+          border: none;
+          font-size: 18px;
+          cursor: pointer;
+          color: #666;
+          padding: 4px;
+          border-radius: 4px;
+          transition: all 0.2s;
+        }
+
+        .modal-close:hover {
+          background: #f8f9fa;
+          color: #333;
+        }
+
+        .modal-body {
+          padding: 24px;
+          text-align: center;
+        }
+
+        .warning-icon {
+          margin-bottom: 16px;
+        }
+
+        .warning-icon i {
+          font-size: 48px;
+          color: #ffc107;
+        }
+
+        .message-content {
+          text-align: left;
+        }
+
+        .main-message {
+          font-size: 16px;
+          margin-bottom: 12px;
+          color: #333;
+          font-weight: 500;
+        }
+
+        .detail-line {
+          font-size: 14px;
+          margin-bottom: 8px;
+          color: #666;
+          padding-left: 16px;
+        }
+
+        .modal-footer {
+          padding: 16px 24px;
+          border-top: 1px solid #e9ecef;
+          display: flex;
+          gap: 12px;
+          justify-content: flex-end;
+        }
+
+        .btn-cancel, .btn-confirm {
+          padding: 10px 20px;
+          border: none;
+          border-radius: 6px;
+          font-size: 14px;
+          font-weight: 500;
           cursor: pointer;
           display: flex;
           align-items: center;
           gap: 8px;
-          transition: all 0.3s;
-          box-shadow: 0 4px 10px rgba(58, 123, 213, 0.2);
+          transition: all 0.2s;
         }
 
-        .upgrade-button:hover {
-          transform: translateY(-2px);
-          box-shadow: 0 6px 15px rgba(58, 123, 213, 0.3);
+        .btn-cancel {
+          background: #f8f9fa;
+          color: #666;
         }
 
-        .no-subscription .empty-state,
-        .no-package .empty-state {
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          text-align: center;
-          padding: 40px 0;
-          color: #696969;
+        .btn-cancel:hover {
+          background: #e9ecef;
+          color: #333;
         }
 
-        .empty-state i {
-          font-size: 48px;
-          color: #d1d5db;
-          margin-bottom: 15px;
+        .btn-confirm {
+          background: #007bff;
+          color: white;
         }
 
-        .empty-state h3 {
-          font-size: 20px;
-          margin-bottom: 10px;
-          color: #202124;
+        .btn-confirm:hover {
+          background: #0056b3;
         }
 
-        .empty-state p {
-          color: #696969;
-        }
-
-        @media (max-width: 767px) {
+        @media (max-width: 768px) {
           .widget-content {
-            padding: 20px;
+            padding: 25px 20px;
           }
 
-          .premium-package, .free-package {
-            padding: 20px;
-          }
-
-          .package-title h3 {
-            font-size: 18px;
-          }
-
-          .detail-item {
+          .package-header {
+            padding: 25px 20px 20px;
             flex-direction: column;
-            align-items: flex-start;
+            gap: 15px;
+            text-align: center;
           }
 
-          .detail-icon {
-            margin-bottom: 10px;
-            margin-right: 0;
+          .package-name {
+            font-size: 24px;
+          }
+
+          .package-stats {
+            padding: 0 20px 25px;
+            grid-template-columns: 1fr;
+            gap: 20px;
+          }
+
+          .stat-card {
+            padding: 20px;
+          }
+
+          .stat-header {
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            gap: 12px;
+          }
+
+          .package-actions {
+            padding: 0 20px 25px;
+            flex-direction: column;
+            align-items: center;
+          }
+
+          .primary-button, .secondary-button {
+            justify-content: center;
+            width: 100%;
+            margin: 0 auto;
+          }
+
+          .title-section h4 {
+            font-size: 20px;
+          }
+        }
+
+        @media (max-width: 480px) {
+          .widget-title {
+            padding: 25px 20px 20px;
+          }
+
+          .stat-numbers .current {
+            font-size: 28px;
           }
         }
       `}</style>

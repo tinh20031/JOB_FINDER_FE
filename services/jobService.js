@@ -912,6 +912,7 @@ export const jobService = {
     }
   },
 
+
   // Lấy job nổi bật (highlight) của company
   async getCompanyHighlightJobs(companyId, limit = 5, timeRange = '7d') {
     try {
@@ -920,6 +921,23 @@ export const jobService = {
     } catch (error) {
       console.error('Error fetching highlight jobs:', error);
       return { Jobs: [] };
+    }
+  },
+
+  // GET: Lấy danh sách trending jobs
+  async getTrendingJobs({ role = "candidate", companyId = null, page = 1, pageSize = 10 } = {}) {
+    try {
+      const params = new URLSearchParams();
+      if (role) params.append("role", role);
+      if (companyId) params.append("companyId", companyId);
+      if (page) params.append("page", page);
+      if (pageSize) params.append("pageSize", pageSize);
+      const response = await axios.get(`${API_URL}/job/trending?${params.toString()}`);
+      return response.data;
+    } catch (error) {
+      console.error("Error fetching trending jobs:", error);
+      throw error;
+
     }
   },
 };

@@ -12,6 +12,7 @@ import MobileMenu from "../header/MobileMenu";
 import Hero1 from "../hero/hero-1";
 import JobCategorie1 from "../job-categories/JobCategorie1";
 import JobFeatured1 from "../job-featured/JobFeatured1";
+import TrendingJobsHome from "../job-featured/TrendingJobsHome";
 // import Testimonial from "../testimonial/Testimonial";
 
 const index = () => {
@@ -45,6 +46,23 @@ const index = () => {
       </div>
     </section>
       {/* End Job Categorie Section */}
+
+      {/* Trending Jobs Section */}
+      <section className="job-section">
+        <div className="auto-container">
+          <div className="sec-title text-center">
+            <h2>Trending Jobs</h2>
+            <div className="text">
+              Hot jobs trending now
+            </div>
+          </div>
+
+          <div className="row " data-aos="fade-up">
+            <TrendingJobsHome />
+          </div>
+        </div>
+      </section>
+      {/* End Trending Jobs Section */}
 
       <section className="job-section">
         <div className="auto-container">
