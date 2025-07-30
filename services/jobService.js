@@ -911,6 +911,24 @@ export const jobService = {
       throw error;
     }
   },
+
+  // ==================== TRENDING JOBS ====================
+
+  // GET: Lấy danh sách trending jobs
+  async getTrendingJobs({ role = "candidate", companyId = null, page = 1, pageSize = 10 } = {}) {
+    try {
+      const params = new URLSearchParams();
+      if (role) params.append("role", role);
+      if (companyId) params.append("companyId", companyId);
+      if (page) params.append("page", page);
+      if (pageSize) params.append("pageSize", pageSize);
+      const response = await axios.get(`${API_URL}/job/trending?${params.toString()}`);
+      return response.data;
+    } catch (error) {
+      console.error("Error fetching trending jobs:", error);
+      throw error;
+    }
+  },
 };
 
 export default jobService;

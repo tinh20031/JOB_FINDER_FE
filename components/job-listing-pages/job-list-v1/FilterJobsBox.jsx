@@ -32,6 +32,10 @@ import {
 } from "../../../services/favoriteJobService";
 import { useFavoriteJobs } from "../../../contexts/FavoriteJobsContext";
 import ClickableBox from "../../common/ClickableBox";
+import { useMemo } from "react";
+
+// Thêm import axios để gọi API trending
+import axios from "axios";
 
 // Thêm CSS styles
 const styles = {
@@ -80,6 +84,11 @@ const FilterJobsBox = () => {
   const [experienceLevels, setExperienceLevels] = useState([]);
   const [industries, setIndustries] = useState([]);
 
+  // Trending jobs state
+  const [trendingJobs, setTrendingJobs] = useState([]);
+  const [loadingTrending, setLoadingTrending] = useState(true);
+  const [errorTrending, setErrorTrending] = useState(null);
+
   const { jobList, jobSort } = useSelector((state) => state.filter);
   const {
     keyword,
@@ -126,12 +135,7 @@ const FilterJobsBox = () => {
           console.error("Failed to fetch job types data", err);
           return [];
         });
-        const expLevelsRes = await jobService
-          .getExperienceLevels()
-          .catch((err) => {
-            console.error("Failed to fetch experience levels data", err);
-            return [];
-          });
+       
         const industriesRes = await jobService.getIndustries().catch((err) => {
           console.error("Failed to fetch industries data", err);
           return [];
@@ -139,7 +143,7 @@ const FilterJobsBox = () => {
 
         setCompanies(companiesRes);
         setJobTypesData(jobTypesRes);
-        setExperienceLevels(expLevelsRes);
+     
         setIndustries(industriesRes);
       } catch (err) {
         console.error(
@@ -187,6 +191,22 @@ const FilterJobsBox = () => {
     jobTypeId,
     excludeJobId,
   ]);
+
+  // Gọi API trending khi mount
+  useEffect(() => {
+    setLoadingTrending(true);
+    jobService
+      .getTrendingJobs({ role: "candidate", page: 1, pageSize: 10 })
+      .then((trending) => {
+        setTrendingJobs(trending.jobs || []);
+        setErrorTrending(null);
+      })
+      .catch((err) => {
+        setErrorTrending("Failed to fetch trending jobs");
+        setTrendingJobs([]);
+      })
+      .finally(() => setLoadingTrending(false));
+  }, []);
 
   useEffect(() => {
     if (userId) {
@@ -334,9 +354,94 @@ const FilterJobsBox = () => {
     }
   };
 
+  // Chuẩn hóa dữ liệu trending job về giống all job
+  const normalizeTrendingJob = (job) => ({
+    id: job.jobId || job.id,
+    jobTitle: job.title || job.jobTitle,
+    description: job.description,
+    companyId: job.companyId,
+    company: job.company
+      ? {
+          id: job.company.userId || job.company.id,
+          fullName: job.company.fullName,
+          email: job.company.email,
+          companyName: job.company.companyName,
+          location: job.company.location,
+          urlCompanyLogo: job.company.urlCompanyLogo,
+        }
+      : null,
+    provinceName: job.provinceName,
+    isSalaryNegotiable: job.isSalaryNegotiable,
+    minSalary: job.minSalary,
+    maxSalary: job.maxSalary,
+    logo:
+      (job.company && job.company.urlCompanyLogo) ||
+      "/images/company-logo/default-logo.png",
+    industryId: job.industryId,
+    industry: job.industry
+      ? {
+          industryId: job.industry.industryId,
+          industryName: job.industry.industryName,
+        }
+      : null,
+    jobTypeId: job.jobTypeId,
+    jobType: job.jobType
+      ? {
+          id: job.jobType.jobTypeId || job.jobType.id,
+          jobTypeName: job.jobType.jobTypeName,
+        }
+      : null,
+    levelId: job.levelId,
+    level: job.level
+      ? {
+          id: job.level.levelId || job.level.id,
+          levelName: job.level.levelName,
+        }
+      : null,
+    quantity: job.quantity ?? 1,
+    expiryDate: job.expiryDate,
+    timeStart: job.timeStart,
+    timeEnd: job.timeEnd,
+    createdAt: job.createdAt,
+    updatedAt: job.updatedAt,
+    status: job.status,
+    addressDetail: job.addressDetail,
+    skills: job.skills || [],
+    descriptionWeight: job.descriptionWeight ?? null,
+    skillsWeight: job.skillsWeight ?? null,
+    experienceWeight: job.experienceWeight ?? null,
+    educationWeight: job.educationWeight ?? null,
+    deactivatedByAdmin: job.deactivatedByAdmin,
+    isTrending: job.isTrending || job.IsTrending,
+    trendingRank: job.trendingRank || null, // Thêm ranking từ API trending
+  });
+
+  // Gộp và sắp xếp jobs: trending jobs lên đầu với ranking, sau đó là all jobs
+  const mergedJobs = useMemo(() => {
+    const normalizedTrendingJobs = trendingJobs.map((job, index) => {
+      const normalized = normalizeTrendingJob(job);
+      // Đảm bảo tất cả trending jobs đều có ranking
+      if (normalized.isTrending && !normalized.trendingRank) {
+        normalized.trendingRank = index + 1;
+      }
+      return normalized;
+    });
+    const allJobs = jobs.filter(job => job.status === 1);
+    
+    // Lấy danh sách ID của trending jobs để tránh trùng lặp
+    const trendingJobIds = new Set(normalizedTrendingJobs.map(job => job.id));
+    
+    // Lọc ra các job không phải trending từ all jobs
+    const nonTrendingJobs = allJobs.filter(job => !trendingJobIds.has(job.id));
+    
+    // Gộp trending jobs (với ranking) và non-trending jobs
+    const merged = [...normalizedTrendingJobs, ...nonTrendingJobs];
+    
+    return merged;
+  }, [trendingJobs, jobs]);
+
   // Lọc job active và áp dụng tất cả các filter
-  const filteredActiveJobs = jobs
-    .filter((job) => job.status === 1)
+  const filteredActiveJobs = mergedJobs
     // Filter từ query string
     .filter(
       (job) => !industryId || String(job.industryId) === String(industryId)
@@ -355,6 +460,7 @@ const FilterJobsBox = () => {
     .filter(tagFilter)
     // Sort
     .sort(sortFilter);
+
   const totalActiveJobs = filteredActiveJobs.length;
   const totalPages = Math.ceil(totalActiveJobs / itemsPerPage);
   // Phân trang trên mảng đã lọc
@@ -456,7 +562,7 @@ const FilterJobsBox = () => {
       </div>
       {/* End ls-switcher */}
 
-      {loading ? (
+      {loading || loadingTrending ? (
         <div className="row">
           {[...Array(6)].map((_, idx) => (
             <div className="job-block col-12 mb-4" key={idx}>
@@ -524,9 +630,9 @@ const FilterJobsBox = () => {
             }
           `}</style>
         </div>
-      ) : error ? (
-        <div className="text-center py-5 text-danger">{error}</div>
-      ) : jobs.length === 0 ? (
+      ) : error || errorTrending ? (
+        <div className="text-center py-5 text-danger">{error || errorTrending}</div>
+      ) : jobsToShow.length === 0 ? (
         <div className="text-center py-5">
           <h3>No suitable job found</h3>
           <p>Please try again with different filters</p>
@@ -539,11 +645,50 @@ const FilterJobsBox = () => {
               window.location.href = `/job-single-v3/${item.id}`;
             };
             return (
-              <ClickableBox
-                key={item.id || index}
-                onClick={handleJobBoxClick}
-              >
-                <div className="content">
+                             <ClickableBox
+                 key={item.id || index}
+                 onClick={handleJobBoxClick}
+                 style={{ position: "relative" }}
+               >
+                                   {/* Hiển thị ranking cho trending jobs - nằm trên viền ngoài của job card */}
+                  {item.isTrending && (item.trendingRank || 0) <= 3 && (
+                    <div
+                      style={{
+                        position: "absolute",
+                        left: "-15px",
+                        top: "-8px",
+                        padding: "6px 12px",
+                        borderRadius: "20px",
+                        background: (item.trendingRank || 0) === 1 
+                          ? "#ff4444" // Red for SUPER HOT
+                          : "#ff6b35", // Orange for HOT
+                        color: "white",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        fontWeight: "bold",
+                        fontSize: (item.trendingRank || 0) === 1 ? "10px" : "12px",
+                        zIndex: 20,
+                        boxShadow: "0 4px 12px rgba(0,0,0,0.3)",
+                        border: "2px solid white",
+                        whiteSpace: "nowrap",
+                        minWidth: (item.trendingRank || 0) === 1 ? "80px" : "50px",
+                      }}
+                    >
+                                             {(item.trendingRank || 0) === 1 ? (
+                         <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
+                           <span style={{ fontSize: "10px" }}>🔥</span>
+                           <span>SUPER HOT</span>
+                         </div>
+                       ) : (
+                         <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
+                           <span style={{ fontSize: "10px" }}>🔥</span>
+                           <span>HOT</span>
+                         </div>
+                       )}
+                    </div>
+                  )}
+                 <div className="content">
                   <span
                     className="company-logo"
                     style={{
@@ -589,6 +734,23 @@ const FilterJobsBox = () => {
                     <Link href={`/job-single-v3/${item.id}`}>
                       {item.jobTitle}
                     </Link>
+                    {/* Hiển thị badge Trending nếu có */}
+                    {item.isTrending && (
+                      <span
+                        style={{
+                          background: "#ffedd5",
+                          color: "#f97316",
+                          borderRadius: 12,
+                          padding: "2px 12px",
+                          fontWeight: 600,
+                          fontSize: 13,
+                          marginLeft: 10,
+                          verticalAlign: "middle",
+                        }}
+                      >
+                        Trending
+                      </span>
+                    )}
                   </h4>
                   <ul className="job-info">
                     <li>

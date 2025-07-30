@@ -86,6 +86,10 @@ const PostBoxForm = ({ cloneData, isClone }) => {
   const DRAFT_KEY = 'job_post_draft';
   const [mySubscription, setMySubscription] = useState(null);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  const [isTrendingLoading, setIsTrendingLoading] = useState(false);
+  const [trendingError, setTrendingError] = useState("");
+  const [trendingSuccess, setTrendingSuccess] = useState(false);
+  const [showTrendingSuccessModal, setShowTrendingSuccessModal] = useState(false);
 
   // Animation variants
   const formVariants = {
@@ -592,6 +596,101 @@ const PostBoxForm = ({ cloneData, isClone }) => {
     }
   };
 
+  const handleTrendingSubmit = async (e) => {
+    e.preventDefault();
+    if (showLeaveConfirmation) return;
+    setTrendingError("");
+    setTrendingSuccess(false);
+    setIsTrendingLoading(true);
+
+    // Check trending job post limit
+    if (
+      !mySubscription ||
+      !mySubscription.subscription ||
+      mySubscription.subscription.trendingJobLimit <= 0 ||
+      mySubscription.subscription.remainingTrendingJobPosts <= 0
+    ) {
+      setTrendingError("You do not have permission to post trending jobs. Please upgrade your package.");
+      setIsTrendingLoading(false);
+      return;
+    }
+
+    if (!validateForm()) {
+      setTrendingError("Please fill in all required fields!");
+      setIsTrendingLoading(false);
+      return;
+    }
+    if (!user?.userId || user.role !== 'Company') {
+      setTrendingError("You must log in with a company account to post a trending job.");
+      setIsTrendingLoading(false);
+      return;
+    }
+    try {
+      const jobData = {
+        title: formData.title,
+        description: formData.description,
+        education: formData.education,
+        companyId: parseInt(user.userId, 10),
+        isSalaryNegotiable: formData.isSalaryNegotiable,
+        minSalary: formData.minSalary,
+        maxSalary: formData.maxSalary,
+        industryId: formData.industryId,
+        expiryDate: formData.expiryDate,
+        levelId: formData.levelId,
+        jobTypeId: formData.jobTypeId,
+        quantity: formData.quantity,
+        timeStart: formData.timeStart,
+        timeEnd: formData.timeEnd,
+        provinceName: formData.provinceName,
+        addressDetail: formData.addressDetail,
+        createdAt: formData.createdAt,
+        updatedAt: formData.updatedAt,
+        YourSkill: formData.YourSkill,
+        YourExperience: formData.YourExperience,
+        DescriptionWeight: Number(formData.DescriptionWeight),
+        SkillsWeight: Number(formData.SkillsWeight),
+        ExperienceWeight: Number(formData.ExperienceWeight),
+        EducationWeight: Number(formData.EducationWeight),
+      };
+      const jobResult = await ApiService.createTrendingJob(jobData);
+      setTrendingSuccess(true);
+      setShowTrendingSuccessModal(true);
+      localStorage.removeItem(DRAFT_KEY);
+      setHasUnsavedChanges(false);
+      setFormData({
+        title: '',
+        description: '',
+        education: '',
+        companyId: 0,
+        isSalaryNegotiable: false,
+        minSalary: null,
+        maxSalary: null,
+        industryId: 0,
+        expiryDate: '',
+        levelId: 0,
+        jobTypeId: 0,
+        quantity: 1,
+        timeStart: '',
+        timeEnd: '',
+        provinceName: '',
+        addressDetail: '',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        YourSkill: '',
+        YourExperience: '',
+        DescriptionWeight: '',
+        SkillsWeight: '',
+        ExperienceWeight: '',
+        EducationWeight: '',
+      });
+      setErrors({});
+    } catch (error) {
+      setTrendingError(error.response?.data?.message || "Failed to create trending job. Please try again.");
+    } finally {
+      setIsTrendingLoading(false);
+    }
+  };
+
   // Auto-save draft when form data changes
   useEffect(() => {
     if (hasActualChanges()) {
@@ -729,6 +828,29 @@ const PostBoxForm = ({ cloneData, isClone }) => {
         <p>Job posted successfully!</p>
       </Modal>
 
+      {/* Success Modal for Trending Job */}
+      <Modal
+        open={showTrendingSuccessModal}
+        onClose={() => setShowTrendingSuccessModal(false)}
+        title="Success!"
+        footer={
+          <button
+            className="btn-confirm"
+            onClick={e => {
+              e.preventDefault();
+              setShowTrendingSuccessModal(false);
+              setTimeout(() => {
+                router.push("/employers-dashboard/manage-jobs");
+              }, 100);
+            }}
+          >
+            Close
+          </button>
+        }
+      >
+        <p>Trending job posted successfully!</p>
+      </Modal>
+
       {/* Upgrade Modal */}
       <Modal
         open={showUpgradeModal}
@@ -787,6 +909,31 @@ const PostBoxForm = ({ cloneData, isClone }) => {
                 Draft cleared successfully!
               </motion.div>
             )}
+            {/* Trending Job Error Message */}
+            <AnimatePresence>
+              {trendingError && (
+                <motion.div
+                  className="message-box error"
+                  initial={{ opacity: 0, y: -20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -20 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  {trendingError}
+                </motion.div>
+              )}
+              {trendingSuccess && (
+                <motion.div
+                  className="message-box success"
+                  initial={{ opacity: 0, y: -20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -20 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  Trending job posted successfully!
+                </motion.div>
+              )}
+            </AnimatePresence>
           </AnimatePresence>
 
           {/* Draft Controls */}
@@ -1322,9 +1469,58 @@ const PostBoxForm = ({ cloneData, isClone }) => {
             >
               {isLoading ? 'Posting...' : 'Post Job'}
             </motion.button>
+            {/* Trending Job Button */}
+            {mySubscription && mySubscription.subscription && mySubscription.subscription.trendingJobLimit > 0 ? (
+              <motion.button
+                type="button"
+                className="theme-btn btn-style-two ml-2"
+                style={{ marginLeft: 12 }}
+                disabled={isTrendingLoading || mySubscription.subscription.remainingTrendingJobPosts <= 0}
+                onClick={handleTrendingSubmit}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                title={mySubscription.subscription.remainingTrendingJobPosts <= 0 ? 'No remaining trending job posts. Upgrade your package.' : 'Post as Trending Job'}
+              >
+                {isTrendingLoading ? 'Posting Trending...' : (
+                  <>
+                    Post as Trending Job
+                    <span className="remaining-count">
+                      ({mySubscription.subscription.remainingTrendingJobPosts} left)
+                    </span>
+                  </>
+                )}
+              </motion.button>
+            ) : (
+              <span style={{ marginLeft: 12, color: '#888', fontSize: 14 }}>
+                Trending job posting is only available for Basic or Premium packages.
+              </span>
+            )}
           </motion.div>
         </div>
       </motion.form>
+      
+      <style jsx>{`
+        .remaining-count {
+          font-size: 12px;
+          font-weight: 500;
+          opacity: 0.8;
+          margin-left: 6px;
+          background: rgba(255, 255, 255, 0.2);
+          padding: 2px 6px;
+          border-radius: 10px;
+          white-space: nowrap;
+        }
+        
+        .theme-btn.btn-style-two {
+          display: flex;
+          align-items: center;
+          gap: 4px;
+        }
+        
+        .theme-btn.btn-style-two:disabled .remaining-count {
+          opacity: 0.5;
+        }
+      `}</style>
     </>
   );
 };

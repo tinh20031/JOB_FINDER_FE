@@ -107,6 +107,46 @@ class ApiServiceClass {
     }
   }
 
+  static async createTrendingJob(jobData) {
+    const url = API_CONFIG.getUrl(API_CONFIG.ENDPOINTS.JOB.TRENDING_CREATE);
+    let options;
+    if (jobData instanceof FormData) {
+      options = {
+        method: "POST",
+        body: jobData,
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      };
+    } else {
+      options = {
+        ...API_CONFIG.getRequestOptions("POST", jobData),
+        headers: {
+          ...API_CONFIG.getRequestOptions("POST", jobData).headers,
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      };
+    }
+    try {
+      const response = await fetch(url, options);
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({
+          message: `Failed to parse error response from server (status: ${response.status})`,
+        }));
+        console.error("Trending job creation error details:", errorData);
+        throw new Error(
+          errorData.message ||
+            errorData.title ||
+            `HTTP error! status: ${response.status}`
+        );
+      }
+      return response.json();
+    } catch (error) {
+      console.error("Trending job creation exception:", error);
+      throw error;
+    }
+  }
+
   // Company APIs
   static async getCompanies(params) {
     const url = API_CONFIG.getUrlWithParams(
@@ -357,6 +397,7 @@ const ApiService = {
   updateUser: ApiServiceClass.updateUser,
   request: ApiServiceClass.request,
   createJob: ApiServiceClass.createJob,
+  createTrendingJob: ApiServiceClass.createTrendingJob,
   addUser: async (formData) => {
     const url = API_CONFIG.getUrl(API_CONFIG.ENDPOINTS.USER.BASE);
     const options = {

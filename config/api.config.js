@@ -45,6 +45,7 @@ const API_CONFIG = {
     JOB: {
       BASE: "job",
       CREATE: "job/create",
+      TRENDING_CREATE: "job/trending",
       UPDATE: (id) => `job/${id}`,
       DELETE: (id) => `job/${id}`,
       APPLY: (id) => `job/${id}/apply`,

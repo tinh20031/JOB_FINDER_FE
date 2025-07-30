@@ -1,6 +1,6 @@
 "use client";
 import dynamic from "next/dynamic";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { jobService } from "@/services/jobService";
 import LoginPopup from "@/components/common/form/login/LoginPopup";
 import FooterDefault from "@/components/footer/common-footer";
@@ -41,6 +41,7 @@ const JobSingleDynamicV3 = ({ params }) => {
   const userId = typeof window !== 'undefined' ? Number(localStorage.getItem('userId')) : null;
   const isFavorited = favoriteJobIds.includes(Number(params.id));
   const [loadingFavorite, setLoadingFavorite] = useState(false);
+  const hasTrackedView = useRef(false); // Thêm ref để đánh dấu đã track view
 
   useEffect(() => {
     // Import Bootstrap only on client side
@@ -103,6 +104,18 @@ const JobSingleDynamicV3 = ({ params }) => {
       }
     }
   }, [job]);
+
+  useEffect(() => {
+    if (job && job.id && !hasTrackedView.current) {
+      hasTrackedView.current = true; // Đánh dấu đã track
+      jobService.trackJobView(job.id);
+    }
+  }, [job]);
+
+  // Reset tracking khi đổi job khác
+  useEffect(() => {
+    hasTrackedView.current = false;
+  }, [params.id]);
 
   const getIndustryName = (id) => industries.find(i => i.industryId === id)?.industryName || "N/A";
   const getLevelName = (id) => levels.find(l => l.id === id)?.levelName || "N/A";

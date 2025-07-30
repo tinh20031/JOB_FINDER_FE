@@ -73,46 +73,54 @@ const BuyPackagePage = () => {
               <div className="ls-widget">
                 <div className="tabs-box">
                   <div className="widget-title">
-                    <h4>Available Packages</h4>
+                    <h4>List of corporate packages</h4>
                   </div>
                   <div className="widget-content">
                     <div className="pricing-tabs tabs-box wow fadeInUp" style={{marginTop: 40}}>
                       <div className="row">
-                        {packages.map((pkg, idx) => (
-                          <div
-                            className={`pricing-table col-lg-4 col-md-6 col-sm-12${pkg.isRecommended ? ' tagged' : ''}`}
-                            key={pkg.subscriptionTypeId || pkg.SubscriptionTypeId}
-                          >
-                            <div className="inner-box">
-                              {pkg.isRecommended ? (
-                                <span className="tag">Recommended</span>
-                              ) : null}
-                              <div className="title">{pkg.name}</div>
-                              <div className="price">
-                                {pkg.price?.toLocaleString()} <span className="duration">VND</span>
-                              </div>
-                              <div className="table-content">
-                                <ul>
-                                  {pkg.description && (
-                                    <li><span>{pkg.description}</span></li>
+                        {packages.map((pkg, idx) => {
+                          return (
+                            <div
+                              className={`pricing-table col-lg-4 col-md-6 col-sm-12${pkg.isRecommended ? ' tagged' : ''}`}
+                              key={pkg.subscriptionTypeId || pkg.SubscriptionTypeId}
+                            >
+                              <div className="inner-box">
+                                {pkg.isRecommended ? (
+                                  <span className="tag">Propose</span>
+                                ) : null}
+                                <div className="title">{pkg.name}</div>
+                                <div style={{marginBottom: 8, fontStyle: 'italic', color: '#666', fontSize: 14}}>{pkg.description}</div>
+                                <div className="price">
+                                  {pkg.price === 0 ? "Free" : pkg.price?.toLocaleString()} <span className="duration">VND</span>
+                                </div>
+                                <div className="table-content">
+                                  <ul>
+                                    <li><span>Try-match: {pkg.tryMatchLimit}</span></li>
+                                    <li><span>Download CV: {getDownloadQuotaByPackageName(pkg.name)}</span></li>
+                                    <li><span>Remove watermark: {canRemoveWatermarkByPackageName(pkg.name) ? 'Yes' : 'No'}</span></li>
+                                  </ul>
+                                </div>
+                                <div className="table-footer">
+                                  {pkg.price !== 0 && (
+                                    <button
+                                      className="theme-btn btn-style-three"
+                                      disabled={buyingId === (pkg.subscriptionTypeId || pkg.SubscriptionTypeId)}
+                                      onClick={() => handleBuyPackage(pkg.subscriptionTypeId || pkg.SubscriptionTypeId)}
+                                    >
+                                      {buyingId === (pkg.subscriptionTypeId || pkg.SubscriptionTypeId)
+                                        ? "Processing..."
+                                        : (pkg.name && pkg.name.toLowerCase() === 'basic')
+                                          ? "Update to Basic"
+                                          : (pkg.name && pkg.name.toLowerCase() === 'premium')
+                                            ? "Update to Premium"
+                                            : "Purchase/Subscription"}
+                                    </button>
                                   )}
-                                  <li><span>Try-match: {pkg.tryMatchLimit}</span></li>
-                                  <li><span>Download CV: {getDownloadQuotaByPackageName(pkg.name)}</span></li>
-                                  <li><span>Remove watermark: {canRemoveWatermarkByPackageName(pkg.name) ? 'Yes' : 'No'}</span></li>
-                                </ul>
-                              </div>
-                              <div className="table-footer">
-                                <button
-                                  className="theme-btn btn-style-three"
-                                  disabled={buyingId === (pkg.subscriptionTypeId || pkg.SubscriptionTypeId)}
-                                  onClick={() => handleBuyPackage(pkg.subscriptionTypeId || pkg.SubscriptionTypeId)}
-                                >
-                                  {buyingId === (pkg.subscriptionTypeId || pkg.SubscriptionTypeId) ? "Processing..." : "Buy/Subscribe"}
-                                </button>
+                                </div>
                               </div>
                             </div>
-                          </div>
-                        ))}
+                          );
+                        })}
                       </div>
                     </div>
                   </div>
@@ -123,6 +131,56 @@ const BuyPackagePage = () => {
         </div>
       </section>
       <CopyrightFooter />
+      <style jsx>{`
+        .row {
+          display: flex;
+          flex-wrap: wrap;
+          align-items: stretch;
+        }
+        .pricing-table {
+          display: flex;
+          flex-direction: column;
+          height: 100%;
+        }
+        .pricing-table .inner-box {
+          min-height: 500px;
+          height: 100%;
+          display: flex;
+          flex-direction: column;
+        }
+        .current-package .inner-box {
+          border: 3px solid #0ca750;
+          box-shadow: 0 0 16px 0 #0ca75055;
+          background: #eafff2;
+          position: relative;
+        }
+        .current-package .tag {
+          background: #0ca750 !important;
+          color: #fff !important;
+          font-weight: bold;
+          font-size: 15px;
+          position: absolute;
+          top: 10px;
+          right: 10px;
+          padding: 6px 16px;
+          border-radius: 20px;
+          z-index: 2;
+          box-shadow: 0 2px 8px #0ca75033;
+        }
+        .tag {
+          background: #ff7675;
+          color: #fff;
+          font-weight: bold;
+          font-size: 15px;
+          position: absolute;
+          top: 10px;
+          right: 10px;
+          padding: 6px 16px;
+          border-radius: 20px;
+          z-index: 2;
+          box-shadow: 0 2px 8px #ff767533;
+        }
+      `}</style>
     </div>
   );
 };

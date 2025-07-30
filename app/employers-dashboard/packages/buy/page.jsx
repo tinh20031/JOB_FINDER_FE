@@ -95,22 +95,33 @@ const BuyCompanyPackagePage = () => {
                                   <span className="tag" style={{background: '#0ca750', color: '#fff'}}>Current Package</span>
                                 )}
                                 <div className="title">{pkg.name}</div>
+                                <div style={{marginBottom: 8, fontStyle: 'italic', color: '#666', fontSize: 14}}>{pkg.description}</div>
                                 <div className="price">
-                                  {pkg.price?.toLocaleString()} <span className="duration">VND</span>
+                                  {pkg.price === 0 ? "Free" : pkg.price?.toLocaleString()} <span className="duration">VND</span>
                                 </div>
                                 <div className="table-content">
-                                  <ul>
+                                  <ul>                                  
                                     <li><span>Posting Limit: {pkg.jobPostLimit === 2147483647 ? 'Unlimited' : pkg.jobPostLimit}</span></li>
                                     <li><span>CV matching limit: {pkg.cvMatchLimit === 2147483647 ? 'Unlimited' : pkg.cvMatchLimit}</span></li>
+                                    <li><span>Trending Job Limit: {pkg.trendingJobLimit === 2147483647 ? 'Unlimited' : pkg.trendingJobLimit}</span></li>
                                   </ul>
                                 </div>
                                 <div className="table-footer">
-                                  <button
-                                    className="theme-btn btn-style-three"
-                                    disabled={isCurrent || buyingId === (pkg.companySubscriptionTypeId || pkg.CompanySubscriptionTypeId)}
-                                    onClick={() => handleBuyPackage(pkg.companySubscriptionTypeId || pkg.CompanySubscriptionTypeId)}
-                                  >
-                                    {isCurrent ? "Current Plan" : (buyingId === (pkg.companySubscriptionTypeId || pkg.CompanySubscriptionTypeId) ? "Processing..." : "Purchase/Subscription")}                                  </button>
+                                  {!(isCurrent || pkg.price === 0) && (
+                                    <button
+                                      className="theme-btn btn-style-three"
+                                      disabled={buyingId === (pkg.companySubscriptionTypeId || pkg.CompanySubscriptionTypeId)}
+                                      onClick={() => handleBuyPackage(pkg.companySubscriptionTypeId || pkg.CompanySubscriptionTypeId)}
+                                    >
+                                      {buyingId === (pkg.companySubscriptionTypeId || pkg.CompanySubscriptionTypeId)
+                                        ? "Processing..."
+                                        : (pkg.name && pkg.name.toLowerCase() === 'basic')
+                                          ? "Update to Basic"
+                                          : (pkg.name && pkg.name.toLowerCase() === 'premium')
+                                            ? "Update to Premium"
+                                            : "Purchase/Subscription"}
+                                    </button>
+                                  )}
                                 </div>
                               </div>
                             </div>
@@ -134,9 +145,40 @@ const BuyCompanyPackagePage = () => {
           padding: 20px 24px;
           margin-bottom: 24px;
         }
+        .row {
+          display: flex;
+          flex-wrap: wrap;
+          align-items: stretch;
+        }
+        .pricing-table {
+          display: flex;
+          flex-direction: column;
+          height: 100%;
+        }
+        .pricing-table .inner-box {
+          min-height: 500px;
+          height: 100%;
+          display: flex;
+          flex-direction: column;
+        }
         .current-package .inner-box {
-          border: 2px solid #0ca750;
-          box-shadow: 0 0 8px 0 #0ca75033;
+          border: 3px solid #0ca750;
+          box-shadow: 0 0 16px 0 #0ca75055;
+          background: #eafff2;
+          position: relative;
+        }
+        .current-package .tag {
+          background: #0ca750 !important;
+          color: #fff !important;
+          font-weight: bold;
+          font-size: 15px;
+          position: absolute;
+          top: 10px;
+          right: 10px;
+          padding: 6px 16px;
+          border-radius: 20px;
+          z-index: 2;
+          box-shadow: 0 2px 8px #0ca75033;
         }
       `}</style>
     </div>
