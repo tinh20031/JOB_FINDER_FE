@@ -1907,7 +1907,7 @@ const PostBoxForm = ({ cloneData, isClone }) => {
           </>
         }
       >
-        <p>Bạn có nội dung chưa lưu. Bạn muốn làm gì?</p>
+        <p>You have unsaved changes. What would you like to do</p>
       </Modal>
 
       <style jsx>{`
