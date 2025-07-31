@@ -1,7 +1,7 @@
 'use client'
 
 import Map from "../../../Map";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 // import Map from "../../../Map";
 import Select from "react-select";
 import CreatableSelect from 'react-select/creatable';
@@ -19,6 +19,9 @@ import "@/styles/modal.css";
 import locationService from "../../../../../services/locationService";
 import { companyService } from "../../../../../services/companyService";
 import Link from "next/link";
+import DraftService from "../../../../../services/draftService";
+import DraftModal from "../../DraftModal";
+import { toast } from 'react-toastify';
 
 const ReactQuill = dynamic(() => import('react-quill'), { ssr: false });
 
@@ -90,6 +93,44 @@ const PostBoxForm = ({ cloneData, isClone }) => {
   const [trendingError, setTrendingError] = useState("");
   const [trendingSuccess, setTrendingSuccess] = useState(false);
   const [showTrendingSuccessModal, setShowTrendingSuccessModal] = useState(false);
+  
+  // Draft related states
+  const [showDraftModal, setShowDraftModal] = useState(false);
+  const [isDraftLoading, setIsDraftLoading] = useState(false);
+  const [draftError, setDraftError] = useState('');
+  const [drafts, setDrafts] = useState([]);
+  const [isLoadingDrafts, setIsLoadingDrafts] = useState(false);
+  const [selectedDraftInfo, setSelectedDraftInfo] = useState(null);
+  const [currentDraftId, setCurrentDraftId] = useState(null);
+  const [showDeleteConfirmModal, setShowDeleteConfirmModal] = useState(false);
+
+  // Lưu giá trị mặc định ban đầu của form
+  const defaultFormData = useRef({
+    title: '',
+    description: '',
+    education: '',
+    companyId: 0,
+    isSalaryNegotiable: false,
+    minSalary: null,
+    maxSalary: null,
+    industryId: 0,
+    expiryDate: '',
+    levelId: 0,
+    jobTypeId: 0,
+    quantity: 1,
+    timeStart: '',
+    timeEnd: '',
+    provinceName: '',
+    addressDetail: '',
+    createdAt: '',
+    updatedAt: '',
+    YourSkill: '',
+    YourExperience: '',
+    DescriptionWeight: '',
+    SkillsWeight: '',
+    ExperienceWeight: '',
+    EducationWeight: '',
+  });
 
   // Animation variants
   const formVariants = {
@@ -195,6 +236,8 @@ const PostBoxForm = ({ cloneData, isClone }) => {
       try {
         const draftData = JSON.parse(savedDraft);
         setFormData(draftData);
+        // Cập nhật defaultFormData để draft data trở thành "baseline"
+        defaultFormData.current = { ...draftData };
         setHasUnsavedChanges(true);
       } catch (error) {
         console.error('Error loading draft:', error);
@@ -203,33 +246,58 @@ const PostBoxForm = ({ cloneData, isClone }) => {
   }, [isClone]);
 
   // Check if form has actual changes
-  const hasActualChanges = () => {
-    return formData.title || 
-           formData.description || 
-           formData.education ||
-           formData.minSalary || 
-           formData.maxSalary || 
-           formData.industryId || 
-           formData.levelId || 
-           formData.jobTypeId || 
-           formData.quantity || // Thay experienceLevelId bằng quantity
-           formData.expiryDate || 
-           formData.timeStart || 
-           formData.timeEnd || 
-           formData.provinceName || 
-           formData.addressDetail ||
-           formData.YourSkill ||
-           formData.YourExperience ||
-           formData.DescriptionWeight ||
-           formData.SkillsWeight ||
-           formData.ExperienceWeight ||
-           formData.EducationWeight;
+  const isFormDirty = () => {
+    // Chỉ kiểm tra các trường quan trọng mà user có thể nhập
+    const importantFields = ['title', 'description', 'education', 'YourSkill', 'YourExperience', 'provinceName', 'addressDetail'];
+    
+    for (const key of importantFields) {
+      const currentValue = formData[key];
+      const defaultValue = defaultFormData.current[key];
+      
+      // Kiểm tra string fields
+      if (typeof currentValue === 'string') {
+        if (currentValue.trim() !== (defaultValue || '').trim()) {
+          console.log(`Field "${key}" is dirty: "${currentValue.trim()}" !== "${(defaultValue || '').trim()}"`);
+          return true;
+        }
+      }
+    }
+    
+    // Kiểm tra các trường số quan trọng
+    const numberFields = ['minSalary', 'maxSalary', 'quantity'];
+    for (const key of numberFields) {
+      const currentValue = formData[key];
+      const defaultValue = defaultFormData.current[key];
+      if (currentValue !== defaultValue) {
+        console.log(`Field "${key}" is dirty: ${currentValue} !== ${defaultValue}`);
+        return true;
+      }
+    }
+    
+    // Kiểm tra boolean fields
+    if (formData.isSalaryNegotiable !== defaultFormData.current.isSalaryNegotiable) {
+      console.log(`Field "isSalaryNegotiable" is dirty: ${formData.isSalaryNegotiable} !== ${defaultFormData.current.isSalaryNegotiable}`);
+      return true;
+    }
+    
+    // Kiểm tra date fields
+    const dateFields = ['expiryDate', 'timeStart', 'timeEnd'];
+    for (const key of dateFields) {
+      const currentValue = formData[key];
+      const defaultValue = defaultFormData.current[key];
+      if (currentValue !== defaultValue) {
+        console.log(`Field "${key}" is dirty: ${currentValue} !== ${defaultValue}`);
+        return true;
+      }
+    }
+    
+    return false;
   };
 
   // Handle navigation away
   useEffect(() => {
     const handleBeforeUnload = (e) => {
-      if (hasUnsavedChanges && hasActualChanges()) {
+      if (isFormDirty()) {
         e.preventDefault();
         e.returnValue = '';
       }
@@ -237,11 +305,20 @@ const PostBoxForm = ({ cloneData, isClone }) => {
 
     const handleClick = (e) => {
       const anchor = e.target.closest('a');
-      if (anchor && anchor.href && !anchor.href.startsWith('javascript:') && hasUnsavedChanges && hasActualChanges()) {
+      if (anchor && anchor.href && !anchor.href.startsWith('javascript:') && isFormDirty()) {
         e.preventDefault();
         e.stopPropagation();
         setShowLeaveConfirmation(true);
         setIntendedPath(anchor.href);
+        return false;
+      }
+    };
+
+    // Bắt Next.js router navigation
+    const handleRouteChange = (url) => {
+      if (isFormDirty()) {
+        setShowLeaveConfirmation(true);
+        setIntendedPath(url);
         return false;
       }
     };
@@ -253,14 +330,91 @@ const PostBoxForm = ({ cloneData, isClone }) => {
       window.removeEventListener('beforeunload', handleBeforeUnload);
       document.removeEventListener('click', handleClick, true);
     };
-  }, [hasUnsavedChanges]);
+  }, [formData]);
 
   const handleClearDraft = () => {
-    setShowClearConfirm(true);
+    setSelectedDraftInfo(null);
+    setCurrentDraftId(null);
+    setFormData({
+      title: '',
+      description: '',
+      education: '',
+      industryId: 1,
+      expiryDate: '',
+      levelId: 1,
+      jobTypeId: 1,
+      quantity: 1,
+      timeStart: '',
+      timeEnd: '',
+      provinceName: '',
+      addressDetail: '',
+      isSalaryNegotiable: false,
+      minSalary: '',
+      maxSalary: '',
+      YourSkill: '',
+      YourExperience: '',
+      DescriptionWeight: 0,
+      SkillsWeight: 0,
+      ExperienceWeight: 0,
+      EducationWeight: 0,
+      skillInputs: []
+    });
+    defaultFormData.current = {
+      title: '',
+      description: '',
+      education: '',
+      industryId: 1,
+      expiryDate: '',
+      levelId: 1,
+      jobTypeId: 1,
+      quantity: 1,
+      timeStart: '',
+      timeEnd: '',
+      provinceName: '',
+      addressDetail: '',
+      isSalaryNegotiable: false,
+      minSalary: '',
+      maxSalary: '',
+      YourSkill: '',
+      YourExperience: '',
+      DescriptionWeight: 0,
+      SkillsWeight: 0,
+      ExperienceWeight: 0,
+      EducationWeight: 0,
+      skillInputs: []
+    };
+    toast.info('Draft cleared. You can now create a new job.');
   };
 
   const handleConfirmClear = () => {
     localStorage.removeItem(DRAFT_KEY);
+    // Reset defaultFormData về giá trị ban đầu
+    defaultFormData.current = {
+      title: '',
+      description: '',
+      education: '',
+      companyId: 0,
+      isSalaryNegotiable: false,
+      minSalary: null,
+      maxSalary: null,
+      industryId: 0,
+      expiryDate: '',
+      levelId: 0,
+      jobTypeId: 0,
+      quantity: 1,
+      timeStart: '',
+      timeEnd: '',
+      provinceName: '',
+      addressDetail: '',
+      createdAt: '',
+      updatedAt: '',
+      YourSkill: '',
+      YourExperience: '',
+      DescriptionWeight: '',
+      SkillsWeight: '',
+      ExperienceWeight: '',
+      EducationWeight: '',
+    };
     setFormData({
       title: '',
       description: '',
@@ -309,6 +463,19 @@ const PostBoxForm = ({ cloneData, isClone }) => {
     setHasUnsavedChanges(false);
     if (intendedPath) {
       router.push(intendedPath);
+    }
+  };
+
+  const handleSaveAndLeave = async () => {
+    try {
+      await handleSaveDraft();
+      setShowLeaveConfirmation(false);
+      setHasUnsavedChanges(false);
+      if (intendedPath) {
+        router.push(intendedPath);
+      }
+    } catch (error) {
+      console.error('Error saving draft before leaving:', error);
     }
   };
 
@@ -560,6 +727,16 @@ const PostBoxForm = ({ cloneData, isClone }) => {
 
       const jobResult = await ApiService.createJob(jobData);
       
+      // Delete draft if exists
+      if (currentDraftId) {
+        try {
+          await DraftService.deleteDraft(currentDraftId);
+          setCurrentDraftId(null);
+        } catch (error) {
+          console.error('Error deleting draft after publish:', error);
+        }
+      }
+      
       setSuccess(true);
       setShowSuccessModal(true);
       localStorage.removeItem(DRAFT_KEY);
@@ -653,6 +830,17 @@ const PostBoxForm = ({ cloneData, isClone }) => {
         EducationWeight: Number(formData.EducationWeight),
       };
       const jobResult = await ApiService.createTrendingJob(jobData);
+      
+      // Delete draft if exists
+      if (currentDraftId) {
+        try {
+          await DraftService.deleteDraft(currentDraftId);
+          setCurrentDraftId(null);
+        } catch (error) {
+          console.error('Error deleting draft after publish:', error);
+        }
+      }
+      
       setTrendingSuccess(true);
       setShowTrendingSuccessModal(true);
       localStorage.removeItem(DRAFT_KEY);
@@ -693,7 +881,7 @@ const PostBoxForm = ({ cloneData, isClone }) => {
 
   // Auto-save draft when form data changes
   useEffect(() => {
-    if (hasActualChanges()) {
+    if (isFormDirty()) {
       localStorage.setItem(DRAFT_KEY, JSON.stringify(formData));
       setHasUnsavedChanges(true);
     } else {
@@ -701,6 +889,181 @@ const PostBoxForm = ({ cloneData, isClone }) => {
       setHasUnsavedChanges(false);
     }
   }, [formData]);
+
+  // Handle save draft to server
+  const handleSaveDraft = async () => {
+    if (!formData.title || formData.title.trim() === '') {
+      toast.error('Please enter a job title to save as draft');
+      return;
+    }
+
+    // Validate CompanyId
+    if (!user.userId || user.userId <= 0) {
+      toast.error('Invalid company ID. Please log in again.');
+      return;
+    }
+
+    try {
+      setIsDraftLoading(true);
+      
+      // Format DateTime cho backend - sửa format
+      const formatDateTime = (dateString) => {
+        if (!dateString || dateString === '' || dateString === 'Invalid Date') return null;
+        const date = new Date(dateString);
+        if (isNaN(date.getTime())) return null; // Kiểm tra date hợp lệ
+        
+        // Format: YYYY-MM-DDTHH:mm:ss.000Z (ISO format)
+        return date.toISOString();
+      };
+
+      const jobData = {
+        CompanyId: parseInt(user.userId, 10), // Sử dụng user.userId thay vì formData.companyId
+        Title: formData.title,
+        IndustryId: formData.industryId || 1,
+        ExpiryDate: formatDateTime(formData.expiryDate),
+        LevelId: formData.levelId || 1,
+        JobTypeId: formData.jobTypeId || 1,
+        Quantity: formData.quantity || 1,
+        TimeStart: formatDateTime(formData.timeStart),
+        TimeEnd: formatDateTime(formData.timeEnd),
+        ProvinceName: formData.provinceName || '',
+        AddressDetail: formData.addressDetail || '',
+        YourSkill: formData.YourSkill || '',
+        YourExperience: formData.YourExperience || '',
+        DescriptionWeight: formData.DescriptionWeight || 0,
+        SkillsWeight: formData.SkillsWeight || 0,
+        ExperienceWeight: formData.ExperienceWeight || 0,
+        EducationWeight: formData.EducationWeight || 0,
+        Description: formData.description || '',
+        Education: formData.education || '',
+        IsSalaryNegotiable: formData.isSalaryNegotiable || false,
+        MinSalary: formData.minSalary || null,
+        MaxSalary: formData.maxSalary || null,
+        skillInputs: formData.skillInputs || []
+      };
+
+      console.log('Saving draft with data:', jobData);
+      console.log('Current draft ID:', currentDraftId);
+      console.log('Original formData:', formData);
+      console.log('Formatted dates:', {
+        expiryDate: formData.expiryDate,
+        formattedExpiryDate: formatDateTime(formData.expiryDate),
+        timeStart: formData.timeStart,
+        formattedTimeStart: formatDateTime(formData.timeStart),
+        timeEnd: formData.timeEnd,
+        formattedTimeEnd: formatDateTime(formData.timeEnd)
+      });
+      console.log('User ID:', user.userId);
+      console.log('Company ID being sent:', parseInt(user.userId, 10));
+      
+      await DraftService.saveDraft(jobData);
+      
+      // Nếu đang edit draft hiện tại, cập nhật currentDraftId và thông báo
+      if (currentDraftId) {
+        toast.success('Draft updated successfully!');
+        console.log('Draft updated with ID:', currentDraftId);
+      } else {
+        toast.success('Draft saved successfully!');
+        console.log('New draft created');
+      }
+      
+    } catch (error) {
+      console.error('Error saving draft:', error);
+      toast.error('Failed to save draft. Please try again.');
+    } finally {
+      setIsDraftLoading(false);
+    }
+  };
+  // Handle load draft from server
+  const handleLoadDraft = (draft) => {
+    if (!draft) return;
+    
+    console.log('Loading draft:', draft);
+    
+    // API trả về camelCase, không cần convert
+    const convertedDraft = {
+      title: draft.title || '',
+      description: draft.description || '',
+      education: draft.education || '',
+      industryId: draft.industryId || 1,
+      expiryDate: draft.expiryDate ? new Date(draft.expiryDate).toISOString().split('T')[0] : '',
+      levelId: draft.levelId || 1,
+      jobTypeId: draft.jobTypeId || 1,
+      quantity: draft.quantity || 1,
+      timeStart: draft.timeStart ? new Date(draft.timeStart).toISOString().split('T')[0] : '',
+      timeEnd: draft.timeEnd ? new Date(draft.timeEnd).toISOString().split('T')[0] : '',
+      provinceName: draft.provinceName || '',
+      addressDetail: draft.addressDetail || '',
+      isSalaryNegotiable: draft.isSalaryNegotiable || false,
+      minSalary: draft.minSalary || '',
+      maxSalary: draft.maxSalary || '',
+      YourSkill: draft.yourSkill || '',
+      YourExperience: draft.yourExperience || '',
+      DescriptionWeight: draft.descriptionWeight ? draft.descriptionWeight * 100 : 0,
+      SkillsWeight: draft.skillsWeight ? draft.skillsWeight * 100 : 0,
+      ExperienceWeight: draft.experienceWeight ? draft.experienceWeight * 100 : 0,
+      EducationWeight: draft.educationWeight ? draft.educationWeight * 100 : 0,
+      skillInputs: draft.Skills ? draft.Skills.map(skill => ({
+        skillId: skill.skillId,
+        skillName: skill.skillName
+      })) : []
+    };
+
+    console.log('Converted draft data:', convertedDraft);
+
+    setFormData(convertedDraft);
+    setCurrentDraftId(draft.jobId);
+    setSelectedDraftInfo(draft); // Store original draft info for display
+    
+    // Update defaultFormData to the loaded draft
+    defaultFormData.current = convertedDraft;
+    
+    // Clear any existing errors
+    setDraftError('');
+    
+    // Show success message
+    toast.success('Draft loaded successfully!');
+  };
+
+  const handleDeleteDraft = async () => {
+    if (!currentDraftId) return;
+    setShowDeleteConfirmModal(true);
+  };
+
+  const handleConfirmDeleteDraft = async () => {
+    try {
+      await DraftService.deleteDraft(currentDraftId);
+      setSelectedDraftInfo(null);
+      setCurrentDraftId(null);
+      setShowDeleteConfirmModal(false);
+      toast.success('Draft deleted successfully!');
+    } catch (error) {
+      console.error('Error deleting draft:', error);
+      toast.error('Failed to delete draft. Please try again.');
+    }
+  };
+
+  const handleOpenDraftModal = async () => {
+    console.log('Opening draft modal...');
+    console.log('Current showDraftModal state:', showDraftModal);
+    setShowDraftModal(true);
+    setIsLoadingDrafts(true);
+    setDraftError('');
+    
+    try {
+      console.log('Fetching drafts...');
+      const response = await DraftService.getDrafts();
+      console.log('Drafts response:', response);
+      console.log('Drafts response type:', typeof response);
+      console.log('Drafts response length:', response?.length);
+      setDrafts(response || []);
+    } catch (error) {
+      console.error('Error fetching drafts:', error);
+      setDraftError('Failed to load drafts. Please try again.');
+    } finally {
+      setIsLoadingDrafts(false);
+    }
+  };
 
   useEffect(() => {
     if (isClone && cloneData) {
@@ -749,122 +1112,122 @@ const PostBoxForm = ({ cloneData, isClone }) => {
 
   return (
     <>
-      {/* Leave Confirmation Modal */}
-      <Modal
-        open={showLeaveConfirmation}
-        onClose={handleStay}
-        title="Unsaved Changes"
-        footer={
-          <>
-            <button
-              type="button"
-              className="btn-cancel"
-              onClick={handleStay}
-            >
-              Stay
-            </button>
-            <button
-              type="button"
-              className="btn-confirm"
-              onClick={handleLeave}
-              style={{ marginLeft: 8 }}
-            >
-              Leave
-            </button>
-          </>
-        }
-      >
-        <p>You have unsaved changes. Are you sure you want to leave?</p>
-      </Modal>
+      {/* Draft Information Display - ở đầu trang */}
+      {selectedDraftInfo && (
+        <div className="col-lg-12 mb-4">
+          <div className="alert alert-warning border-0 shadow-sm" style={{ 
+            borderRadius: '12px',
+            maxWidth: '500px',
+            margin: '0 auto',
+            padding: '1rem 1.25rem',
+            background: 'linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%)',
+            border: '2px solid #ffc107',
+            boxShadow: '0 4px 15px rgba(255, 193, 7, 0.2)'
+          }}>
+            <div className="d-flex justify-content-between align-items-center">
+              <div className="d-flex align-items-center">
+                <div className="me-3">
+                  <div style={{
+                    width: '40px',
+                    height: '40px',
+                    borderRadius: '50%',
+                    background: 'linear-gradient(135deg, #ffc107 0%, #ff8f00 100%)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    boxShadow: '0 2px 8px rgba(255, 193, 7, 0.3)'
+                  }}>
+                    <i className="fas fa-file-alt text-white" style={{ fontSize: '1rem' }}></i>
+                  </div>
+                </div>
+                <div>
+                  <h6 className="mb-1 text-dark fw-bold" style={{ fontSize: '0.9rem' }}>
+                    Currently Editing Draft
+                  </h6>
+                  <p className="mb-0 text-muted" style={{ fontSize: '0.8rem' }}>
+                    {selectedDraftInfo.title || 'Untitled Job'}
+                  </p>
+                </div>
+              </div>
+              <div className="d-flex gap-2">
+                <button
+                  type="button"
+                  onClick={handleSaveDraft}
+                  disabled={isDraftLoading}
+                  className="btn btn-warning btn-sm"
+                  style={{ 
+                    borderRadius: '8px', 
+                    fontSize: '0.75rem', 
+                    padding: '6px 12px',
+                    fontWeight: '600',
+                    boxShadow: '0 2px 8px rgba(255, 193, 7, 0.3)',
+                    border: 'none'
+                  }}
+                >
+                  {isDraftLoading ? (
+                    <>
+                      <span className="spinner-border spinner-border-sm me-1"></span>
+                      Saving...
+                    </>
+                  ) : (
+                    <>
+                      <i className="fas fa-save me-1"></i>
+                      Update Draft
+                    </>
+                  )}
+                </button>
+                <button
+                  type="button"
+                  onClick={handleClearDraft}
+                  className="btn btn-outline-secondary btn-sm"
+                  style={{ 
+                    borderRadius: '8px', 
+                    fontSize: '0.75rem', 
+                    padding: '6px 10px',
+                    border: '1px solid #dee2e6'
+                  }}
+                  title="Clear draft from form"
+                >
+                  <i className="fas fa-times"></i>
+                </button>
+                <button
+                  type="button"
+                  onClick={handleDeleteDraft}
+                  className="btn btn-outline-danger btn-sm"
+                  style={{ 
+                    borderRadius: '8px', 
+                    fontSize: '0.75rem', 
+                    padding: '6px 10px',
+                    border: '1px solid #dc3545'
+                  }}
+                  title="Delete draft permanently"
+                >
+                  <i className="fas fa-trash"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
-      {/* Clear Confirmation Modal */}
-      <Modal
-        open={showClearConfirm}
-        onClose={handleCancelClear}
-        title="Clear Draft"
-        footer={
-          <>
-            <button
-              type="button"
-              className="btn-cancel"
-              onClick={handleCancelClear}
-            >
-              Cancel
-            </button>
-            <button
-              type="button"
-              className="btn-confirm"
-              onClick={handleConfirmClear}
-              style={{ marginLeft: 8 }}
-            >
-              Clear
-            </button>
-          </>
-        }
-      >
-        <p>Are you sure you want to clear all information? This action cannot be undone.</p>
-      </Modal>
-
-      {/* Success Modal */}
-      <Modal
-        open={showSuccessModal}
-        onClose={() => setShowSuccessModal(false)}
-        title="Success!"
-        footer={
-          <button
-            className="btn-confirm"
-            onClick={e => {
-              e.preventDefault();
-              setShowSuccessModal(false);
-              setTimeout(() => {
-                router.push("/employers-dashboard/manage-jobs");
-              }, 100);
-            }}
-          >
-            Close
-          </button>
-        }
-      >
-        <p>Job posted successfully!</p>
-      </Modal>
-
-      {/* Success Modal for Trending Job */}
-      <Modal
-        open={showTrendingSuccessModal}
-        onClose={() => setShowTrendingSuccessModal(false)}
-        title="Success!"
-        footer={
-          <button
-            className="btn-confirm"
-            onClick={e => {
-              e.preventDefault();
-              setShowTrendingSuccessModal(false);
-              setTimeout(() => {
-                router.push("/employers-dashboard/manage-jobs");
-              }, 100);
-            }}
-          >
-            Close
-          </button>
-        }
-      >
-        <p>Trending job posted successfully!</p>
-      </Modal>
-
-      {/* Upgrade Modal */}
-      <Modal
-        open={showUpgradeModal}
-        onClose={() => setShowUpgradeModal(false)}
-        title="Job Post Limit Reached"
-        footer={
-          <>
-            <button className="btn-cancel" onClick={() => setShowUpgradeModal(false)}>Cancel</button>
-            <button className="btn-confirm" style={{ marginLeft: 8 }} onClick={() => { router.push('/employers-dashboard/packages'); }}>Upgrade Package</button>
-          </>
-        }
-      >
-        <p>You have used all your job post slots for this package. Would you like to upgrade your package to post more jobs?</p>
-      </Modal>
+      {/* Load Draft Button */}
+      <div className="col-lg-12 mb-3">
+        <button
+          type="button"
+          onClick={handleOpenDraftModal}
+          className="btn btn-primary btn-sm"
+          style={{ 
+            borderRadius: '6px',
+            padding: '8px 16px',
+            fontSize: '14px',
+            fontWeight: '500',
+            width: '180px'
+          }}
+        >
+          <i className="fas fa-folder-open me-2"></i>
+          {selectedDraftInfo ? 'Load Different Draft' : 'Load Draft'}
+        </button>
+      </div>
 
       {/* Form chính */}
       <motion.form 
@@ -934,48 +1297,6 @@ const PostBoxForm = ({ cloneData, isClone }) => {
                 </motion.div>
               )}
             </AnimatePresence>
-          </AnimatePresence>
-
-          {/* Draft Controls */}
-          <AnimatePresence>
-            {hasUnsavedChanges && (
-              <motion.div 
-                className="form-group col-lg-12 col-md-12"
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: "auto" }}
-                exit={{ opacity: 0, height: 0 }}
-                transition={{ duration: 0.3 }}
-              >
-                <div className="draft-controls" style={{ 
-                  display: 'flex', 
-                  justifyContent: 'space-between', 
-                  alignItems: 'center',
-                  marginBottom: '20px',
-                  padding: '10px',
-                  backgroundColor: '#f8f9fa',
-                  borderRadius: '4px'
-                }}>
-                  <motion.span 
-                    style={{ color: '#666' }}
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ delay: 0.2 }}
-                  >
-                    <i className="fas fa-save" style={{ marginRight: '8px' }}></i>
-                    You have unsaved changes
-                  </motion.span>
-                  <motion.button
-                    type="button"
-                    className="theme-btn btn-style-two"
-                    onClick={handleClearDraft}
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                  >
-                    Clear Draft
-                  </motion.button>
-                </div>
-              </motion.div>
-            )}
           </AnimatePresence>
 
           {/* Job Title */}
@@ -1061,7 +1382,7 @@ const PostBoxForm = ({ cloneData, isClone }) => {
                 placeholder="Education Requirements"
                 value={formData.education}
                 onChange={handleInputChange}
-                rows="8"
+                rows="6"
               ></textarea>
             )}
             {errors.education && <div className="invalid-feedback">{errors.education}</div>}
@@ -1460,6 +1781,23 @@ const PostBoxForm = ({ cloneData, isClone }) => {
             className="form-group col-lg-12 col-md-12 text-right"
             variants={itemVariants}
           >
+
+
+            {/* Error message for draft */}
+            {draftError && (
+              <div className="alert alert-danger mb-3" role="alert">
+                {draftError}
+              </div>
+            )}
+
+            {/* Current draft indicator */}
+            {currentDraftId && (
+              <div className="alert alert-info mb-3" role="alert">
+                <i className="fas fa-info-circle me-1"></i>
+                Currently editing draft #{currentDraftId}
+              </div>
+            )}
+
             <motion.button 
               type="submit" 
               className="theme-btn btn-style-one"
@@ -1499,6 +1837,79 @@ const PostBoxForm = ({ cloneData, isClone }) => {
         </div>
       </motion.form>
       
+      {/* Draft Modal */}
+      <DraftModal
+        isOpen={showDraftModal}
+        onClose={() => setShowDraftModal(false)}
+        onLoadDraft={handleLoadDraft}
+        drafts={drafts}
+        isLoading={isLoadingDrafts}
+      />
+
+      {/* Delete Confirmation Modal */}
+      <Modal
+        open={showDeleteConfirmModal}
+        onClose={() => setShowDeleteConfirmModal(false)}
+        title="Confirm Deletion"
+        footer={
+          <>
+            <button
+              type="button"
+              className="btn-cancel"
+              onClick={() => setShowDeleteConfirmModal(false)}
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              className="btn-confirm"
+              onClick={handleConfirmDeleteDraft}
+              style={{ marginLeft: 8 }}
+            >
+              Delete
+            </button>
+          </>
+        }
+      >
+        <p>Are you sure you want to delete this draft? This action cannot be undone.</p>
+      </Modal>
+
+      {/* Leave Confirmation Modal sử dụng đúng Modal component */}
+      <Modal
+        open={showLeaveConfirmation}
+        onClose={() => setShowLeaveConfirmation(false)}
+        title="Do you want to leave this page?"
+        footer={
+          <>
+            <button
+              type="button"
+              className="btn-cancel"
+              onClick={handleStay}
+            >
+              Stay
+            </button>
+            <button
+              type="button"
+              className="btn-confirm"
+              onClick={handleSaveAndLeave}
+              style={{ marginLeft: 8 }}
+            >
+              Save and Exit
+            </button>
+            <button
+              type="button"
+              className="btn btn-outline-danger"
+              onClick={handleLeave}
+              style={{ marginLeft: 8 }}
+            >
+              Exit
+            </button>
+          </>
+        }
+      >
+        <p>Bạn có nội dung chưa lưu. Bạn muốn làm gì?</p>
+      </Modal>
+
       <style jsx>{`
         .remaining-count {
           font-size: 12px;
