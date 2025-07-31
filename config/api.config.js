@@ -58,6 +58,9 @@ const API_CONFIG = {
       GET_RECENT_JOBS: "job/recent",
       GET_FEATURED_JOBS: "job/featured",
       GET_SIMILAR_JOBS: (id) => `job/${id}/similar`,
+      SAVE_DRAFT: "job/save-draft",
+      GET_DRAFTS: "job/drafts",
+      DELETE_DRAFT: (id) => `job/draft/${id}`,
     },
     COMPANY: {
       BASE: "CompanyProfile",
