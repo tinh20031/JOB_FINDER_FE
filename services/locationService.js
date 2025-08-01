@@ -1,14 +1,12 @@
 import axios from "axios";
 
-
-
-const PROVINCE_API_URL = "https://provinces.open-api.vn/api";
+const BASE_API_URL = "https://34tinhthanh.com/api";
 
 const locationService = {
-  // Lấy danh sách tỉnh/thành phố từ API Việt Nam
+  // Lấy danh sách tỉnh/thành phố từ API
   getProvinces: async () => {
     try {
-      const response = await axios.get(PROVINCE_API_URL);
+      const response = await axios.get(`${BASE_API_URL}/provinces`);
       return response.data;
     } catch (error) {
       console.error("Error fetching provinces:", error);
@@ -17,25 +15,24 @@ const locationService = {
   },
 
   // Lấy danh sách quận/huyện của một tỉnh/thành phố
+  // Note: The new API documentation doesn't explicitly provide a districts endpoint.
+  // This is a placeholder assuming a similar structure or needs further clarification.
   getDistricts: async (provinceCode) => {
     try {
-      const response = await axios.get(
-        `${PROVINCE_API_URL}/p/${provinceCode}?depth=2`
-      );
-      return response.data.districts;
+      // Assuming a hypothetical endpoint for districts; adjust based on actual API
+      const response = await axios.get(`${BASE_API_URL}/districts?province_code=${provinceCode}`);
+      return response.data; // Adjust based on actual response structure
     } catch (error) {
       console.error("Error fetching districts:", error);
       throw error;
     }
   },
 
-  // Lấy danh sách phường/xã của một quận/huyện
-  getWards: async (districtCode) => {
+  // Lấy danh sách phường/xã của một tỉnh/thành phố
+  getWards: async (provinceCode) => {
     try {
-      const response = await axios.get(
-        `${PROVINCE_API_URL}/d/${districtCode}?depth=2`
-      );
-      return response.data.wards;
+      const response = await axios.get(`${BASE_API_URL}/wards?province_code=${provinceCode}`);
+      return response.data;
     } catch (error) {
       console.error("Error fetching wards:", error);
       throw error;

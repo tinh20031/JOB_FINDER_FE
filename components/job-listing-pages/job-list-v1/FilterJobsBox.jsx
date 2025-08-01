@@ -154,7 +154,7 @@ const FilterJobsBox = () => {
       }
     };
 
-    // Gọi API lấy tất cả job active (status === 1)
+    // Gọi API lấy tất cả job active (status === 2)
     const fetchJobs = async () => {
       try {
         setLoading(true);
@@ -452,7 +452,7 @@ const FilterJobsBox = () => {
       }
       return normalized;
     });
-    const allJobs = jobs.filter(job => job.status === 1);
+    const allJobs = jobs.filter(job => job.status === 2);
     
     // Lấy danh sách ID của trending jobs để tránh trùng lặp
     const trendingJobIds = new Set(normalizedTrendingJobs.map(job => job.id));

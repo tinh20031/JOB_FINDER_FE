@@ -216,13 +216,14 @@ const JobListingsTable = () => {
   function getCompanyJobStatus(job) {
     const now = new Date();
     if (job.deactivatedByAdmin) return "Locked";
-    if (job.status === 0) return "Pending";
-    if (job.status === 1) {
+    if (job.status === 0) return "Draft";
+    if (job.status === 1) return "Pending";
+    if (job.status === 2) {
       if (new Date(job.timeStart) > now) return "Not Started";
       if (new Date(job.timeEnd) < now) return "Expired";
       return "Active";
     }
-    if (job.status === 2) {
+    if (job.status === 3) {
       if (new Date(job.timeEnd) < now) return "Expired";
       if (new Date(job.timeStart) > now && !job.deactivatedByAdmin) return "Cancelled";
       return "Inactive";
@@ -284,13 +285,14 @@ const JobListingsTable = () => {
             {/* Filter theo trạng thái */}
             <select className="chosen-single form-select" value={filterStatus} onChange={e=>{setFilterStatus(e.target.value); setCurrentPage(1);}}>
               <option value="all">All Status</option>
-              <option value="active">Active</option>
-              <option value="expired">Expired</option>
+              {/* <option value="draft">Draft</option> */}
               <option value="pending">Pending</option>
+              <option value="active">Active</option>
+              <option value="inactive">Inactive</option>
+              <option value="expired">Expired</option>
               <option value="locked">Locked</option>
               <option value="cancelled">Cancelled</option>
               <option value="not started">Not Started</option>
-              <option value="inactive">Inactive</option>
             </select>
             {/* Filter theo thời gian */}
             <select className="chosen-single form-select" value={filterTime} onChange={e=>{setFilterTime(e.target.value); setCurrentPage(1);}}>
@@ -319,11 +321,12 @@ const JobListingsTable = () => {
               </thead>
               <tbody>
                 {paginatedJobs.map((job) => {
-                  const isPending = job.status === 0;
-                  const isExpired = new Date(job.timeEnd) < new Date();
-                  const isLocked = job.deactivatedByAdmin;
-                  const disableStatusButton = isPending || isExpired || isLocked;
-                  const isActive = job.status === 1;
+                      const isDraft = job.status === 0;
+    const isPending = job.status === 1;
+    const isExpired = new Date(job.timeEnd) < new Date();
+    const isLocked = job.deactivatedByAdmin;
+    const disableStatusButton = isDraft || isPending || isExpired || isLocked;
+    const isActive = job.status === 2;
                   const canViewDetail = isActive || isExpired;
                   return (
                     <tr key={job.id}>
@@ -400,14 +403,14 @@ const JobListingsTable = () => {
                                       setPendingActivateJob(job);
                                       setShowStartDateModal(true);
                                     } else {
-                                      handleRequestChangeStatus(job, job.status === 1 ? 'inactive' : 'active');
+                                      handleRequestChangeStatus(job, job.status === 2 ? 'inactive' : 'active');
                                     }
                                   }}
-                                  data-text={job.status === 1 ? 'Deactivate' : 'Activate'}
+                                  data-text={job.status === 2 ? 'Deactivate' : 'Activate'}
                                 >
                                   {statusLoadingId === job.id ? (
                                     <span className="la la-spinner fa-spin"></span>
-                                  ) : job.status === 1 ? (
+                                  ) : job.status === 2 ? (
                                     <span className="la la-toggle-off"></span>
                                   ) : (
                                     <span className="la la-toggle-on"></span>
@@ -425,9 +428,10 @@ const JobListingsTable = () => {
                                     onChange={e => handleChangeStatus(job, e.target.value)}
                                     style={{ minWidth: 90 }}
                                   >
-                                    <option value={0}>Pending</option>
-                                    <option value={1}>Active</option>
-                                    <option value={2}>Inactive</option>
+                <option value={0}>Draft</option>
+                <option value={1}>Pending</option>
+                <option value={2}>Active</option>
+                <option value={3}>Inactive</option>
                                   </select>
                                 </li>
                                 <li>

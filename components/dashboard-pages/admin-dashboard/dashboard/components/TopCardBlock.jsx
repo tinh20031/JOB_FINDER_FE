@@ -31,7 +31,7 @@ const TopCardBlock = () => {
         // Fetch jobs data for admin
         const { data: jobsData, total: totalJobs } = await jobService.getJobs({ role: 'admin', limit: 10000 });
         // Count active jobs (handle both number and string status)
-        const activeJobs = jobsData.filter(job => job.status === 1 || String(job.status).toLowerCase() === 'active').length;
+        const activeJobs = jobsData.filter(job => job.status === 2 || String(job.status).toLowerCase() === 'active').length;
 
         // Count applications by status
         const applications = {

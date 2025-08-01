@@ -1874,6 +1874,67 @@ const PostBoxForm = ({ cloneData, isClone }) => {
         <p>Are you sure you want to delete this draft? This action cannot be undone.</p>
       </Modal>
 
+      {/* Success Modal */}
+      <Modal
+        open={showSuccessModal}
+        onClose={() => setShowSuccessModal(false)}
+        title="Success!"
+        footer={
+          <button
+            className="btn-confirm"
+            onClick={e => {
+              e.preventDefault();
+              setShowSuccessModal(false);
+              setTimeout(() => {
+                router.push("/employers-dashboard/manage-jobs");
+              }, 100);
+            }}
+          >
+            Close
+          </button>
+        }
+      >
+        <p>Job posted successfully!</p>
+      </Modal>
+
+      {/* Success Modal for Trending Job */}
+      <Modal
+        open={showTrendingSuccessModal}
+        onClose={() => setShowTrendingSuccessModal(false)}
+        title="Success!"
+        footer={
+          <button
+            className="btn-confirm"
+            onClick={e => {
+              e.preventDefault();
+              setShowTrendingSuccessModal(false);
+              setTimeout(() => {
+                router.push("/employers-dashboard/manage-jobs");
+              }, 100);
+            }}
+          >
+            Close
+          </button>
+        }
+      >
+        <p>Trending job posted successfully!</p>
+      </Modal>
+
+      {/* Upgrade Modal */}
+      <Modal
+        open={showUpgradeModal}
+        onClose={() => setShowUpgradeModal(false)}
+        title="Job Post Limit Reached"
+        footer={
+          <>
+            <button className="btn-cancel" onClick={() => setShowUpgradeModal(false)}>Cancel</button>
+            <button className="btn-confirm" style={{ marginLeft: 8 }} onClick={() => { router.push('/employers-dashboard/packages'); }}>Upgrade Package</button>
+          </>
+        }
+      >
+        <p>You have used all your job post slots for this package. Would you like to upgrade your package to post more jobs?</p>
+      </Modal>
+
       {/* Leave Confirmation Modal sử dụng đúng Modal component */}
       <Modal
         open={showLeaveConfirmation}

@@ -25,9 +25,9 @@ const TopCardBlock = () => {
       // Gọi API lấy danh sách jobs và đếm số lượng
       jobService.getJobs({ role: "company", companyId }).then((res) => {
         setPostedJobs(res.total || 0);
-        // Đếm số job active (status === 1)
+        // Đếm số job active (status === 2)
         if (Array.isArray(res.data)) {
-          setActiveJobs(res.data.filter(j => j.status === 1).length);
+                      setActiveJobs(res.data.filter(j => j.status === 2).length);
         } else {
           setActiveJobs(0);
         }

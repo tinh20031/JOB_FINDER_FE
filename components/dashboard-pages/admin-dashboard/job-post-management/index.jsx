@@ -241,17 +241,19 @@ const JobPostManagement = () => {
   function getJobDisplayStatus(job) {
     const now = new Date();
     if (job.deactivatedByAdmin) return { label: 'Locked', color: 'bg-danger' };
-    // Nếu job pending nhưng đã hết hạn, ưu tiên hiển thị Expired
     if (job.status === 0) {
+      return { label: 'Draft', color: 'bg-info' };
+    }
+    if (job.status === 1) {
       if (new Date(job.timeEnd) < now) return { label: 'Expired', color: 'bg-dark' };
       return { label: 'Pending', color: 'bg-warning' };
     }
-    if (job.status === 1) {
+    if (job.status === 2) {
       if (new Date(job.timeStart) > now) return { label: 'Not Started', color: 'bg-orange' };
       if (new Date(job.timeEnd) < now) return { label: 'Expired', color: 'bg-dark' };
       return { label: 'Active', color: 'bg-success' };
     }
-    if (job.status === 2) {
+    if (job.status === 3) {
       if (new Date(job.timeEnd) < now) return { label: 'Expired', color: 'bg-dark' };
       if (new Date(job.timeStart) > now && !job.deactivatedByAdmin) return { label: 'Cancelled', color: 'bg-secondary' };
       return { label: 'Inactive', color: 'bg-secondary' };

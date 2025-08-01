@@ -3,6 +3,7 @@
 import axios from "axios";
 import Cookies from "js-cookie";
 import API_CONFIG from "../config/api.config";
+import { JobStatus, getJobStatusLabel, getJobStatusColor } from "../utils/jobStatus";
 
 
 const API_URL = API_CONFIG.BASE_URL;
@@ -721,12 +722,7 @@ export const jobService = {
 
   // Helper: Map job status to display text
   getJobStatusText(status) {
-    const statusMap = {
-      pending: "Chờ duyệt",
-      active: "Đang hoạt động",
-      inactive: "Tạm dừng",
-    };
-    return statusMap[status] || status;
+    return getJobStatusLabel(status, 'vi');
   },
 
   // Admin job management methods
@@ -738,7 +734,7 @@ export const jobService = {
       }
 
       const response = await axios.put(
-        `${API_URL}/Job/${jobId}/status?newStatus=1`,
+        `${API_URL}/Job/${jobId}/status?newStatus=2`,
         {},
         {
           headers: {
@@ -761,7 +757,7 @@ export const jobService = {
       }
 
       const response = await axios.put(
-        `${API_URL}/Job/${jobId}/status?newStatus=2`,
+        `${API_URL}/Job/${jobId}/status?newStatus=3`,
         {},
         {
           headers: {
@@ -810,15 +806,7 @@ export const jobService = {
     return "Không công bố";
   },
 
-  // Helper: Get job status color for UI
-  getJobStatusColor(status) {
-    const colorMap = {
-      pending: "warning",
-      active: "success",
-      inactive: "secondary",
-    };
-    return colorMap[status] || "default";
-  },
+
 
   async getAppliedCount(jobId) {
     try {
@@ -835,10 +823,10 @@ export const jobService = {
     }
   },
 
-  // Hàm lấy tất cả job active (status === 1)
+  // Hàm lấy tất cả job active (status === 2)
   async getActiveJobs(filters = {}) {
     const { data: jobs } = await this.getJobs(filters);
-    return jobs.filter((job) => job.status === 1);
+    return jobs.filter((job) => job.status === 2);
   },
 
   // POST: Track job view
