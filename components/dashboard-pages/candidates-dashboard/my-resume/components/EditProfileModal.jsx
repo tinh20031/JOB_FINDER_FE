@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import locationService from "@/services/locationService";
+import ApiService from "@/services/api.service";
 
 const genderOptions = [
   { value: "male", label: "Male" },
@@ -32,7 +33,6 @@ const EditProfileModal = ({ open, onClose, onSubmit, profile }) => {
   const [loadingWards, setLoadingWards] = useState(false);
 
   useEffect(() => {
-    console.log("EditProfileModal useEffect triggered with profile:", profile);
     const formatDobForInput = (dob) => {
       if (!dob) return "";
       try {
@@ -60,7 +60,6 @@ const EditProfileModal = ({ open, onClose, onSubmit, profile }) => {
       image: profile?.image || "",
       Email: profile?.email || "",
     };
-    console.log("Setting initial form:", initialForm);
     setForm(initialForm);
     setPreview(profile?.image || "");
     if (open) {
@@ -78,55 +77,34 @@ const EditProfileModal = ({ open, onClose, onSubmit, profile }) => {
           codeMap[p.name] = p.province_code;
         });
         setProvinceCodeMap(codeMap);
-        console.log("Province Code Map:", codeMap);
-        console.log("Profile data:", profile);
-        console.log("Profile province:", profile?.province);
-        console.log("Profile city:", profile?.city);
         if (profile?.province && codeMap[profile.province]) {
-          console.log("Found province code for profile province:", codeMap[profile.province]);
-          console.log("Loading wards for province:", profile.province, "with code:", codeMap[profile.province]);
           setLoadingWards(true);
           locationService
             .getWards(codeMap[profile.province])
             .then((wardsData) => {
-              console.log("Wards Data for", profile.province, ":", wardsData);
               const wardsArray = Array.isArray(wardsData) ? wardsData : [];
-              console.log("Setting wards array in initial load with", wardsArray.length, "items");
               setWards(wardsArray);
               // Kiểm tra xem ward từ profile có tồn tại trong danh sách wards không
               if (profile?.city && wardsArray.length > 0) {
                 const existingWard = wardsArray.find(ward => ward.ward_name === profile.city);
                 if (existingWard) {
-                  console.log("Found matching ward in initial load:", existingWard.ward_name);
                   // Đảm bảo form.Ward được set đúng giá trị từ profile
                   if (form.Ward !== profile.city) {
-                    console.log("Setting form.Ward to profile.city in initial load:", profile.city);
                     setForm(prev => ({ ...prev, Ward: profile.city }));
-                  } else {
-                    console.log("form.Ward already set to correct value in initial load:", form.Ward);
                   }
-                } else {
-                  console.log("Ward from profile not found in initial wards list:", profile.city);
-                  console.log("Available wards:", wardsArray.map(w => w.ward_name));
                 }
               }
               setLoadingWards(false);
             })
             .catch((error) => {
-              console.error("Error fetching wards:", error);
               setWards([]);
               setLoadingWards(false);
             });
         } else {
-          console.log("No province found in profile or province code not found");
-          console.log("Profile province:", profile?.province);
-          console.log("Available province codes:", Object.keys(codeMap));
-          console.log("Available province names:", Object.keys(codeMap).map(code => codeMap[code]));
           setWards([]);
         }
         setLoadingProvinces(false);
       }).catch((error) => {
-        console.error("Error fetching provinces:", error);
         setProvinces([]);
         setWards([]);
         setLoadingProvinces(false);
@@ -140,43 +118,30 @@ const EditProfileModal = ({ open, onClose, onSubmit, profile }) => {
       locationService
         .getWards(provinceCodeMap[form.Province])
         .then((wardsData) => {
-          console.log("Wards Data for", form.Province, ":", wardsData);
           if (Array.isArray(wardsData)) {
-            console.log("Setting wards array with", wardsData.length, "items");
             setWards(wardsData);
             // Chỉ reset Ward nếu đây là lần đầu load và có dữ liệu từ profile
             if (form.Province === profile?.province && profile?.city) {
               // Kiểm tra xem ward từ profile có tồn tại trong danh sách wards không
               const existingWard = wardsData.find(ward => ward.ward_name === profile.city);
-              if (!existingWard) {
-                console.log("Ward from profile not found in wards list:", profile.city);
-              } else {
-                console.log("Found matching ward in useEffect:", existingWard.ward_name);
-              }
             }
           } else {
-            console.log("Wards data is not an array, setting empty array");
             setWards([]);
           }
           setLoadingWards(false);
         })
         .catch((error) => {
-          console.error("Error fetching wards for", form.Province, ":", error);
           setWards([]);
           setLoadingWards(false);
         });
       // Chỉ reset Ward khi user thay đổi province (không phải lần đầu load)
       if (form.Province !== (profile?.province || "")) {
-        console.log("User changed province, resetting Ward");
         setForm((f) => ({ ...f, Ward: "" }));
-      } else {
-        console.log("Province unchanged, keeping current Ward value:", form.Ward);
       }
     } else {
       setWards([]);
       // Chỉ reset Ward khi không có province được chọn
       if (!form.Province) {
-        console.log("No province selected, resetting Ward");
         setForm((f) => ({ ...f, Ward: "" }));
       }
     }
@@ -184,36 +149,15 @@ const EditProfileModal = ({ open, onClose, onSubmit, profile }) => {
 
   // useEffect để load wards ban đầu khi có dữ liệu từ profile
   useEffect(() => {
-    console.log("Final useEffect triggered with:", { 
-      profileProvince: profile?.province, 
-      profileCity: profile?.city, 
-      hasProvinceCode: !!provinceCodeMap[profile?.province], 
-      wardsLength: wards.length,
-      currentFormWard: form.Ward 
-    });
     if (profile?.province && profile?.city && provinceCodeMap[profile.province] && wards.length > 0) {
       // Kiểm tra xem ward từ profile có tồn tại trong danh sách wards không
       const existingWard = wards.find(ward => ward.ward_name === profile.city);
       if (existingWard) {
-        console.log("Found matching ward in final useEffect:", existingWard.ward_name);
         // Đảm bảo form.Ward được set đúng giá trị từ profile
         if (form.Ward !== profile.city) {
-          console.log("Setting form.Ward to:", profile.city);
           setForm(prev => ({ ...prev, Ward: profile.city }));
-        } else {
-          console.log("form.Ward already set to correct value:", form.Ward);
         }
-      } else {
-        console.log("Ward from profile not found in final wards list:", profile.city);
-        console.log("Available wards:", wards.map(w => w.ward_name));
       }
-    } else {
-      console.log("Final useEffect conditions not met:", {
-        hasProfileProvince: !!profile?.province,
-        hasProfileCity: !!profile?.city,
-        hasProvinceCode: !!provinceCodeMap[profile?.province],
-        wardsLength: wards.length
-      });
     }
   }, [profile?.province, profile?.city, provinceCodeMap, wards, form.Ward]);
 
@@ -236,36 +180,26 @@ const EditProfileModal = ({ open, onClose, onSubmit, profile }) => {
       }
     } else if (name === "Province") {
       // Khi thay đổi province, reset ward và load wards mới
-      console.log("User changed province to:", value, "resetting Ward");
       setForm((prev) => ({ ...prev, [name]: value, Ward: "" }));
       if (value && provinceCodeMap[value]) {
-        console.log("Found province code for", value, ":", provinceCodeMap[value]);
         setLoadingWards(true);
         locationService
           .getWards(provinceCodeMap[value])
           .then((wardsData) => {
-            console.log("Wards Data for", value, ":", wardsData);
             const wardsArray = Array.isArray(wardsData) ? wardsData : [];
-            console.log("Setting wards array in handleChange with", wardsArray.length, "items");
             setWards(wardsArray);
             setLoadingWards(false);
           })
           .catch((error) => {
-            console.error("Error fetching wards:", error);
             setWards([]);
             setLoadingWards(false);
           });
       } else if (value) {
-        console.log("No province code found for", value, "setting empty wards array");
         setWards([]);
       } else {
-        console.log("No value provided for province, setting empty wards array");
         setWards([]);
       }
     } else {
-      if (name === "Ward") {
-        console.log("User changed ward to:", value);
-      }
       setForm((prev) => ({ ...prev, [name]: value }));
     }
   };
@@ -335,22 +269,11 @@ const EditProfileModal = ({ open, onClose, onSubmit, profile }) => {
     if (form.imageFile) formData.append("imageFile", form.imageFile);
     formData.append("PersonalLink", form.PersonalLink || "");
   
-    console.log("Form Data:", Object.fromEntries(formData)); // Debug
-    console.log("Current form state:", form);
-    console.log("Profile data:", profile);
     try {
-      const response = await fetch("http://localhost:5194/api/CandidateProfile/me", {
-        method: "PUT",
-        body: formData,
-        headers: {
-          Authorization: "Bearer " + localStorage.getItem("token"), // Thêm token nếu cần
-        },
-      });
-      if (!response.ok) throw new Error("Failed to update profile");
-      console.log("Update successful:", await response.text());
+      await ApiService.request("CandidateProfile/me", "PUT", formData);
       onClose();
     } catch (error) {
-      console.error("Error updating profile:", error);
+      // Handle error silently or show toast notification
     }
   };
 
