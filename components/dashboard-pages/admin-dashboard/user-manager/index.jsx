@@ -470,10 +470,11 @@ const UserManager = () => {
                                         href={`/admin-dashboard/user-manager/${user.id}`} 
                                         className="btn btn-sm btn-outline-primary"
                                         style={{
-                                          minWidth: '60px',
+                                          minWidth: '80px',
                                           transition: 'all 0.3s ease',
                                           borderRadius: '8px',
-                                          fontWeight: '600'
+                                          fontWeight: '600',
+                                          boxShadow: 'none'
                                         }}
                                       >
                                         <i className="fas fa-eye me-1"></i>
@@ -483,7 +484,7 @@ const UserManager = () => {
                                         className={`btn btn-sm ${isLocked ? 'btn-success' : 'btn-outline-danger'}`}
                                         onClick={() => handleToggleLock(user)}
                                         style={{
-                                          minWidth: '70px',
+                                          minWidth: '80px',
                                           transition: 'all 0.3s ease',
                                           borderRadius: '8px',
                                           fontWeight: '600',
@@ -506,11 +507,10 @@ const UserManager = () => {
                         (() => {
                           const totalPagesToShow = totalPages >= 1 ? totalPages : 1;
                           return (
-                            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 16, margin: '24px 0' }}>
+                            <div className="pagination">
                               <button
                                 disabled={currentPage === 1}
                                 onClick={() => handleSetPage(currentPage - 1)}
-                                style={{ background: 'none', border: 'none', fontSize: 22, cursor: 'pointer', color: currentPage === 1 ? '#ccc' : '#444' }}
                               >
                                 &#8592;
                               </button>
@@ -518,20 +518,7 @@ const UserManager = () => {
                                 <button
                                   key={i + 1}
                                   onClick={() => handleSetPage(i + 1)}
-                                  style={{
-                                    width: 40,
-                                    height: 40,
-                                    borderRadius: '50%',
-                                    background: currentPage === i + 1 ? '#1967d2' : 'none',
-                                    color: currentPage === i + 1 ? '#fff' : '#444',
-                                    border: 'none',
-                                    fontWeight: 600,
-                                    fontSize: 18,
-                                    cursor: 'pointer',
-                                    outline: 'none',
-                                    boxShadow: 'none',
-                                    transition: 'background 0.2s, color 0.2s'
-                                  }}
+                                  className={currentPage === i + 1 ? 'active' : ''}
                                 >
                                   {i + 1}
                                 </button>
@@ -539,7 +526,6 @@ const UserManager = () => {
                               <button
                                 disabled={currentPage === totalPagesToShow || totalPagesToShow === 0}
                                 onClick={() => handleSetPage(currentPage + 1)}
-                                style={{ background: 'none', border: 'none', fontSize: 22, cursor: 'pointer', color: currentPage === totalPagesToShow || totalPagesToShow === 0 ? '#ccc' : '#444' }}
                               >
                                 &#8594;
                               </button>
