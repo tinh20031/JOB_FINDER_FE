@@ -257,6 +257,30 @@ const EmployerManagement = () => {
             padding: 4px 12px;
             border-radius: 8px;
           }
+          /* Responsive breakpoints */
+          @media (max-width: 1200px) {
+            .filter-container {
+              flex-direction: column;
+              align-items: stretch;
+              width: 100%;
+            }
+            
+            .search-group, .filter-group {
+              width: 100%;
+            }
+            
+            .search-input, .filter-select {
+              width: 100%;
+              min-width: unset;
+            }
+            
+            .widget-title {
+              flex-direction: column;
+              gap: 16px;
+              align-items: stretch;
+            }
+          }
+          
           @media (max-width: 767px) {
             .employer-card { flex-direction: column; align-items: flex-start; }
             .employer-actions { flex-direction: row; align-items: center; margin-top: 12px; }
@@ -288,6 +312,17 @@ const EmployerManagement = () => {
               width: 100% !important;
               margin-right: 0 !important;
               margin-bottom: 10px;
+            }
+          }
+          
+          @media (max-width: 480px) {
+            .filter-container {
+              gap: 8px;
+            }
+            
+            .search-input, .filter-select {
+              padding: 10px 12px;
+              font-size: 16px; /* Prevent zoom on iOS */
             }
           }
           .btn.btn-sm:hover, .btn.btn-sm:focus {
@@ -323,6 +358,238 @@ const EmployerManagement = () => {
           .employer-info div a:hover {
             color: #1967d2; /* Blue color on hover */
           }
+          
+          /* Enhanced visual effects for company management */
+          .employer-card {
+            transition: all 0.3s ease;
+            border-radius: 12px;
+            overflow: hidden;
+          }
+          
+          .employer-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+          }
+          
+          .employer-card .employer-info {
+            transition: all 0.3s ease;
+          }
+          
+          .employer-card:hover .employer-info {
+            transform: scale(1.02);
+          }
+          
+          .employer-actions button {
+            transition: all 0.3s ease;
+            border-radius: 8px;
+            font-weight: 600;
+            position: relative;
+            overflow: hidden;
+          }
+          
+          .employer-actions button:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+          }
+          
+          .employer-actions button:active {
+            transform: translateY(0);
+          }
+          
+          .employer-actions button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.5s;
+          }
+          
+          .employer-actions button:hover::before {
+            left: 100%;
+          }
+          
+          .ls-widget {
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            transition: all 0.3s ease;
+          }
+          
+          .ls-widget:hover {
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+          }
+          
+          .widget-title {
+            border-radius: 16px 16px 0 0;
+            background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+            border-bottom: 2px solid #e9ecef;
+          }
+          
+          /* Responsive filter styles */
+          .filter-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            align-items: center;
+          }
+          
+          .search-group, .filter-group {
+            position: relative;
+            transition: all 0.3s ease;
+          }
+          
+          .search-input {
+            min-width: 180px;
+            border-radius: 8px;
+            border: 1px solid #e9ecef;
+            transition: all 0.3s ease;
+            padding: 8px 12px;
+            font-size: 14px;
+          }
+          
+          .search-input:focus {
+            border-color: #1967d2;
+            box-shadow: 0 0 0 3px rgba(25, 103, 210, 0.1);
+            transform: translateY(-1px);
+          }
+          
+          .filter-select {
+            min-width: 140px;
+            border-radius: 8px;
+            border: 1px solid #e9ecef;
+            transition: all 0.3s ease;
+            padding: 8px 12px;
+            font-size: 14px;
+            background-color: #fff;
+          }
+          
+          .filter-select:focus {
+            border-color: #1967d2;
+            box-shadow: 0 0 0 3px rgba(25, 103, 210, 0.1);
+            transform: translateY(-1px);
+          }
+          
+          .search-group:hover .search-input,
+          .filter-group:hover .filter-select {
+            border-color: #1967d2;
+            transform: translateY(-1px);
+          }
+          
+          .search-group, .filter-group {
+            position: relative;
+            transition: all 0.3s ease;
+          }
+          
+          .search-input {
+            min-width: 180px;
+            border-radius: 8px;
+            border: 1px solid #e9ecef;
+            transition: all 0.3s ease;
+            padding: 8px 12px;
+            font-size: 14px;
+          }
+          
+          .search-input:focus {
+            border-color: #1967d2;
+            box-shadow: 0 0 0 3px rgba(25, 103, 210, 0.1);
+            transform: translateY(-1px);
+          }
+          
+          .filter-select {
+            min-width: 140px;
+            border-radius: 8px;
+            border: 1px solid #e9ecef;
+            transition: all 0.3s ease;
+            padding: 8px 12px;
+            font-size: 14px;
+            background-color: #fff;
+          }
+          
+          .filter-select:focus {
+            border-color: #1967d2;
+            box-shadow: 0 0 0 3px rgba(25, 103, 210, 0.1);
+            transform: translateY(-1px);
+          }
+          
+          .search-group:hover .search-input,
+          .filter-group:hover .filter-select {
+            border-color: #1967d2;
+            transform: translateY(-1px);
+          }
+          
+          /* Responsive breakpoints */
+          @media (max-width: 1200px) {
+            .filter-container {
+              flex-direction: column;
+              align-items: stretch;
+              width: 100%;
+            }
+            
+            .search-group, .filter-group {
+              width: 100%;
+            }
+            
+            .search-input, .filter-select {
+              width: 100%;
+              min-width: unset;
+            }
+            
+            .widget-title {
+              flex-direction: column;
+              gap: 16px;
+              align-items: stretch;
+            }
+          }
+          
+          @media (max-width: 768px) {
+            .employer-actions {
+              flex-direction: column;
+              gap: 8px;
+              align-items: stretch;
+            }
+            
+            .employer-actions button {
+              width: 100%;
+              min-width: unset;
+            }
+            
+            .employer-card {
+              flex-direction: column;
+              align-items: flex-start;
+              gap: 16px;
+            }
+            
+            .employer-info {
+              width: 100%;
+            }
+            
+            .employer-actions {
+              width: 100%;
+              margin-top: 0;
+            }
+          }
+          
+          @media (max-width: 480px) {
+            .filter-container {
+              gap: 8px;
+            }
+            
+            .search-input, .filter-select {
+              padding: 10px 12px;
+              font-size: 16px; /* Prevent zoom on iOS */
+            }
+            
+            .employer-card {
+              padding: 16px 20px;
+            }
+            
+            .employer-logo {
+              width: 48px;
+              height: 48px;
+            }
+          }
         `}</style>
 
         <span className="header-span"></span>
@@ -345,27 +612,40 @@ const EmployerManagement = () => {
             <div className="row">
               <div className="col-lg-12">
                 <div className="ls-widget">
-                  <div className="widget-title d-flex flex-wrap gap-2 justify-content-between align-items-center">
-                    <h4>Company List</h4>
-                    <div className="d-flex flex-wrap gap-2 align-items-center">
-                      <input
-                        type="text"
-                        className="form-control form-control-sm"
-                        style={{width:180}}
-                        placeholder="Search company..."
-                        value={search}
-                        onChange={handleSearch}
-                      />
-                      <select className="form-select form-select-sm" style={{width:120}} value={filterStatus} onChange={e=>handleFilterStatus(e.target.value)}>
-                        <option value="all">All Status</option>
-                        <option value="verified">Verified</option>
-                        <option value="pending">Pending</option>
-                      </select>
-                      <select className="form-select form-select-sm" style={{width:120}} value={filterLock} onChange={e=>handleFilterLock(e.target.value)}>
-                        <option value="all">All Status Lock</option>
-                        <option value="locked">Locked</option>
-                        <option value="unlocked">Unlocked</option>
-                      </select>
+                  <div className="widget-title d-flex flex-wrap gap-3 justify-content-between align-items-center">
+                    <h4>Company List ({filteredEmployers.length})</h4>
+                    <div className="filter-container d-flex flex-wrap gap-2 align-items-center">
+                      <div className="search-group">
+                        <input
+                          type="text"
+                          className="form-control form-control-sm search-input"
+                          placeholder="Search company..."
+                          value={search}
+                          onChange={handleSearch}
+                        />
+                      </div>
+                      <div className="filter-group">
+                        <select 
+                          className="form-select form-select-sm filter-select" 
+                          value={filterStatus} 
+                          onChange={e=>handleFilterStatus(e.target.value)}
+                        >
+                          <option value="all">All Status</option>
+                          <option value="verified">Verified</option>
+                          <option value="pending">Pending</option>
+                        </select>
+                      </div>
+                      <div className="filter-group">
+                        <select 
+                          className="form-select form-select-sm filter-select" 
+                          value={filterLock} 
+                          onChange={e=>handleFilterLock(e.target.value)}
+                        >
+                          <option value="all">All Lock Status</option>
+                          <option value="locked">Locked</option>
+                          <option value="unlocked">Unlocked</option>
+                        </select>
+                      </div>
                     </div>
                   </div>
                   <div className={`widget-content ${!loading ? 'fade-in' : ''}`}> 
@@ -432,11 +712,32 @@ const EmployerManagement = () => {
                                   </div>
                                 </div>
                                 <div className="employer-actions">
-                                  {/* Removed View Profile and Edit buttons */}
                                   {!emp.IsVerified && (
-                                    <button className="btn btn-sm me-1" onClick={() => handleVerify(emp.Id)}>Approve</button>
+                                    <button 
+                                      className="btn btn-sm btn-success" 
+                                      onClick={() => handleVerify(emp.Id)}
+                                      style={{
+                                        minWidth: '80px',
+                                        transition: 'all 0.3s ease',
+                                        boxShadow: '0 2px 8px rgba(40, 167, 69, 0.3)'
+                                      }}
+                                    >
+                                      <i className="fas fa-check-circle me-1"></i>
+                                      Approve
+                                    </button>
                                   )}
-                                  <button className="btn btn-sm lock-toggle-btn" onClick={() => handleToggleLock(emp.Id, emp.IsLocked)}>{emp.IsLocked ? "Unlock" : "Lock"}</button>
+                                  <button 
+                                    className={`btn btn-sm ${emp.IsLocked ? 'btn-success' : 'btn-outline-danger'}`}
+                                    onClick={() => handleToggleLock(emp.Id, emp.IsLocked)}
+                                    style={{
+                                      minWidth: '80px',
+                                      transition: 'all 0.3s ease',
+                                      boxShadow: emp.IsLocked ? '0 2px 8px rgba(40, 167, 69, 0.3)' : 'none'
+                                    }}
+                                  >
+                                    <i className={`fas ${emp.IsLocked ? 'fa-unlock' : 'fa-lock'} me-1`}></i>
+                                    {emp.IsLocked ? "Unlock" : "Lock"}
+                                  </button>
                                 </div>
                               </div>
                             ))

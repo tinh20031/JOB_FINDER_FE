@@ -25,6 +25,7 @@ import "@/styles/modal.css";
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { JobStatus, getJobStatusColor } from "../../../../utils/jobStatus";
 
 // Skeleton component for job blocks
 const JobSkeleton = () => (
@@ -96,9 +97,10 @@ const JobPostManagement = () => {
   const [filterLock, setFilterLock] = useState("");
 
   const jobStatuses = [
-    { value: 0, label: "Pending" },
-    { value: 1, label: "Active" },
-    { value: 2, label: "Inactive" }
+    { value: 0, label: "Draft" },
+    { value: 1, label: "Pending" },
+    { value: 2, label: "Active" },
+    { value: 3, label: "Inactive" }
   ];
 
   const lockStatuses = [
@@ -107,6 +109,11 @@ const JobPostManagement = () => {
   ];
 
   const [showExpiredModal, setShowExpiredModal] = useState(false);
+  
+  // Confirmation modal states
+  const [showStatusModal, setShowStatusModal] = useState(false);
+  const [selectedJob, setSelectedJob] = useState(null);
+  const [newStatus, setNewStatus] = useState(null);
 
   // Fetch all jobs on component mount
   useEffect(() => {
@@ -190,15 +197,26 @@ const JobPostManagement = () => {
     setCurrentPage(page);
   };
 
-  const handleUpdateStatus = async (jobId, newStatus) => {
+  const handleStatusChangeClick = (job, status) => {
+    setSelectedJob(job);
+    setNewStatus(status);
+    setShowStatusModal(true);
+  };
+
+  const handleConfirmStatusChange = async () => {
+    if (!selectedJob || newStatus === null) return;
+    
     try {
-      await ApiService.request(`Job/${jobId}/status?newStatus=${newStatus}`, 'PUT');
+      await ApiService.request(`Job/${selectedJob.jobId}/status?newStatus=${newStatus}`, 'PUT');
       toast.success("Job status updated successfully!");
       setAllJobs(prevJobs =>
         prevJobs.map(job =>
-          job.jobId === jobId ? { ...job, status: parseInt(newStatus) } : job
+          job.jobId === selectedJob.jobId ? { ...job, status: parseInt(newStatus) } : job
         )
       );
+      setShowStatusModal(false);
+      setSelectedJob(null);
+      setNewStatus(null);
     } catch (error) {
       let msg = error?.response?.data;
       if (typeof msg === 'object' && msg !== null) {
@@ -212,6 +230,9 @@ const JobPostManagement = () => {
       } else {
         toast.error(`Failed to update job status: ${msg}`);
       }
+      setShowStatusModal(false);
+      setSelectedJob(null);
+      setNewStatus(null);
     }
   };
 
@@ -348,23 +369,96 @@ const JobPostManagement = () => {
             <p>This job has expired and cannot be updated. Please check the job posting time!</p>
           </Modal>
 
+          {/* Modal xác nhận thay đổi status */}
+          <Modal
+            open={showStatusModal}
+            onClose={() => {
+              setShowStatusModal(false);
+              setSelectedJob(null);
+              setNewStatus(null);
+            }}
+            title="Confirm Status Change"
+            footer={
+              <div className="d-flex gap-2">
+                <button 
+                  className="btn-cancel" 
+                  onClick={() => {
+                    setShowStatusModal(false);
+                    setSelectedJob(null);
+                    setNewStatus(null);
+                  }}
+                >
+                  Cancel
+                </button>
+                <button 
+                  className="btn-confirm" 
+                  onClick={handleConfirmStatusChange}
+                >
+                  Confirm
+                </button>
+              </div>
+            }
+          >
+            <p>
+              Are you sure you want to change the status of job "<strong>{selectedJob?.title}</strong>" to{" "}
+              <span style={{ fontWeight: 'bold' }}>
+                {newStatus === JobStatus.ACTIVE ? "Active" : "Inactive"}
+              </span>?
+            </p>
+          </Modal>
+
           <div className="row">
             <div className="col-lg-12">
               <div className="ls-widget">
                 <div className="widget-title d-flex flex-wrap gap-3 justify-content-between align-items-center">
                   <h4>Job Post List ({filteredJobs.length})</h4>
-                  <div className="d-flex flex-wrap gap-2 align-items-center">
-                    <input type="text" className="form-control form-control-sm" style={{width:180}} placeholder="Search job title..." value={searchKeyword} onChange={(e) => {setSearchKeyword(e.target.value); handleSetPage(1);}} />
-                    <input type="text" className="form-control form-control-sm" style={{width:160}} placeholder="Search company..." value={selectedCompany} onChange={(e) => {setSelectedCompany(e.target.value); handleSetPage(1);}} />
-                 
-                    <select className="form-select form-select-sm" style={{width:120}} value={filterStatus} onChange={(e) => {setFilterStatus(e.target.value); handleSetPage(1);}}>
-                      <option value="">All Status</option>
-                      {jobStatuses.map((status, idx) => (<option key={status.value !== undefined ? status.value : `status-${idx}`} value={status.value}>{status.label}</option>))}
-                    </select>
-                    <select className="form-select form-select-sm" style={{width:120}} value={filterLock} onChange={(e) => {setFilterLock(e.target.value); handleSetPage(1);}}>
-                      <option value="">All Lock Status</option>
-                      {lockStatuses.map((status, idx) => (<option key={status.value !== undefined ? status.value : `lock-${idx}`} value={status.value}>{status.label}</option>))}
-                    </select>
+                  <div className="filter-container d-flex flex-wrap gap-2 align-items-center">
+                    <div className="search-group">
+                      <input 
+                        type="text" 
+                        className="form-control form-control-sm search-input" 
+                        placeholder="Search job title..." 
+                        value={searchKeyword} 
+                        onChange={(e) => {setSearchKeyword(e.target.value); handleSetPage(1);}} 
+                      />
+                    </div>
+                    <div className="search-group">
+                      <input 
+                        type="text" 
+                        className="form-control form-control-sm search-input" 
+                        placeholder="Search company..." 
+                        value={selectedCompany} 
+                        onChange={(e) => {setSelectedCompany(e.target.value); handleSetPage(1);}} 
+                      />
+                    </div>
+                    <div className="filter-group">
+                      <select 
+                        className="form-select form-select-sm filter-select" 
+                        value={filterStatus} 
+                        onChange={(e) => {setFilterStatus(e.target.value); handleSetPage(1);}}
+                      >
+                        <option value="">All Status</option>
+                        {jobStatuses.map((status, idx) => (
+                          <option key={status.value !== undefined ? status.value : `status-${idx}`} value={status.value}>
+                            {status.label}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <div className="filter-group">
+                      <select 
+                        className="form-select form-select-sm filter-select" 
+                        value={filterLock} 
+                        onChange={(e) => {setFilterLock(e.target.value); handleSetPage(1);}}
+                      >
+                        <option value="">All Lock Status</option>
+                        {lockStatuses.map((status, idx) => (
+                          <option key={status.value !== undefined ? status.value : `lock-${idx}`} value={status.value}>
+                            {status.label}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
                   </div>
                 </div>
 
@@ -393,21 +487,44 @@ const JobPostManagement = () => {
                             </ul>
                           </div>
                           <div className="job-actions d-flex flex-row align-items-center gap-2 ms-3">
-                            <select
-                              className="form-select form-select-sm"
-                              value={item.status}
-                              onChange={(e) => handleUpdateStatus(item.jobId, e.target.value)}
-                              disabled={item.deactivatedByAdmin}
-                              style={{ width: '150px' }}
-                            >
-                              {jobStatuses.map((status) => (
-                                <option key={status.value} value={status.value}>{status.label}</option>
-                              ))}
-                            </select>
+                            <div className="d-flex gap-2">
+                              <button
+                                className={`btn btn-sm ${item.status === JobStatus.ACTIVE ? 'btn-success' : 'btn-outline-success'}`}
+                                onClick={() => handleStatusChangeClick(item, JobStatus.ACTIVE)}
+                                disabled={item.deactivatedByAdmin || item.status === JobStatus.ACTIVE}
+                                style={{
+                                  minWidth: '80px',
+                                  transition: 'all 0.3s ease',
+                                  boxShadow: item.status === JobStatus.ACTIVE ? '0 2px 8px rgba(40, 167, 69, 0.3)' : 'none'
+                                }}
+                              >
+                                <i className="fas fa-check-circle me-1"></i>
+                                Active
+                              </button>
+                              <button
+                                className={`btn btn-sm ${item.status === JobStatus.INACTIVE ? 'btn-secondary' : 'btn-outline-secondary'}`}
+                                onClick={() => handleStatusChangeClick(item, JobStatus.INACTIVE)}
+                                disabled={item.deactivatedByAdmin || item.status === JobStatus.INACTIVE}
+                                style={{
+                                  minWidth: '80px',
+                                  transition: 'all 0.3s ease',
+                                  boxShadow: item.status === JobStatus.INACTIVE ? '0 2px 8px rgba(108, 117, 125, 0.3)' : 'none'
+                                }}
+                              >
+                                <i className="fas fa-pause-circle me-1"></i>
+                                Inactive
+                              </button>
+                            </div>
                             <button
-                              className={`btn btn-sm ${item.deactivatedByAdmin ? 'btn-outline-success' : 'btn-outline-danger'}`}
+                              className={`btn btn-sm ${item.deactivatedByAdmin ? 'btn-success' : 'btn-outline-danger'}`}
                               onClick={() => handleLockJob(item.jobId, item.deactivatedByAdmin)}
+                              style={{
+                                minWidth: '80px',
+                                transition: 'all 0.3s ease',
+                                boxShadow: item.deactivatedByAdmin ? '0 2px 8px rgba(40, 167, 69, 0.3)' : 'none'
+                              }}
                             >
+                              <i className={`fas ${item.deactivatedByAdmin ? 'fa-unlock' : 'fa-lock'} me-1`}></i>
                               {item.deactivatedByAdmin ? 'Unlock' : 'Lock'}
                             </button>
                           </div>
@@ -493,6 +610,314 @@ const JobPostManagement = () => {
       .skeleton-job .inner-box {
         background-color: #f8f9fa;
         border: 1px solid #e9ecef;
+      }
+      
+      /* Enhanced visual effects for admin interface */
+      .job-block {
+        transition: all 0.3s ease;
+        border-radius: 12px;
+        overflow: hidden;
+      }
+      
+      .job-block:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+      }
+      
+      .job-block .inner-box {
+        transition: all 0.3s ease;
+        border-radius: 12px;
+        border: 1px solid #e9ecef;
+      }
+      
+      .job-block:hover .inner-box {
+        border-color: #1967d2;
+        background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+      }
+      
+      .job-actions button {
+        transition: all 0.3s ease;
+        border-radius: 8px;
+        font-weight: 600;
+        position: relative;
+        overflow: hidden;
+      }
+      
+      .job-actions button:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      }
+      
+      .job-actions button:active {
+        transform: translateY(0);
+      }
+      
+      .job-actions button::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+        transition: left 0.5s;
+      }
+      
+      .job-actions button:hover::before {
+        left: 100%;
+      }
+      
+      .ls-widget {
+        border-radius: 16px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        transition: all 0.3s ease;
+      }
+      
+      .ls-widget:hover {
+        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+      }
+      
+      .widget-title {
+        border-radius: 16px 16px 0 0;
+        background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+        border-bottom: 2px solid #e9ecef;
+      }
+      
+      .form-control, .form-select {
+        transition: all 0.3s ease;
+        border-radius: 8px;
+      }
+      
+      .form-control:focus, .form-select:focus {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(25, 103, 210, 0.15);
+      }
+      
+      .badge {
+        transition: all 0.3s ease;
+        border-radius: 6px;
+        font-weight: 600;
+      }
+      
+      .badge:hover {
+        transform: scale(1.05);
+      }
+      
+      /* Loading animation for buttons */
+      @keyframes buttonLoading {
+        0% { opacity: 1; }
+        50% { opacity: 0.7; }
+        100% { opacity: 1; }
+      }
+      
+      .job-actions button:disabled {
+        animation: buttonLoading 1.5s infinite;
+      }
+      
+      /* Success animation */
+      @keyframes successPulse {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.05); }
+        100% { transform: scale(1); }
+      }
+      
+      .job-actions button.btn-success {
+        animation: successPulse 0.6s ease-out;
+      }
+      
+      /* Responsive filter styles */
+      .filter-container {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        align-items: center;
+      }
+      
+      .search-group, .filter-group {
+        position: relative;
+        transition: all 0.3s ease;
+      }
+      
+      .search-input {
+        min-width: 180px;
+        border-radius: 8px;
+        border: 1px solid #e9ecef;
+        transition: all 0.3s ease;
+        padding: 8px 12px;
+        font-size: 14px;
+      }
+      
+      .search-input:focus {
+        border-color: #1967d2;
+        box-shadow: 0 0 0 3px rgba(25, 103, 210, 0.1);
+        transform: translateY(-1px);
+      }
+      
+      .filter-select {
+        min-width: 140px;
+        border-radius: 8px;
+        border: 1px solid #e9ecef;
+        transition: all 0.3s ease;
+        padding: 8px 12px;
+        font-size: 14px;
+        background-color: #fff;
+      }
+      
+      .filter-select:focus {
+        border-color: #1967d2;
+        box-shadow: 0 0 0 3px rgba(25, 103, 210, 0.1);
+        transform: translateY(-1px);
+      }
+      
+      .search-group:hover .search-input,
+      .filter-group:hover .filter-select {
+        border-color: #1967d2;
+        transform: translateY(-1px);
+      }
+      
+      /* Responsive breakpoints */
+      @media (max-width: 1200px) {
+        .filter-container {
+          flex-direction: column;
+          align-items: stretch;
+          width: 100%;
+        }
+        
+        .search-group, .filter-group {
+          width: 100%;
+        }
+        
+        .search-input, .filter-select {
+          width: 100%;
+          min-width: unset;
+        }
+        
+        .widget-title {
+          flex-direction: column;
+          gap: 16px;
+          align-items: stretch;
+        }
+      }
+      
+      @media (max-width: 768px) {
+        .job-actions {
+          flex-direction: column;
+          gap: 8px;
+          align-items: stretch;
+        }
+        
+        .job-actions .d-flex {
+          flex-direction: column;
+          gap: 8px;
+        }
+        
+        .job-actions button {
+          width: 100%;
+          min-width: unset;
+        }
+        
+        .job-block .inner-box {
+          flex-direction: column;
+          gap: 16px;
+        }
+        
+        .job-block .content {
+          width: 100%;
+        }
+        
+        .job-block .job-actions {
+          width: 100%;
+          margin-left: 0;
+        }
+      }
+      
+      @media (max-width: 480px) {
+        .modal-content-animated {
+          margin: 8px;
+          padding: 24px 16px;
+        }
+        
+        .filter-container {
+          gap: 8px;
+        }
+        
+        .search-input, .filter-select {
+          padding: 10px 12px;
+          font-size: 16px; /* Prevent zoom on iOS */
+        }
+      }
+      
+      /* Status button styles */
+      .status-btn {
+        border-radius: 6px;
+        font-weight: 500;
+        font-size: 0.875rem;
+        padding: 0.375rem 0.75rem;
+        border-width: 2px;
+        position: relative;
+        overflow: hidden;
+      }
+      
+      .status-btn:hover:not(:disabled) {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      }
+      
+      .status-btn:active:not(:disabled) {
+        transform: translateY(0);
+      }
+      
+      .status-btn.active {
+        font-weight: 600;
+        border-width: 2px;
+      }
+      
+      .status-btn:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+        transform: none !important;
+        box-shadow: none !important;
+      }
+      
+      .btn-outline-success:hover:not(:disabled) {
+        background-color: #28a745;
+        border-color: #28a745;
+        color: white;
+      }
+      
+      .btn-outline-secondary:hover:not(:disabled) {
+        background-color: #6c757d;
+        border-color: #6c757d;
+        color: white;
+      }
+      
+      /* Modal button styles */
+      .btn-cancel {
+        background-color: #6c757d;
+        color: white;
+        border: none;
+        padding: 0.5rem 1rem;
+        border-radius: 4px;
+        cursor: pointer;
+        transition: background-color 0.2s;
+      }
+      
+      .btn-cancel:hover {
+        background-color: #5a6268;
+      }
+      
+      .btn-confirm {
+        background-color: #007bff;
+        color: white;
+        border: none;
+        padding: 0.5rem 1rem;
+        border-radius: 4px;
+        cursor: pointer;
+        transition: background-color 0.2s;
+      }
+      
+      .btn-confirm:hover {
+        background-color: #0056b3;
       }
     `}</style>
     </>

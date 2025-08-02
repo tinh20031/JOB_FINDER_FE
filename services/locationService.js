@@ -14,14 +14,12 @@ const locationService = {
     }
   },
 
-  // Lấy danh sách quận/huyện của một tỉnh/thành phố
-  // Note: The new API documentation doesn't explicitly provide a districts endpoint.
-  // This is a placeholder assuming a similar structure or needs further clarification.
+
   getDistricts: async (provinceCode) => {
     try {
-      // Assuming a hypothetical endpoint for districts; adjust based on actual API
+     
       const response = await axios.get(`${BASE_API_URL}/districts?province_code=${provinceCode}`);
-      return response.data; // Adjust based on actual response structure
+      return response.data; 
     } catch (error) {
       console.error("Error fetching districts:", error);
       throw error;
