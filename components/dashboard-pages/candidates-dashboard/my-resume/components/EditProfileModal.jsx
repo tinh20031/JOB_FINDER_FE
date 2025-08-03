@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import locationService from "@/services/locationService";
+import ApiService from "@/services/api.service";
 
 const genderOptions = [
   { value: "male", label: "Male" },
@@ -13,7 +14,7 @@ const EditProfileModal = ({ open, onClose, onSubmit, profile }) => {
     Gender: profile?.gender || "Male",
     Dob: profile?.dob || "",
     Province: profile?.province || "",
-    City: profile?.city || "",
+    Ward: profile?.city || "", // Sử dụng city thay vì ward
     Address: profile?.address || "",
     PersonalLink: profile?.personalLink || "",
     Phone: profile?.phone || "",
@@ -26,87 +27,139 @@ const EditProfileModal = ({ open, onClose, onSubmit, profile }) => {
   const [errors, setErrors] = useState({});
   const [touched, setTouched] = useState({});
   const [provinces, setProvinces] = useState([]);
-  const [cities, setCities] = useState([]);
+  const [wards, setWards] = useState([]);
   const [provinceCodeMap, setProvinceCodeMap] = useState({});
+  const [loadingProvinces, setLoadingProvinces] = useState(false);
+  const [loadingWards, setLoadingWards] = useState(false);
 
   useEffect(() => {
-    // Convert dob from ISO string to YYYY-MM-DD format for date input
     const formatDobForInput = (dob) => {
       if (!dob) return "";
       try {
         const date = new Date(dob);
         if (isNaN(date.getTime())) return "";
-        // Use local date to avoid timezone issues
         const year = date.getFullYear();
-        const month = String(date.getMonth() + 1).padStart(2, '0');
-        const day = String(date.getDate()).padStart(2, '0');
+        const month = String(date.getMonth() + 1).padStart(2, "0");
+        const day = String(date.getDate()).padStart(2, "0");
         return `${year}-${month}-${day}`;
       } catch (error) {
         return "";
       }
     };
 
-    setForm({
+    const initialForm = {
       FullName: profile?.fullName || "",
       JobTitle: profile?.jobTitle || "",
       Gender: profile?.gender || "Male",
       Dob: formatDobForInput(profile?.dob),
       Province: profile?.province || "",
-      City: profile?.city || "",
+      Ward: profile?.city || "", // Sử dụng city thay vì ward
       Address: profile?.address || "",
       PersonalLink: profile?.personalLink || "",
       Phone: profile?.phone || "",
       image: profile?.image || "",
       Email: profile?.email || "",
-    });
+    };
+    setForm(initialForm);
     setPreview(profile?.image || "");
     if (open) {
       setTimeout(() => setShow(true), 10);
     } else {
       setShow(false);
     }
-    // Fetch provinces when modal opens
     if (open) {
+      setLoadingProvinces(true);
       locationService.getProvinces().then((data) => {
         const arr = Array.isArray(data) ? data : data || [];
         setProvinces(arr);
-        // Tạo map tên -> code để lấy code khi chọn
         const codeMap = {};
         arr.forEach((p) => {
-          codeMap[p.name] = p.code || p.id;
+          codeMap[p.name] = p.province_code;
         });
         setProvinceCodeMap(codeMap);
-        // Nếu đã có province và city cũ, fetch districts luôn
         if (profile?.province && codeMap[profile.province]) {
+          setLoadingWards(true);
           locationService
-            .getDistricts(codeMap[profile.province])
-            .then((districts) => {
-              setCities(Array.isArray(districts) ? districts : []);
+            .getWards(codeMap[profile.province])
+            .then((wardsData) => {
+              const wardsArray = Array.isArray(wardsData) ? wardsData : [];
+              setWards(wardsArray);
+              // Kiểm tra xem ward từ profile có tồn tại trong danh sách wards không
+              if (profile?.city && wardsArray.length > 0) {
+                const existingWard = wardsArray.find(ward => ward.ward_name === profile.city);
+                if (existingWard) {
+                  // Đảm bảo form.Ward được set đúng giá trị từ profile
+                  if (form.Ward !== profile.city) {
+                    setForm(prev => ({ ...prev, Ward: profile.city }));
+                  }
+                }
+              }
+              setLoadingWards(false);
+            })
+            .catch((error) => {
+              setWards([]);
+              setLoadingWards(false);
             });
         } else {
-          setCities([]);
+          setWards([]);
         }
+        setLoadingProvinces(false);
+      }).catch((error) => {
+        setProvinces([]);
+        setWards([]);
+        setLoadingProvinces(false);
       });
     }
   }, [profile, open]);
 
-  // Khi chọn province, fetch city, chỉ reset City nếu đổi province (không reset khi khởi tạo từ profile)
   useEffect(() => {
     if (form.Province && provinceCodeMap[form.Province]) {
+      setLoadingWards(true);
       locationService
-        .getDistricts(provinceCodeMap[form.Province])
-        .then((districts) => {
-          setCities(Array.isArray(districts) ? districts : []);
+        .getWards(provinceCodeMap[form.Province])
+        .then((wardsData) => {
+          if (Array.isArray(wardsData)) {
+            setWards(wardsData);
+            // Chỉ reset Ward nếu đây là lần đầu load và có dữ liệu từ profile
+            if (form.Province === profile?.province && profile?.city) {
+              // Kiểm tra xem ward từ profile có tồn tại trong danh sách wards không
+              const existingWard = wardsData.find(ward => ward.ward_name === profile.city);
+            }
+          } else {
+            setWards([]);
+          }
+          setLoadingWards(false);
+        })
+        .catch((error) => {
+          setWards([]);
+          setLoadingWards(false);
         });
-      // Nếu province khác với profile.province thì reset City
+      // Chỉ reset Ward khi user thay đổi province (không phải lần đầu load)
       if (form.Province !== (profile?.province || "")) {
-        setForm((f) => ({ ...f, City: "" }));
+        setForm((f) => ({ ...f, Ward: "" }));
       }
     } else {
-      setCities([]);
-      setForm((f) => ({ ...f, City: "" }));
+      setWards([]);
+      // Chỉ reset Ward khi không có province được chọn
+      if (!form.Province) {
+        setForm((f) => ({ ...f, Ward: "" }));
+      }
     }
-  }, [form.Province]);
+  }, [form.Province, profile?.province, provinceCodeMap]);
+
+  // useEffect để load wards ban đầu khi có dữ liệu từ profile
+  useEffect(() => {
+    if (profile?.province && profile?.city && provinceCodeMap[profile.province] && wards.length > 0) {
+      // Kiểm tra xem ward từ profile có tồn tại trong danh sách wards không
+      const existingWard = wards.find(ward => ward.ward_name === profile.city);
+      if (existingWard) {
+        // Đảm bảo form.Ward được set đúng giá trị từ profile
+        if (form.Ward !== profile.city) {
+          setForm(prev => ({ ...prev, Ward: profile.city }));
+        }
+      }
+    }
+  }, [profile?.province, profile?.city, provinceCodeMap, wards, form.Ward]);
 
   if (!open) return null;
 
@@ -125,6 +178,27 @@ const EditProfileModal = ({ open, onClose, onSubmit, profile }) => {
         setForm((prev) => ({ ...prev, imageFile: null }));
         setPreview("");
       }
+    } else if (name === "Province") {
+      // Khi thay đổi province, reset ward và load wards mới
+      setForm((prev) => ({ ...prev, [name]: value, Ward: "" }));
+      if (value && provinceCodeMap[value]) {
+        setLoadingWards(true);
+        locationService
+          .getWards(provinceCodeMap[value])
+          .then((wardsData) => {
+            const wardsArray = Array.isArray(wardsData) ? wardsData : [];
+            setWards(wardsArray);
+            setLoadingWards(false);
+          })
+          .catch((error) => {
+            setWards([]);
+            setLoadingWards(false);
+          });
+      } else if (value) {
+        setWards([]);
+      } else {
+        setWards([]);
+      }
     } else {
       setForm((prev) => ({ ...prev, [name]: value }));
     }
@@ -139,7 +213,6 @@ const EditProfileModal = ({ open, onClose, onSubmit, profile }) => {
     e.preventDefault();
     setForm((prev) => ({ ...prev, imageFile: null, image: "" }));
     setPreview("");
-    // Reset file input
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
@@ -157,27 +230,24 @@ const EditProfileModal = ({ open, onClose, onSubmit, profile }) => {
     if (!form.Phone.trim()) newErrors.Phone = "Phone is required.";
     if (!form.Dob || form.Dob.trim() === "") newErrors.Dob = "Date of birth is required.";
     if (!form.Province.trim()) newErrors.Province = "Province is required.";
-    if (!form.City.trim()) newErrors.City = "City is required.";
+    if (!form.Ward.trim()) newErrors.Ward = "Ward is required.";
     return newErrors;
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     const validationErrors = validate();
     setErrors(validationErrors);
     if (Object.keys(validationErrors).length > 0) return;
-    
-    // Convert date back to ISO string for API
+  
     const formatDobForAPI = (dob) => {
       if (!dob) return null;
-      // Nếu dob là yyyy-mm-dd thì trả về `${dob}T00:00:00.000Z` để không bị lệch múi giờ
       if (/^\d{4}-\d{2}-\d{2}$/.test(dob)) {
         return `${dob}T00:00:00.000Z`;
       }
       try {
         const date = new Date(dob);
         if (isNaN(date.getTime())) return null;
-        // Fallback: vẫn tạo ISO string nếu không đúng định dạng
         const year = date.getFullYear();
         const month = date.getMonth();
         const day = date.getDate();
@@ -186,23 +256,27 @@ const EditProfileModal = ({ open, onClose, onSubmit, profile }) => {
         return null;
       }
     };
-
-    const submitData = {
-      FullName: form.FullName,
-      JobTitle: form.JobTitle,
-      Phone: form.Phone,
-      Gender: form.Gender,
-      City: form.City,
-      Province: form.Province,
-      Address: form.Address,
-      Dob: formatDobForAPI(form.Dob),
-      imageFile: form.imageFile,
-      PersonalLink: form.PersonalLink,
-    };
-    onSubmit(submitData);
+  
+    const formData = new FormData();
+    formData.append("FullName", form.FullName);
+    formData.append("JobTitle", form.JobTitle);
+    formData.append("Phone", form.Phone);
+    formData.append("Gender", form.Gender);
+    formData.append("city", form.Ward || ""); // Gửi city
+    formData.append("Province", form.Province);
+    formData.append("Address", form.Address || "");
+    formData.append("Dob", formatDobForAPI(form.Dob));
+    if (form.imageFile) formData.append("imageFile", form.imageFile);
+    formData.append("PersonalLink", form.PersonalLink || "");
+  
+    try {
+      await ApiService.request("CandidateProfile/me", "PUT", formData);
+      onClose();
+    } catch (error) {
+      // Handle error silently or show toast notification
+    }
   };
 
-  // Add URL validation function
   const getValidImageUrl = (url) => {
     if (!url || typeof url !== "string") {
       return null;
@@ -211,7 +285,7 @@ const EditProfileModal = ({ open, onClose, onSubmit, profile }) => {
       url.startsWith("http://") ||
       url.startsWith("https://") ||
       url.startsWith("/") ||
-      url.startsWith("data:") // Add support for data URLs from FileReader
+      url.startsWith("data:")
     ) {
       return url;
     }
@@ -363,7 +437,6 @@ const EditProfileModal = ({ open, onClose, onSubmit, profile }) => {
             Personal details
           </h2>
           <div className="modal-flex">
-            {/* Avatar + Edit/Delete */}
             <div className="avatar-section">
               <img
                 src={
@@ -426,7 +499,6 @@ const EditProfileModal = ({ open, onClose, onSubmit, profile }) => {
                 </button>
               </div>
             </div>
-            {/* Form fields */}
             <form className="modal-form-flex" onSubmit={handleSubmit}>
               <div className="modal-form-grid">
                 <div className="form-group">
@@ -585,8 +657,7 @@ const EditProfileModal = ({ open, onClose, onSubmit, profile }) => {
                 </div>
                 <div className="form-group">
                   <label>
-                    Current province/city{" "}
-                    <span style={{ color: "#e60023" }}>*</span>
+                    Province <span style={{ color: "#e60023" }}>*</span>
                   </label>
                   <select
                     name="Province"
@@ -594,6 +665,7 @@ const EditProfileModal = ({ open, onClose, onSubmit, profile }) => {
                     onChange={handleChange}
                     onBlur={handleBlur}
                     required
+                    disabled={loadingProvinces}
                     style={{
                       border:
                         errors.Province ||
@@ -607,13 +679,16 @@ const EditProfileModal = ({ open, onClose, onSubmit, profile }) => {
                         (touched.Province && !form.Province.trim())
                           ? "1px solid #e60023"
                           : undefined,
-                      background: "#fff",
+                      background: loadingProvinces ? "#f8f9fa" : "#fff",
+                      opacity: loadingProvinces ? 0.7 : 1,
                     }}
                   >
-                    <option value="">Select province</option>
+                    <option value="">
+                      {loadingProvinces ? "Loading provinces..." : "Select a province"}
+                    </option>
                     {provinces.map((province) => (
                       <option
-                        key={province.code || province.id || province.name}
+                        key={province.province_code}
                         value={province.name}
                       >
                         {province.name}
@@ -625,53 +700,57 @@ const EditProfileModal = ({ open, onClose, onSubmit, profile }) => {
                     <div
                       style={{ color: "#e60023", fontSize: 13, marginTop: 2 }}
                     >
-                      Please enter your province
+                      Please select a province
                     </div>
                   )}
                 </div>
                 <div className="form-group">
-                  <label>
-                    City <span style={{ color: "#e60023" }}>*</span>
-                  </label>
-                  <select
-                    name="City"
-                    value={form.City}
-                    onChange={handleChange}
-                    onBlur={handleBlur}
-                    required
-                    style={{
-                      border:
-                        errors.City || (touched.City && !form.City.trim())
-                          ? "2px solid #e60023"
-                          : form.City.trim()
-                          ? "2px solid #28a745"
-                          : "1px solid #ddd",
-                      outline:
-                        errors.City || (touched.City && !form.City.trim())
-                          ? "1px solid #e60023"
-                          : undefined,
-                      background: "#fff",
-                    }}
-                    disabled={!form.Province || cities.length === 0}
-                  >
-                    <option value="">Select city</option>
-                    {cities.map((city) => (
-                      <option
-                        key={city.code || city.id || city.name}
-                        value={city.name}
-                      >
-                        {city.name}
-                      </option>
-                    ))}
-                  </select>
-                  {(errors.City || (touched.City && !form.City.trim())) && (
-                    <div
-                      style={{ color: "#e60023", fontSize: 13, marginTop: 2 }}
-                    >
-                      Please enter your city
-                    </div>
-                  )}
-                </div>
+  <label>
+    Ward/Commune <span style={{ color: "#e60023" }}>*</span>
+  </label>
+  <select
+    name="Ward"
+    value={form.Ward}
+    onChange={handleChange}
+    onBlur={handleBlur}
+    required
+    disabled={!form.Province || wards.length === 0 || loadingWards}
+    style={{
+      border:
+        errors.Ward || (touched.Ward && !form.Ward.trim())
+          ? "2px solid #e60023"
+          : form.Ward.trim()
+          ? "2px solid #28a745"
+          : "1px solid #ddd",
+      outline:
+        errors.Ward || (touched.Ward && !form.Ward.trim())
+          ? "1px solid #e60023"
+          : undefined,
+      background: loadingWards ? "#f8f9fa" : "#fff",
+      opacity: loadingWards ? 0.7 : 1,
+    }}
+  >
+    <option value="">
+      {loadingWards
+        ? "Loading wards..."
+        : !form.Province
+        ? "Please select a province first"
+        : wards.length === 0
+        ? "No wards available"
+        : "Select a ward"}
+    </option>
+    {wards.map((ward) => (
+      <option key={ward.ward_code} value={ward.ward_name}>
+        {ward.ward_name}
+      </option>
+    ))}
+  </select>
+  {(errors.Ward || (touched.Ward && !form.Ward.trim())) && (
+    <div style={{ color: "#e60023", fontSize: 13, marginTop: 2 }}>
+      Please select a ward
+    </div>
+  )}
+</div>
                 <div className="form-group address">
                   <label>Address (Street, district,...)</label>
                   <input

@@ -1,6 +1,6 @@
 'use client';
 
-import React from "react";
+import React, { Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import LoginPopup from "../../../components/common/form/login/LoginPopup";
 import FooterDefault from "../../../components/footer/common-footer";
@@ -9,7 +9,7 @@ import MobileMenu from "@/components/header/MobileMenu";
 import Breadcrumb from "../../../components/dashboard-pages/BreadCrumb";
 import { useRouter } from "next/navigation";
 
-const PaymentCancelledPage = () => {
+const PaymentCancelledPageContent = () => {
   const searchParams = useSearchParams();
   const router = useRouter();
   let orderCode = searchParams.get("orderCode");
@@ -99,5 +99,11 @@ const PaymentCancelledPage = () => {
     </>
   );
 };
+
+const PaymentCancelledPage = () => (
+  <Suspense fallback={<div>Loading...</div>}>
+    <PaymentCancelledPageContent />
+  </Suspense>
+);
 
 export default PaymentCancelledPage; 

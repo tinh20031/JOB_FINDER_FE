@@ -138,8 +138,19 @@ const ChatBoxContentField = ({
               }
               className="rounded-circle me-2"
               alt={currentChatPartner.name}
-              width={40}
-              height={40}
+              width={48}
+              height={48}
+              style={{
+                objectFit: 'cover',
+                border: '2px solid #e0e0e0',
+                boxShadow: '0 2px 6px rgba(0,0,0,0.1)',
+                borderRadius: '50%',
+                width: '48px',
+                height: '48px'
+              }}
+              onError={(e) => {
+                e.target.src = '/images/resource/default-avatar.png';
+              }}
             />
             <div>
               <h5 
@@ -233,14 +244,43 @@ const ChatBoxContentField = ({
                 }}
               >
                 {!isMyMessage && (
-                  <Image
-                    src={avatarUrl}
-                    alt={displayName}
-                    width={32}
-                    height={32}
-                    className="rounded-circle"
-                    style={{ flexShrink: 0 }}
-                  />
+                  <div style={{ 
+                    position: 'relative',
+                    flexShrink: 0,
+                    marginRight: '8px'
+                  }}>
+                    <Image
+                      src={avatarUrl}
+                      alt={displayName}
+                      width={40}
+                      height={40}
+                      className="rounded-circle"
+                      style={{ 
+                        objectFit: 'cover',
+                        border: '2px solid #e0e0e0',
+                        boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+                        borderRadius: '50%',
+                        width: '40px',
+                        height: '40px'
+                      }}
+                      onError={(e) => {
+                        e.target.src = '/images/resource/default-avatar.png';
+                      }}
+                    />
+                    {partnerOnline && (
+                      <div style={{
+                        position: 'absolute',
+                        bottom: '2px',
+                        right: '2px',
+                        width: '12px',
+                        height: '12px',
+                        backgroundColor: '#4caf50',
+                        borderRadius: '50%',
+                        border: '2px solid white',
+                        boxShadow: '0 1px 3px rgba(0,0,0,0.2)'
+                      }} />
+                    )}
+                  </div>
                 )}
                 
                 <div
@@ -251,7 +291,8 @@ const ChatBoxContentField = ({
                   }`}
                   style={{
                     maxWidth: '70%',
-                    wordWrap: 'break-word'
+                    wordWrap: 'break-word',
+                    boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
                   }}
                 >
                   {msg.fileUrl && (
@@ -301,14 +342,30 @@ const ChatBoxContentField = ({
                 </div>
 
                 {isMyMessage && (
-                  <Image
-                    src={avatarUrl}
-                    alt={displayName}
-                    width={32}
-                    height={32}
-                    className="rounded-circle"
-                    style={{ flexShrink: 0 }}
-                  />
+                  <div style={{ 
+                    position: 'relative',
+                    flexShrink: 0,
+                    marginLeft: '8px'
+                  }}>
+                    <Image
+                      src={avatarUrl}
+                      alt={displayName}
+                      width={40}
+                      height={40}
+                      className="rounded-circle"
+                      style={{ 
+                        objectFit: 'cover',
+                        border: '2px solid #e0e0e0',
+                        boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+                        borderRadius: '50%',
+                        width: '40px',
+                        height: '40px'
+                      }}
+                      onError={(e) => {
+                        e.target.src = '/images/resource/default-avatar.png';
+                      }}
+                    />
+                  </div>
                 )}
               </div>
             );

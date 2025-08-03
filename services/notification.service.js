@@ -90,4 +90,23 @@ const notificationService = {
   },
 };
 
+// Mapping notification type/link to detail URL
+const notificationTypeToUrl = {
+  1: (n) => `/job-single-v3/${n.link?.split("/").pop()}`,
+  2: (n) => n.link || "/notifications", // ApplicationStatus
+  3: (n) => "/notifications", // SystemNotification
+  4: (n) => `/job-single-v3/${n.link?.split("/").pop()}`,
+  5: (n) => `/job-single-v3/${n.link?.split("/").pop()}`,
+  6: (n) => n.link, // NewJobApplication
+  7: (n) => n.link, // CompanyFavorited
+  8: (n) => n.link, // JobFavorited
+  9: (n) => n.link, // TryMatchUpdate
+  10: (n) => n.link, // ApplicationStatusUpdate
+};
+
+export function getNotificationDetailUrl(notification) {
+  const fn = notificationTypeToUrl[notification.type] || (() => "/notifications");
+  return fn(notification);
+}
+
 export default notificationService; 

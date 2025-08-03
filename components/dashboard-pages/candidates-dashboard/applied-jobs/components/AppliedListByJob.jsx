@@ -1,4 +1,5 @@
-'use client';
+"use client";
+
 import { useEffect, useState } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { applicationService } from "@/services/applicationService";
@@ -16,17 +17,17 @@ const TableSkeleton = () => (
     <table className="default-table manage-job-table">
       <thead>
         <tr>
-          <th>Date</th>
           <th>Cover Letter</th>
-          <th>CV</th>
+          <th style={{ textAlign: 'center', padding: '8px' }}>CV</th>
+          <th>Date</th>
         </tr>
       </thead>
       <tbody>
         {[...Array(5)].map((_, idx) => (
           <tr key={idx}>
             <td><div className="skeleton-line long" style={{ height: 18, marginBottom: 8, borderRadius: 6 }}></div></td>
-            <td><div className="skeleton-line long" style={{ height: 16, borderRadius: 6 }}></div></td>
             <td><div className="skeleton-line short" style={{ height: 16, borderRadius: 6 }}></div></td>
+            <td><div className="skeleton-line long" style={{ height: 16, borderRadius: 6 }}></div></td>
           </tr>
         ))}
       </tbody>
@@ -143,7 +144,7 @@ const AppliedListByJob = () => {
             <div className="col-lg-12">
               <div className="ls-widget">
                 <div className="tabs-box">
-                  <div className="widget-title">
+                  <div className="widget-title" style={{ textAlign: 'center', marginBottom: '20px' }}>
                     <h4>All times you applied for this job</h4>
                   </div>
                   <div className="widget-content">
@@ -158,17 +159,14 @@ const AppliedListByJob = () => {
                         <table className="default-table manage-job-table">
                           <thead>
                             <tr>
-                              <th>Submission Date</th>
                               <th>Cover Letter</th>
-                              <th>CV</th>
+                              <th style={{ textAlign: 'center', padding: '8px' }}>CV</th>
+                              <th>Date</th>
                             </tr>
                           </thead>
                           <tbody>
                             {paginatedApplications.map(app => (
                               <tr key={app.applicationId}>
-                                <td>
-                                  {formatDateVN(app.submittedAt)}
-                                </td>
                                 <td>
                                   <span
                                     style={{
@@ -210,6 +208,9 @@ const AppliedListByJob = () => {
                                       </button>
                                     </li>
                                   </ul>
+                                </td>
+                                <td>
+                                  {formatDateVN(app.submittedAt)}
                                 </td>
                               </tr>
                             ))}
@@ -305,4 +306,4 @@ const AppliedListByJob = () => {
   );
 };
 
-export default AppliedListByJob; 
+export default AppliedListByJob;

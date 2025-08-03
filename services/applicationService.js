@@ -4,7 +4,7 @@ import API_CONFIG from "../config/api.config";
 
 
 const API_URL = API_CONFIG.BASE_URL;
-// const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://job-finder-kjt2.onrender.com/api';
+
 
 
 // Helper function to get token
@@ -124,7 +124,28 @@ export const applicationService = {
     }
   },
 
-
+// Trong applicationService.js
+getApplicationById: async (applicationId) => {
+  try {
+    const token = getToken();
+    if (!token) {
+      throw new Error('No authentication token found');
+    }
+    const response = await axios.get(
+      `${API_URL}/Application/${applicationId}`,
+      {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching application details:', error);
+    throw error;
+  }
+},
   // Withdraw application
   withdraw: async (applicationId) => {
     try {
@@ -279,7 +300,6 @@ export const applicationService = {
       throw error;
     }
   },
-
 
   // Get matching applicants for a job (matching_job API)
   getMatchingJobApplicants: async (jobId) => {

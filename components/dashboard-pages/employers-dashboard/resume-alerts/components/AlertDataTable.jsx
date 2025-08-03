@@ -1,57 +1,71 @@
 'use client';
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import notificationService from "@/services/notification.service";
+import notificationService, { getNotificationDetailUrl } from "@/services/notification.service";
+
+function timeAgo(dateString) {
+  if (!dateString) return '';
+  const now = new Date();
+  const date = new Date(dateString);
+  date.setHours(date.getHours() + 7); // Nếu backend trả về UTC
+  const diff = Math.floor((now - date) / 1000);
+  if (diff < 60) return "just now";
+  if (diff < 3600) return `${Math.floor(diff / 60)} minutes ago`;
+  if (diff < 86400) return `${Math.floor(diff / 3600)} hours ago`;
+  if (diff < 604800) return `${Math.floor(diff / 86400)} days ago`;
+  if (diff < 2592000) return `${Math.floor(diff / 604800)} weeks ago`;
+  return date.toLocaleDateString("en-US");
+}
 
 const AlertDataTable = () => {
-  const [jobs, setJobs] = useState([]);
+  const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchJobs = async () => {
+    const fetchNotifications = async () => {
       setLoading(true);
       try {
-        const data = await notificationService.getUpcomingJobAlerts();
-        setJobs(Array.isArray(data) ? data : []);
+        const data = await notificationService.getAllNotifications(1, 20, null);
+        setNotifications(Array.isArray(data) ? data : []);
       } catch {
-        setJobs([]);
+        setNotifications([]);
       }
       setLoading(false);
     };
-    fetchJobs();
+    fetchNotifications();
   }, []);
 
   return (
     <table className="default-table manage-job-table">
       <thead>
         <tr>
-          <th>Job Title</th>
-          <th>Days Remaining</th>
+          <th>Title</th>
+          <th>Time</th>
           <th>Action</th>
         </tr>
       </thead>
       <tbody>
         {loading ? (
           <tr><td colSpan={3} style={{ textAlign: 'center' }}>Loading...</td></tr>
-        ) : jobs.length === 0 ? (
-          <tr><td colSpan={3} style={{ textAlign: 'center', color: '#888' }}>No jobs are about to start.</td></tr>
+        ) : notifications.length === 0 ? (
+          <tr><td colSpan={3} style={{ textAlign: 'center', color: '#888' }}>No notifications.</td></tr>
         ) : (
-          jobs.map((job, idx) => (
-            <tr key={job.jobId || job.title || idx}>
-              <td>{job.link ? (
-                <Link href={job.link} target="_blank"><strong>{job.title}</strong></Link>
-              ) : (
-                <strong>{job.title}</strong>
-              )}</td>
-              <td style={{ color: '#1967d2' }}>
-                {job.daysRemaining !== undefined ? (
-                  <>
-                    {job.daysRemaining} {job.daysRemaining === 1 ? "day" : "days"}
-                  </>
-                ) : '-'}
-              </td>
+          notifications.map((n, idx) => (
+            <tr key={n.notificationId || n.id || idx} style={{ background: n.isRead ? '#fff' : '#f1f6fd' }}>
+              <td>{n.title}</td>
+              <td>{n.createdAt ? timeAgo(n.createdAt) : ""}</td>
               <td>
-                {job.link ? <Link href={job.link} style={{ color: '#1967d2' }} target="_blank">View</Link> : ''}
+                <div className="option-box">
+                  <ul className="option-list">
+                    <li>
+                      <Link href={getNotificationDetailUrl(n)} target="_blank">
+                        <button data-text="View Notification" title="View Notification">
+                          <span className="la la-eye"></span>
+                        </button>
+                      </Link>
+                    </li>
+                  </ul>
+                </div>
               </td>
             </tr>
           ))

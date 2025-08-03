@@ -33,13 +33,19 @@ const getValidImageUrl = (url) => {
 const ApplicantModal = ({ applicationId, show, onClose }) => {
   const [application, setApplication] = useState(null);
   useEffect(() => {
-    if (show && applicationId) {
-      fetch(`/api/Application/${applicationId}`)
-        .then(res => res.json())
-        .then(data => setApplication(data))
-        .catch(() => setApplication(null));
-    }
+    const fetchApplication = async () => {
+      if (show && applicationId) {
+        try {
+          const data = await applicationService.getApplicationById(applicationId);
+          setApplication(data);
+        } catch {
+          setApplication(null);
+        }
+      }
+    };
+    fetchApplication();
   }, [show, applicationId]);
+
   if (!show) return null;
   return (
     <div className="modal-overlay">
@@ -388,29 +394,28 @@ const WidgetContentBox = ({ jobId, candidateName, showMatchingInfo, useMatchingA
   };
   // Gửi export
   const handleExport = async () => {
-    if (!selectedIds.length) return;
+    if (!selectedIds.length) {
+      alert('Please select at least one applicant to export CVs!');
+      return;
+    }
     try {
-      const response = await fetch('/api/application/export-applications', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token') || ''}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          ApplicationIds: selectedIds
-        })
-      });
-      if (!response.ok) {
-        throw new Error(`Failed to fetch: ${response.statusText}`);
-      }
-      const contentDisposition = response.headers.get('content-disposition');
+      // Gọi applicationService.exportApplications chỉ với selectedIds
+      const response = await applicationService.exportApplications(selectedIds);
+  
+      // Xử lý response để tải file ZIP
+      const contentDisposition = response.headers['content-disposition'];
       const fileNameMatch = contentDisposition && contentDisposition.match(/filename="(.+)"/);
       const fileName = fileNameMatch ? fileNameMatch[1] : `CVs_${new Date().toISOString().replace(/[:.]/g, '-')}.zip`;
-      const blob = await response.blob();
+  
+      // Tạo blob và tải file
+      const blob = new Blob([response.data], { type: 'application/zip' });
       saveAs(blob, fileName);
-      setShowExportModal(false);
+  
+      // Đóng modal xác nhận
+      setShowDownloadConfirm(false);
     } catch (e) {
-      alert('Export failed!');
+      console.error('Error exporting CVs:', e.message, { selectedIds });
+      alert('Export failed! Please try again or contact support.');
     }
   };
  // Thêm hàm xác nhận/từ chối
@@ -522,13 +527,30 @@ const WidgetContentBox = ({ jobId, candidateName, showMatchingInfo, useMatchingA
             style={{ flex: 1, maxWidth: 320, background: '#f5f8fa', border: '1px solid #e5e9ec', borderRadius: 8, fontSize: 14, fontFamily: 'inherit', height: 44, boxShadow: 'none', outline: 'none', color: '#6f6f6f', fontWeight: 400, paddingLeft: 16 }}
           />
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <input
-              type="checkbox"
-              checked={selectedIds.length === applicantsToShow.length && applicantsToShow.length > 0}
-              onChange={e => handleSelectAll(e.target.checked)}
-              style={{ marginRight: 4 }}
-            />
-            <span style={{ marginRight: 8 }}>Select all</span>
+            <div 
+              style={{ 
+                display: 'flex', 
+                alignItems: 'center', 
+                gap: 4, 
+                cursor: 'pointer',
+                padding: '8px 12px',
+                borderRadius: '6px',
+                transition: 'background-color 0.2s ease',
+                userSelect: 'none'
+              }}
+              onClick={() => handleSelectAll(!(selectedIds.length === applicantsToShow.length && applicantsToShow.length > 0))}
+              onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f0f8ff'}
+              onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+            >
+              <input
+                type="checkbox"
+                checked={selectedIds.length === applicantsToShow.length && applicantsToShow.length > 0}
+                onChange={e => handleSelectAll(e.target.checked)}
+                style={{ marginRight: 4 }}
+                onClick={(e) => e.stopPropagation()}
+              />
+              <span style={{ marginRight: 8 }}>Select all</span>
+            </div>
             <button
               ref={exportBtnRef}
               className="btn btn-primary btn-sm"
@@ -581,7 +603,40 @@ const WidgetContentBox = ({ jobId, candidateName, showMatchingInfo, useMatchingA
                       className="candidate-block-three col-lg-6 col-md-12 col-sm-12"
                       key={applicant.applicationId}
                     >
-                      <div className="inner-box" style={{ position: 'relative', padding: 24, borderRadius: 16, background: '#fff', boxShadow: '0 2px 8px #eee', minHeight: 180 }}>
+                      <div 
+                        className="inner-box" 
+                        style={{ 
+                          position: 'relative', 
+                          padding: 24, 
+                          borderRadius: 16, 
+                          background: '#fff', 
+                          boxShadow: '0 2px 8px #eee', 
+                          minHeight: 180,
+                          cursor: 'pointer',
+                          transition: 'box-shadow 0.2s ease',
+                          border: selectedIds.includes(applicant.applicationId) ? '2px solid #1967d2' : '2px solid transparent'
+                        }}
+                        onClick={(e) => {
+                          // Không trigger nếu click vào checkbox hoặc các button action
+                          if (e.target.type === 'checkbox' || 
+                              e.target.closest('.option-list') || 
+                              e.target.closest('button') ||
+                              e.target.closest('a')) {
+                            return;
+                          }
+                          handleSelectOne(applicant.applicationId, !selectedIds.includes(applicant.applicationId));
+                        }}
+                        onMouseEnter={(e) => {
+                          if (!e.target.closest('.option-list') && !e.target.closest('button') && !e.target.closest('a')) {
+                            e.currentTarget.style.boxShadow = '0 4px 12px rgba(25, 103, 210, 0.15)';
+                          }
+                        }}
+                        onMouseLeave={(e) => {
+                          if (!e.target.closest('.option-list') && !e.target.closest('button') && !e.target.closest('a')) {
+                            e.currentTarget.style.boxShadow = '0 2px 8px #eee';
+                          }
+                        }}
+                      >
                         {/* Checkbox chọn ứng viên */}
                         <input
                           type="checkbox"
@@ -592,19 +647,20 @@ const WidgetContentBox = ({ jobId, candidateName, showMatchingInfo, useMatchingA
                         />
                         {/* Hiển thị similarity score chỉ khi showMatchingInfo là true */}
                         {showMatchingInfo && (
-                          <div style={{ position: 'absolute', top: 16, right: 16, width: 48, height: 48, zIndex: 2 }}>
-                            <CircularProgressbar
-                              value={Math.round(applicant.similarityScore)}
-                              text={`${Math.round(applicant.similarityScore)}`}
-                              styles={buildStyles({
-                                textColor: Math.round(applicant.similarityScore) >= 50 ? '#1967d2' : '#e53935',
-                                pathColor: Math.round(applicant.similarityScore) >= 50 ? '#1967d2' : '#e53935',
-                                trailColor: '#e0e0e0',
-                                textSize: '26px',
-                                strokeLinecap: 'round',
-                              })}
-                            />
-                          </div>
+                         <div style={{ position: 'absolute', top: 16, right: 16, width: 48, height: 48, zIndex: 2 }}>
+                         <CircularProgressbar
+                           value={Math.round(applicant.similarityScore)}
+                           text={`${(applicant.similarityScore || 0).toFixed(1)}%`}
+                           styles={buildStyles({
+                             textColor: Math.round(applicant.similarityScore) >= 50 ? '#1967d2' : '#e53935',
+                             pathColor: Math.round(applicant.similarityScore) >= 50 ? '#1967d2' : '#e53935',
+                             trailColor: '#e0e0e0',
+                             textSize: '22px',
+                             strokeLinecap: 'round',
+                           })}
+                         />
+                       </div>
+                       
                         )}
                         <div className="content">
                           <figure className="image">
@@ -649,10 +705,10 @@ const WidgetContentBox = ({ jobId, candidateName, showMatchingInfo, useMatchingA
                           {showMatchingInfo && (
                             <>
                               <div style={{ fontSize: 13, color: '#555', margin: '12px 0', display: 'flex', flexDirection: 'column', gap: 4 }}>
-                                <div><b>Education Match:</b> {formatScore(applicant.similarityEducation)}</div>
-                                <div><b>Experience Match:</b> {formatScore(applicant.similarityExperience)}</div>
-                                <div><b>Skills Match:</b> {formatScore(applicant.similaritySkills)}</div>
-                                <div><b>Description Match:</b> {formatScore(applicant.similarityDescription)}</div>
+                                <div><b>Education Match:</b> {formatScoreWithDecimal(applicant.similarityEducation)}</div>
+                                <div><b>Experience Match:</b> {formatScoreWithDecimal(applicant.similarityExperience)}</div>
+                                <div><b>Skills Match:</b> {formatScoreWithDecimal(applicant.similaritySkills)}</div>
+                                <div><b>Description Match:</b> {formatScoreWithDecimal(applicant.similarityDescription)}</div>
                               </div>
                             </>
                           )}
@@ -826,4 +882,11 @@ function formatScore(scoreStr) {
   if (!scoreStr) return '';
   const [num, denom] = scoreStr.split('/');
   return `${Math.round(parseFloat(num))}/${Math.round(parseFloat(denom))}`;
+}
+
+// Helper function to format score with 1 decimal place for numerator only
+function formatScoreWithDecimal(scoreStr) {
+  if (!scoreStr) return '';
+  const [num, denom] = scoreStr.split('/');
+  return `${parseFloat(num).toFixed(1)}/${Math.round(parseFloat(denom))}`;
 }

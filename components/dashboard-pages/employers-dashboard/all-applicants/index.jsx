@@ -63,7 +63,7 @@ const Index = ({ showMatchingInfo = false, useMatchingApi = false }) => {
       {/* <!-- Dashboard --> */}
       <section className="user-dashboard">
         <div className="dashboard-outer">
-          <BreadCrumb title="All Applicants!" />
+          <BreadCrumb title={showMatchingInfo || useMatchingApi ? "All Matching Applicants" : "All Applicants"} />
           {/* breadCrumb */}
 
 
@@ -77,7 +77,7 @@ const Index = ({ showMatchingInfo = false, useMatchingApi = false }) => {
               <div className="ls-widget">
                 <div className="tabs-box">
                   <div className="widget-title" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <h4>Applicant</h4>
+                    <h4>{showMatchingInfo || useMatchingApi ? "Matching Applicant" : "Applicant"}</h4>
                     {useMatchingApi ? (
                       <a href={allUrl} style={{ color: '#1967d2', fontWeight: 600, fontSize: 14, textDecoration: 'underline', cursor: 'pointer' }}>Go to All Applicants</a>
                     ) : (

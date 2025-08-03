@@ -29,6 +29,7 @@ import { useRouter } from "next/navigation";
 import "@/styles/apply-job-modal.css";
 import { useFavoriteJobs } from "@/contexts/FavoriteJobsContext";
 import { addFavoriteJob, removeFavoriteJob } from "@/services/favoriteJobService";
+import Modal from '@/components/common/Modal';
 
 const JobSingleDynamicV3 = ({ params }) => {
   const [job, setJob] = useState(null);
@@ -41,7 +42,10 @@ const JobSingleDynamicV3 = ({ params }) => {
   const userId = typeof window !== 'undefined' ? Number(localStorage.getItem('userId')) : null;
   const isFavorited = favoriteJobIds.includes(Number(params.id));
   const [loadingFavorite, setLoadingFavorite] = useState(false);
-  const hasTrackedView = useRef(false); // Thêm ref để đánh dấu đã track view
+
+  const [showApplyModal, setShowApplyModal] = useState(false);
+
+  const hasTrackedView = useRef(false); 
 
   useEffect(() => {
     // Import Bootstrap only on client side
@@ -342,14 +346,12 @@ const JobSingleDynamicV3 = ({ params }) => {
               <div className="sidebar-column col-lg-4 col-md-12 col-sm-12">
                 <aside className="sidebar">
                   <div className="btn-box">
-                    <a
-                      href="#"
+                    <button
                       className="theme-btn btn-style-one"
-                      data-bs-toggle="modal"
-                      data-bs-target="#applyJobModal"
+                      onClick={() => setShowApplyModal(true)}
                     >
                       Apply For Job
-                    </a>
+                    </button>
                     <button
                       className={`bookmark-btn${isFavorited ? ' active' : ''}`}
                       onClick={handleBookmarkClick}
@@ -370,31 +372,12 @@ const JobSingleDynamicV3 = ({ params }) => {
                   {/* Only one CvMatchingTool below Apply For Job */}
                   <CvMatchingTool jobId={job.id} jobTitle={job.title} />
                   {/* <!-- Modal --> */}
-                  <div
-                    className="modal fade apply-job-modal"
-                    id="applyJobModal"
-                    tabIndex="-1"
-                    aria-hidden="true"
-                  >
-                    <div className="modal-dialog modal-dialog-centered modal-dialog-scrollable">
-                      <div className="apply-modal-content modal-content">
-                        <div className="text-center">
-                          <h3 className="title">Apply for this job</h3>
-                          <button
-                            type="button"
-                            className="closed-modal"
-                            data-bs-dismiss="modal"
-                            aria-label="Close"
-                          ></button>
-                        </div>
-                        {/* End modal-header */}
-
-                        <ApplyJobModalContent jobId={params.id} />
-                        {/* End PrivateMessageBox */}
-                      </div>
-                      {/* End .send-private-message-wrapper */}
+                  <Modal open={showApplyModal} onClose={() => setShowApplyModal(false)}>
+                    <div className="text-center">
+                      <h3 className="title">Apply for this job</h3>
                     </div>
-                  </div>
+                    <ApplyJobModalContent jobId={params.id} onClose={() => setShowApplyModal(false)} />
+                  </Modal>
                   {/* End .modal */}
 
                   <div className="sidebar-widget company-widget">

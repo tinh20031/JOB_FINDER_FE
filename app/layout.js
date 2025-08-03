@@ -4,6 +4,7 @@ import "aos/dist/aos.css";
 import "antd/dist/reset.css";
 import "../styles/index.scss";
 import "../styles/chat.css";
+import "../styles/draft.css";
 import { useEffect } from "react";
 import ScrollToTop from "../components/common/ScrollTop";
 import { Provider } from "react-redux";

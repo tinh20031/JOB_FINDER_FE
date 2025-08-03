@@ -422,17 +422,17 @@ const PostBoxForm = ({ initialData, isEditing }) => {
           {errors.addressDetail && <span className="error-message">{errors.addressDetail}</span>}
         </div>
         {/* Status select box for editing jobs (company only, not pending) */}
-        {isEditing && user && user.role === 'Company' && initialData && (initialData.status === 1 || initialData.status === 2) && (
+        {isEditing && user && user.role === 'Company' && initialData && (initialData.status === 2 || initialData.status === 3) && (
           <div className="form-group col-lg-6 col-md-12">
             <label>Status</label>
             <select value={formData.status} onChange={e => setFormData(prev => ({ ...prev, status: Number(e.target.value) }))} disabled={isLoading} className="chosen-single form-select">
-              <option value={1}>Active</option>
-              <option value={2}>Inactive</option>
+              <option value={2}>Active</option>
+              <option value={3}>Inactive</option>
             </select>
             <small className="form-text text-muted">You can only switch between Active and Inactive. After editing content, job will be set to pending and you cannot change status until admin approves.</small>
           </div>
         )}
-        {isEditing && user && user.role === 'Company' && initialData && (initialData.status === 1 || initialData.status === 2) && (formData.status !== initialData.status) && (
+        {isEditing && user && user.role === 'Company' && initialData && (initialData.status === 2 || initialData.status === 3) && (formData.status !== initialData.status) && (
           <div className="form-group col-lg-12 col-md-12">
             <div className="alert alert-warning" role="alert">
               <i className="fas fa-exclamation-triangle me-2"></i>

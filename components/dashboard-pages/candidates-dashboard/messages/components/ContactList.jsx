@@ -217,14 +217,33 @@ const ChatboxContactList = ({
                       alt={contact.name}
                       width={60}
                       height={60}
+                      style={{
+                        objectFit: 'cover',
+                        border: '2px solid #e0e0e0',
+                        boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+                      }}
+                      onError={(e) => {
+                        e.target.src = '/images/resource/default-avatar.png';
+                      }}
                     />
                     {contact.unreadCount > 0 && (
-                      <span className="unread-badge-on-avatar">
-                        {contact.unreadCount}
-                      </span>
+                      <span className="unread-badge-on-avatar">{contact.unreadCount}</span>
                     )}
                     {unreadContactIds.includes(contact.id) && (
                       <span className="unread-badge"></span>
+                    )}
+                    {contact.isOnline && (
+                      <div style={{
+                        position: 'absolute',
+                        bottom: '2px',
+                        right: '2px',
+                        width: '16px',
+                        height: '16px',
+                        backgroundColor: '#4caf50',
+                        borderRadius: '50%',
+                        border: '3px solid white',
+                        boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
+                      }} />
                     )}
                   </div>
                   <div className="message-overview">

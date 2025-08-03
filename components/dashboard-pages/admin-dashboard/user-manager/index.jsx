@@ -334,34 +334,47 @@ const UserManager = () => {
             <div className="row">
               <div className="col-lg-12">
                 <div className="ls-widget">
-                  <div className="widget-title d-flex justify-content-between align-items-center">
-                    <h4>User Manager</h4>
-                    <div className="d-flex align-items-center gap-2">
-                      <input
-                        type="text"
-                        className="form-control form-control-sm me-2"
-                        style={{width:220}}
-                        placeholder="Search by name, email, phone..."
-                        value={search}
-                        onChange={handleSearch}
-                      />
-                      <select className="form-select form-select-sm me-2" style={{width:120}} value={filterRole} onChange={e=>handleFilterRole(e.target.value)}>
-                        <option key="all" value="all">All Roles</option>
-                        {Array.isArray(roles) && roles.length > 0 ? (
-                          roles.map(role => (
-                            <option key={`filter-role-${role.name}`} value={role.name}>
-                              {role.name || `Role`}
-                            </option>
-                          ))
-                        ) : (
-                          <option value="" disabled>No roles available</option>
-                        )}
-                      </select>
-                      <select className="form-select form-select-sm me-2" style={{width:120}} value={filterLock} onChange={e=>handleFilterLock(e.target.value)}>
-                        <option key="all-status" value="all">All Status</option>
-                        <option key="locked" value="locked">Locked</option>
-                        <option key="unlocked" value="unlocked">Unlocked</option>
-                      </select>
+                  <div className="widget-title d-flex flex-wrap gap-3 justify-content-between align-items-center">
+                    <h4>User Management ({filteredUsers.length})</h4>
+                    <div className="filter-container d-flex flex-wrap gap-2 align-items-center">
+                      <div className="search-group">
+                        <input
+                          type="text"
+                          className="form-control form-control-sm search-input"
+                          placeholder="Search by name, email, phone..."
+                          value={search}
+                          onChange={handleSearch}
+                        />
+                      </div>
+                      <div className="filter-group">
+                        <select 
+                          className="form-select form-select-sm filter-select" 
+                          value={filterRole} 
+                          onChange={e=>handleFilterRole(e.target.value)}
+                        >
+                          <option key="all" value="all">All Roles</option>
+                          {Array.isArray(roles) && roles.length > 0 ? (
+                            roles.map(role => (
+                              <option key={`filter-role-${role.name}`} value={role.name}>
+                                {role.name || `Role`}
+                              </option>
+                            ))
+                          ) : (
+                            <option value="" disabled>No roles available</option>
+                          )}
+                        </select>
+                      </div>
+                      <div className="filter-group">
+                        <select 
+                          className="form-select form-select-sm filter-select" 
+                          value={filterLock} 
+                          onChange={e=>handleFilterLock(e.target.value)}
+                        >
+                          <option key="all-status" value="all">All Lock Status</option>
+                          <option key="locked" value="locked">Locked</option>
+                          <option key="unlocked" value="unlocked">Unlocked</option>
+                        </select>
+                      </div>
                     </div>
                   </div>
                   <div className={`widget-content ${!loading ? 'fade-in' : ''}`}> 
@@ -452,14 +465,36 @@ const UserManager = () => {
                                   </td>
                                   {/* Cột Actions: chỉ còn View và Lock/Unlock */}
                                   <td>
-                                    <button className="btn btn-sm me-1" onClick={() => handleShowDetail(user)} style={{display:'none'}}>View</button>
-                                    <Link href={`/admin-dashboard/user-manager/${user.id}`} className="btn btn-sm me-1">View</Link>
-                                    <button
-                                      className={`btn btn-sm me-1 ${isLocked ? 'btn-outline-danger' : 'btn-outline-secondary'}`}
-                                      onClick={() => handleToggleLock(user)}
-                                    >
-                                      {isLocked ? 'Unlock' : 'Lock'}
-                                    </button>
+                                    <div className="action-buttons d-flex gap-2">
+                                      <Link 
+                                        href={`/admin-dashboard/user-manager/${user.id}`} 
+                                        className="btn btn-sm btn-outline-primary"
+                                        style={{
+                                          minWidth: '80px',
+                                          transition: 'all 0.3s ease',
+                                          borderRadius: '8px',
+                                          fontWeight: '600',
+                                          boxShadow: 'none'
+                                        }}
+                                      >
+                                        <i className="fas fa-eye me-1"></i>
+                                        View
+                                      </Link>
+                                      <button
+                                        className={`btn btn-sm ${isLocked ? 'btn-success' : 'btn-outline-danger'}`}
+                                        onClick={() => handleToggleLock(user)}
+                                        style={{
+                                          minWidth: '80px',
+                                          transition: 'all 0.3s ease',
+                                          borderRadius: '8px',
+                                          fontWeight: '600',
+                                          boxShadow: isLocked ? '0 2px 8px rgba(40, 167, 69, 0.3)' : 'none'
+                                        }}
+                                      >
+                                        <i className={`fas ${isLocked ? 'fa-unlock' : 'fa-lock'} me-1`}></i>
+                                        {isLocked ? 'Unlock' : 'Lock'}
+                                      </button>
+                                    </div>
                                   </td>
                                 </tr>
                               );
@@ -472,11 +507,10 @@ const UserManager = () => {
                         (() => {
                           const totalPagesToShow = totalPages >= 1 ? totalPages : 1;
                           return (
-                            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 16, margin: '24px 0' }}>
+                            <div className="pagination">
                               <button
                                 disabled={currentPage === 1}
                                 onClick={() => handleSetPage(currentPage - 1)}
-                                style={{ background: 'none', border: 'none', fontSize: 22, cursor: 'pointer', color: currentPage === 1 ? '#ccc' : '#444' }}
                               >
                                 &#8592;
                               </button>
@@ -484,20 +518,7 @@ const UserManager = () => {
                                 <button
                                   key={i + 1}
                                   onClick={() => handleSetPage(i + 1)}
-                                  style={{
-                                    width: 40,
-                                    height: 40,
-                                    borderRadius: '50%',
-                                    background: currentPage === i + 1 ? '#1967d2' : 'none',
-                                    color: currentPage === i + 1 ? '#fff' : '#444',
-                                    border: 'none',
-                                    fontWeight: 600,
-                                    fontSize: 18,
-                                    cursor: 'pointer',
-                                    outline: 'none',
-                                    boxShadow: 'none',
-                                    transition: 'background 0.2s, color 0.2s'
-                                  }}
+                                  className={currentPage === i + 1 ? 'active' : ''}
                                 >
                                   {i + 1}
                                 </button>
@@ -505,7 +526,6 @@ const UserManager = () => {
                               <button
                                 disabled={currentPage === totalPagesToShow || totalPagesToShow === 0}
                                 onClick={() => handleSetPage(currentPage + 1)}
-                                style={{ background: 'none', border: 'none', fontSize: 22, cursor: 'pointer', color: currentPage === totalPagesToShow || totalPagesToShow === 0 ? '#ccc' : '#444' }}
                               >
                                 &#8594;
                               </button>

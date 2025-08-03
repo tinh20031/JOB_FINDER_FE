@@ -23,15 +23,15 @@ const JobFeatured1 = () => {
         });
         setCompanies(companiesRes);
 
-        // Gọi API với status = 1 để chỉ lấy job đã được approve
+        // Gọi API với status = 2 để chỉ lấy job đã được approve
         const response = await jobService.getJobs({ 
-          status: 1,  // Chỉ lấy job đã được approve
+          status: 2,  // Chỉ lấy job đã được approve
           limit: 6,   // Giới hạn 6 job
           page: 1     // Lấy trang đầu tiên
         });
         
         // Kiểm tra và lọc thêm để đảm bảo chỉ hiển thị job đã approve
-        const approvedJobs = response.data.filter(job => job.status === 1);
+        const approvedJobs = response.data.filter(job => job.status === 2);
         console.log('Featured jobs:', approvedJobs); // Log để debug
         setJobs(approvedJobs);
         setError(null);

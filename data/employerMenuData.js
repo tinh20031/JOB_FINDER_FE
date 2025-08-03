@@ -27,41 +27,27 @@ module.exports = [
     routePath: "/employers-dashboard/manage-jobs",
     active: "",
   },
-  // {
-  //   id: 5,
-  //   name: "All Applicants",
-  //   icon: "la-file-invoice",
-  //   routePath: "/employers-dashboard/all-applicants",
-  //   active: "",
-  // },
-  // {
-  //   id: 6,
-  //   name: "Shortlisted Resumes",
-  //   icon: "la-bookmark-o",
-  //   routePath: "/employers-dashboard/shortlisted-resumes",
-  //   active: "",
-  // },
   {
-    id: 7,
+    id: 5,
     name: "Packages",
     icon: "la-box",
     routePath: "/employers-dashboard/packages",
     active: "",
   },
   {
-    id: 8,
+    id: 6,
     name: "Messages",
     icon: "la-comment-o",
     routePath: "/employers-dashboard/messages",
     active: "",
   },
-  {
-    id: 9,
-    name: "Notification",
-    icon: "la-bell",
-    routePath: "/employers-dashboard/resume-alerts",
-    active: "",
-  },
+  // {
+  //   id: 9,
+  //   name: "Notification",
+  //   icon: "la-bell",
+  //   routePath: "/employers-dashboard/resume-alerts",
+  //   active: "",
+  // },
  
   
 ];
