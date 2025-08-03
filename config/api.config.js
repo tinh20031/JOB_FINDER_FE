@@ -135,16 +135,30 @@ const API_CONFIG = {
       BASE: "Skill",
       GET_BY_ID: (id) => `Skill/${id}`,
     },
-    LEVEL: "/Level",
-    JOB_TYPE: "/JobType",
-    EXPERIENCE_LEVEL: "/ExperienceLevels",
-    INDUSTRY: "/Industry",
-    JOB_SKILLS: "/JobSkill",
-    SKILLS: "/Skill",
+    REVENUE_STATISTICS: {
+      BASE: "RevenueStatistics",
+      SUMMARY: "RevenueStatistics/summary",
+      MONTHLY: "RevenueStatistics/monthly",
+      BY_PACKAGE_TYPE: "RevenueStatistics/by-package-type",
+      RECENT_TRANSACTIONS: "RevenueStatistics/recent-transactions",
+      DASHBOARD: "RevenueStatistics/dashboard",
+      EXPORT: "RevenueStatistics/export",
+      PACKAGE_UPGRADES: "RevenueStatistics/package-upgrades",
+    },
+    LEVEL: "Level",
+    JOB_TYPE: "JobType",
+    EXPERIENCE_LEVEL: "ExperienceLevels",
+    INDUSTRY: "Industry",
+    JOB_SKILLS: "JobSkill",
+    SKILLS: "Skill",
   },
 
   // Helper functions để tạo URL đầy đủ
-  getUrl: (endpoint) => `${API_CONFIG.BASE_URL}/${endpoint}`,
+  getUrl: (endpoint) => {
+    // Remove leading slash if present to avoid double slashes
+    const cleanEndpoint = endpoint.startsWith('/') ? endpoint.slice(1) : endpoint;
+    return `${API_CONFIG.BASE_URL}/${cleanEndpoint}`;
+  },
 
   // Thêm hàm lấy Google login URL
   getGoogleLoginUrl: () =>

@@ -41,6 +41,13 @@ module.exports = [
       routePath: "/admin-dashboard/Reports-Violations-Management",
       active: "",
     },
+    {
+      id: 7,
+      name: "Revenue Statistics",
+      icon: "la-dollar",
+      routePath: "/admin-dashboard/revenue-statistics",
+      active: "",
+    },
     
     {
       id: 8,

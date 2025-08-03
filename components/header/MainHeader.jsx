@@ -1,167 +1,128 @@
-'use client';
+"use client";
 
-import Link from "next/link";
 import Image from "next/image";
+import Link from "next/link";
 import { useEffect, useState, useRef } from "react";
 import { useRouter, usePathname } from "next/navigation";
+import { useSelector, useDispatch } from "react-redux";
+import { clearLoginState, setLoginState } from '@/features/auth/authSlice';
+import { authService } from "../../services/authService";
 import HeaderNavContent from "./HeaderNavContent";
-import notificationService from "@/services/notification.service";
-import { clearLoginState } from "@/features/auth/authSlice";
-import { authService } from "@/services/authService";
 import employerMenuData from "../../data/employerHeaderMenuData";
 import candidatesMenuData from "../../data/candidatesHeaderMenuData";
 import adminMenuData from "../../data/adminHeadedrMenuData";
-import { useFavoriteJobs } from "../../contexts/FavoriteJobsContext";
 import BecomeRecruiterModal from '../common/form/shared/BecomeRecruiterModal';
+import { useFavoriteJobs } from "../../contexts/FavoriteJobsContext";
 import apiService from '@/services/api.service';
+import Cookies from 'js-cookie';
 import { isActiveLink } from "../../utils/linkActiveChecker";
 import notificationHubService from "@/services/notificationHub";
 
 // Helper function to validate image URLs
-const getValidImageUrl = (url) => {
-  if (!url || typeof url !== 'string') {
-    return "/images/resource/candidate-1.png";
-  }
-  if (url === "string") {
-    return "/images/resource/candidate-1.png";
-  }
-  if (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('/')) {
-    return url;
-  }
-  return "/images/resource/candidate-1.png";
+const getValidImageUrl = (url, fallback = "/images/resource/candidate-1.png") => {
+  if (!url || typeof url !== 'string' || url === "string") return fallback;
+  if (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('/')) return url;
+  return fallback;
 };
-
-// Định dạng ngày/giờ: HH:mm:ss dd/MM/yyyy theo giờ Việt Nam
-const formatDateVN = (str) => {
-  if (!str) return '';
-  const dateObj = new Date(str);
-  dateObj.setHours(dateObj.getHours() + 7);
-  return dateObj.toLocaleString('vi-VN', {
-    timeZone: 'Asia/Ho_Chi_Minh',
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit',
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-    hour12: false
-  });
-};
-
-// Hàm hiển thị thời gian kiểu 'x phút trước', 'x giờ trước', ...
-function timeAgo(dateString) {
-  if (!dateString) return '';
-  const now = new Date();
-  const date = new Date(dateString);
-  // Luôn cộng 7 tiếng để chuyển sang giờ Việt Nam
-  date.setHours(date.getHours() + 7);
-  const diff = Math.floor((now - date) / 1000);
-  if (diff < 60) return "just now";
-  if (diff < 3600) return `${Math.floor(diff / 60)} minutes ago`;
-  if (diff < 86400) return `${Math.floor(diff / 3600)} hours ago`;
-  if (diff < 604800) return `${Math.floor(diff / 86400)} days ago`;
-  if (diff < 2592000) return `${Math.floor(diff / 604800)} weeks ago`;
-  return date.toLocaleDateString("en-US");
-}
 
 const MainHeader = () => {
   const router = useRouter();
   const pathname = usePathname();
+  const { user, isLoggedIn, role, profileUpdated, userId } = useSelector((state) => state.auth);
+  const dispatch = useDispatch();
+  const { favoriteCount } = useFavoriteJobs() || {};
+
+  const [navbar, setNavbar] = useState(false);
   const [displayUserName, setDisplayUserName] = useState("My Account");
   const [displayAvatar, setDisplayAvatar] = useState("/images/resource/candidate-1.png");
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [role, setRole] = useState(null);
-  const [navbar, setNavbar] = useState(false);
   const [openRecruiterModal, setOpenRecruiterModal] = useState(false);
   const [currentUserId, setCurrentUserId] = useState(null);
-  const { favoriteCount } = useFavoriteJobs();
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [showDropdown, setShowDropdown] = useState(false);
-  const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef(null);
-  const userId = typeof window !== 'undefined' ? Number(localStorage.getItem('userId')) : null;
 
+  // Sticky header effect
   useEffect(() => {
+    const changeBackground = () => {
+      if (typeof window !== 'undefined' && window.scrollY >= 10) setNavbar(true);
+      else setNavbar(false);
+    };
     if (typeof window !== 'undefined') {
-      const userString = localStorage.getItem('user');
-      const roleString = localStorage.getItem('role');
-      if (userString && roleString) {
-        setIsLoggedIn(true);
-        setRole(roleString);
-        try {
-          const user = JSON.parse(userString);
-          setDisplayUserName(user.fullName || user.name || "My Account");
-          setDisplayAvatar(user.avatar || user.image || "/images/resource/candidate-1.png");
-        } catch {
-          setDisplayUserName("My Account");
-          setDisplayAvatar("/images/resource/candidate-1.png");
-        }
-      } else {
-        setIsLoggedIn(false);
-        setRole(null);
-        setDisplayUserName("My Account");
-        setDisplayAvatar("/images/resource/candidate-1.png");
-      }
+      window.addEventListener("scroll", changeBackground);
+      return () => window.removeEventListener("scroll", changeBackground);
     }
   }, []);
-
-  useEffect(() => {
-    if (typeof window !== 'undefined' && isLoggedIn) {
-      const id = localStorage.getItem('userId');
-      setCurrentUserId(id);
-    }
-  }, [isLoggedIn]);
-
+  function timeAgo(dateString) {
+    if (!dateString) return '';
+    const now = new Date();
+    const date = new Date(dateString);
+    // Luôn cộng 7 tiếng để chuyển sang giờ Việt Nam
+    date.setHours(date.getHours() + 7);
+    const diff = Math.floor((now - date) / 1000);
+    if (diff < 60) return "just now";
+    if (diff < 3600) return `${Math.floor(diff / 60)} minutes ago`;
+    if (diff < 86400) return `${Math.floor(diff / 3600)} hours ago`;
+    if (diff < 604800) return `${Math.floor(diff / 86400)} days ago`;
+    if (diff < 2592000) return `${Math.floor(diff / 604800)} weeks ago`;
+    return date.toLocaleDateString("en-US");
+  }
+  // Fetch profile by role
   useEffect(() => {
     const fetchProfile = async () => {
+      let id = userId || user?.userId || user?.id || (typeof window !== 'undefined' ? localStorage.getItem('userId') : null);
       if (role === 'Candidate' && isLoggedIn) {
         try {
           const profile = await apiService.get('/CandidateProfile/me');
           setDisplayUserName(profile.fullName || "My Account");
-          setDisplayAvatar(profile.image || "/images/resource/candidate-1.png");
-        } catch (e) {
+          setDisplayAvatar(getValidImageUrl(profile.image));
+        } catch {
           setDisplayUserName("My Account");
           setDisplayAvatar("/images/resource/candidate-1.png");
         }
-      } else if (role === 'Company' && isLoggedIn) {
-        let id = typeof window !== 'undefined' ? localStorage.getItem('userId') : null;
-        if (id) {
-          try {
-            const profile = await apiService.get(`/CompanyProfile/${id}`);
-            setDisplayUserName(profile.companyName || "My Account");
-            setDisplayAvatar(profile.urlCompanyLogo || "/images/resource/company-6.png");
-          } catch (e) {
-            setDisplayUserName("My Account");
-            setDisplayAvatar("/images/resource/company-6.png");
-            console.error("Lỗi lấy CompanyProfile:", e);
-          }
-        } else {
+      } else if (role === 'Company' && isLoggedIn && id) {
+        try {
+          const profile = await apiService.get(`/CompanyProfile/${id}`);
+          setDisplayUserName(profile.companyName || "My Account");
+          setDisplayAvatar(getValidImageUrl(profile.urlCompanyLogo, "/images/resource/company-6.png"));
+        } catch {
           setDisplayUserName("My Account");
           setDisplayAvatar("/images/resource/company-6.png");
         }
-      } else if (role === 'Admin' && isLoggedIn) {
-        let id = typeof window !== 'undefined' ? localStorage.getItem('userId') : null;
-        if (id) {
-          try {
-            const profile = await apiService.get(`/User/${id}`);
-            setDisplayUserName(profile.fullName || profile.name || "My Account");
-            setDisplayAvatar(getValidImageUrl(profile.avatar || profile.image));
-          } catch (e) {
-            setDisplayUserName("My Account");
-            setDisplayAvatar("/images/resource/candidate-1.png");
-          }
-        } else {
-          setDisplayUserName("My Account");
-          setDisplayAvatar("/images/resource/candidate-1.png");
+      } else if (role === 'Admin' && isLoggedIn && id) {
+        try {
+          const profile = await apiService.get(`/User/${id}`);
+          setDisplayUserName(profile.fullName || profile.name || "Admin");
+          setDisplayAvatar(getValidImageUrl(profile.avatar || profile.image, "/images/resource/company-6.png"));
+        } catch {
+          setDisplayUserName("Admin");
+          setDisplayAvatar("/images/resource/company-6.png");
         }
       } else {
         setDisplayUserName("My Account");
         setDisplayAvatar("/images/resource/candidate-1.png");
       }
     };
-    fetchProfile();
-  }, [isLoggedIn, role]);
+    if (isLoggedIn) fetchProfile();
+  }, [isLoggedIn, role, profileUpdated, user, userId]);
+
+  // Fallback: nếu redux chưa có user, lấy lại từ localStorage
+  useEffect(() => {
+    if (!user && typeof window !== 'undefined') {
+      const userStr = localStorage.getItem('user');
+      const token = localStorage.getItem('token');
+      const role = localStorage.getItem('role');
+      const userId = localStorage.getItem('userId');
+      if (userStr && token && role && userId) {
+        dispatch(setLoginState({
+          user: JSON.parse(userStr),
+          isLoggedIn: true,
+          role,
+          userId,
+        }));
+      }
+    }
+  }, [user, dispatch]);
 
   // Fetch notifications/unread count cho cả Candidate và Company
   useEffect(() => {
@@ -223,24 +184,32 @@ const MainHeader = () => {
     }
   };
 
+  // Logout logic
   const handleLogout = () => {
+    if (typeof window !== "undefined") {
+      Cookies.remove('token', { path: '/' });
+      Cookies.remove('role', { path: '/' });
+      Cookies.remove('name', { path: '/' });
+      Cookies.remove('token', { path: '/', domain: 'localhost' });
+      Cookies.remove('role', { path: '/', domain: 'localhost' });
+      Cookies.remove('name', { path: '/', domain: 'localhost' });
+      localStorage.removeItem('token');
+      localStorage.removeItem('role');
+      localStorage.removeItem('name');
+      localStorage.removeItem('user');
+      localStorage.removeItem('userId');
+    }
     authService.logout();
-    localStorage.removeItem('user');
-    localStorage.removeItem('userId');
-
-    window.location.href = '/';
+    dispatch(clearLoginState());
+    router.push('/');
   };
 
   const handleMenuClick = (item) => {
-    if (item.isLogout) {
-      handleLogout();
-    }
+    if (item.isLogout) handleLogout();
   };
 
   return (
-    <header
-      className={`main-header main-header-always-fixed`}
-    >
+    <header className={`main-header header-shaddow ${navbar ? "fixed-header animated slideInDown" : ""}`}>
       <div className="main-box">
         <div className="nav-outer">
           <div className="logo-box">
@@ -257,10 +226,8 @@ const MainHeader = () => {
               </Link>
             </div>
           </div>
-
           <HeaderNavContent />
         </div>
-
         <div className="outer-box">
           {isLoggedIn ? (
             <div className="logged-in-info" style={{display: 'flex', alignItems: 'center', gap: '16px'}}>
@@ -305,8 +272,7 @@ const MainHeader = () => {
                   )}
                 </>
               )}
-              {/* Icon trái tim */}
-              {isLoggedIn && (role === 'Candidate') && (
+              {role === 'Candidate' && (
                 <Link href="/favorite-jobs">
                   <button className="menu-btn">
                     {favoriteCount > 0 && <span className="count">{favoriteCount}</span>}
@@ -314,7 +280,6 @@ const MainHeader = () => {
                   </button>
                 </Link>
               )}
-              {/* Notification Bell giống DashboardHeader */}
               {(role === 'Candidate' || role === 'Company') && (
                 <div style={{ position: 'relative', marginRight: 16 }}>
                   <button className="menu-btn" onClick={handleBellClick} style={{ position: 'relative' }}>
@@ -357,25 +322,19 @@ const MainHeader = () => {
                   )}
                 </div>
               )}
-              <div className="dropdown dashboard-option" ref={dropdownRef}>
-                <button
-                  className="dropdown-toggle"
-                  type="button"
-                  aria-expanded={dropdownOpen}
-                  onClick={() => setDropdownOpen((open) => !open)}
-                  style={{ background: 'none', border: 'none', padding: 0, display: 'flex', alignItems: 'center', cursor: 'pointer' }}
-                >
+              <div className="dropdown dashboard-option">
+                <a className="dropdown-toggle" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                   <Image
                     alt="avatar"
                     width={50}
                     height={50}
-                    src={getValidImageUrl(displayAvatar)}
+                    src={displayAvatar}
                     className="thumb"
                     style={{ borderRadius: '50%', objectFit: 'cover', width: 50, height: 50 }}
                   />
                   <span className="name">{displayUserName}</span>
-                </button>
-                <ul className="dropdown-menu" style={{ display: dropdownOpen ? 'block' : 'none' }}>
+                </a>
+                <ul className="dropdown-menu">
                   {role === 'Company' && employerMenuData.map((item) => (
                     <li
                       className={`${isActiveLink(item.routePath, pathname) ? "active" : ""} mb-1`}
@@ -429,7 +388,6 @@ const MainHeader = () => {
                   ))}
                 </ul>
               </div>
-
             </div>
           ) : (
             <>
@@ -460,4 +418,4 @@ const MainHeader = () => {
   );
 };
 
-export default MainHeader; 
+export default MainHeader;

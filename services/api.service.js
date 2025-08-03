@@ -438,6 +438,83 @@ const ApiService = {
   uploadCV: ApiServiceClass.uploadCV,
   getMyCVs: ApiServiceClass.getMyCVs,
   deleteCV: ApiServiceClass.deleteCV,
+  // Revenue Statistics APIs
+  getRevenueSummary: async () => {
+    const url = `${BASE_URL}/RevenueStatistics/summary`;
+    const token = localStorage.getItem("token");
+    
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json',
+        'Authorization': `Bearer ${token}`
+      }
+    });
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    
+    return response.json();
+  },
+  getMonthlyRevenue: (year) => {
+    const params = {};
+    if (year) params.year = year;
+    return ApiService.get(API_CONFIG.ENDPOINTS.REVENUE_STATISTICS.MONTHLY, { params });
+  },
+  getRevenueByPackageType: async () => {
+    const url = `${BASE_URL}/RevenueStatistics/by-package-type`;
+    const token = localStorage.getItem("token");
+    
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json',
+        'Authorization': `Bearer ${token}`
+      }
+    });
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    
+    return response.json();
+  },
+  getRecentTransactions: (count) => {
+    const params = {};
+    if (count) params.count = count;
+    return ApiService.get(API_CONFIG.ENDPOINTS.REVENUE_STATISTICS.RECENT_TRANSACTIONS, { params });
+  },
+  getDashboardStatistics: async () => {
+    const url = `${BASE_URL}/RevenueStatistics/dashboard`;
+    const token = localStorage.getItem("token");
+    
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json',
+        'Authorization': `Bearer ${token}`
+      }
+    });
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    
+    return response.json();
+  },
+  exportRevenueData: (startDate, endDate) => {
+    const params = {};
+    if (startDate) params.startDate = startDate;
+    if (endDate) params.endDate = endDate;
+    return ApiService.request(API_CONFIG.ENDPOINTS.REVENUE_STATISTICS.EXPORT, 'GET', null, params);
+  },
+  getPackageUpgrades: (startDate, endDate) => {
+    const params = {};
+    if (startDate) params.startDate = startDate;
+    if (endDate) params.endDate = endDate;
+    return ApiService.request(API_CONFIG.ENDPOINTS.REVENUE_STATISTICS.PACKAGE_UPGRADES, 'GET', null, params);
+  },
   // Subscription/Payment APIs for Candidate
   getSubscriptionPackages: () => ApiService.get('/payment/packages'),
   getMySubscription: () => ApiService.get('/payment/my-subscription'),
