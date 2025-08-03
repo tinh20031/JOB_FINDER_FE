@@ -223,7 +223,7 @@ const CvMatchingTool = ({ jobId, jobTitle }) => {
             <label style={{display: 'flex', alignItems: 'flex-start', gap: 12, cursor: 'pointer', padding: '14px 18px', border: '1.5px solid #e3e6ee', borderRadius: 10, background: useExistingCv ? '#f5f8ff' : '#fff', transition: 'background 0.2s, border 0.2s', boxShadow: useExistingCv ? '0 2px 8px rgba(102,126,234,0.07)' : 'none'}}>
               <input type="radio" name="cvOption" checked={useExistingCv} onChange={()=>handleCvOptionChange('existing')} style={{width: 20, height: 20, accentColor: '#2563eb', marginTop: 2}} />
               <div style={{flex: 1}}>
-                <div style={{fontWeight: 700, fontSize: 17, color: '#222'}}>Use Saved CV</div>
+                <div style={{fontWeight: 700, fontSize: 17, color: '#222'}}> Use your CV from the list</div>
                 <div style={{fontSize: 15, color: '#888', marginTop: 2}}>Your previously uploaded CV</div>
                 {useExistingCv && (
                   <div style={{marginTop: 12}}>

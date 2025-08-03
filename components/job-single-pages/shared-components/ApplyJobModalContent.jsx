@@ -369,7 +369,7 @@ const ApplyJobModalContent = ({ jobId, onClose }) => {
               />
               <div style={{ flex: 1 }}>
                 <div style={{ fontWeight: 600, fontSize: '1.1rem', color: '#1976d2', marginBottom: 2 }}>
-                  Upload a new CV
+                  Upload New CV
                 </div>
                 <div className="choose-file-row">
                   <label htmlFor="upload-cv-file" style={{ display: 'inline-block', background: '#fff', border: '1.5px solid #1976d2', color: '#1976d2', borderRadius: 6, padding: '7px 12px', fontWeight: 600, cursor: 'pointer', fontSize: 15 }}>

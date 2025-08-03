@@ -230,7 +230,7 @@ const EmployersSingleV1 = ({ params }) => {
                       color: '#1967d2',
                       textAlign: 'center'
                     }}>
-                      Hot Jobs at this Company
+                      Hot Jobs 
                     </h3>
                     <div className="row">
                       {highlightJobs.map((job, index) => (
