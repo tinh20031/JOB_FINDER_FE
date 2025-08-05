@@ -215,7 +215,32 @@ const JobListingsTable = () => {
   // Hàm xác định trạng thái hiển thị cho công ty
   function getCompanyJobStatus(job) {
     const now = new Date();
-    if (job.deactivatedByAdmin) return "Locked";
+    
+    // Kiểm tra trạng thái lock trước
+    if (job.deactivatedByAdmin) {
+      // Nếu job bị lock, hiển thị trạng thái gốc + "Locked"
+      let baseStatus = '';
+      if (job.status === 0) baseStatus = 'Draft';
+      else if (job.status === 1) baseStatus = 'Pending';
+      else if (job.status === 2) {
+        if (new Date(job.timeStart) > now) baseStatus = 'Not Started';
+        else if (new Date(job.timeEnd) < now) baseStatus = 'Expired';
+        else baseStatus = 'Active';
+      }
+      else if (job.status === 3) {
+        if (new Date(job.timeEnd) < now) baseStatus = 'Expired';
+        else baseStatus = 'Inactive';
+      }
+      else if (job.status === 4) {
+        if (new Date(job.timeEnd) < now) baseStatus = 'Expired';
+        else baseStatus = 'Inactive (Admin)';
+      }
+      else baseStatus = 'Unknown';
+      
+      return `${baseStatus} (Locked)`;
+    }
+    
+    // Nếu không bị lock, hiển thị trạng thái bình thường
     if (job.status === 0) return "Draft";
     if (job.status === 1) return "Pending";
     if (job.status === 2) {
@@ -225,10 +250,61 @@ const JobListingsTable = () => {
     }
     if (job.status === 3) {
       if (new Date(job.timeEnd) < now) return "Expired";
-      if (new Date(job.timeStart) > now && !job.deactivatedByAdmin) return "Cancelled";
+      if (new Date(job.timeStart) > now) return "Cancelled";
       return "Inactive";
     }
+    if (job.status === 4) {
+      if (new Date(job.timeEnd) < now) return "Expired";
+      if (new Date(job.timeStart) > now) return "Cancelled";
+      return "Inactive (Admin)";
+    }
     return "Unknown";
+  }
+
+  // Hàm tạo CSS class name cho trạng thái
+  function getStatusClassName(job) {
+    const now = new Date();
+    
+    // Kiểm tra trạng thái lock trước
+    if (job.deactivatedByAdmin) {
+      // Nếu job bị lock, tạo class name cho trạng thái locked
+      if (job.status === 0) return 'status-draft';
+      else if (job.status === 1) return 'status-pending--locked';
+      else if (job.status === 2) {
+        if (new Date(job.timeStart) > now) return 'status-not-started';
+        else if (new Date(job.timeEnd) < now) return 'status-expired';
+        else return 'status-active--locked';
+      }
+      else if (job.status === 3) {
+        if (new Date(job.timeEnd) < now) return 'status-expired';
+        else return 'status-inactive--locked';
+      }
+      else if (job.status === 4) {
+        if (new Date(job.timeEnd) < now) return 'status-expired';
+        else return 'status-inactive--admin';
+      }
+      else return 'status-unknown';
+    }
+    
+    // Nếu không bị lock, tạo class name bình thường
+    if (job.status === 0) return 'status-draft';
+    if (job.status === 1) return 'status-pending';
+    if (job.status === 2) {
+      if (new Date(job.timeStart) > now) return 'status-not-started';
+      if (new Date(job.timeEnd) < now) return 'status-expired';
+      return 'status-active';
+    }
+    if (job.status === 3) {
+      if (new Date(job.timeEnd) < now) return 'status-expired';
+      if (new Date(job.timeStart) > now) return 'status-cancelled';
+      return 'status-inactive';
+    }
+    if (job.status === 4) {
+      if (new Date(job.timeEnd) < now) return 'status-expired';
+      if (new Date(job.timeStart) > now) return 'status-cancelled';
+      return 'status-inactive--admin';
+    }
+    return 'status-unknown';
   }
 
   // Filter jobs theo trạng thái, thời gian, tên job
@@ -236,7 +312,21 @@ const JobListingsTable = () => {
     // Filter trạng thái
     if (filterStatus !== 'all') {
       const status = getCompanyJobStatus(job).toLowerCase();
-      if (status !== filterStatus) return false;
+      const filterStatusLower = filterStatus.toLowerCase();
+      
+      // Xử lý filter cho trạng thái locked
+      if (filterStatusLower === 'locked') {
+        if (!job.deactivatedByAdmin) return false;
+      } else {
+        // Nếu filter không phải 'locked', kiểm tra trạng thái cơ bản
+        if (job.deactivatedByAdmin) {
+          // Nếu job bị lock, lấy trạng thái cơ bản (bỏ phần "(Locked)")
+          const baseStatus = status.replace(' (locked)', '').toLowerCase();
+          if (baseStatus !== filterStatusLower) return false;
+        } else {
+          if (status !== filterStatusLower) return false;
+        }
+      }
     }
     // Filter theo tên job
     if (searchTitle.trim() && !job.jobTitle.toLowerCase().includes(searchTitle.trim().toLowerCase())) {
@@ -289,6 +379,7 @@ const JobListingsTable = () => {
               <option value="pending">Pending</option>
               <option value="active">Active</option>
               <option value="inactive">Inactive</option>
+              <option value="inactive (admin)">Inactive (Admin)</option>
               <option value="expired">Expired</option>
               <option value="locked">Locked</option>
               <option value="cancelled">Cancelled</option>
@@ -325,7 +416,8 @@ const JobListingsTable = () => {
     const isPending = job.status === 1;
     const isExpired = new Date(job.timeEnd) < new Date();
     const isLocked = job.deactivatedByAdmin;
-    const disableStatusButton = isDraft || isPending || isExpired || isLocked;
+    const isInactiveByAdmin = job.status === 4; // INACTIVEBYADMIN
+    const disableStatusButton = isDraft || isPending || isExpired || isLocked || isInactiveByAdmin;
     const isActive = job.status === 2;
                   const canViewDetail = isActive || isExpired;
                   return (
@@ -370,7 +462,7 @@ const JobListingsTable = () => {
                         {formatDateVN(job.timeEnd)}
                       </td>
                       <td className="status">
-                        <span className={`status-${getCompanyJobStatus(job).toLowerCase().replace(/[^a-z]/g, '-')}`}>{getCompanyJobStatus(job)}</span>
+                        <span className={getStatusClassName(job)}>{getCompanyJobStatus(job)}</span>
                       </td>
                       <td>
                         <div className="option-box">
@@ -403,7 +495,12 @@ const JobListingsTable = () => {
                                       setPendingActivateJob(job);
                                       setShowStartDateModal(true);
                                     } else {
-                                      handleRequestChangeStatus(job, job.status === 2 ? 'inactive' : 'active');
+                                      // Chỉ cho phép toggle giữa active và inactive (không phải inactivebyadmin)
+                                      if (job.status === 2) {
+                                        handleRequestChangeStatus(job, 'inactive');
+                                      } else if (job.status === 3) {
+                                        handleRequestChangeStatus(job, 'active');
+                                      }
                                     }
                                   }}
                                   data-text={job.status === 2 ? 'Deactivate' : 'Activate'}
@@ -428,10 +525,11 @@ const JobListingsTable = () => {
                                     onChange={e => handleChangeStatus(job, e.target.value)}
                                     style={{ minWidth: 90 }}
                                   >
-                <option value={0}>Draft</option>
-                <option value={1}>Pending</option>
-                <option value={2}>Active</option>
-                <option value={3}>Inactive</option>
+                                      <option value={0}>Draft</option>
+                                      <option value={1}>Pending</option>
+                                      <option value={2}>Active</option>
+                                      <option value={3}>Inactive</option>
+                                      <option value={4}>Inactive (Admin)</option>
                                   </select>
                                 </li>
                                 <li>

@@ -28,7 +28,7 @@ const RelatedJobs2 = ({ job }) => {
         const now = new Date();
         const filtered = data.filter(j =>
           j.id !== job.id &&
-          j.status === 2 &&
+          j.status === 2 && !j.deactivatedByAdmin && j.status !== 4 &&
           (!j.expiryDate || new Date(j.expiryDate) > now) &&
           ((job.level?.id || job.levelId) ? (j.level?.id || j.levelId) === (job.level?.id || job.levelId) : true) &&
           (job.skills && job.skills.length > 0

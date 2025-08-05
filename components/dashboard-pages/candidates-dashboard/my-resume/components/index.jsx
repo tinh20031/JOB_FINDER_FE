@@ -11,7 +11,7 @@ import HighlightProject from "./HighlightProject";
 import Certificate from "./Certificate";
 import Awards from "./Awards";
 import EditProfileModal from "./EditProfileModal";
-import { updateCandidateProfile } from "@/services/useResumeData";
+
 import { useState, useEffect } from "react";
 import ForeignLanguageModal from "./ForeignLanguageModal";
 import ProfileStrengthSidebar from "./ProfileStrengthSidebar";
@@ -156,18 +156,34 @@ const index = () => {
   const handleEditProfile = () => setEditOpen(true);
   const handleEditAboutMe = () => setEditOpen(true);
   const handleCloseEdit = () => setEditOpen(false);
-  const handleSaveEdit = async (form) => {
+  const handleSaveEdit = async (updatedProfile) => {
     setSaving(true);
     try {
-      const updated = await updateCandidateProfile(form);
+      // Cập nhật state ngay lập tức với dữ liệu mới
+      setProfileState((prev) => ({ ...prev, ...updatedProfile }));
+      
+      // Đóng modal
       setEditOpen(false);
-      setProfileState((prev) => ({ ...prev, ...form, ...updated }));
+      
+      // Dispatch action để cập nhật Redux store
       dispatch(setProfileUpdated(Date.now()));
-      if (typeof refetch === "function") await refetch();
+      
+      // Refetch data để đảm bảo đồng bộ với server
+      if (typeof refetch === "function") {
+        try {
+          await refetch();
+        } catch (refetchError) {
+          console.warn("Refetch failed but profile was updated:", refetchError);
+        }
+      }
     } catch (e) {
-      alert("Update failed!");
+      console.error("Error updating profile state:", e);
+      alert("Update failed! Please try again.");
+      // Không đóng modal nếu có lỗi
+      setEditOpen(true);
+    } finally {
+      setSaving(false);
     }
-    setSaving(false);
   };
 
   return (
@@ -254,6 +270,7 @@ const index = () => {
             onClose={handleCloseEdit}
             onSubmit={handleSaveEdit}
             profile={profileState}
+            saving={saving}
           />
           <ForeignLanguageModal
             open={openFL}

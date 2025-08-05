@@ -257,7 +257,7 @@ const PostBoxForm = ({ cloneData, isClone }) => {
       // Kiểm tra string fields
       if (typeof currentValue === 'string') {
         if (currentValue.trim() !== (defaultValue || '').trim()) {
-          console.log(`Field "${key}" is dirty: "${currentValue.trim()}" !== "${(defaultValue || '').trim()}"`);
+          
           return true;
         }
       }
@@ -704,13 +704,15 @@ const PostBoxForm = ({ cloneData, isClone }) => {
         education: formData.education,
         companyId: parseInt(user.userId, 10),
         isSalaryNegotiable: formData.isSalaryNegotiable,
-        minSalary: formData.minSalary,
-        maxSalary: formData.maxSalary,
-        industryId: formData.industryId,
+        // Handle salary fields properly - only include if they have valid values
+        ...(formData.minSalary && formData.minSalary > 0 && { minSalary: Number(formData.minSalary) }),
+        ...(formData.maxSalary && formData.maxSalary > 0 && { maxSalary: Number(formData.maxSalary) }),
+        // Ensure numeric fields are properly converted
+        industryId: formData.industryId ? Number(formData.industryId) : undefined,
         expiryDate: formData.expiryDate,
-        levelId: formData.levelId,
-        jobTypeId: formData.jobTypeId,
-        quantity: formData.quantity, // Thay experienceLevelId bằng quantity
+        levelId: formData.levelId ? Number(formData.levelId) : undefined,
+        jobTypeId: formData.jobTypeId ? Number(formData.jobTypeId) : undefined,
+        quantity: formData.quantity ? Number(formData.quantity) : 1, // Thay experienceLevelId bằng quantity
         timeStart: formData.timeStart,
         timeEnd: formData.timeEnd,
         provinceName: formData.provinceName,
@@ -719,10 +721,11 @@ const PostBoxForm = ({ cloneData, isClone }) => {
         updatedAt: formData.updatedAt,
         YourSkill: formData.YourSkill,
         YourExperience: formData.YourExperience,
-        DescriptionWeight: Number(formData.DescriptionWeight),
-        SkillsWeight: Number(formData.SkillsWeight),
-        ExperienceWeight: Number(formData.ExperienceWeight),
-        EducationWeight: Number(formData.EducationWeight),
+        // Ensure weight fields are properly converted to numbers
+        DescriptionWeight: formData.DescriptionWeight ? Number(formData.DescriptionWeight) : 0,
+        SkillsWeight: formData.SkillsWeight ? Number(formData.SkillsWeight) : 0,
+        ExperienceWeight: formData.ExperienceWeight ? Number(formData.ExperienceWeight) : 0,
+        EducationWeight: formData.EducationWeight ? Number(formData.EducationWeight) : 0,
       };
 
       const jobResult = await ApiService.createJob(jobData);
@@ -733,7 +736,7 @@ const PostBoxForm = ({ cloneData, isClone }) => {
           await DraftService.deleteDraft(currentDraftId);
           setCurrentDraftId(null);
         } catch (error) {
-          console.error('Error deleting draft after publish:', error);
+         
         }
       }
       
@@ -741,6 +744,14 @@ const PostBoxForm = ({ cloneData, isClone }) => {
       setShowSuccessModal(true);
       localStorage.removeItem(DRAFT_KEY);
       setHasUnsavedChanges(false);
+      
+      // Refresh subscription data after successful job creation
+      try {
+        const updatedSubscription = await ApiService.getMyCompanySubscription();
+        setMySubscription(updatedSubscription);
+      } catch (error) {
+        console.error('Error refreshing subscription data:', error);
+      }
       setFormData({
         title: '',
         description: '',
@@ -769,7 +780,46 @@ const PostBoxForm = ({ cloneData, isClone }) => {
       });
       setErrors({});
     } catch (error) {
-      setError(error.response?.data?.message || "Failed to create job. Please try again.");
+      // Kiểm tra nếu lỗi là do giới hạn job post
+      if (error.response?.data?.upgradeRequired) {
+        setShowUpgradeModal(true);
+        return;
+      }
+      
+      // Handle validation errors specifically
+      if (error.response?.data?.errors) {
+        const validationErrors = error.response.data.errors;
+        console.error("Validation errors:", validationErrors);
+        
+        // Extract specific error messages
+        let errorMessages = [];
+        if (validationErrors.dto) {
+          errorMessages.push(...validationErrors.dto);
+        }
+        if (validationErrors['$.minSalary']) {
+          errorMessages.push(`Min Salary: ${validationErrors['$.minSalary'].join(', ')}`);
+        }
+        if (validationErrors['$.maxSalary']) {
+          errorMessages.push(`Max Salary: ${validationErrors['$.maxSalary'].join(', ')}`);
+        }
+        
+        // Add any other field-specific errors
+        Object.keys(validationErrors).forEach(key => {
+          if (key !== 'dto' && key !== '$.minSalary' && key !== '$.maxSalary') {
+            errorMessages.push(`${key}: ${validationErrors[key].join(', ')}`);
+          }
+        });
+        
+        setError(errorMessages.join('. ') || "Validation failed. Please check your input.");
+        return;
+      }
+      
+      // Hiển thị thông báo lỗi cụ thể từ API
+      const errorMessage = error.response?.data?.message || "Failed to create job. Please try again.";
+      setError(errorMessage);
+      
+      // Log lỗi để debug
+      console.error("Job creation error:", error);
     }
   };
 
@@ -1798,14 +1848,46 @@ const PostBoxForm = ({ cloneData, isClone }) => {
               </div>
             )}
 
+            {/* Job post limit warning */}
+            {mySubscription && typeof mySubscription.remainingJobPosts === 'number' && mySubscription.remainingJobPosts <= 2 && mySubscription.remainingJobPosts > 0 && (
+              <div className="alert alert-warning mb-3" role="alert">
+                <i className="fas fa-exclamation-triangle me-1"></i>
+                <strong>Warning:</strong> You have only {mySubscription.remainingJobPosts} job post{mySubscription.remainingJobPosts === 1 ? '' : 's'} remaining. 
+                <Link href="/employers-dashboard/packages" style={{ marginLeft: '8px', color: '#e60023', textDecoration: 'underline' }}>
+                  Upgrade your package
+                </Link> to post more jobs.
+              </div>
+            )}
+
+            {/* No job posts remaining */}
+            {mySubscription && typeof mySubscription.remainingJobPosts === 'number' && mySubscription.remainingJobPosts <= 0 && (
+              <div className="alert alert-danger mb-3" role="alert">
+                <i className="fas fa-ban me-1"></i>
+                <strong>Job Post Limit Reached:</strong> You have used all your job posts for this package. 
+                <Link href="/employers-dashboard/packages" style={{ marginLeft: '8px', color: '#e60023', textDecoration: 'underline' }}>
+                  Upgrade your package
+                </Link> to continue posting jobs.
+              </div>
+            )}
+
             <motion.button 
               type="submit" 
               className="theme-btn btn-style-one"
-              disabled={isLoading}
+              disabled={isLoading || (mySubscription && typeof mySubscription.remainingJobPosts === 'number' && mySubscription.remainingJobPosts <= 0)}
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
+              title={mySubscription && mySubscription.remainingJobPosts <= 0 ? 'No remaining job posts. Please upgrade your package.' : 'Post Job'}
             >
-              {isLoading ? 'Posting...' : 'Post Job'}
+              {isLoading ? 'Posting...' : (
+                <>
+                  Post Job
+                  {mySubscription && typeof mySubscription.remainingJobPosts === 'number' && (
+                    <span className="remaining-count">
+                      ({mySubscription.remainingJobPosts} left)
+                    </span>
+                  )}
+                </>
+              )}
             </motion.button>
             {/* Trending Job Button */}
             {mySubscription && mySubscription.subscription && mySubscription.subscription.trendingJobLimit > 0 ? (
@@ -1932,7 +2014,27 @@ const PostBoxForm = ({ cloneData, isClone }) => {
           </>
         }
       >
-        <p>You have used all your job post slots for this package. Would you like to upgrade your package to post more jobs?</p>
+        <div style={{ textAlign: 'center' }}>
+          <div style={{ fontSize: '48px', marginBottom: '16px' }}>📊</div>
+          <h3 style={{ marginBottom: '12px', color: '#e60023' }}>Job Post Limit Reached</h3>
+          <p style={{ marginBottom: '16px', lineHeight: '1.6' }}>
+            You've reached the job posting limit for your <strong>{mySubscription?.subscription?.tier || 'Free'} tier</strong> ({mySubscription?.subscription?.jobPostLimit || 2} jobs).
+          </p>
+          <div style={{ 
+            background: '#f8f9fa', 
+            padding: '16px', 
+            borderRadius: '8px', 
+            marginBottom: '16px',
+            border: '1px solid #e9ecef'
+          }}>
+            <p style={{ margin: '0', fontWeight: '600', color: '#495057' }}>
+              Current Usage: {mySubscription?.subscription?.jobPostLimit - (mySubscription?.remainingJobPosts || 0)} / {mySubscription?.subscription?.jobPostLimit || 2} jobs
+            </p>
+          </div>
+          <p style={{ marginBottom: '0', lineHeight: '1.6' }}>
+            Please upgrade your subscription to post more jobs and unlock additional features.
+          </p>
+        </div>
       </Modal>
 
       {/* Leave Confirmation Modal sử dụng đúng Modal component */}

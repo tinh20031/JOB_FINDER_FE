@@ -7,7 +7,7 @@ const genderOptions = [
   { value: "female", label: "Female" },
 ];
 
-const EditProfileModal = ({ open, onClose, onSubmit, profile }) => {
+const EditProfileModal = ({ open, onClose, onSubmit, profile, saving = false }) => {
   const [form, setForm] = useState({
     FullName: profile?.fullName || "",
     JobTitle: profile?.jobTitle || "",
@@ -270,10 +270,31 @@ const EditProfileModal = ({ open, onClose, onSubmit, profile }) => {
     formData.append("PersonalLink", form.PersonalLink || "");
   
     try {
-      await ApiService.request("CandidateProfile/me", "PUT", formData);
+      const response = await ApiService.request("CandidateProfile/me", "PUT", formData);
+      
+      // Tạo object chứa dữ liệu đã cập nhật để truyền cho onSubmit
+      const updatedProfile = {
+        fullName: form.FullName,
+        jobTitle: form.JobTitle,
+        phone: form.Phone,
+        gender: form.Gender,
+        city: form.Ward,
+        province: form.Province,
+        address: form.Address,
+        dob: formatDobForAPI(form.Dob),
+        personalLink: form.PersonalLink,
+        image: form.imageFile ? preview : form.image, // Sử dụng preview nếu có file mới
+        email: form.Email, // Giữ nguyên email
+        ...response // Thêm response từ API nếu có
+      };
+      
+      // Gọi onSubmit để cập nhật state ở component cha
+      onSubmit(updatedProfile);
       onClose();
     } catch (error) {
       // Handle error silently or show toast notification
+      console.error("Error updating profile:", error);
+      throw error; // Re-throw để component cha có thể handle
     }
   };
 
@@ -787,18 +808,20 @@ const EditProfileModal = ({ open, onClose, onSubmit, profile }) => {
                 </button>
                 <button
                   type="submit"
+                  disabled={saving}
                   style={{
-                    background: "#e60023",
+                    background: saving ? "#ccc" : "#e60023",
                     color: "#fff",
                     border: "none",
                     padding: "10px 32px",
                     borderRadius: 8,
                     fontWeight: 600,
                     fontSize: 16,
-                    cursor: "pointer",
+                    cursor: saving ? "not-allowed" : "pointer",
+                    opacity: saving ? 0.7 : 1,
                   }}
                 >
-                  Save
+                  {saving ? "Saving..." : "Save"}
                 </button>
               </div>
             </form>

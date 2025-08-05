@@ -30,8 +30,8 @@ const JobFeatured1 = () => {
           page: 1     // Lấy trang đầu tiên
         });
         
-        // Kiểm tra và lọc thêm để đảm bảo chỉ hiển thị job đã approve
-        const approvedJobs = response.data.filter(job => job.status === 2);
+        // Kiểm tra và lọc thêm để đảm bảo chỉ hiển thị job đã approve và không bị lock
+        const approvedJobs = response.data.filter(job => job.status === 2 && !job.deactivatedByAdmin && job.status !== 4);
         console.log('Featured jobs:', approvedJobs); // Log để debug
         setJobs(approvedJobs);
         setError(null);

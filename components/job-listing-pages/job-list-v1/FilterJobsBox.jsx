@@ -452,7 +452,7 @@ const FilterJobsBox = () => {
       }
       return normalized;
     });
-    const allJobs = jobs.filter(job => job.status === 2);
+    const allJobs = jobs.filter(job => job.status === 2 && !job.deactivatedByAdmin && job.status !== 4);
     
     // Lấy danh sách ID của trending jobs để tránh trùng lặp
     const trendingJobIds = new Set(normalizedTrendingJobs.map(job => job.id));
@@ -795,13 +795,31 @@ const FilterJobsBox = () => {
                       <span className="icon flaticon-clock-3"></span>
                       {item.createdAt
                         ? (() => {
-                            const diff = Math.floor(
-                              (Date.now() - new Date(item.createdAt)) /
-                                (1000 * 60 * 60)
-                            );
-                            return diff < 24
-                              ? `${diff} hours ago`
-                              : `${Math.floor(diff / 24)} days ago`;
+                            const now = Date.now();
+                            const createdAt = new Date(item.createdAt).getTime();
+                            const diffMs = now - createdAt;
+                            const diffMinutes = Math.floor(diffMs / (1000 * 60));
+                            const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+                            const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+                            
+                            if (diffMinutes < 1) {
+                              return "Just now";
+                            } else if (diffMinutes < 60) {
+                              return `${diffMinutes} minute${diffMinutes > 1 ? 's' : ''} ago`;
+                            } else if (diffHours < 24) {
+                              return `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
+                            } else if (diffDays < 7) {
+                              return `${diffDays} day${diffDays > 1 ? 's' : ''} ago`;
+                            } else if (diffDays < 30) {
+                              const weeks = Math.floor(diffDays / 7);
+                              return `${weeks} week${weeks > 1 ? 's' : ''} ago`;
+                            } else if (diffDays < 365) {
+                              const months = Math.floor(diffDays / 30);
+                              return `${months} month${months > 1 ? 's' : ''} ago`;
+                            } else {
+                              const years = Math.floor(diffDays / 365);
+                              return `${years} year${years > 1 ? 's' : ''} ago`;
+                            }
                           })()
                         : "N/A"}
                     </li>
