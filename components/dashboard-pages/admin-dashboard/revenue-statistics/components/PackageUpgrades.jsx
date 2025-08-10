@@ -10,12 +10,22 @@ const PackageUpgrades = ({ dateRange }) => {
   const [activeTab, setActiveTab] = useState('combined');
 
   useEffect(() => {
+    const toIsoDateTime = (value, isEnd = false) => {
+      if (!value) return undefined;
+      // If value already contains time, return as is
+      if (typeof value === 'string' && value.includes('T')) return value;
+      // Normalize plain date (YYYY-MM-DD) to full ISO with timezone
+      return isEnd
+        ? `${value}T23:59:59.999Z`
+        : `${value}T00:00:00Z`;
+    };
+
     const fetchData = async () => {
       try {
         setLoading(true);
         const response = await ApiService.getPackageUpgrades(
-          dateRange.startDate,
-          dateRange.endDate
+          toIsoDateTime(dateRange.startDate, false),
+          toIsoDateTime(dateRange.endDate, true)
         );
         setData(response);
         setLoading(false);
@@ -29,17 +39,55 @@ const PackageUpgrades = ({ dateRange }) => {
     fetchData();
   }, [dateRange]);
 
+  const formatNumber = (num) => {
+    if (num === null || num === undefined || Number.isNaN(num)) return '0';
+    return new Intl.NumberFormat('vi-VN').format(num);
+  };
+
   if (loading) {
     return (
-      <div className="text-center py-5" style={{ minHeight: '200px' }}>
-        <div className="spinner-border text-primary" role="status" style={{
-          width: '3rem', 
-          height: '3rem',
-          borderWidth: '0.25rem',
-          animation: 'spinner-border 1s linear infinite'
-        }}>
-          <span className="visually-hidden">Loading...</span>
+      <div className="package-upgrades-statistics">
+        <div className="tabs-wrapper">
+          <div className="skeleton tabs-bar" />
         </div>
+        <div className="row">
+          {[0,1].map((col) => (
+            <div className="col-md-6 mb-4" key={col}>
+              <div className="skeleton-card">
+                <div className="skeleton-header">
+                  <div className="sk-line lg" />
+                  <div className="sk-pill" />
+                </div>
+                <div className="sk-grid">
+                  {[...Array(6)].map((_, i) => (
+                    <div className="sk-item" key={i}>
+                      <div className="sk-icon" />
+                      <div className="sk-content">
+                        <div className="sk-line md" />
+                        <div className="sk-line sm" />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+        <style jsx>{`
+          .skeleton.tabs-bar { height: 44px; border-radius: 12px; background: #f1f5f9; }
+          .skeleton-card { background: #fff; border: 1px solid #eef2f7; border-radius: 16px; overflow: hidden; }
+          .skeleton-header { display: flex; justify-content: space-between; align-items: center; padding: 18px 24px; border-bottom: 1px solid #eef2f7; }
+          .sk-line { height: 12px; background: #f1f5f9; border-radius: 8px; position: relative; overflow: hidden; }
+          .sk-line.lg { width: 40%; height: 18px; }
+          .sk-line.md { width: 50%; }
+          .sk-line.sm { width: 30%; height: 10px; }
+          .sk-pill { width: 90px; height: 24px; background: #eef2ff; border-radius: 999px; position: relative; overflow: hidden; }
+          .sk-grid { display: grid; grid-template-columns: 1fr; gap: 12px; padding: 20px; }
+          .sk-item { display: flex; align-items: center; gap: 12px; }
+          .sk-icon { width: 48px; height: 48px; border-radius: 12px; background: #f1f5f9; }
+          .sk-line::after, .sk-pill::after { content: ''; position: absolute; inset: 0; transform: translateX(-100%); background: linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,.6) 50%, rgba(255,255,255,0) 100%); animation: shimmer 1.4s infinite; }
+          @keyframes shimmer { 100% { transform: translateX(100%); } }
+        `}</style>
       </div>
     );
   }
@@ -335,20 +383,23 @@ const PackageUpgrades = ({ dateRange }) => {
   };
 
   // Stat item component
-  const StatItem = ({ icon, label, value, type }) => (
-    <div style={cardStyle.statItem}>
-      <div style={{
-        ...cardStyle.iconBox,
-        backgroundColor: getIconBgColor(type)
-      }}>
-        <i className={icon} style={{ color: getIconColor(type) }}></i>
+  const StatItem = ({ icon, label, value, type }) => {
+    const displayValue = typeof value === 'number' ? formatNumber(value) : value;
+    return (
+      <div style={cardStyle.statItem} className="fade-up">
+        <div style={{
+          ...cardStyle.iconBox,
+          backgroundColor: getIconBgColor(type)
+        }}>
+          <i className={icon} style={{ color: getIconColor(type) }}></i>
+        </div>
+        <div style={cardStyle.statContent}>
+          <span style={cardStyle.statLabel}>{label}</span>
+          <span style={cardStyle.statValue}>{displayValue}</span>
+        </div>
       </div>
-      <div style={cardStyle.statContent}>
-        <span style={cardStyle.statLabel}>{label}</span>
-        <span style={cardStyle.statValue}>{value}</span>
-      </div>
-    </div>
-  );
+    );
+  };
 
   return (
     <div className="package-upgrades-statistics">
@@ -389,8 +440,8 @@ const PackageUpgrades = ({ dateRange }) => {
         <div style={tabStyle.content}>
           {activeTab === 'combined' && (
             <div className="row">
-              <div className="col-md-6 mb-4">
-                <div style={cardStyle.container}>
+              <div className="col-md-6 mb-4 fade-up" style={{ animationDelay: '0.05s' }}>
+                <div style={cardStyle.container} className="hover-card">
                   <div style={cardStyle.header}>
                     <h5 style={cardStyle.title}>Overall Package Statistics</h5>
                     <div style={cardStyle.badge}>Combined</div>
@@ -430,8 +481,8 @@ const PackageUpgrades = ({ dateRange }) => {
                 </div>
               </div>
               
-              <div className="col-md-6 mb-4">
-                <div style={cardStyle.container}>
+              <div className="col-md-6 mb-4 fade-up" style={{ animationDelay: '0.1s' }}>
+                <div style={cardStyle.container} className="hover-card">
                   <div style={cardStyle.header}>
                     <h5 style={cardStyle.title}>Key Performance Indicators</h5>
                     <div style={cardStyle.badge}>Metrics</div>
@@ -468,8 +519,8 @@ const PackageUpgrades = ({ dateRange }) => {
           
           {activeTab === 'candidate' && (
             <div className="row">
-              <div className="col-md-6 mb-4">
-                <div style={cardStyle.container}>
+              <div className="col-md-6 mb-4 fade-up" style={{ animationDelay: '0.05s' }}>
+                <div style={cardStyle.container} className="hover-card">
                   <div style={cardStyle.header}>
                     <h5 style={cardStyle.title}>Candidate Package Statistics</h5>
                     <div style={cardStyle.badge}>Candidate</div>
@@ -515,8 +566,8 @@ const PackageUpgrades = ({ dateRange }) => {
                 </div>
               </div>
               
-              <div className="col-md-6 mb-4">
-                <div style={cardStyle.container}>
+              <div className="col-md-6 mb-4 fade-up" style={{ animationDelay: '0.1s' }}>
+                <div style={cardStyle.container} className="hover-card">
                   <div style={cardStyle.header}>
                     <h5 style={cardStyle.title}>Candidate User Behavior</h5>
                     <div style={cardStyle.badge}>Analytics</div>
@@ -621,8 +672,8 @@ const PackageUpgrades = ({ dateRange }) => {
           
           {activeTab === 'company' && (
             <div className="row">
-              <div className="col-md-6 mb-4">
-                <div style={cardStyle.container}>
+              <div className="col-md-6 mb-4 fade-up" style={{ animationDelay: '0.05s' }}>
+                <div style={cardStyle.container} className="hover-card">
                   <div style={cardStyle.header}>
                     <h5 style={cardStyle.title}>Company Package Statistics</h5>
                     <div style={cardStyle.badge}>Company</div>
@@ -668,8 +719,8 @@ const PackageUpgrades = ({ dateRange }) => {
                 </div>
               </div>
               
-              <div className="col-md-6 mb-4">
-                <div style={cardStyle.container}>
+              <div className="col-md-6 mb-4 fade-up" style={{ animationDelay: '0.1s' }}>
+                <div style={cardStyle.container} className="hover-card">
                   <div style={cardStyle.header}>
                     <h5 style={cardStyle.title}>Company User Behavior</h5>
                     <div style={cardStyle.badge}>Analytics</div>
@@ -773,6 +824,12 @@ const PackageUpgrades = ({ dateRange }) => {
           )}
         </div>
       </div>
+      <style jsx>{`
+        .hover-card { transition: transform .2s ease, box-shadow .2s ease; }
+        .hover-card:hover { transform: translateY(-2px); box-shadow: 0 10px 22px rgba(2,6,23,0.06); }
+        .fade-up { animation: fadeUp .45s ease both; }
+        @keyframes fadeUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+      `}</style>
     </div>
   );
 };

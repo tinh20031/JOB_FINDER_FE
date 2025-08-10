@@ -1,8 +1,5 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  experimental: {
-    appDir: true,
-  },
   images: {
     domains: [
       "randomuser.me",
@@ -19,17 +16,14 @@ const nextConfig = {
       },
     ],
   },
-  // Disable static generation for auth pages
-  async generateStaticParams() {
-    return [];
-  },
+  // Note: generateStaticParams is not a next.config option; remove to avoid warnings
   // Configure which pages should not be statically generated
   async rewrites() {
     return [
       {
         source: "/api/:path*",
-        destination: "http://localhost:5194/api/:path*", 
-        // destination: "https://job-finder-kjt2.onrender.com/api/:path*",
+        // destination: "http://localhost:5194/api/:path*", 
+        destination: "https://job-finder-kjt2.onrender.com/api/:path*",
       },
       {
         source: "/auth/:path*",

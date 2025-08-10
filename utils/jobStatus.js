@@ -14,11 +14,11 @@ export const JobStatus = {
  * Job Status Labels (Tiếng Việt)
  */
 export const JobStatusLabels = {
-  [JobStatus.DRAFT]: "Bản nháp",
-  [JobStatus.PENDING]: "Chờ duyệt", 
-  [JobStatus.ACTIVE]: "Đang hoạt động",
-  [JobStatus.INACTIVE]: "Tạm dừng",
-  [JobStatus.INACTIVEBYADMIN]: "Tạm dừng (Admin)"
+  [JobStatus.DRAFT]: "Draft",
+[JobStatus.PENDING]: "Pending",
+[JobStatus.ACTIVE]: "Active",
+[JobStatus.INACTIVE]: "Paused",
+[JobStatus.INACTIVEBYADMIN]: "Paused (Admin)"
 };
 
 /**

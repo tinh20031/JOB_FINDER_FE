@@ -1,31 +1,16 @@
-"use client";
-import Aos from "aos";
 import "aos/dist/aos.css";
 import "antd/dist/reset.css";
 import "../styles/index.scss";
 import "../styles/chat.css";
 import "../styles/draft.css";
 import "../styles/dropdown-fix.css";
-import { useEffect } from "react";
-import ScrollToTop from "../components/common/ScrollTop";
-import { Provider } from "react-redux";
-import { store } from "../store/store";
 import "react-toastify/dist/ReactToastify.css";
-import { ToastContainer } from "react-toastify";
-import { FavoriteJobsProvider } from "../contexts/FavoriteJobsContext";
 import '../components/dashboard-pages/candidates-dashboard/cv-manager/components/CvManagerTable.css';
+import RootClientProviders from "@/components/common/RootClientProviders";
+import { Suspense } from "react";
 
 
 export default function RootLayout({ children }) {
-  useEffect(() => {
-    Aos.init({
-      duration: 1400,
-      once: true,
-    });
-    // Import Bootstrap JS only on client side
-    require("bootstrap/dist/js/bootstrap");
-  }, []);
-
   return (
     <html lang="en">
       <head>
@@ -48,29 +33,9 @@ export default function RootLayout({ children }) {
       </head>
 
       <body>
-        <Provider store={store}>
-          <FavoriteJobsProvider>
-            <div className="page-wrapper">
-              {children}
-
-              {/* Toastify */}
-              <ToastContainer
-                position="top-right"
-                autoClose={3000}
-                hideProgressBar={false}
-                newestOnTop={false}
-                closeOnClick
-                rtl={false}
-                pauseOnFocusLoss
-                draggable
-                pauseOnHover
-                theme="light"
-              />
-              {/* <!-- Scroll To Top --> */}
-              <ScrollToTop />
-            </div>
-          </FavoriteJobsProvider>
-        </Provider>
+        <Suspense fallback={null}>
+          <RootClientProviders>{children}</RootClientProviders>
+        </Suspense>
       </body>
     </html>
   );

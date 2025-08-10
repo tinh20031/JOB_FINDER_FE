@@ -1,7 +1,7 @@
 import API_CONFIG from "../config/api.config";
 
-const BASE_URL = "http://localhost:5194/api";
-// const BASE_URL = "https://job-finder-kjt2.onrender.com/api";
+// const BASE_URL = "http://localhost:5194/api";
+const BASE_URL = "https://job-finder-kjt2.onrender.com/api";
 // Định nghĩa class trước
 class ApiServiceClass {
   // Auth APIs
@@ -439,10 +439,13 @@ const ApiService = {
   getMyCVs: ApiServiceClass.getMyCVs,
   deleteCV: ApiServiceClass.deleteCV,
   // Revenue Statistics APIs
-  getRevenueSummary: async () => {
-    const url = `${BASE_URL}/RevenueStatistics/summary`;
+  getRevenueSummary: async (startDate, endDate) => {
+    const params = new URLSearchParams();
+    if (startDate) params.append('startDate', startDate);
+    if (endDate) params.append('endDate', endDate);
+    const url = `${BASE_URL}/RevenueStatistics/summary${params.toString() ? `?${params.toString()}` : ''}`;
     const token = localStorage.getItem("token");
-    
+
     const response = await fetch(url, {
       method: 'GET',
       headers: {
@@ -450,11 +453,11 @@ const ApiService = {
         'Authorization': `Bearer ${token}`
       }
     });
-    
+
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
-    
+
     return response.json();
   },
   getMonthlyRevenue: (year) => {
@@ -462,10 +465,12 @@ const ApiService = {
     if (year) params.year = year;
     return ApiService.get(API_CONFIG.ENDPOINTS.REVENUE_STATISTICS.MONTHLY, { params });
   },
-  getRevenueByPackageType: async () => {
-    const url = `${BASE_URL}/RevenueStatistics/by-package-type`;
+  getRevenueByPackageType: async (startDate, endDate) => {
+    const params = new URLSearchParams();
+    if (startDate) params.append('startDate', startDate);
+    if (endDate) params.append('endDate', endDate);
+    const url = `${BASE_URL}/RevenueStatistics/by-package-type${params.toString() ? `?${params.toString()}` : ''}`;
     const token = localStorage.getItem("token");
-    
     const response = await fetch(url, {
       method: 'GET',
       headers: {
@@ -473,11 +478,9 @@ const ApiService = {
         'Authorization': `Bearer ${token}`
       }
     });
-    
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
-    
     return response.json();
   },
   getRecentTransactions: (count) => {
@@ -485,10 +488,12 @@ const ApiService = {
     if (count) params.count = count;
     return ApiService.get(API_CONFIG.ENDPOINTS.REVENUE_STATISTICS.RECENT_TRANSACTIONS, { params });
   },
-  getDashboardStatistics: async () => {
-    const url = `${BASE_URL}/RevenueStatistics/dashboard`;
+  getDashboardStatistics: async (startDate, endDate) => {
+    const params = new URLSearchParams();
+    if (startDate) params.append('startDate', startDate);
+    if (endDate) params.append('endDate', endDate);
+    const url = `${BASE_URL}/RevenueStatistics/dashboard${params.toString() ? `?${params.toString()}` : ''}`;
     const token = localStorage.getItem("token");
-    
     const response = await fetch(url, {
       method: 'GET',
       headers: {
@@ -496,11 +501,9 @@ const ApiService = {
         'Authorization': `Bearer ${token}`
       }
     });
-    
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
-    
     return response.json();
   },
   exportRevenueData: (startDate, endDate) => {

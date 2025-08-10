@@ -681,41 +681,37 @@ const FilterJobsBox = () => {
                >
                                    {/* Hiển thị ranking cho trending jobs - nằm trên viền ngoài của job card */}
                   {item.isTrending && (item.trendingRank || 0) <= 3 && (
-                    <div
-                      style={{
-                        position: "absolute",
-                        left: "-15px",
-                        top: "-8px",
-                        padding: "6px 12px",
-                        borderRadius: "20px",
-                        background: (item.trendingRank || 0) === 1 
-                          ? "#ff4444" // Red for SUPER HOT
-                          : "#ff6b35", // Orange for HOT
-                        color: "white",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        fontWeight: "bold",
-                        fontSize: (item.trendingRank || 0) === 1 ? "10px" : "12px",
-                        zIndex: 20,
-                        boxShadow: "0 4px 12px rgba(0,0,0,0.3)",
-                        border: "2px solid white",
-                        whiteSpace: "nowrap",
-                        minWidth: (item.trendingRank || 0) === 1 ? "80px" : "50px",
-                      }}
-                    >
-                                             {(item.trendingRank || 0) === 1 ? (
-                         <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
-                           <span style={{ fontSize: "10px" }}>🔥</span>
-                           <span>SUPER HOT</span>
-                         </div>
-                       ) : (
-                         <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
-                           <span style={{ fontSize: "10px" }}>🔥</span>
-                           <span>HOT</span>
-                         </div>
-                       )}
-                    </div>
+                    (() => {
+                      const rank = item.trendingRank || 0;
+                      const isSuper = rank === 1;
+                      const background = isSuper
+                        ? "linear-gradient(135deg,#ef4444 0%,#f97316 100%)"
+                        : "linear-gradient(135deg,#fb923c 0%,#f59e0b 100%)";
+                      return (
+                        <div style={{ position: "absolute", top: -18, right: -10, zIndex: 25 }}>
+                          <div
+                            style={{
+                              display: "flex",
+                              alignItems: "center",
+                              gap: 6,
+                              padding: "6px 10px",
+                              borderRadius: 999,
+                              color: "#fff",
+                              fontWeight: 800,
+                              fontSize: 12,
+                              letterSpacing: 0.3,
+                              background,
+                              boxShadow: "0 6px 20px rgba(0,0,0,0.15)",
+                              whiteSpace: "nowrap",
+                              border: "1px solid rgba(255,255,255,0.6)",
+                            }}
+                          >
+                            <span style={{ fontSize: 12 }}>🔥</span>
+                            <span>{isSuper ? "SUPER HOT" : "HOT"}</span>
+                          </div>
+                        </div>
+                      );
+                    })()
                   )}
                  <div className="content">
                   <span

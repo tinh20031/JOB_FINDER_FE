@@ -15,42 +15,160 @@ const ExportData = ({ dateRange }) => {
     try {
       setExporting(true);
       
+      const toIsoDateTime = (value, isEnd = false) => {
+        if (!value) return undefined;
+        if (typeof value === 'string' && value.includes('T')) return value;
+        return isEnd ? `${value}T23:59:59.999Z` : `${value}T00:00:00Z`;
+      };
+
       const response = await ApiService.exportRevenueData(
-        dateRange.startDate,
-        dateRange.endDate,
+        toIsoDateTime(dateRange.startDate, false),
+        toIsoDateTime(dateRange.endDate, true),
         detailLevel === 'detailed'
       );
 
-      // Create content based on selected format
-      let content = '';
-      let mimeType = '';
-      let fileExtension = '';
-      
-      if (fileFormat === 'json') {
-        content = createJSONContent(response);
-        mimeType = 'application/json;charset=utf-8;';
-        fileExtension = 'json';
-      } else if (fileFormat === 'excel') {
-        content = createExcelContent(response);
-        mimeType = 'text/csv;charset=utf-8;';
-        fileExtension = 'csv';
+      // Dynamically import SheetJS only on client
+      let XLSX;
+      try {
+        const XLSXMod = await import('xlsx');
+        XLSX = XLSXMod.default || XLSXMod;
+      } catch (e) {
+        alert('Thiếu thư viện xlsx. Vui lòng cài đặt bằng: npm i xlsx hoặc yarn add xlsx');
+        setExporting(false);
+        return;
       }
 
-      // Download the file
-      const blob = new Blob([content], { type: mimeType });
+      // Build workbook
+      const workbook = XLSX.utils.book_new();
+
+      const addSheetFromAOA = (name, aoa) => {
+        const ws = XLSX.utils.aoa_to_sheet(aoa);
+        XLSX.utils.book_append_sheet(workbook, ws, name);
+      };
+
+      // Optional metadata sheet
+      if (includeHeaders) {
+        const meta = [
+          ['REVENUE REPORT'],
+          ['Export Date', new Date().toLocaleString('vi-VN')],
+          ['Date Range', `${formatDate(response.summary?.startDate, true)} to ${formatDate(response.summary?.endDate, true)}`],
+          ['Report Type', getExportTypeDisplayName()],
+          ['Detail Level', detailLevel === 'detailed' ? 'Detailed' : 'Standard']
+        ];
+        addSheetFromAOA('Metadata', meta);
+      }
+
+      const include = (type) => exportType === 'full' || exportType === type;
+
+      if (include('summary') && response.summary) {
+        const s = response.summary;
+        const aoa = [
+          ['Metric', 'Value', 'Start Date', 'End Date'],
+          ['Total Revenue', s.totalRevenue, formatDate(s.startDate, true), formatDate(s.endDate, true)],
+          ['Candidate Revenue', s.candidateRevenue, formatDate(s.startDate, true), formatDate(s.endDate, true)],
+          ['Company Revenue', s.companyRevenue, formatDate(s.startDate, true), formatDate(s.endDate, true)],
+          ['Total Transactions', s.totalTransactions, formatDate(s.startDate, true), formatDate(s.endDate, true)],
+          ['Candidate Transactions', s.candidateTransactions, formatDate(s.startDate, true), formatDate(s.endDate, true)],
+          ['Company Transactions', s.companyTransactions, formatDate(s.startDate, true), formatDate(s.endDate, true)],
+          ['Unique Users', s.uniqueUsers, formatDate(s.startDate, true), formatDate(s.endDate, true)],
+          ['Unique Candidates', s.uniqueCandidates, formatDate(s.startDate, true), formatDate(s.endDate, true)],
+          ['Unique Companies', s.uniqueCompanies, formatDate(s.startDate, true), formatDate(s.endDate, true)],
+          ['Average Transaction Value', s.averageTransactionValue, formatDate(s.startDate, true), formatDate(s.endDate, true)],
+          ['Median Transaction Value', s.medianTransactionValue, formatDate(s.startDate, true), formatDate(s.endDate, true)],
+          ['Most Popular Payment Method', `${s.topPaymentProvider?.provider} (${s.topPaymentProvider?.count} transactions)`, formatDate(s.startDate, true), formatDate(s.endDate, true)]
+        ];
+        addSheetFromAOA('Summary', aoa);
+      }
+
+      if (include('transactions') && Array.isArray(response.transactions)) {
+        const headers = ['Transaction ID','Order Code','Amount','User ID','Email','User Name','Account Type','Payment Type','Package Name','Package Type','Package Price','Created Date','Completed Date','Payment Method'];
+        const rows = response.transactions.map(t => [
+          t.transactionId,
+          t.orderCode,
+          t.amount,
+          t.userId,
+          t.userEmail,
+          t.userName,
+          translateAccountType(t.accountType),
+          translatePaymentType(t.paymentType),
+          t.packageName,
+          t.packageType,
+          t.packagePrice,
+          formatDate(t.createdAt, true),
+          formatDate(t.completedAt, true),
+          t.paymentProvider
+        ]);
+        addSheetFromAOA('Transactions', [headers, ...rows]);
+      }
+
+      if (include('packages') && response.packageStatistics) {
+        const cps = response.packageStatistics.candidatePackages || [];
+        const cmp = response.packageStatistics.companyPackages || [];
+        const ch = ['Package ID','Package Name','Package Type','Price','Revenue','Payment Count'];
+        const cr = cps.map(p => [p.packageId, p.packageName, p.packageType, p.price, p.revenue, p.paymentCount]);
+        addSheetFromAOA('Candidate Packages', [ch, ...cr]);
+        const coh = ['Package ID','Package Name','Package Type','Price','Job Post Limit','CV View Limit','Revenue','Payment Count'];
+        const cor = cmp.map(p => [p.packageId, p.packageName, p.packageType, p.price, p.jobPostLimit, p.cvMatchLimit, p.revenue, p.paymentCount]);
+        addSheetFromAOA('Company Packages', [coh, ...cor]);
+      }
+
+      if (include('monthly') && Array.isArray(response.monthlyRevenue)) {
+        const headers = ['Month','Month Name','Total Revenue','Candidate Revenue','Company Revenue','Total Transactions','Candidate Transactions','Company Transactions'];
+        const rows = response.monthlyRevenue.map(m => [m.month, m.monthName, m.totalRevenue, m.candidateRevenue, m.companyRevenue, m.transactionCount, m.candidateTransactions, m.companyTransactions]);
+        addSheetFromAOA('Monthly Revenue', [headers, ...rows]);
+      }
+
+      if (include('daily') && Array.isArray(response.dailyRevenue)) {
+        const headers = ['Date','Total Revenue','Candidate Revenue','Company Revenue','Transaction Count'];
+        const rows = response.dailyRevenue.map(d => [formatDate(d.date, true), d.totalRevenue, d.candidateRevenue, d.companyRevenue, d.transactionCount]);
+        addSheetFromAOA('Daily Revenue', [headers, ...rows]);
+      }
+
+      if (include('users') && Array.isArray(response.userRevenue)) {
+        const headers = ['User ID','Email','Name','Account Type','Total Spent','Transaction Count','First Purchase','Last Purchase'];
+        const rows = response.userRevenue.map(u => [u.userId, u.email, u.name, translateAccountType(u.accountType), u.totalSpent, u.transactionCount, formatDate(u.firstPurchase, true), formatDate(u.lastPurchase, true)]);
+        addSheetFromAOA('User Revenue', [headers, ...rows]);
+      }
+
+      if (include('upgrades') && response.upgradeStatistics) {
+        const cs = response.upgradeStatistics.combinedStatistics || {};
+        const up = response.upgradeStatistics.userUpgradePatterns || [];
+        const combined = [
+          ['Metric','Value'],
+          ['Total Packages Purchased', cs.totalPackagePayments],
+          ['Total Basic Packages Purchased', cs.totalBasicPackagePayments],
+          ['Total Premium Packages Purchased', cs.totalPremiumPackagePayments],
+          ['Total Package Upgrades', cs.totalUpgrades],
+          ['Total Same Package Renewals', cs.totalSamePackageRenewals],
+          ['Package Upgrade Rate', `${cs.overallUpgradeRate}%`],
+          ['Package Renewal Rate', `${cs.overallRenewalRate}%`],
+          ['User Return Rate', `${cs.overallReturnRate}%`]
+        ];
+        addSheetFromAOA('Combined Stats', combined);
+
+        const headers = ['User ID','User Name','Email','Account Type','Upgrade Pattern','First Subscription Date','First Package Name','First Package Type','Second Subscription Date','Second Package Name'];
+        const rows = up.map(p => [p.userId, p.userName, p.email, translateAccountType(p.accountType), translateUpgradePattern(p.upgradePattern), formatDate(p.firstSubscriptionDate, true), p.firstPackageName, p.firstPackageType, formatDate(p.secondSubscriptionDate, true), p.secondPackageName]);
+        addSheetFromAOA('Upgrade Patterns', [headers, ...rows]);
+      }
+
+      // Fallback: if no sheet was added, dump raw JSON
+      if (!workbook.SheetNames || workbook.SheetNames.length === 0) {
+        try {
+          const flat = [{ note: 'No structured sheets generated. Dumping raw response JSON.' }];
+          const ws = XLSX.utils.json_to_sheet(flat);
+          XLSX.utils.book_append_sheet(workbook, ws, 'Data');
+        } catch {}
+      }
+
+      // Write workbook and download
+      const wbout = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
+      const blob = new Blob([wbout], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
       const link = document.createElement('a');
       const url = URL.createObjectURL(blob);
       
-      // Format date for filename
-      const formattedStartDate = dateRange.startDate.split('T')[0];
-      const formattedEndDate = dateRange.endDate.split('T')[0];
-      
-      // Create Vietnamese filename with date
       const today = new Date();
       const formattedToday = `${today.getDate()}-${today.getMonth() + 1}-${today.getFullYear()}`;
-      const fileName = fileFormat === 'excel' 
-        ? `bao_cao_doanh_thu_${exportType}_${formattedToday}.${fileExtension}`
-        : `revenue_export_${exportType}_${formattedStartDate}_to_${formattedEndDate}.${fileExtension}`;
+      const fileName = `revenue_export_${exportType}_${formattedToday}.xlsx`;
       
       link.setAttribute('href', url);
       link.setAttribute('download', fileName);
@@ -62,7 +180,7 @@ const ExportData = ({ dateRange }) => {
 
     } catch (error) {
       console.error('Export failed:', error);
-      alert('Xuất dữ liệu thất bại. Vui lòng thử lại.');
+      alert('Data export failed. Please try again.');
     } finally {
       setExporting(false);
     }
@@ -117,107 +235,9 @@ const ExportData = ({ dateRange }) => {
     return csvContent;
   };
 
-  const createJSONContent = (data) => {
-    const exportData = {
-      metadata: includeHeaders ? {
-        generated: new Date().toISOString(),
-        dateRange: {
-          startDate: data.summary?.startDate,
-          endDate: data.summary?.endDate
-        },
-        exportType,
-        detailLevel
-      } : undefined
-    };
-    
-    if (exportType === 'summary' || exportType === 'full') {
-      exportData.summary = data.summary;
-    }
-    
-    if (exportType === 'transactions' || exportType === 'full') {
-      exportData.transactions = data.transactions;
-    }
-    
-    if (exportType === 'packages' || exportType === 'full') {
-      exportData.packageStatistics = data.packageStatistics;
-    }
-    
-    if (exportType === 'monthly' || exportType === 'full') {
-      exportData.monthlyRevenue = data.monthlyRevenue;
-    }
-    
-    if (exportType === 'daily' || exportType === 'full') {
-      exportData.dailyRevenue = data.dailyRevenue;
-    }
-    
-    if (exportType === 'users' || exportType === 'full') {
-      exportData.userRevenue = data.userRevenue;
-    }
-    
-    if (exportType === 'upgrades' || exportType === 'full') {
-      exportData.upgradeStatistics = data.upgradeStatistics;
-    }
-    
-    return JSON.stringify(exportData, null, 2);
-  };
+  // Removed JSON export to only support Excel (CSV)
 
-  const createExcelContent = (data) => {
-    const createExcelCSVContent = (data) => {
-      const isExcelFormat = true;
-      
-      let csvContent = '';
-      
-      if (includeHeaders) {
-        const today = new Date();
-        const currentDate = `${today.getDate().toString().padStart(2, '0')}/${(today.getMonth() + 1).toString().padStart(2, '0')}/${today.getFullYear()}`;
-        csvContent += `REVENUE REPORT\n`;
-        csvContent += `Export Date: ${currentDate}\n`;
-        csvContent += `Date Range: ${formatDate(data.summary?.startDate, isExcelFormat)} to ${formatDate(data.summary?.endDate, isExcelFormat)}\n`;
-        csvContent += `Report Type: ${getExportTypeDisplayName()}\n`;
-        csvContent += `Detail Level: ${detailLevel === 'detailed' ? 'Detailed' : 'Standard'}\n\n`;
-      }
-      
-      if (exportType === 'summary' || exportType === 'full') {
-        csvContent += createSummaryCSV(data.summary, isExcelFormat);
-      }
-      
-      if (exportType === 'transactions' || exportType === 'full') {
-        if (exportType === 'full') csvContent += '\n\n';
-        csvContent += createTransactionsCSV(data.transactions, isExcelFormat);
-      }
-      
-      if (exportType === 'packages' || exportType === 'full') {
-        if (exportType === 'full') csvContent += '\n\n';
-        csvContent += createPackageStatisticsCSV(data.packageStatistics, isExcelFormat);
-      }
-      
-      if (exportType === 'monthly' || exportType === 'full') {
-        if (exportType === 'full') csvContent += '\n\n';
-        csvContent += createMonthlyRevenueCSV(data.monthlyRevenue, isExcelFormat);
-      }
-      
-      if (exportType === 'daily' || exportType === 'full') {
-        if (exportType === 'full') csvContent += '\n\n';
-        csvContent += createDailyRevenueCSV(data.dailyRevenue, isExcelFormat);
-      }
-      
-      if (exportType === 'users' || exportType === 'full') {
-        if (exportType === 'full') csvContent += '\n\n';
-        csvContent += createUserRevenueCSV(data.userRevenue, isExcelFormat);
-      }
-      
-      if (exportType === 'upgrades' || exportType === 'full') {
-        if (exportType === 'full') csvContent += '\n\n';
-        csvContent += createUpgradeStatisticsCSV(data.upgradeStatistics, isExcelFormat);
-      }
-      
-      return csvContent;
-    };
-    
-    const csvContent = createExcelCSVContent(data);
-    const excelContent = csvContent.replace(/,/g, ';');
-    return '\ufeff' + excelContent;
-  };
+  // Removed CSV content generator; using XLSX workbook instead
 
   const formatDate = (dateString, isExcelFormat = false) => {
     if (!dateString) return '';
@@ -552,8 +572,7 @@ const ExportData = ({ dateRange }) => {
   ];
 
   const fileFormatOptions = [
-    { value: 'excel', label: 'Excel (CSV)', icon: '📊', description: 'Suitable for Microsoft Excel' },
-    { value: 'json', label: 'JSON', icon: '{ }', description: 'Suitable for technical analysis' }
+    { value: 'excel', label: 'Excel (.xlsx)', icon: '📊', description: 'Suitable for Microsoft Excel and Google Sheets' }
   ];
 
   const dataTypeInfo = [
@@ -642,11 +661,6 @@ const ExportData = ({ dateRange }) => {
             <h2>Export Revenue Data</h2>
            
           </div>
-        </div>
-        <div className="header-decoration">
-          <div className="decoration-circle circle-1"></div>
-          <div className="decoration-circle circle-2"></div>
-          <div className="decoration-circle circle-3"></div>
         </div>
       </div>
       
@@ -795,562 +809,115 @@ const ExportData = ({ dateRange }) => {
       </div>
       
       <style jsx>{`
-                 .export-container {
-           font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-           background: #ffffff;
-           border-radius: 12px;
-           box-shadow: 
-             0 6px 20px -4px rgba(0, 0, 0, 0.08),
-             0 2px 8px -2px rgba(0, 0, 0, 0.06);
-           overflow: hidden;
-           margin: 16px 0;
-           position: relative;
-         }
-        
-                 .export-header {
-           background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-           padding: 20px 24px;
-           color: white;
-           position: relative;
-           overflow: hidden;
-         }
-        
-                 .header-content {
-           display: flex;
-           align-items: center;
-           gap: 16px;
-           position: relative;
-           z-index: 2;
-         }
-        
-        .header-icon {
-          position: relative;
+        .export-container {
+          font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+          background: #ffffff;
+          border-radius: 12px;
+          box-shadow: 0 6px 18px -6px rgba(0, 0, 0, 0.12);
+          overflow: hidden;
+          margin: 16px 0;
         }
-        
-                 .icon-bg {
-           width: 44px;
-           height: 44px;
-           background: rgba(255, 255, 255, 0.15);
-           backdrop-filter: blur(10px);
-           border-radius: 12px;
-           display: flex;
-           align-items: center;
-           justify-content: center;
-           box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
-           border: 1px solid rgba(255, 255, 255, 0.2);
-         }
-        
-                 .icon-bg svg {
-           width: 22px;
-           height: 22px;
-           color: white;
-         }
-        
-                 .header-text h2 {
-           margin: 0 0 4px 0;
-           font-weight: 700;
-           font-size: 20px;
-           letter-spacing: -0.5px;
-         }
-        
-                 .header-text p {
-           margin: 0;
-           opacity: 0.9;
-           font-size: 13px;
-           line-height: 1.4;
-           max-width: 350px;
-         }
-        
-        .header-decoration {
-          position: absolute;
-          top: 0;
-          right: 0;
-          width: 100%;
-          height: 100%;
-          pointer-events: none;
-        }
-        
-        .decoration-circle {
-          position: absolute;
-          border-radius: 50%;
-          background: rgba(255, 255, 255, 0.05);
-        }
-        
-        .circle-1 {
-          width: 200px;
-          height: 200px;
-          top: -100px;
-          right: -100px;
-        }
-        
-        .circle-2 {
-          width: 120px;
-          height: 120px;
-          top: 20px;
-          right: 50px;
-          background: rgba(255, 255, 255, 0.08);
-        }
-        
-        .circle-3 {
-          width: 60px;
-          height: 60px;
-          bottom: 20px;
-          right: 200px;
-          background: rgba(255, 255, 255, 0.1);
-        }
-        
-                 .export-body {
-           padding: 24px;
-         }
-        
-                 .main-content {
-           display: flex;
-           flex-direction: column;
-           gap: 20px;
-         }
-        
-                 .settings-panel,
-         .info-panel {
-           background: #f8fafc;
-           border-radius: 12px;
-           overflow: hidden;
-           box-shadow: 0 1px 8px rgba(0, 0, 0, 0.04);
-           border: 1px solid #e2e8f0;
-         }
-        
-                 .panel-header {
-           background: white;
-           padding: 16px 20px;
-           border-bottom: 1px solid #e2e8f0;
-         }
-        
-                 .panel-header h3 {
-           margin: 0;
-           font-weight: 600;
-           font-size: 16px;
-           color: #1e293b;
-         }
-        
-                 .settings-grid {
-           padding: 20px;
-           display: grid;
-           gap: 16px;
-         }
-        
-                 .setting-group {
-           display: flex;
-           flex-direction: column;
-           gap: 8px;
-         }
-        
-        .setting-group.full-width {
-          grid-column: 1 / -1;
-        }
-        
-                 .setting-label {
-           display: flex;
-           align-items: center;
-           gap: 6px;
-           font-size: 13px;
-           font-weight: 600;
-           color: #334155;
-         }
-        
-                 .label-icon {
-           font-size: 14px;
-         }
-        
-        .custom-select {
-          position: relative;
-        }
-        
-                 .custom-select select {
-           width: 100%;
-           padding: 12px 48px 12px 14px;
-           border-radius: 8px;
-           border: 2px solid #e2e8f0;
-           background: white;
-           font-size: 13px;
-           color: #1e293b;
-           appearance: none;
-           cursor: pointer;
-           transition: all 0.2s ease;
-         }
-        
-        .custom-select select:focus {
-          outline: none;
-          border-color: #667eea;
-          box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
-        }
-        
-        .select-arrow {
-          position: absolute;
-          right: 16px;
-          top: 50%;
-          transform: translateY(-50%);
-          width: 20px;
-          height: 20px;
-          color: #64748b;
-          pointer-events: none;
-        }
-        
-                 .format-options {
-           display: grid;
-           grid-template-columns: 1fr 1fr;
-           gap: 8px;
-         }
-        
-                 .format-option {
-           background: white;
-           border: 2px solid #e2e8f0;
-           border-radius: 8px;
-           padding: 12px;
-           cursor: pointer;
-           transition: all 0.2s ease;
-           position: relative;
-           overflow: hidden;
-         }
-        
-        .format-option:hover {
-          border-color: #667eea;
-          transform: translateY(-2px);
-          box-shadow: 0 8px 25px rgba(102, 126, 234, 0.15);
-        }
-        
-        .format-option.active {
-          border-color: #667eea;
-          background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
-        }
-        
-        .format-option input {
-          position: absolute;
-          opacity: 0;
-          pointer-events: none;
-        }
-        
-        .format-content {
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          gap: 8px;
-          text-align: center;
-        }
-        
-                 .format-icon {
-           font-size: 18px;
-           margin-bottom: 3px;
-         }
-        
-                 .format-label {
-           font-weight: 600;
-           color: #1e293b;
-           font-size: 12px;
-         }
-        
-                 .options-grid {
-           display: grid;
-           gap: 10px;
-         }
-        
-                 .option-card {
-           background: white;
-           border: 2px solid #e2e8f0;
-           border-radius: 8px;
-           padding: 14px;
-           cursor: pointer;
-           transition: all 0.2s ease;
-           display: flex;
-           align-items: center;
-           gap: 10px;
-           position: relative;
-         }
-        
-        .option-card:hover {
-          border-color: #667eea;
-          transform: translateY(-2px);
-          box-shadow: 0 8px 25px rgba(102, 126, 234, 0.15);
-        }
-        
-        .option-card.active {
-          border-color: #667eea;
-          background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
-        }
-        
-        .option-card input {
-          position: absolute;
-          opacity: 0;
-          pointer-events: none;
-        }
-        
-        .option-content {
-          display: flex;
-          align-items: center;
-          gap: 16px;
-          flex: 1;
-        }
-        
-                 .option-icon {
-           font-size: 18px;
-           width: 32px;
-           height: 32px;
-           display: flex;
-           align-items: center;
-           justify-content: center;
-           background: rgba(102, 126, 234, 0.1);
-           border-radius: 6px;
-         }
-        
-        .option-text {
-          display: flex;
-          flex-direction: column;
-          gap: 4px;
-        }
-        
-                 .option-title {
-           font-weight: 600;
-           color: #1e293b;
-           font-size: 13px;
-         }
-        
-                 .option-desc {
-           font-size: 11px;
-           color: #64748b;
-         }
-        
-        .option-check {
-          width: 24px;
-          height: 24px;
-          border-radius: 50%;
-          background: #667eea;
+
+        .export-header {
+          background: linear-gradient(135deg, #6366f1 0%, #7c3aed 100%);
+          padding: 16px 20px;
           color: white;
+        }
+
+        .header-content {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+        }
+
+        .header-icon .icon-bg {
+          width: 40px;
+          height: 40px;
+          background: rgba(255, 255, 255, 0.16);
+          border-radius: 10px;
           display: flex;
           align-items: center;
           justify-content: center;
-          opacity: 0;
-          transform: scale(0.8);
-          transition: all 0.2s ease;
+          border: 1px solid rgba(255, 255, 255, 0.25);
         }
-        
-        .option-card.active .option-check {
-          opacity: 1;
-          transform: scale(1);
+
+        .icon-bg svg { width: 20px; height: 20px; color: white; }
+
+        .header-text h2 { margin: 0 0 2px 0; font-weight: 700; font-size: 18px; letter-spacing: -0.2px; }
+        .header-text p { margin: 0; opacity: 0.9; font-size: 12px; }
+
+        .export-body { padding: 18px; }
+        .main-content { display: flex; flex-direction: column; gap: 14px; }
+
+        .settings-panel, .info-panel {
+          background: #f8fafc;
+          border-radius: 10px;
+          overflow: hidden;
+          box-shadow: 0 1px 6px rgba(0, 0, 0, 0.04);
+          border: 1px solid #e2e8f0;
         }
-        
-        .option-check svg {
-          width: 14px;
-          height: 14px;
+
+        .panel-header { background: white; padding: 12px 16px; border-bottom: 1px solid #e2e8f0; }
+        .panel-header h3 { margin: 0; font-weight: 600; font-size: 14px; color: #1e293b; }
+
+        .settings-grid { padding: 16px; display: grid; gap: 12px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        .setting-group { display: flex; flex-direction: column; gap: 6px; }
+        .setting-group.full-width { grid-column: 1 / -1; }
+
+        .setting-label { display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; color: #334155; }
+        .label-icon { font-size: 14px; }
+        .custom-select { position: relative; }
+        .custom-select select {
+          width: 100%; padding: 10px 42px 10px 12px; border-radius: 8px; border: 2px solid #e2e8f0; background: white; font-size: 13px; color: #1e293b; appearance: none; cursor: pointer; transition: all 0.2s ease;
         }
-        
-                 .action-section {
-           padding: 0 20px 20px;
-         }
-        
-                 .export-button {
-           width: 100%;
-           background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-           color: white;
-           border: none;
-           border-radius: 10px;
-           padding: 0;
-           font-size: 14px;
-           font-weight: 600;
-           cursor: pointer;
-           transition: all 0.3s ease;
-           box-shadow: 0 4px 16px rgba(102, 126, 234, 0.3);
-           position: relative;
-           overflow: hidden;
-         }
-        
-        .export-button:hover:not(:disabled) {
-          transform: translateY(-2px);
-          box-shadow: 0 12px 40px rgba(102, 126, 234, 0.4);
-        }
-        
-        .export-button:active:not(:disabled) {
-          transform: translateY(0);
-        }
-        
-        .export-button:disabled {
-          opacity: 0.7;
-          cursor: not-allowed;
-          transform: none !important;
-        }
-        
-                 .button-content {
-           display: flex;
-           align-items: center;
-           justify-content: center;
-           gap: 8px;
-           padding: 14px 20px;
-           position: relative;
-           z-index: 2;
-         }
-        
-                 .button-content svg {
-           width: 16px;
-           height: 16px;
-         }
-        
-        .spinner {
-          width: 20px;
-          height: 20px;
-          border: 3px solid rgba(255, 255, 255, 0.3);
-          border-radius: 50%;
-          border-top-color: white;
-          animation: spin 1s linear infinite;
-        }
-        
-        @keyframes spin {
-          to { transform: rotate(360deg); }
-        }
-        
-                 .info-content {
-           padding: 16px;
-           max-height: 250px;
-           overflow-y: auto;
-         }
-        
-                 .tab-content {
-           display: flex;
-           flex-direction: column;
-           gap: 12px;
-         }
-        
-                 .info-item {
-           display: flex;
-           gap: 10px;
-           padding: 10px 0;
-           border-bottom: 1px dashed #e2e8f0;
-         }
-        
-        .info-item:last-child {
-          border-bottom: none;
-        }
-        
-                 .info-icon {
-           width: 28px;
-           height: 28px;
-           border-radius: 6px;
-           background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
-           display: flex;
-           align-items: center;
-           justify-content: center;
-           flex-shrink: 0;
-         }
-        
-                 .emoji {
-           font-size: 14px;
-         }
-        
-                 .info-content h5 {
-           margin: 0 0 2px 0;
-           font-size: 13px;
-           font-weight: 600;
-           color: #1e293b;
-         }
-        
-                 .info-content p {
-           margin: 0;
-           font-size: 12px;
-           color: #64748b;
-           line-height: 1.3;
-         }
-        
-        .guide-step {
-          display: flex;
-          gap: 16px;
-          margin-bottom: 20px;
-        }
-        
-        .guide-step:last-child {
-          margin-bottom: 0;
-        }
-        
-        .step-number {
-          width: 32px;
-          height: 32px;
-          border-radius: 50%;
-          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-          color: white;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          font-weight: 700;
-          font-size: 14px;
-          flex-shrink: 0;
-          box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
-        }
-        
-        .step-content h5 {
-          margin: 0 0 6px 0;
-          font-size: 15px;
-          font-weight: 600;
-          color: #1e293b;
-        }
-        
-        .step-content p {
-          margin: 0;
-          font-size: 14px;
-          color: #64748b;
-          line-height: 1.5;
-        }
-        
-        
-        
-        @media (max-width: 768px) {
-          .export-header {
-            padding: 32px 24px;
-          }
-          
-          .header-content {
-            flex-direction: column;
-            text-align: center;
-            gap: 16px;
-          }
-          
-          .header-text h2 {
-            font-size: 28px;
-          }
-          
-          .export-body {
-            padding: 32px 24px;
-          }
-          
-          .settings-grid {
-            padding: 24px;
-          }
-          
-          .format-options {
-            grid-template-columns: 1fr;
-          }
-          
-          
-        }
-        
-        @media (max-width: 480px) {
-          .export-container {
-            margin: 16px 0;
-            border-radius: 16px;
-          }
-          
-          .header-text h2 {
-            font-size: 24px;
-          }
-          
-          .header-text p {
-            font-size: 14px;
-          }
-          
-          .icon-bg {
-            width: 60px;
-            height: 60px;
-          }
-          
-          .icon-bg svg {
-            width: 28px;
-            height: 28px;
-          }
-        }
+        .custom-select select:focus { outline: none; border-color: #6366f1; box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.12); }
+        .select-arrow { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); width: 18px; height: 18px; color: #64748b; pointer-events: none; }
+
+        .format-options { display: flex; gap: 8px; flex-wrap: wrap; }
+        .format-option { background: white; border: 2px solid #e2e8f0; border-radius: 8px; padding: 10px 12px; cursor: pointer; transition: all 0.2s ease; position: relative; }
+        .format-option:hover { border-color: #6366f1; }
+        .format-option.active { border-color: #6366f1; background: linear-gradient(135deg, rgba(99,102,241,0.08) 0%, rgba(124,58,237,0.08) 100%); }
+        .format-option input { position: absolute; opacity: 0; pointer-events: none; }
+        .format-content { display: flex; align-items: center; gap: 8px; }
+        .format-icon { font-size: 16px; }
+        .format-label { font-weight: 600; color: #1e293b; font-size: 12px; }
+
+        .options-grid { display: grid; gap: 8px; }
+        .option-card { background: white; border: 2px solid #e2e8f0; border-radius: 8px; padding: 10px 12px; cursor: pointer; transition: all 0.2s ease; display: flex; align-items: center; gap: 10px; position: relative; }
+        .option-card:hover { border-color: #6366f1; }
+        .option-card.active { border-color: #6366f1; background: linear-gradient(135deg, rgba(99,102,241,0.08) 0%, rgba(124,58,237,0.08) 100%); }
+        .option-card input { position: absolute; opacity: 0; pointer-events: none; }
+        .option-content { display: flex; align-items: center; gap: 12px; flex: 1; }
+        .option-icon { font-size: 16px; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; background: rgba(99,102,241,0.12); border-radius: 6px; }
+        .option-text { display: flex; flex-direction: column; gap: 2px; }
+        .option-title { font-weight: 600; color: #1e293b; font-size: 12px; }
+        .option-desc { font-size: 11px; color: #64748b; }
+        .option-check { width: 20px; height: 20px; border-radius: 50%; background: #6366f1; color: white; display: flex; align-items: center; justify-content: center; opacity: 0; transform: scale(0.9); transition: all 0.2s ease; }
+        .option-card.active .option-check { opacity: 1; transform: scale(1); }
+        .option-check svg { width: 12px; height: 12px; }
+
+        .action-section { padding: 0 16px 16px; }
+        .export-button { width: 100%; background: linear-gradient(135deg, #6366f1 0%, #7c3aed 100%); color: white; border: none; border-radius: 10px; padding: 0; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.25s ease; box-shadow: 0 4px 14px rgba(99, 102, 241, 0.35); }
+        .export-button:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 10px 28px rgba(99, 102, 241, 0.4); }
+        .export-button:active:not(:disabled) { transform: translateY(0); }
+        .export-button:disabled { opacity: 0.7; cursor: not-allowed; }
+
+        .button-content { display: flex; align-items: center; justify-content: center; gap: 8px; padding: 12px 16px; }
+        .button-content svg { width: 16px; height: 16px; }
+        .spinner { width: 18px; height: 18px; border: 3px solid rgba(255, 255, 255, 0.3); border-radius: 50%; border-top-color: white; animation: spin 1s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .info-content { padding: 12px; }
+        .tab-content { display: grid; gap: 8px; }
+        .info-item { display: flex; gap: 10px; padding: 8px 0; border-bottom: 1px dashed #e2e8f0; }
+        .info-item:last-child { border-bottom: none; }
+        .info-icon { width: 26px; height: 26px; border-radius: 6px; background: rgba(99,102,241,0.1); display: flex; align-items: center; justify-content: center; }
+        .emoji { font-size: 13px; }
+        .info-content h5 { margin: 0 0 2px 0; font-size: 12px; font-weight: 600; color: #1e293b; }
+        .info-content p { margin: 0; font-size: 12px; color: #64748b; }
+
+        @media (max-width: 900px) { .settings-grid { grid-template-columns: 1fr; } }
+        @media (max-width: 768px) { .export-body { padding: 16px; } .header-content { flex-direction: column; text-align: center; gap: 10px; } }
       `}</style>
     </div>
   );
