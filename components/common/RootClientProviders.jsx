@@ -7,9 +7,8 @@ import { store } from '@/store/store'
 import { ToastContainer } from 'react-toastify'
 import ScrollToTop from '@/components/common/ScrollTop'
 import { FavoriteJobsProvider } from '@/contexts/FavoriteJobsContext'
-import GlobalLoadingOverlay from '@/components/common/GlobalLoadingOverlay'
-import FetchLoadingInterceptor from '@/components/common/FetchLoadingInterceptor'
-import RouteImmediateLoader from '@/components/common/RouteImmediateLoader'
+
+
 
 export default function RootClientProviders({ children }) {
   useEffect(() => {
@@ -22,11 +21,6 @@ export default function RootClientProviders({ children }) {
   return (
     <Provider store={store}>
       <FavoriteJobsProvider>
-        {/* Mount interceptors/overlays as early as possible */}
-        <RouteImmediateLoader />
-        <FetchLoadingInterceptor />
-        <GlobalLoadingOverlay />
-
         <div className="page-wrapper">
           {children}
 

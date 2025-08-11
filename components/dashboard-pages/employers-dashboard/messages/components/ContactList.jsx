@@ -8,8 +8,6 @@ const ChatboxContactList = ({ onContactSelect, currentChatPartnerId, contacts = 
     contact.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  console.log("[DEBUG] ContactList contacts:", contacts);
-  console.log("[DEBUG] ContactList filteredContacts:", filteredContacts);
 
   const getTimeAgo = (timestamp) => {
     if (!timestamp) return '';
