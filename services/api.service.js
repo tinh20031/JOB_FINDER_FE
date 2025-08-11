@@ -1,7 +1,8 @@
 import API_CONFIG from "../config/api.config";
 
-const BASE_URL = "http://localhost:5194/api";
+const BASE_URL = API_CONFIG.BASE_URL;
 // const BASE_URL = "https://job-finder-kjt2.onrender.com/api";
+// const BASE_URL = "http://localhost:5194/api";
 // Định nghĩa class trước
 class ApiServiceClass {
   // Auth APIs
@@ -330,7 +331,11 @@ const ApiService = {
         ...(token ? { Authorization: `Bearer ${token}` } : {}),
       },
     }).then(async (res) => {
-      if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+      if (!res.ok) {
+        const error = new Error(`HTTP error! status: ${res.status}`);
+        error.status = res.status;
+        throw error;
+      }
       const text = await res.text();
       return text ? JSON.parse(text) : null;
     });

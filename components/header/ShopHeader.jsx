@@ -50,6 +50,7 @@ const ShopHeader = () => {
                   src="/images/jobfinder-logo.png"
                   alt="JobFinder logo"
                   title="JobFinder"
+                  style={{ width: 'auto', height: 'auto' }}
                 />
               </Link>
             </div>

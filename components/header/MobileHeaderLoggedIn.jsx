@@ -105,6 +105,7 @@ const MobileHeaderLoggedIn = () => {
                     src="/images/jobfinder-logo.png"
                     alt="JobFinder logo"
                     title="JobFinder"
+                    style={{ width: 'auto', height: 'auto' }}
                     onError={(e) => { e.target.onerror = null; e.target.src = "/images/logo.svg"; }}
                   />
                 </Link>
@@ -127,7 +128,11 @@ const MobileHeaderLoggedIn = () => {
                     alt="avatar"
                     width={40}
                     height={40}
-                    src={getValidImageUrl(user?.image || user?.avatar)}
+                    src={
+                      role === 'Company' 
+                        ? getValidImageUrl(user?.imageLogoLgr || user?.image || user?.avatar, "/images/resource/company-6.png")
+                        : getValidImageUrl(user?.image || user?.avatar, "/images/resource/candidate-1.png")
+                    }
                     className="rounded-circle"
                   />
                 </button>

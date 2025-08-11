@@ -16,8 +16,14 @@ import 'react-toastify/dist/ReactToastify.css';
 
 const defaultUser = { fullName: "", email: "", phone: "", roleId: "", password: "", status: "Active", skills: [], cvUrl: "", image: "" };
 
-// Mapping roleId cố định
+// Mapping roleId cố định - Bỏ Company ra khỏi dropdown
 const ROLE_MAP = [
+  { id: 1, name: "Candidate" },
+  { id: 3, name: "Admin" }
+];
+
+// Mapping roleId đầy đủ để xử lý dữ liệu
+const FULL_ROLE_MAP = [
   { id: 1, name: "Candidate" },
   { id: 2, name: "Company" },
   { id: 3, name: "Admin" }
@@ -25,7 +31,6 @@ const ROLE_MAP = [
 
 const FALLBACK_ROLES = [
   { id: 1, name: "Candidate" },
-  { id: 2, name: "Company" },
   { id: 3, name: "Admin" }
 ];
 
@@ -100,6 +105,7 @@ const UserManager = () => {
       }
       setRoles(processedRoles.length > 0 ? processedRoles : FALLBACK_ROLES);
     } catch (error) {
+      console.warn('Failed to fetch roles from API, using fallback roles:', error.message);
       setRoles(FALLBACK_ROLES);
     }
   };
@@ -117,8 +123,8 @@ const UserManager = () => {
           } else if (user.role_id) {
             roleId = parseInt(user.role_id);
           } else if (user.role) {
-            // Nếu user.role là tên, map sang id
-            const found = ROLE_MAP.find(r => r.name.toLowerCase() === String(user.role).toLowerCase());
+            // Nếu user.role là tên, map sang id - sử dụng FULL_ROLE_MAP để xử lý cả Company
+            const found = FULL_ROLE_MAP.find(r => r.name.toLowerCase() === String(user.role).toLowerCase());
             roleId = found ? found.id : '';
           }
           return {
@@ -202,8 +208,8 @@ const UserManager = () => {
     setShowDetailModal(true);
   };
   const handleShowEdit = (user) => {
-    // Map role name sang roleId cố định
-    const foundRole = ROLE_MAP.find(role => role.name === user.role);
+    // Map role name sang roleId cố định - sử dụng FULL_ROLE_MAP để xử lý cả Company
+    const foundRole = FULL_ROLE_MAP.find(role => role.name === user.role);
     const roleIdToSet = foundRole ? foundRole.id : "";
     const userForForm = {
       ...user,
@@ -240,8 +246,8 @@ const UserManager = () => {
         image: URL.createObjectURL(files[0])
       });
     } else if (name === "role") {
-      // Map role name sang roleId cố định
-      const selectedRole = ROLE_MAP.find(r => r.name === value);
+      // Map role name sang roleId cố định - sử dụng FULL_ROLE_MAP để xử lý cả Company
+      const selectedRole = FULL_ROLE_MAP.find(r => r.name === value);
       setFormUser({
         ...formUser,
         role: value,
@@ -279,9 +285,9 @@ const UserManager = () => {
     }
   };
 
-  // Hàm lấy tên role từ roleId
+  // Hàm lấy tên role từ roleId - sử dụng FULL_ROLE_MAP để xử lý cả Company
   const getRoleName = (roleId) => {
-    const found = ROLE_MAP.find(r => r.id === Number(roleId));
+    const found = FULL_ROLE_MAP.find(r => r.id === Number(roleId));
     return found ? found.name : '';
   };
 
@@ -302,6 +308,13 @@ const UserManager = () => {
   };
 
   const handleRoleChange = async (user, newRoleId) => {
+    // Ngăn việc chọn Company role
+    const selectedRole = FULL_ROLE_MAP.find(r => r.id === newRoleId);
+    if (selectedRole && selectedRole.name === "Company") {
+      toast.error('Cannot change to Company role. This option is disabled.');
+      return;
+    }
+    
     try {
       const formData = new FormData();
       formData.append('roleId', newRoleId);
@@ -354,11 +367,13 @@ const UserManager = () => {
                         >
                           <option key="all" value="all">All Roles</option>
                           {Array.isArray(roles) && roles.length > 0 ? (
-                            roles.map(role => (
-                              <option key={`filter-role-${role.name}`} value={role.name}>
-                                {role.name || `Role`}
-                              </option>
-                            ))
+                            roles
+                              .filter(role => role.name !== "Company") // Lọc bỏ Company khỏi filter
+                              .map(role => (
+                                <option key={`filter-role-${role.name}`} value={role.name}>
+                                  {role.name || `Role`}
+                                </option>
+                              ))
                           ) : (
                             <option value="" disabled>No roles available</option>
                           )}
@@ -442,7 +457,11 @@ const UserManager = () => {
                                   {/* <td>{user.id}</td> */}
                                   <td>
                                     <img 
-                                      src={user.image || '/images/default-avatar.png'} 
+                                      src={
+                                        user.role === 'Company' 
+                                          ? (user.urlCompanyLogo || user.image || '/images/resource/company-6.png')
+                                          : (user.image || '/images/resource/candidate-1.png')
+                                      } 
                                       alt={user.fullName}
                                       style={{width: '50px', height: '50px', borderRadius: '50%', objectFit: 'cover'}}
                                     />
@@ -458,9 +477,17 @@ const UserManager = () => {
                                       value={user.roleId || ''}
                                       onChange={e => handleRoleChange(user, Number(e.target.value))}
                                     >
-                                      {ROLE_MAP.map(role => (
-                                        <option key={role.id} value={role.id}>{role.name}</option>
-                                      ))}
+                                                                             {/* Hiển thị tất cả roles trong dropdown nhưng chỉ cho phép chọn Candidate và Admin */}
+                                       {FULL_ROLE_MAP.map(role => (
+                                         <option 
+                                           key={role.id} 
+                                           value={role.id}
+                                           disabled={role.name === "Company"}
+                                           style={role.name === "Company" ? { color: '#999', fontStyle: 'italic' } : {}}
+                                         >
+                                           {role.name}
+                                         </option>
+                                       ))}
                                     </select>
                                   </td>
                                   {/* Cột Actions: chỉ còn View và Lock/Unlock */}

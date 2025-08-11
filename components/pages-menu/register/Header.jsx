@@ -35,23 +35,20 @@ const Header = () => {
                   <Image
                     width={154}
                     height={50}
-
                     src="/images/jobfinder-logo.png"
                     alt="JobFinder logo"
                     title="JobFinder"
-
+                    style={{ width: 'auto', height: 'auto' }}
                   />
                 </Link>
                 <Link href="/" className="isSticky">
                   <Image
                     width={154}
                     height={50}
-
                     src="/images/jobfinder-logo.png"
                     alt="JobFinder logo"
                     title="JobFinder"
-
-
+                    style={{ width: 'auto', height: 'auto' }}
                   />
                 </Link>
               </div>

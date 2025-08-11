@@ -140,7 +140,16 @@ const UserDetailPage = () => {
               <div className="inner-box">
                 <div className="content">
                   <figure className="image">
-                    <Image width={90} height={90} src={user.image || "/images/resource/default-avatar.png"} alt="avatar" />
+                    <Image 
+                      width={90} 
+                      height={90} 
+                      src={
+                        user.role === 'Company' 
+                          ? (user.imageLogoLgr || user.image || "/images/resource/company-6.png")
+                          : (user.image || "/images/resource/default-avatar.png")
+                      } 
+                      alt="avatar" 
+                    />
                   </figure>
                   <h4 className="name">{user.fullName}</h4>
                   <div style={{ display: 'flex', gap: '8px', margin: '8px 0' }}>

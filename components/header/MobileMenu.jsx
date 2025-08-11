@@ -63,13 +63,14 @@ const MobileMenu = () => {
             <div className="logo-box">
               <div className="logo">
                 <Link href="/">
-                  <Image
-                    width={154}
-                    height={50}
-                    src="/images/jobfinder-logo.png"
-                    alt="JobFinder logo"
-                    title="JobFinder"
-                  />
+                                  <Image
+                  width={154}
+                  height={50}
+                  src="/images/jobfinder-logo.png"
+                  alt="JobFinder logo"
+                  title="JobFinder"
+                  style={{ width: 'auto', height: 'auto' }}
+                />
                 </Link>
               </div>
             </div>

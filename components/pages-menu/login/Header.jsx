@@ -41,6 +41,7 @@ const Header = () => {
                     }
                     alt="JobFinder logo"
                     title="JobFinder"
+                    style={{ width: 'auto', height: 'auto' }}
                     onError={(e) => {
                       e.target.onerror = null;
                       e.target.src = "/images/logo.svg";
@@ -57,6 +58,7 @@ const Header = () => {
                     }
                     alt="JobFinder logo"
                     title="JobFinder"
+                    style={{ width: 'auto', height: 'auto' }}
                     onError={(e) => {
                       e.target.onerror = null;
                       e.target.src = "/images/logo.svg";

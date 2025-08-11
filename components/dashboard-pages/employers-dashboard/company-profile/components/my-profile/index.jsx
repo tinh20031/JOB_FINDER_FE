@@ -146,7 +146,7 @@ const Index = () => {
 
             try {
                 const data = await companyProfileService.getCompanyProfile(userId);
-                console.log("Fetched company profile data:", data);
+              
                 setInitialProfileData(data);
                 setCompanyProfileData(prevState => ({
                     ...prevState,
@@ -360,6 +360,13 @@ const Index = () => {
             const response = await companyProfileService.updateCompanyProfile(userId, formData);
 
             console.log('Profile update response:', response);
+            
+            // Store company ID if it's in the response
+            if (response && response.id) {
+                localStorage.setItem('CompanyProfileId', response.id);
+                
+            }
+            
             toast.success("Profile updated successfully!");
             setShowSuccessModal(true);
             setIsEditing(false);
@@ -462,19 +469,73 @@ const Index = () => {
 
     const PreviewProfileButton = () => {
         const [companyId, setCompanyId] = useState(null);
+        const [userId, setUserId] = useState(null);
+        
+        const refreshIds = () => {
+            const id = authService.getCompanyId();
+            const currentUserId = localStorage.getItem('userId') || localStorage.getItem('UserId');
+            
+            setCompanyId(id);
+            setUserId(currentUserId);
+        };
+        
         useEffect(() => {
-            setCompanyId(authService.getCompanyId());
+            refreshIds();
         }, []);
-        const handlePreview = () => {
-            if (companyId) {
-                window.open(`/employers-single-v1/${companyId}`, '_blank');
+        
+        // Listen for profile updates
+        useEffect(() => {
+            if (initialProfileData && initialProfileData.id) {
+                refreshIds();
+            }
+        }, [initialProfileData]);
+        
+        const handlePreview = async () => {
+            const idToUse = companyId || userId;
+            if (idToUse) {
+                try {
+                    // First try with company profile ID
+                    if (companyId) {
+                        window.open(`/employers-single-v1/${companyId}`, '_blank');
+                        return;
+                    }
+                    
+                    // If no company profile ID, try to get company profile by user ID
+                    if (userId) {
+                        try {
+                            // Try to fetch company profile by user ID first
+                            const profileData = await companyProfileService.getCompanyProfile(userId);
+                            if (profileData && profileData.id) {
+                                // Store the company profile ID for future use
+                                localStorage.setItem('CompanyProfileId', profileData.id);
+                                window.open(`/employers-single-v1/${profileData.id}`, '_blank');
+                                return;
+                            }
+                        } catch (error) {
+                            console.log('Could not fetch company profile by user ID:', error);
+                        }
+                        
+                        // Fallback: try with user ID directly
+                        window.open(`/employers-single-v1/${userId}`, '_blank');
+                    }
+                } catch (error) {
+                    console.error('Error previewing profile:', error);
+                    toast.error('Error previewing profile. Please try again.');
+                }
+            } else {
+                console.log('Cannot preview: no ID available');
+                toast.error('Cannot preview profile. Please save your profile first.');
             }
         };
+        
+        const isDisabled = !companyId && !userId;
+        
         return (
             <button
                 className="btn-confirm"
                 onClick={handlePreview}
-                disabled={!companyId}
+                disabled={isDisabled}
+                title={isDisabled ? "No ID found. Please save your profile first." : "Preview your company profile"}
             >
                 Preview Profile
             </button>
@@ -502,7 +563,7 @@ const Index = () => {
                                         <button className="btn-confirm" onClick={handleEditProfile}>
                                             Edit Profile
                                         </button>
-                                        <PreviewProfileButton />
+                                        <PreviewProfileButton key={initialProfileData?.id || 'no-profile'} />
                                     </>
                                 )}
                             </div>

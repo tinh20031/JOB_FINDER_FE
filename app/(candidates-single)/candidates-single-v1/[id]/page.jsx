@@ -224,7 +224,11 @@ const CandidateSingleDynamicV1 = ({ params }) => {
                 <div className="content">
                   <figure className="image">
                     <Image
-                      src={user.image || "/images/resource/default-avatar.png"}
+                      src={
+                        user.role === 'Company' 
+                          ? (user.imageLogoLgr || user.image || "/images/resource/company-6.png")
+                          : (user.image || "/images/resource/default-avatar.png")
+                      }
                       alt="avatar"
                       fill
                       style={{ objectFit: 'cover', objectPosition: 'center' }}

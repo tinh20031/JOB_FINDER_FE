@@ -97,7 +97,7 @@ export default function CVCubic({ resume, accentColor, removeLogo, setRemoveLogo
         {/* Avatar */}
         <div style={{ marginBottom: "20px" }}>
           <img
-            src={resume?.image || resume?.avatar || "/default-avatar.png"}
+                            src={resume?.image || resume?.avatar || "/images/resource/candidate-1.png"}
             alt="avatar"
             style={{
               width: 80,
