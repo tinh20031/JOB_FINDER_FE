@@ -505,6 +505,17 @@ const PostBoxForm = ({ cloneData, isClone }) => {
       newErrors.minSalary = 'Minimum salary is required if not negotiable';
       newErrors.maxSalary = 'Maximum salary is required if not negotiable';
     }
+    
+    // Validate minimum salary - only check for negative values
+    if (formData.minSalary && formData.minSalary < 0) {
+      newErrors.minSalary = 'Minimum salary cannot be negative';
+    }
+    
+    // Validate maximum salary - only check for negative values
+    if (formData.maxSalary && formData.maxSalary < 0) {
+      newErrors.maxSalary = 'Maximum salary cannot be negative';
+    }
+    
     if (formData.minSalary && formData.maxSalary && formData.minSalary > formData.maxSalary) {
       newErrors.minSalary = 'Min salary cannot be greater than Max salary';
       newErrors.maxSalary = 'Max salary cannot be less than Min salary';
@@ -622,6 +633,34 @@ const PostBoxForm = ({ cloneData, isClone }) => {
       }
       return;
     }
+    
+    // Handle salary validation in real-time
+    if (name === 'minSalary' || name === 'maxSalary') {
+      const numValue = Number(value);
+      setFormData(prev => ({
+        ...prev,
+        [name]: value === '' ? null : numValue
+      }));
+      
+      // Clear existing error
+      if (errors[name]) {
+        setErrors(prev => ({
+          ...prev,
+          [name]: ''
+        }));
+      }
+      
+      // Real-time validation for salary - only check for negative values
+      if (value !== '' && numValue < 0) {
+        setErrors(prev => ({
+          ...prev,
+          [name]: `${name === 'minSalary' ? 'Minimum' : 'Maximum'} salary cannot be negative`
+        }));
+      }
+      
+      return;
+    }
+    
     setFormData(prev => ({
       ...prev,
       [name]: [
@@ -704,9 +743,9 @@ const PostBoxForm = ({ cloneData, isClone }) => {
         education: formData.education,
         companyId: parseInt(user.userId, 10),
         isSalaryNegotiable: formData.isSalaryNegotiable,
-        // Handle salary fields properly - only include if they have valid values
-        ...(formData.minSalary && formData.minSalary > 0 && { minSalary: Number(formData.minSalary) }),
-        ...(formData.maxSalary && formData.maxSalary > 0 && { maxSalary: Number(formData.maxSalary) }),
+        // Handle salary fields properly - only include if they have valid values (non-negative)
+        ...(formData.minSalary && formData.minSalary >= 0 && { minSalary: Number(formData.minSalary) }),
+        ...(formData.maxSalary && formData.maxSalary >= 0 && { maxSalary: Number(formData.maxSalary) }),
         // Ensure numeric fields are properly converted
         industryId: formData.industryId ? Number(formData.industryId) : undefined,
         expiryDate: formData.expiryDate,
@@ -859,8 +898,9 @@ const PostBoxForm = ({ cloneData, isClone }) => {
         education: formData.education,
         companyId: parseInt(user.userId, 10),
         isSalaryNegotiable: formData.isSalaryNegotiable,
-        minSalary: formData.minSalary,
-        maxSalary: formData.maxSalary,
+        // Handle salary fields properly - only include if they have valid values (non-negative)
+        ...(formData.minSalary && formData.minSalary >= 0 && { minSalary: Number(formData.minSalary) }),
+        ...(formData.maxSalary && formData.maxSalary >= 0 && { maxSalary: Number(formData.maxSalary) }),
         industryId: formData.industryId,
         expiryDate: formData.expiryDate,
         levelId: formData.levelId,
@@ -1594,10 +1634,12 @@ const PostBoxForm = ({ cloneData, isClone }) => {
                   value={formData.minSalary || ''}
                   onChange={handleInputChange}
                   placeholder="Enter min salary"
+                  min="0"
                   className={errors.minSalary ? 'form-control is-invalid' : 'form-control'}
                   disabled={isLoading}
                 />
                 {errors.minSalary && <div className="invalid-feedback">{errors.minSalary}</div>}
+                <small className="form-text text-muted">Minimum salary cannot be negative</small>
               </motion.div>
 
               <motion.div className="form-group col-lg-6 col-md-12" variants={itemVariants}>
@@ -1607,11 +1649,13 @@ const PostBoxForm = ({ cloneData, isClone }) => {
                   name="maxSalary" 
                   value={formData.maxSalary || ''}
                   onChange={handleInputChange}
-                  placeholder="Enter Max salary"
+                  placeholder="Enter max salary"
+                  min="0"
                   className={errors.maxSalary ? 'form-control is-invalid' : 'form-control'}
                   disabled={isLoading}
                 />
                 {errors.maxSalary && <div className="invalid-feedback">{errors.maxSalary}</div>}
+                <small className="form-text text-muted">Maximum salary cannot be negative</small>
               </motion.div>
             </>
           )}
