@@ -140,10 +140,20 @@ const PostBoxForm = ({ initialData, isEditing }) => {
     if (!formData.education.trim()) newErrors.education = 'Education requirements are required';
     if (!formData.YourSkill.trim()) newErrors.YourSkill = 'Skills are required';
     if (!formData.YourExperience.trim()) newErrors.YourExperience = 'Experience is required';
+    const isBlank = (value) => value === null || value === undefined || (typeof value === 'string' && value.trim() === '');
     if (!formData.isSalaryNegotiable) {
-      if (!formData.minSalary || formData.minSalary.trim() === '' || isNaN(formData.minSalary)) newErrors.minSalary = 'Min Salary is required';
-      if (!formData.maxSalary || formData.maxSalary.trim() === '' || isNaN(formData.maxSalary)) newErrors.maxSalary = 'Max Salary is required';
-      if (formData.minSalary && formData.maxSalary && parseFloat(formData.minSalary) > parseFloat(formData.maxSalary)) newErrors.maxSalary = 'Max Salary must be greater than Min Salary';
+      const minSalaryValue = formData.minSalary;
+      const maxSalaryValue = formData.maxSalary;
+
+      if (isBlank(minSalaryValue) || isNaN(Number(minSalaryValue))) {
+        newErrors.minSalary = 'Min Salary is required';
+      }
+      if (isBlank(maxSalaryValue) || isNaN(Number(maxSalaryValue))) {
+        newErrors.maxSalary = 'Max Salary is required';
+      }
+      if (!isBlank(minSalaryValue) && !isBlank(maxSalaryValue) && Number(minSalaryValue) > Number(maxSalaryValue)) {
+        newErrors.maxSalary = 'Max Salary must be greater than Min Salary';
+      }
     }
     if (!formData.quantity || formData.quantity < 1) {
       newErrors.quantity = 'The number of positions to be filled must be greater than 0';

@@ -18,7 +18,7 @@ const API_CONFIG = {
       RESET_PASSWORD: "auth/reset-password",
       GOOGLE_LOGIN: "auth/login-google", 
     },
-    USER: {
+    USER: { 
       BASE: "User",
       PROFILE: "users/profile",
       VERIFY: (id) => `users/${id}/verify`,
