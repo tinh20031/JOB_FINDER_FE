@@ -1,7 +1,10 @@
+"use client";
 import React from "react";
+import { useSelector } from "react-redux";
 
 const JobOverView2 = ({ job, industryName, levelName, jobTypeName }) => {
   if (!job) return null;
+  const { isLoggedIn } = useSelector((state) => state.auth) || {};
 
   // Định dạng ngày/giờ: dd/MM/yyyy theo giờ Việt Nam, cộng thêm 7 tiếng nếu backend trả về giờ không có offset
   const formatDateVN = (dateStr) => {
@@ -17,6 +20,38 @@ const JobOverView2 = ({ job, industryName, levelName, jobTypeName }) => {
   };
 
   const renderSalary = () => {
+    if (!isLoggedIn) {
+      return (
+        <>
+          <span style={{ filter: 'blur(4px)' }}>Login required</span>
+          <a
+            href="#"
+            className="theme-btn btn-style-three call-modal"
+            data-bs-toggle="modal"
+            data-bs-target="#loginPopupModal"
+            style={{ marginLeft: 10, padding: '2px 10px', fontSize: 12 }}
+            onClick={(e) => {
+              e.preventDefault();
+              const modalEl = document.getElementById('loginPopupModal');
+              if (modalEl && typeof window !== 'undefined') {
+                try {
+                  const Modal = window.bootstrap && window.bootstrap.Modal;
+                  if (Modal) {
+                    Modal.getOrCreateInstance(modalEl).show();
+                  } else {
+                    modalEl.classList.add('show');
+                    modalEl.style.display = 'block';
+                    modalEl.removeAttribute('aria-hidden');
+                  }
+                } catch {}
+              }
+            }}
+          >
+            Login to view
+          </a>
+        </>
+      );
+    }
     if (job.isSalaryNegotiable) return "Negotiable Salary";
     if (job.minSalary && job.maxSalary)
       return `$${job.minSalary.toLocaleString()} - $${job.maxSalary.toLocaleString()}`;

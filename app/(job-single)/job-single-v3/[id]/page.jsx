@@ -28,6 +28,7 @@ import "react-toastify/dist/ReactToastify.css";
 import { useRouter } from "next/navigation";
 import "@/styles/apply-job-modal.css";
 import { useFavoriteJobs } from "@/contexts/FavoriteJobsContext";
+import { useSelector } from "react-redux";
 import { addFavoriteJob, removeFavoriteJob } from "@/services/favoriteJobService";
 import Modal from '@/components/common/Modal';
 
@@ -39,6 +40,7 @@ const JobSingleDynamicV3 = ({ params }) => {
   const [company, setCompany] = useState(null);
   const [fetchError, setFetchError] = useState(null);
   const { favoriteJobIds, updateFavoriteJobs } = useFavoriteJobs();
+  const { isLoggedIn } = useSelector((state) => state.auth) || {};
   const userId = typeof window !== 'undefined' ? Number(localStorage.getItem('userId')) : null;
   const isFavorited = favoriteJobIds.includes(Number(params.id));
   const [loadingFavorite, setLoadingFavorite] = useState(false);
@@ -154,7 +156,11 @@ const JobSingleDynamicV3 = ({ params }) => {
   const jobTypeName = job?.jobType?.jobTypeName || 'N/A';
 
   const handleBookmarkClick = async () => {
-    if (!userId || !params.id || loadingFavorite) return;
+    if (!isLoggedIn || !userId) {
+      toast.error("Please log in to use this feature");
+      return;
+    }
+    if (!params.id || loadingFavorite) return;
     setLoadingFavorite(true);
     try {
       if (isFavorited) {
@@ -328,12 +334,12 @@ const JobSingleDynamicV3 = ({ params }) => {
 
                 {/* ĐÃ XOÁ CvMatchingTool khỏi content chính */}
 
-                <div className="other-options">
+                {/* <div className="other-options">
                   <div className="social-share">
                     <h5>Share this job</h5>
                     <SocialTwo />
                   </div>
-                </div>
+                </div> */}
                 {/* <!-- Other Options --> */}
 
                 <div className="related-jobs">

@@ -34,6 +34,13 @@ const FormContent = ({ isPopup = false }) => {
     }));
   };
 
+  // Ensure displayed error messages are not wrapped in quotes
+  const stripQuotes = (msg) => {
+    if (msg === undefined || msg === null) return "";
+    const s = String(msg).trim();
+    return s.replace(/^["']+|["']+$/g, "");
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
@@ -102,7 +109,7 @@ const FormContent = ({ isPopup = false }) => {
           (error.message.includes("requiresVerification") ||
             error.message.toLowerCase().includes("not verified") ||
             error.message.toLowerCase().includes("unverified") ||
-            error.message.toLowerCase().includes("email chưa được xác thực") ||
+            error.message.toLowerCase().includes("Email not verified") ||
             error.message.includes("Email has not been verified") ||
             error.message.includes("check your inbox to verify") ||
             error.message.includes("verify your account before logging in") ||
@@ -132,16 +139,23 @@ const FormContent = ({ isPopup = false }) => {
 
         setVerifyEmailAlert(alertMessage);
         setError("");
-      } else if (
-        error.message &&
-        (error.message.includes("401") ||
-          error.message.includes("Invalid credentials"))
-      ) {
-        setError("Incorrect password. Please try again.");
-      } else if (error.message && error.message.includes("Unexpected token")) {
-        setError("Network or server error.");
       } else {
-        setError(error.message || "An error occurred. Please try again.");
+        // Classify common auth errors for clearer messaging
+        // Server may respond with plain text (e.g., "Invalid email address, please try again")
+        const rawServer = (error.response?.data || error.data || '').toString();
+        const serverMsg = (error.response?.data?.message || error.data?.message || error.message || rawServer || '').toLowerCase();
+        const isInvalidCredentials = serverMsg.includes('invalid credentials') || (error.message && error.message.includes('401'));
+        const isEmailNotFound = serverMsg.includes('email not found') || serverMsg.includes('email does not exist') || serverMsg.includes('user not found') || serverMsg.includes('account not found') || serverMsg.includes('invalid email address, please try again');
+
+        if (isEmailNotFound) {
+          setError("Invalid email address, please try again.");
+        } else if (isInvalidCredentials) {
+          setError("Incorrect password. Please try again.");
+        } else if (error.message && error.message.includes("Unexpected token")) {
+          setError("Network or server error.");
+        } else {
+          setError(error.message || "An error occurred. Please try again.");
+        }
       }
     } finally {
       setLoading(false);
@@ -155,7 +169,7 @@ const FormContent = ({ isPopup = false }) => {
       ) : (
         <>
           <h3>Login to JobFinder</h3>
-          {error && <div className="alert alert-danger">{error}</div>}
+          {error && <div className="alert alert-danger">{stripQuotes(error)}</div>}
           {showVerifyEmailForm ? (
             <>
               {verifyEmailAlert && (

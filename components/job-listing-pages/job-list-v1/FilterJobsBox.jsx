@@ -121,6 +121,7 @@ const FilterJobsBox = () => {
       : null;
 
   const isMobile = useIsMobile();
+  const { isLoggedIn } = useSelector((state) => state.auth) || {};
 
   // Fetch jobs khi filters hoặc pagination thay đổi
   useEffect(() => {
@@ -363,6 +364,10 @@ const FilterJobsBox = () => {
 
   // Cập nhật hàm xử lý bookmark
   const handleToggleFavorite = (jobId) => {
+    if (!isLoggedIn || !userId) {
+      toast.error("Please log in to use this feature");
+      return;
+    }
     if (favoriteJobIds.includes(jobId)) {
       removeFavoriteJob(userId, jobId)
         .then(() => {
@@ -821,11 +826,44 @@ const FilterJobsBox = () => {
                     </li>
                     <li>
                       <span className="icon flaticon-money"></span>
-                      {item.isSalaryNegotiable
-                        ? "Negotiable Salary"
-                        : item.minSalary && item.maxSalary
-                        ? `$${item.minSalary.toLocaleString()} - $${item.maxSalary.toLocaleString()}`
-                        : "Salary N/A"}
+                      {isLoggedIn ? (
+                        item.isSalaryNegotiable
+                          ? "Negotiable Salary"
+                          : item.minSalary && item.maxSalary
+                          ? `$${item.minSalary.toLocaleString()} - $${item.maxSalary.toLocaleString()}`
+                          : "Salary N/A"
+                      ) : (
+                        <>
+                          <span style={{ filter: 'blur(4px)' }}>Login required</span>
+                          <a
+                            href="#"
+                            className="theme-btn btn-style-three call-modal"
+                            data-bs-toggle="modal"
+                            data-bs-target="#loginPopupModal"
+                            style={{ marginLeft: 10, padding: '2px 10px', fontSize: 12 }}
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              const modalEl = document.getElementById('loginPopupModal');
+                              if (modalEl && typeof window !== 'undefined') {
+                                try {
+                                  const Modal = window.bootstrap && window.bootstrap.Modal;
+                                  if (Modal) {
+                                    Modal.getOrCreateInstance(modalEl).show();
+                                  } else {
+                                    // Fallback: basic show if Bootstrap API not available
+                                    modalEl.classList.add('show');
+                                    modalEl.style.display = 'block';
+                                    modalEl.removeAttribute('aria-hidden');
+                                  }
+                                } catch {}
+                              }
+                            }}
+                          >
+                            Login to view
+                          </a>
+                        </>
+                      )}
                     </li>
                   </ul>
                   <div

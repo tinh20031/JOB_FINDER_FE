@@ -313,20 +313,7 @@ const WidgetContentBox = ({ jobId, candidateName, showMatchingInfo, useMatchingA
     setCvViewed(currentPage * itemsPerPage);
   }, [currentPage, itemsPerPage]);
 
-  // Handler for 'View More Top CVs'
-  const handleViewMoreTopCVs = () => {
-    // Nếu là premium hoặc không giới hạn thì cho xem tiếp
-    if (!cvViewLimit || cvViewLimit === Number.MAX_SAFE_INTEGER) {
-      setCurrentPage(currentPage + 1);
-      return;
-    }
-    // Nếu đã hết lượt thì hiện modal
-    if (cvViewed >= cvViewLimit) {
-      setShowUpgradeModal(true);
-    } else {
-      setCurrentPage(currentPage + 1);
-    }
-  };
+ 
 
   // Khi mount, đọc page từ query string
   useEffect(() => {
@@ -579,16 +566,7 @@ const WidgetContentBox = ({ jobId, candidateName, showMatchingInfo, useMatchingA
                 marginLeft: 4
               }}>Total(s): {totalApplicants}</span>
             </div>
-            {showMatchingInfo && (
-              <button
-                className="btn btn-primary btn-sm"
-                style={{ marginLeft: 24, padding: '8px 24px', fontWeight: 600, fontSize: 16 }}
-                onClick={handleViewMoreTopCVs}
-                disabled={viewMoreLoading}
-              >
-                See more top CVs
-              </button>
-            )}
+           
           </div>
 
 

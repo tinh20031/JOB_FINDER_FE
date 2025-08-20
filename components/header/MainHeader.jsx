@@ -153,8 +153,17 @@ const MainHeader = () => {
     const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
     if (isLoggedIn && userId && token && (role === 'Company' || role === 'Candidate')) {
       notificationHubService.start(token, userId, (notification) => {
-        setNotifications((prev) => [notification, ...prev]);
-        setUnreadCount((prev) => prev + 1);
+        const incomingId = notification?.notificationId || notification?.id;
+        let isDuplicate = false;
+        setNotifications((prev) => {
+          if (incomingId) {
+            isDuplicate = prev.some((n) => (n.notificationId || n.id) === incomingId);
+          }
+          return isDuplicate ? prev : [notification, ...prev];
+        });
+        if (!isDuplicate) {
+          setUnreadCount((prev) => prev + 1);
+        }
       });
       return () => notificationHubService.stop();
     }

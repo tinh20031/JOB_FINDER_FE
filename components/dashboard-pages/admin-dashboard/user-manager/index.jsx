@@ -476,6 +476,8 @@ const UserManager = () => {
                                       style={{ width: 120, display: 'inline-block' }}
                                       value={user.roleId || ''}
                                       onChange={e => handleRoleChange(user, Number(e.target.value))}
+                                      disabled={user.role === 'Company'}
+                                      title={user.role === 'Company' ? 'Company role cannot be changed' : ''}
                                     >
                                                                              {/* Hiển thị tất cả roles trong dropdown nhưng chỉ cho phép chọn Candidate và Admin */}
                                        {FULL_ROLE_MAP.map(role => (
@@ -611,7 +613,7 @@ const UserManager = () => {
                     </div>
                     <div className="mb-2">
                       <label>Role</label>
-                      <select className="form-control" name="role" value={formUser.role || ""} onChange={handleFormChange} required>
+                      <select className="form-control" name="role" value={formUser.role || ""} onChange={handleFormChange} required disabled={editUser?.role === 'Company'} title={editUser?.role === 'Company' ? 'Company role cannot be changed' : ''}>
                         <option value="">Select Role</option>
                         {ROLE_MAP.map(role => (
                           <option key={`edit-role-${role.id}`} value={role.name}>
@@ -619,6 +621,9 @@ const UserManager = () => {
                           </option>
                         ))}
                       </select>
+                      {editUser?.role === 'Company' && (
+                        <small className="text-muted">This user currently has the Company role and cannot be changed.</small>
+                      )}
                     </div>
                   </div>
                   <div className="modal-footer">

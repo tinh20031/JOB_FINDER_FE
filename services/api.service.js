@@ -9,7 +9,25 @@ class ApiServiceClass {
   static async login(email, password) {
     const url = API_CONFIG.getUrl(API_CONFIG.ENDPOINTS.AUTH.LOGIN);
     const options = API_CONFIG.getRequestOptions("POST", { email, password });
-    return API_CONFIG.handleResponse(await fetch(url, options));
+    const res = await fetch(url, options);
+    if (!res.ok) {
+      const text = await res.text().catch(() => "");
+      const message = text || `HTTP error! status: ${res.status}`;
+      const error = new Error(message);
+      error.response = {
+        status: res.status,
+        statusText: res.statusText,
+        data: text,
+      };
+      error.data = text;
+      throw error;
+    }
+    const text = await res.text();
+    try {
+      return JSON.parse(text);
+    } catch {
+      return text;
+    }
   }
 
   static async register(userData) {

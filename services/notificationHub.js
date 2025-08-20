@@ -11,6 +11,8 @@ class NotificationHubService {
   }
 
   async start(token, userId, onReceiveNotification) {
+    // Always update the callback so the latest handler is used
+    this.onReceiveNotification = onReceiveNotification;
     if (this.connection && this.connection.state !== HubConnectionState.Disconnected) {
       return this.connection;
     }
@@ -18,7 +20,6 @@ class NotificationHubService {
     this.isStarting = true;
     this.token = token;
     this.userId = userId;
-    this.onReceiveNotification = onReceiveNotification;
 
     this.connection = new HubConnectionBuilder()
       .withUrl(API_CONFIG.SIGNALR_NOTIFICATION_HUB_URL, {
@@ -32,7 +33,7 @@ class NotificationHubService {
 
     this.connection.on("ReceiveNotification", (notification) => {
       if (this.onReceiveNotification) this.onReceiveNotification(notification);
-  });
+    });
 
     try {
       await this.connection.start();
