@@ -1,12 +1,12 @@
 // API Configuration
 const API_CONFIG = {
 
-  BASE_URL: process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5194/api",
-  SIGNALR_CHAT_HUB_URL: process.env.NEXT_PUBLIC_SIGNALR_CHAT_HUB_URL || "http://localhost:5194/chathub",
-  SIGNALR_NOTIFICATION_HUB_URL: process.env.NEXT_PUBLIC_SIGNALR_NOTIFICATION_HUB_URL || "http://localhost:5194/notificationHub",
-  // BASE_URL: process.env.NEXT_PUBLIC_API_BASE_URL || "https://job-finder-kjt2.onrender.com/api",
-  // SIGNALR_CHAT_HUB_URL: process.env.NEXT_PUBLIC_SIGNALR_CHAT_HUB_URL || "https://job-finder-kjt2.onrender.com/chathub",
-  // SIGNALR_NOTIFICATION_HUB_URL: process.env.NEXT_PUBLIC_SIGNALR_NOTIFICATION_HUB_URL || "https://job-finder-kjt2.onrender.com/notificationHub",
+  // BASE_URL: process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5194/api",
+  // SIGNALR_CHAT_HUB_URL: process.env.NEXT_PUBLIC_SIGNALR_CHAT_HUB_URL || "http://localhost:5194/chathub",
+  // SIGNALR_NOTIFICATION_HUB_URL: process.env.NEXT_PUBLIC_SIGNALR_NOTIFICATION_HUB_URL || "http://localhost:5194/notificationHub",
+  BASE_URL: process.env.NEXT_PUBLIC_API_BASE_URL || "https://job-finder-kjt2.onrender.com/api",
+  SIGNALR_CHAT_HUB_URL: process.env.NEXT_PUBLIC_SIGNALR_CHAT_HUB_URL || "https://job-finder-kjt2.onrender.com/chathub",
+  SIGNALR_NOTIFICATION_HUB_URL: process.env.NEXT_PUBLIC_SIGNALR_NOTIFICATION_HUB_URL || "https://job-finder-kjt2.onrender.com/notificationHub",
 
   ENDPOINTS: {
     AUTH: {
@@ -149,12 +149,12 @@ const API_CONFIG = {
       EXPORT: "RevenueStatistics/export",
       PACKAGE_UPGRADES: "RevenueStatistics/package-upgrades",
     },
-    LEVEL: "/Level",
-    JOB_TYPE: "/JobType",
-    EXPERIENCE_LEVEL: "/ExperienceLevels",
-    INDUSTRY: "/Industry",
-    JOB_SKILLS: "/JobSkill",
-    SKILLS: "/Skill",
+    LEVEL: "api/Level",
+    JOB_TYPE: "api/JobType",
+    EXPERIENCE_LEVEL: "api/ExperienceLevels",
+    INDUSTRY: "api/Industry",
+    JOB_SKILLS: "api/JobSkill",
+    SKILLS: "api/Skill",
   },
 
   // Helper functions để tạo URL đầy đủ
