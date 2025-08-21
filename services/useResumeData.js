@@ -74,13 +74,21 @@ export default function useResumeData() {
         safeFetch(`${API_URL}/HighlightProject/me`),
         safeFetch(`${API_URL}/Certificate/me`),
       ]);
+      // Normalize education items (map backend Id -> educationId)
+      const normalizedEducation = Array.isArray(education)
+        ? education.map((e) => ({
+            ...e,
+            educationId: e?.educationId ?? e?.id ?? e?.Id ?? 0,
+          }))
+        : [];
+
       setData({
         aboutme: aboutme,
         profile:
           profile && typeof profile === "object" && !Array.isArray(profile)
             ? profile
             : {},
-        education: Array.isArray(education) ? education : [],
+        education: normalizedEducation,
         experiences: Array.isArray(experiences) ? experiences : [],
         awards: Array.isArray(awards) ? awards : [],
         skills: Array.isArray(skills) ? skills : [],

@@ -17,7 +17,7 @@ const JobFavouriteTable = () => {
         setLoading(true);
         const response = await jobService.getShortlistedJobs();
         // Lọc chỉ lấy job đã được approve
-        const approvedJobs = response.filter(job => job.status === 2);
+        const approvedJobs = response.filter(job => job.status === 2 && !job.deactivatedByAdmin && job.status !== 4);
         setJobs(approvedJobs);
         setError(null);
       } catch (err) {

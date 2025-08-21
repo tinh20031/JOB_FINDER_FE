@@ -116,6 +116,7 @@ const PostBoxForm = ({ initialData, isEditing }) => {
         timeStart: initialData.timeStart ? initialData.timeStart.split('T')[0] : '',
         timeEnd: initialData.timeEnd ? initialData.timeEnd.split('T')[0] : '',
         status: typeof initialData.status === 'number' ? initialData.status : 0,
+        deactivatedByAdmin: initialData.deactivatedByAdmin || false, // Đảm bảo deactivatedByAdmin được bao gồm
         descriptionWeight: !isNaN(Number(initialData.descriptionWeight)) ? Number(initialData.descriptionWeight) * 100 : 0,
         skillsWeight: !isNaN(Number(initialData.skillsWeight)) ? Number(initialData.skillsWeight) * 100 : 0,
         experienceWeight: !isNaN(Number(initialData.experienceWeight)) ? Number(initialData.experienceWeight) * 100 : 0,
@@ -139,10 +140,20 @@ const PostBoxForm = ({ initialData, isEditing }) => {
     if (!formData.education.trim()) newErrors.education = 'Education requirements are required';
     if (!formData.YourSkill.trim()) newErrors.YourSkill = 'Skills are required';
     if (!formData.YourExperience.trim()) newErrors.YourExperience = 'Experience is required';
+    const isBlank = (value) => value === null || value === undefined || (typeof value === 'string' && value.trim() === '');
     if (!formData.isSalaryNegotiable) {
-      if (!formData.minSalary || formData.minSalary.trim() === '' || isNaN(formData.minSalary)) newErrors.minSalary = 'Min Salary is required';
-      if (!formData.maxSalary || formData.maxSalary.trim() === '' || isNaN(formData.maxSalary)) newErrors.maxSalary = 'Max Salary is required';
-      if (formData.minSalary && formData.maxSalary && parseFloat(formData.minSalary) > parseFloat(formData.maxSalary)) newErrors.maxSalary = 'Max Salary must be greater than Min Salary';
+      const minSalaryValue = formData.minSalary;
+      const maxSalaryValue = formData.maxSalary;
+
+      if (isBlank(minSalaryValue) || isNaN(Number(minSalaryValue))) {
+        newErrors.minSalary = 'Min Salary is required';
+      }
+      if (isBlank(maxSalaryValue) || isNaN(Number(maxSalaryValue))) {
+        newErrors.maxSalary = 'Max Salary is required';
+      }
+      if (!isBlank(minSalaryValue) && !isBlank(maxSalaryValue) && Number(minSalaryValue) > Number(maxSalaryValue)) {
+        newErrors.maxSalary = 'Max Salary must be greater than Min Salary';
+      }
     }
     if (!formData.quantity || formData.quantity < 1) {
       newErrors.quantity = 'The number of positions to be filled must be greater than 0';
@@ -222,7 +233,13 @@ const PostBoxForm = ({ initialData, isEditing }) => {
 
     try {
       if (isEditing) {
-        await jobService.updateJob(formData.jobId, formData);
+        // Đảm bảo rằng nếu job bị lock hoặc inactivebyadmin, status sẽ được giữ nguyên
+        const updateData = { ...formData };
+        if (initialData && (initialData.deactivatedByAdmin || initialData.status === 4)) {
+          // Nếu job bị lock hoặc inactivebyadmin, giữ nguyên status gốc
+          updateData.status = initialData.status;
+        }
+        await jobService.updateJob(formData.jobId, updateData);
         setSuccess(true);
         setError("");
         setTimeout(() => {
@@ -422,7 +439,7 @@ const PostBoxForm = ({ initialData, isEditing }) => {
           {errors.addressDetail && <span className="error-message">{errors.addressDetail}</span>}
         </div>
         {/* Status select box for editing jobs (company only, not pending) */}
-        {isEditing && user && user.role === 'Company' && initialData && (initialData.status === 2 || initialData.status === 3) && (
+        {isEditing && user && user.role === 'Company' && initialData && (initialData.status === 2 || initialData.status === 3) && !initialData.deactivatedByAdmin && initialData.status !== 4 && (
           <div className="form-group col-lg-6 col-md-12">
             <label>Status</label>
             <select value={formData.status} onChange={e => setFormData(prev => ({ ...prev, status: Number(e.target.value) }))} disabled={isLoading} className="chosen-single form-select">
@@ -432,11 +449,30 @@ const PostBoxForm = ({ initialData, isEditing }) => {
             <small className="form-text text-muted">You can only switch between Active and Inactive. After editing content, job will be set to pending and you cannot change status until admin approves.</small>
           </div>
         )}
-        {isEditing && user && user.role === 'Company' && initialData && (initialData.status === 2 || initialData.status === 3) && (formData.status !== initialData.status) && (
+        {isEditing && user && user.role === 'Company' && initialData && (initialData.status === 2 || initialData.status === 3) && !initialData.deactivatedByAdmin && initialData.status !== 4 && (formData.status !== initialData.status) && (
           <div className="form-group col-lg-12 col-md-12">
             <div className="alert alert-warning" role="alert">
               <i className="fas fa-exclamation-triangle me-2"></i>
               After editing content, job will be set to <b>pending</b> and you cannot change status until admin approves. Please only update status if you are not editing content.
+            </div>
+          </div>
+        )}
+        {/* Warning for locked jobs */}
+        {isEditing && user && user.role === 'Company' && initialData && initialData.deactivatedByAdmin && (
+          <div className="form-group col-lg-12 col-md-12">
+            <div className="alert alert-danger" role="alert">
+              <i className="fas fa-lock me-2"></i>
+              <strong>Job Locked:</strong> This job has been locked by an administrator. You can edit the content, but the status will remain locked until an admin unlocks it.
+            </div>
+          </div>
+        )}
+        
+        {/* Warning for jobs inactivated by admin */}
+        {isEditing && user && user.role === 'Company' && initialData && initialData.status === 4 && (
+          <div className="form-group col-lg-12 col-md-12">
+            <div className="alert alert-danger" role="alert">
+              <i className="fas fa-ban me-2"></i>
+              <strong>Job Inactivated by Admin:</strong> This job has been inactivated by an administrator. You can edit the content, but you cannot change the status. Only an admin can reactivate this job.
             </div>
           </div>
         )}

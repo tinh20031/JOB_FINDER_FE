@@ -100,7 +100,8 @@ const JobPostManagement = () => {
     { value: 0, label: "Draft" },
     { value: 1, label: "Pending" },
     { value: 2, label: "Active" },
-    { value: 3, label: "Inactive" }
+    { value: 3, label: "Inactive" },
+    { value: 4, label: "Inactive (Admin)" }
   ];
 
   const lockStatuses = [
@@ -261,7 +262,32 @@ const JobPostManagement = () => {
   // Helper để xác định trạng thái phụ
   function getJobDisplayStatus(job) {
     const now = new Date();
-    if (job.deactivatedByAdmin) return { label: 'Locked', color: 'bg-danger' };
+    
+    // Kiểm tra trạng thái lock trước
+    if (job.deactivatedByAdmin) {
+      // Nếu job bị lock, hiển thị trạng thái gốc + "Locked"
+      let baseStatus = '';
+      if (job.status === 0) baseStatus = 'Draft';
+      else if (job.status === 1) baseStatus = 'Pending';
+      else if (job.status === 2) {
+        if (new Date(job.timeStart) > now) baseStatus = 'Not Started';
+        else if (new Date(job.timeEnd) < now) baseStatus = 'Expired';
+        else baseStatus = 'Active';
+      }
+      else if (job.status === 3) {
+        if (new Date(job.timeEnd) < now) baseStatus = 'Expired';
+        else baseStatus = 'Inactive';
+      }
+      else if (job.status === 4) {
+        if (new Date(job.timeEnd) < now) baseStatus = 'Expired';
+        else baseStatus = 'Inactive (Admin)';
+      }
+      else baseStatus = 'Unknown';
+      
+      return { label: `${baseStatus} (Locked)`, color: 'bg-danger' };
+    }
+    
+    // Nếu không bị lock, hiển thị trạng thái bình thường
     if (job.status === 0) {
       return { label: 'Draft', color: 'bg-info' };
     }
@@ -276,8 +302,13 @@ const JobPostManagement = () => {
     }
     if (job.status === 3) {
       if (new Date(job.timeEnd) < now) return { label: 'Expired', color: 'bg-dark' };
-      if (new Date(job.timeStart) > now && !job.deactivatedByAdmin) return { label: 'Cancelled', color: 'bg-secondary' };
+      if (new Date(job.timeStart) > now) return { label: 'Cancelled', color: 'bg-secondary' };
       return { label: 'Inactive', color: 'bg-secondary' };
+    }
+    if (job.status === 4) {
+      if (new Date(job.timeEnd) < now) return { label: 'Expired', color: 'bg-dark' };
+      if (new Date(job.timeStart) > now) return { label: 'Cancelled', color: 'bg-secondary' };
+      return { label: 'Inactive (Admin)', color: 'bg-danger' };
     }
     return { label: 'Unknown', color: 'bg-secondary' };
   }
@@ -402,7 +433,7 @@ const JobPostManagement = () => {
             <p>
               Are you sure you want to change the status of job "<strong>{selectedJob?.title}</strong>" to{" "}
               <span style={{ fontWeight: 'bold' }}>
-                {newStatus === JobStatus.ACTIVE ? "Active" : "Inactive"}
+                {newStatus === JobStatus.ACTIVE ? "Active" : "Inactive (Admin)"}
               </span>?
             </p>
           </Modal>
@@ -502,13 +533,13 @@ const JobPostManagement = () => {
                                 Active
                               </button>
                               <button
-                                className={`btn btn-sm ${item.status === JobStatus.INACTIVE ? 'btn-secondary' : 'btn-outline-secondary'}`}
-                                onClick={() => handleStatusChangeClick(item, JobStatus.INACTIVE)}
-                                disabled={item.deactivatedByAdmin || item.status === JobStatus.INACTIVE}
+                                className={`btn btn-sm ${item.status === JobStatus.INACTIVEBYADMIN ? 'btn-secondary' : 'btn-outline-secondary'}`}
+                                onClick={() => handleStatusChangeClick(item, JobStatus.INACTIVEBYADMIN)}
+                                disabled={item.deactivatedByAdmin || item.status === JobStatus.INACTIVEBYADMIN}
                                 style={{
                                   minWidth: '80px',
                                   transition: 'all 0.3s ease',
-                                  boxShadow: item.status === JobStatus.INACTIVE ? '0 2px 8px rgba(108, 117, 125, 0.3)' : 'none'
+                                  boxShadow: item.status === JobStatus.INACTIVEBYADMIN ? '0 2px 8px rgba(108, 117, 125, 0.3)' : 'none'
                                 }}
                               >
                                 <i className="fas fa-pause-circle me-1"></i>

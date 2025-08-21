@@ -1,14 +1,33 @@
 import API_CONFIG from "../config/api.config";
 
-const BASE_URL = "http://localhost:5194/api";
+const BASE_URL = API_CONFIG.BASE_URL;
 // const BASE_URL = "https://job-finder-kjt2.onrender.com/api";
+// const BASE_URL = "http://localhost:5194/api";
 // Định nghĩa class trước
 class ApiServiceClass {
   // Auth APIs
   static async login(email, password) {
     const url = API_CONFIG.getUrl(API_CONFIG.ENDPOINTS.AUTH.LOGIN);
     const options = API_CONFIG.getRequestOptions("POST", { email, password });
-    return API_CONFIG.handleResponse(await fetch(url, options));
+    const res = await fetch(url, options);
+    if (!res.ok) {
+      const text = await res.text().catch(() => "");
+      const message = text || `HTTP error! status: ${res.status}`;
+      const error = new Error(message);
+      error.response = {
+        status: res.status,
+        statusText: res.statusText,
+        data: text,
+      };
+      error.data = text;
+      throw error;
+    }
+    const text = await res.text();
+    try {
+      return JSON.parse(text);
+    } catch {
+      return text;
+    }
   }
 
   static async register(userData) {
@@ -330,7 +349,11 @@ const ApiService = {
         ...(token ? { Authorization: `Bearer ${token}` } : {}),
       },
     }).then(async (res) => {
-      if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+      if (!res.ok) {
+        const error = new Error(`HTTP error! status: ${res.status}`);
+        error.status = res.status;
+        throw error;
+      }
       const text = await res.text();
       return text ? JSON.parse(text) : null;
     });
@@ -439,10 +462,13 @@ const ApiService = {
   getMyCVs: ApiServiceClass.getMyCVs,
   deleteCV: ApiServiceClass.deleteCV,
   // Revenue Statistics APIs
-  getRevenueSummary: async () => {
-    const url = `${BASE_URL}/RevenueStatistics/summary`;
+  getRevenueSummary: async (startDate, endDate) => {
+    const params = new URLSearchParams();
+    if (startDate) params.append('startDate', startDate);
+    if (endDate) params.append('endDate', endDate);
+    const url = `${BASE_URL}/RevenueStatistics/summary${params.toString() ? `?${params.toString()}` : ''}`;
     const token = localStorage.getItem("token");
-    
+
     const response = await fetch(url, {
       method: 'GET',
       headers: {
@@ -450,11 +476,11 @@ const ApiService = {
         'Authorization': `Bearer ${token}`
       }
     });
-    
+
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
-    
+
     return response.json();
   },
   getMonthlyRevenue: (year) => {
@@ -462,10 +488,12 @@ const ApiService = {
     if (year) params.year = year;
     return ApiService.get(API_CONFIG.ENDPOINTS.REVENUE_STATISTICS.MONTHLY, { params });
   },
-  getRevenueByPackageType: async () => {
-    const url = `${BASE_URL}/RevenueStatistics/by-package-type`;
+  getRevenueByPackageType: async (startDate, endDate) => {
+    const params = new URLSearchParams();
+    if (startDate) params.append('startDate', startDate);
+    if (endDate) params.append('endDate', endDate);
+    const url = `${BASE_URL}/RevenueStatistics/by-package-type${params.toString() ? `?${params.toString()}` : ''}`;
     const token = localStorage.getItem("token");
-    
     const response = await fetch(url, {
       method: 'GET',
       headers: {
@@ -473,11 +501,9 @@ const ApiService = {
         'Authorization': `Bearer ${token}`
       }
     });
-    
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
-    
     return response.json();
   },
   getRecentTransactions: (count) => {
@@ -485,10 +511,12 @@ const ApiService = {
     if (count) params.count = count;
     return ApiService.get(API_CONFIG.ENDPOINTS.REVENUE_STATISTICS.RECENT_TRANSACTIONS, { params });
   },
-  getDashboardStatistics: async () => {
-    const url = `${BASE_URL}/RevenueStatistics/dashboard`;
+  getDashboardStatistics: async (startDate, endDate) => {
+    const params = new URLSearchParams();
+    if (startDate) params.append('startDate', startDate);
+    if (endDate) params.append('endDate', endDate);
+    const url = `${BASE_URL}/RevenueStatistics/dashboard${params.toString() ? `?${params.toString()}` : ''}`;
     const token = localStorage.getItem("token");
-    
     const response = await fetch(url, {
       method: 'GET',
       headers: {
@@ -496,11 +524,9 @@ const ApiService = {
         'Authorization': `Bearer ${token}`
       }
     });
-    
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
-    
     return response.json();
   },
   exportRevenueData: (startDate, endDate) => {

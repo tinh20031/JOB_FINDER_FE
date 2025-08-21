@@ -29,20 +29,6 @@ module.exports = [
     },
     {
       id: 5,
-      name: "Application Management",
-      icon: "la-file-invoice",
-      routePath: "/admin-dashboard/Application-Management",
-      active: "",
-    },
-    {
-      id: 6,
-      name: "Reports & Violations Management",
-      icon: "la-bookmark-o",
-      routePath: "/admin-dashboard/Reports-Violations-Management",
-      active: "",
-    },
-    {
-      id: 7,
       name: "Revenue Statistics",
       icon: "la-dollar",
       routePath: "/admin-dashboard/revenue-statistics",
@@ -50,7 +36,7 @@ module.exports = [
     },
     
     {
-      id: 8,
+      id: 6,
       name: "Logout",
       icon: "la-sign-out",
       routePath: "/login",

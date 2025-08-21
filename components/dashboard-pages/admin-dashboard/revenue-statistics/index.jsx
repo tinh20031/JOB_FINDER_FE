@@ -83,7 +83,7 @@ const RevenueStatisticsDashboard = () => {
                   <h4>Recent Transactions</h4>
                 </div>
                 <div className="widget-content">
-                  <RecentTransactions />
+                  <RecentTransactions dateRange={dateRange} />
                 </div>
               </div>
             </div>

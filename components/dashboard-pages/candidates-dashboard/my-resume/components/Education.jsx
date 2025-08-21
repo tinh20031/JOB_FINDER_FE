@@ -68,7 +68,7 @@ const Education = ({
   };
 
   const handleDelete = async (id) => {
-    const edu = education.find((e) => e.educationId === id);
+    const edu = education.find((e) => (e.educationId ?? e.id) === id);
     // if (!window.confirm("Are you sure you want to delete this education?"))
     // return;
     setDeletingId(id);

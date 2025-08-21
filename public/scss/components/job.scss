@@ -473,6 +473,10 @@ Job Section
 .job-block .job-info li a {
   color: #696969;
 }
+/* Ensure inline login button text turns white on hover */
+.job-block .job-info li a.theme-btn.btn-style-three:hover {
+  color: #ffffff !important;
+}
 .job-block .content h4 {
   margin-bottom: 10px;
 }
@@ -1098,6 +1102,7 @@ Job Section Five
 
 .job-block-five .inner-box .theme-btn:hover {
   background: var(--primary-hover-bg-color);
+  color: #ffffff; /* Ensure readable text color on dark hover bg */
 }
 
 .job-block-five .content {
@@ -1223,6 +1228,7 @@ Job Section Five
 
 .job-section-five.style-two .job-block-five .inner-box .theme-btn:hover {
   background-color: var(--primary-color);
+  color: #ffffff; /* Ensure readable text color on dark hover bg */
 }
 
 .job-section-five.style-two .featured-column {
@@ -1430,6 +1436,10 @@ Job Detail Section
 
 .job-block-seven .job-info li a {
   color: #696969;
+}
+/* Ensure inline login button in job header turns white on hover */
+.job-block-seven .job-info li a.theme-btn.btn-style-three:hover {
+  color: #ffffff !important;
 }
 
 .job-block-seven .job-other-info {
@@ -1784,6 +1794,10 @@ Job Detail Section
   color: #444;
   font-weight: 400;
   word-break: break-word;
+}
+/* Ensure inline login button inside overview list has white text on hover */
+.job-overview-two .job-overview-list a.theme-btn.btn-style-three:hover {
+  color: #ffffff !important;
 }
 
 .job-overview-two .job-overview-list .address-item {

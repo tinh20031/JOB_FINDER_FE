@@ -88,7 +88,7 @@ export default function CVMinimal({ resume, accentColor, removeLogo, setRemoveLo
         {/* Right side - Avatar */}
         <div>
           <img
-            src={resume?.image || resume?.avatar || "/default-avatar.png"}
+                            src={resume?.image || resume?.avatar || "/images/resource/candidate-1.png"}
             alt="avatar"
             style={{
               width: 120,

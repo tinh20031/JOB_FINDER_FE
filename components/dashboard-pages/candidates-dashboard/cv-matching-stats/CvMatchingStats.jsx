@@ -45,7 +45,7 @@ const CvMatchingStats = () => {
     return (
       <div className="stats-loading">
         <div className="spinner"></div>
-        <p>Đang tải thống kê...</p>
+        <p>Loading statistics...</p>
       </div>
     );
   }
@@ -53,8 +53,8 @@ const CvMatchingStats = () => {
   return (
     <div className="cv-matching-stats">
       <div className="stats-header">
-        <h4>Thống kê thử khớp CV</h4>
-        <p>Tổng quan về hiệu quả matching CV của bạn</p>
+      <h4>CV matching statistics</h4>
+      <p>Overview of your CV matching performance</p>
       </div>
 
       <div className="stats-grid">
@@ -64,7 +64,7 @@ const CvMatchingStats = () => {
           </div>
           <div className="stat-content">
             <h3>{stats.totalMatches}</h3>
-            <p>Tổng số lần thử khớp</p>
+            <p>Total number of matches</p>
           </div>
         </div>
 
@@ -76,7 +76,7 @@ const CvMatchingStats = () => {
             <h3 style={{ color: getScoreColor(stats.averageScore) }}>
               {stats.averageScore.toFixed(1)}%
             </h3>
-            <p>Điểm trung bình</p>
+            <p>Average score</p>
           </div>
         </div>
 
@@ -88,7 +88,7 @@ const CvMatchingStats = () => {
             <h3 style={{ color: getScoreColor(stats.bestScore) }}>
               {stats.bestScore.toFixed(1)}%
             </h3>
-            <p>Điểm cao nhất</p>
+            <p>Highest score</p>
           </div>
         </div>
 
@@ -98,36 +98,36 @@ const CvMatchingStats = () => {
           </div>
           <div className="stat-content">
             <h3>{stats.recentMatches}</h3>
-            <p>Thử khớp gần đây</p>
+            <p>Try recent matches</p>
           </div>
         </div>
       </div>
 
       <div className="stats-insights">
-        <h5>Nhận xét</h5>
+        <h5>Comment</h5>
         <div className="insights-content">
           {stats.averageScore >= 80 ? (
             <div className="insight positive">
               <i className="flaticon-check"></i>
               <div>
-                <strong>Xuất sắc!</strong>
-                <p>CV của bạn có độ phù hợp rất cao với các công việc. Tiếp tục duy trì chất lượng này!</p>
+              <strong>Excellent!</strong>
+              <p>Your CV is highly relevant to the job. Keep up the good work!</p>
               </div>
             </div>
           ) : stats.averageScore >= 60 ? (
             <div className="insight neutral">
               <i className="flaticon-info"></i>
               <div>
-                <strong>Khá tốt</strong>
-                <p>CV của bạn có mức độ phù hợp trung bình. Có thể cải thiện thêm để tăng cơ hội.</p>
+              <strong>Fair</strong>
+              <p>Your CV has an average level of relevance. There is room for improvement to increase your chances.</p>
               </div>
             </div>
           ) : (
             <div className="insight negative">
               <i className="flaticon-warning"></i>
               <div>
-                <strong>Cần cải thiện</strong>
-                <p>CV của bạn cần được tối ưu hóa để tăng độ phù hợp với các công việc.</p>
+              <strong>Needs Improvement</strong>
+              <p>Your CV needs to be optimized to increase its relevance to jobs.</p>
               </div>
             </div>
           )}

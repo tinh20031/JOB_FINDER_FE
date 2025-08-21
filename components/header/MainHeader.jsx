@@ -40,7 +40,9 @@ const MainHeader = () => {
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [showDropdown, setShowDropdown] = useState(false);
+  const [showAvatarDropdown, setShowAvatarDropdown] = useState(false);
   const dropdownRef = useRef(null);
+  const avatarDropdownRef = useRef(null);
 
   // Sticky header effect
   useEffect(() => {
@@ -151,8 +153,17 @@ const MainHeader = () => {
     const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
     if (isLoggedIn && userId && token && (role === 'Company' || role === 'Candidate')) {
       notificationHubService.start(token, userId, (notification) => {
-        setNotifications((prev) => [notification, ...prev]);
-        setUnreadCount((prev) => prev + 1);
+        const incomingId = notification?.notificationId || notification?.id;
+        let isDuplicate = false;
+        setNotifications((prev) => {
+          if (incomingId) {
+            isDuplicate = prev.some((n) => (n.notificationId || n.id) === incomingId);
+          }
+          return isDuplicate ? prev : [notification, ...prev];
+        });
+        if (!isDuplicate) {
+          setUnreadCount((prev) => prev + 1);
+        }
       });
       return () => notificationHubService.stop();
     }
@@ -164,14 +175,17 @@ const MainHeader = () => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
         setShowDropdown(false);
       }
+      if (avatarDropdownRef.current && !avatarDropdownRef.current.contains(event.target)) {
+        setShowAvatarDropdown(false);
+      }
     }
-    if (showDropdown) {
+    if (showDropdown || showAvatarDropdown) {
       document.addEventListener("mousedown", handleClickOutside);
     } else {
       document.removeEventListener("mousedown", handleClickOutside);
     }
     return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [showDropdown]);
+  }, [showDropdown, showAvatarDropdown]);
 
   // Đánh dấu đã đọc khi mở dropdown
   const handleBellClick = async () => {
@@ -182,6 +196,13 @@ const MainHeader = () => {
         setUnreadCount(0);
       } catch {}
     }
+  };
+
+  // Toggle avatar dropdown
+  const handleAvatarClick = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setShowAvatarDropdown((prev) => !prev);
   };
 
   // Logout logic
@@ -221,6 +242,7 @@ const MainHeader = () => {
                   src="/images/jobfinder-logo.png"
                   alt="JobFinder logo"
                   title="JobFinder"
+                  style={{ width: 'auto', height: 'auto' }}
                   onError={(e) => { e.target.onerror = null; e.target.src = "/images/logo.svg"; }}
                 />
               </Link>
@@ -322,8 +344,13 @@ const MainHeader = () => {
                   )}
                 </div>
               )}
-              <div className="dropdown dashboard-option">
-                <a className="dropdown-toggle" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+              <div className="dropdown dashboard-option" ref={avatarDropdownRef}>
+                <a 
+                  className="dropdown-toggle" 
+                  role="button" 
+                  onClick={handleAvatarClick}
+                  style={{ cursor: 'pointer' }}
+                >
                   <Image
                     alt="avatar"
                     width={50}
@@ -334,59 +361,70 @@ const MainHeader = () => {
                   />
                   <span className="name">{displayUserName}</span>
                 </a>
-                <ul className="dropdown-menu">
-                  {role === 'Company' && employerMenuData.map((item) => (
-                    <li
-                      className={`${isActiveLink(item.routePath, pathname) ? "active" : ""} mb-1`}
-                      key={item.id}
-                      onClick={() => handleMenuClick(item)}
-                    >
-                      {item.isLogout ? (
-                        <a style={{ cursor: 'pointer' }}>
-                          <i className={`la ${item.icon}`}></i> {item.name}
-                        </a>
-                      ) : (
-                        <Link href={item.routePath}>
-                          <i className={`la ${item.icon}`}></i> {item.name}
-                        </Link>
-                      )}
-                    </li>
-                  ))}
-                  {role === 'Candidate' && candidatesMenuData.map((item) => (
-                    <li
-                      className={`${isActiveLink(item.routePath, pathname) ? "active" : ""} mb-1`}
-                      key={item.id}
-                      onClick={() => handleMenuClick(item)}
-                    >
-                       {item.isLogout ? (
-                        <a style={{ cursor: 'pointer' }}>
-                          <i className={`la ${item.icon}`}></i> {item.name}
-                        </a>
-                      ) : (
-                        <Link href={item.routePath}>
-                          <i className={`la ${item.icon}`}></i> {item.name}
-                        </Link>
-                      )}
-                    </li>
-                  ))}
-                   {role === 'Admin' && adminMenuData.map((item) => (
-                    <li
-                      className={`${isActiveLink(item.routePath, pathname) ? "active" : ""} mb-1`}
-                      key={item.id}
-                      onClick={() => handleMenuClick(item)}
-                    >
-                       {item.isLogout ? (
-                        <a style={{ cursor: 'pointer' }}>
-                          <i className={`la ${item.icon}`}></i> {item.name}
-                        </a>
-                      ) : (
-                        <Link href={item.routePath}>
-                          <i className={`la ${item.icon}`}></i> {item.name}
-                        </Link>
-                      )}
-                    </li>
-                  ))}
-                </ul>
+                {showAvatarDropdown && (
+                  <ul className="dropdown-menu" style={{ display: 'block' }}>
+                    {role === 'Company' && employerMenuData.map((item) => (
+                      <li
+                        className={`${isActiveLink(item.routePath, pathname) ? "active" : ""} mb-1`}
+                        key={item.id}
+                        onClick={() => {
+                          handleMenuClick(item);
+                          setShowAvatarDropdown(false);
+                        }}
+                      >
+                        {item.isLogout ? (
+                          <a style={{ cursor: 'pointer' }}>
+                            <i className={`la ${item.icon}`}></i> {item.name}
+                          </a>
+                        ) : (
+                          <Link href={item.routePath} onClick={() => setShowAvatarDropdown(false)}>
+                            <i className={`la ${item.icon}`}></i> {item.name}
+                          </Link>
+                        )}
+                      </li>
+                    ))}
+                    {role === 'Candidate' && candidatesMenuData.map((item) => (
+                      <li
+                        className={`${isActiveLink(item.routePath, pathname) ? "active" : ""} mb-1`}
+                        key={item.id}
+                        onClick={() => {
+                          handleMenuClick(item);
+                          setShowAvatarDropdown(false);
+                        }}
+                      >
+                         {item.isLogout ? (
+                          <a style={{ cursor: 'pointer' }}>
+                            <i className={`la ${item.icon}`}></i> {item.name}
+                          </a>
+                        ) : (
+                          <Link href={item.routePath} onClick={() => setShowAvatarDropdown(false)}>
+                            <i className={`la ${item.icon}`}></i> {item.name}
+                          </Link>
+                        )}
+                      </li>
+                    ))}
+                     {role === 'Admin' && adminMenuData.map((item) => (
+                      <li
+                        className={`${isActiveLink(item.routePath, pathname) ? "active" : ""} mb-1`}
+                        key={item.id}
+                        onClick={() => {
+                          handleMenuClick(item);
+                          setShowAvatarDropdown(false);
+                        }}
+                      >
+                         {item.isLogout ? (
+                          <a style={{ cursor: 'pointer' }}>
+                            <i className={`la ${item.icon}`}></i> {item.name}
+                          </a>
+                        ) : (
+                          <Link href={item.routePath} onClick={() => setShowAvatarDropdown(false)}>
+                            <i className={`la ${item.icon}`}></i> {item.name}
+                          </Link>
+                        )}
+                      </li>
+                    ))}
+                  </ul>
+                )}
               </div>
             </div>
           ) : (

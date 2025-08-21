@@ -25,9 +25,9 @@ const TopCardBlock = () => {
       // Gọi API lấy danh sách jobs và đếm số lượng
       jobService.getJobs({ role: "company", companyId }).then((res) => {
         setPostedJobs(res.total || 0);
-        // Đếm số job active (status === 2)
+        // Đếm số job active (status === 2) và không bị lock
         if (Array.isArray(res.data)) {
-                      setActiveJobs(res.data.filter(j => j.status === 2).length);
+                      setActiveJobs(res.data.filter(j => j.status === 2 && !j.deactivatedByAdmin && j.status !== 4).length);
         } else {
           setActiveJobs(0);
         }

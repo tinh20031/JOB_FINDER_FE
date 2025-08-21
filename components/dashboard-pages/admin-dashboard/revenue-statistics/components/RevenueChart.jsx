@@ -28,28 +28,68 @@ const RevenueChart = ({ dateRange }) => {
     const fetchDashboardData = async () => {
       try {
         setLoading(true);
+        const toIsoDateTime = (value, isEnd = false) => {
+          if (!value) return undefined;
+          if (typeof value === 'string' && value.includes('T')) return value;
+          return isEnd ? `${value}T23:59:59.999Z` : `${value}T00:00:00Z`;
+        };
+
+        const response = await ApiService.getDashboardStatistics(
+          toIsoDateTime(dateRange?.startDate, false),
+          toIsoDateTime(dateRange?.endDate, true)
+        );
         
-        // Use the refactored service method
-        const response = await ApiService.getDashboardStatistics();
         
-        
-        // Directly use the data from the API response
+        // Normalize various possible response shapes
+        const data = response || {};
+        const getNum = (v) => (typeof v === 'number' ? v : Number(v)) || 0;
+
+        const todayRevenue = getNum(data.todayRevenue ?? data.TodayRevenue ?? data.metrics?.todayRevenue);
+        const weekRevenue = getNum(data.weekRevenue ?? data.WeekRevenue ?? data.metrics?.weekRevenue);
+        const monthRevenue = getNum(data.monthRevenue ?? data.MonthRevenue ?? data.metrics?.monthRevenue);
+        const yearRevenue = getNum(data.yearRevenue ?? data.YearRevenue ?? data.metrics?.yearRevenue);
+        const totalRevenue = getNum(data.totalRevenue ?? data.TotalRevenue ?? data.summary?.totalRevenue);
+
+        const candidateRevenue = getNum(data.candidateRevenue ?? data.CandidateRevenue ?? data.revenue?.candidate);
+        const companyRevenue = getNum(data.companyRevenue ?? data.CompanyRevenue ?? data.revenue?.company);
+
+        const todayTransactions = getNum(data.todayTransactions ?? data.TodayTransactions ?? data.metrics?.todayTransactions);
+        const totalTransactions = getNum(data.totalTransactions ?? data.TotalTransactions ?? data.summary?.totalTransactions);
+
+        const activeUserSubscriptions = getNum(
+          data.activeUserSubscriptions ?? data.activeCandidateSubscriptions ?? data.ActiveUserSubscriptions
+        );
+        const activeCompanySubscriptions = getNum(
+          data.activeCompanySubscriptions ?? data.ActiveCompanySubscriptions
+        );
+
+        const rb = data.revenueBreakdown ?? data.RevenueBreakdown ?? {};
+        let candidatePercentage = getNum(
+          rb.candidatePercentage ?? rb.CandidatePercentage ?? data.candidatePercentage ?? data.share?.candidate
+        );
+        let companyPercentage = getNum(
+          rb.companyPercentage ?? rb.CompanyPercentage ?? data.companyPercentage ?? data.share?.company
+        );
+        // If backend returns 0..1, convert to %
+        if (candidatePercentage > 0 && candidatePercentage <= 1) candidatePercentage *= 100;
+        if (companyPercentage > 0 && companyPercentage <= 1) companyPercentage *= 100;
+
         setDashboardData({
-          todayRevenue: response.todayRevenue || 0,
-          weekRevenue: response.weekRevenue || 0,
-          monthRevenue: response.monthRevenue || 0,
-          yearRevenue: response.yearRevenue || 0,
-          totalRevenue: response.totalRevenue || 0,
-          candidateRevenue: response.candidateRevenue || 0,
-          companyRevenue: response.companyRevenue || 0,
-          todayTransactions: response.todayTransactions || 0,
-          totalTransactions: response.totalTransactions || 0,
-          activeUserSubscriptions: response.activeUserSubscriptions || 0,
-          activeCompanySubscriptions: response.activeCompanySubscriptions || 0,
+          todayRevenue,
+          weekRevenue,
+          monthRevenue,
+          yearRevenue,
+          totalRevenue,
+          candidateRevenue,
+          companyRevenue,
+          todayTransactions,
+          totalTransactions,
+          activeUserSubscriptions,
+          activeCompanySubscriptions,
           revenueBreakdown: {
-            candidatePercentage: response.revenueBreakdown?.candidatePercentage || 0,
-            companyPercentage: response.revenueBreakdown?.companyPercentage || 0
-          }
+            candidatePercentage,
+            companyPercentage,
+          },
         });
         setError(null);
       } catch (err) {
@@ -61,27 +101,55 @@ const RevenueChart = ({ dateRange }) => {
     };
 
     fetchDashboardData();
-  }, []);
+  }, [dateRange]);
 
-  const formatCurrency = (amount) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0
-    }).format(amount);
-  };
+  const formatCurrency = (amount) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(amount);
 
-  const formatNumber = (num) => {
-    return new Intl.NumberFormat('en-US').format(num);
-  };
+  const formatNumber = (num) => new Intl.NumberFormat('vi-VN').format(num);
 
   if (loading) {
     return (
-      <div className="text-center">
-        <div className="spinner-border" role="status">
-          <span className="sr-only">Loading...</span>
+      <div className="revenue-chart">
+        <div className="overview-cards skeleton">
+          {[...Array(4)].map((_, i) => (
+            <div className="overview-card" key={i}>
+              <div className="card-icon skeleton-pill" />
+              <div className="card-content">
+                <div className="skeleton-line lg" />
+                <div className="skeleton-line md" />
+                <div className="skeleton-line sm" />
+              </div>
+            </div>
+          ))}
         </div>
+
+        <div className="subscription-stats">
+          <div className="stats-content skeleton">
+            {[...Array(2)].map((_, i) => (
+              <div className="stat-item" key={i}>
+                <div className="stat-icon skeleton-pill" />
+                <div className="stat-info" style={{ width: '100%' }}>
+                  <div className="skeleton-line md" />
+                  <div className="skeleton-line sm" />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <style jsx>{`
+          .revenue-chart { padding: 20px; }
+          .overview-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; }
+          .skeleton .overview-card,
+          .skeleton .stat-item { position: relative; overflow: hidden; background: #fff; border: 1px solid #eef2f7; border-radius: 12px; padding: 16px; }
+          .skeleton-line { height: 12px; background: #f1f5f9; border-radius: 8px; margin: 8px 0; position: relative; overflow: hidden; }
+          .skeleton-line.lg { width: 60%; height: 18px; }
+          .skeleton-line.md { width: 40%; }
+          .skeleton-line.sm { width: 30%; height: 10px; }
+          .skeleton-pill { width: 48px; height: 48px; background: #eef2ff; border-radius: 999px; }
+          .skeleton-line::after, .overview-card::after, .stat-item::after { content: ''; position: absolute; inset: 0; transform: translateX(-100%); background: linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,.6) 50%, rgba(255,255,255,0) 100%); animation: shimmer 1.4s infinite; }
+          @keyframes shimmer { 100% { transform: translateX(100%); } }
+        `}</style>
       </div>
     );
   }
@@ -144,55 +212,7 @@ const RevenueChart = ({ dateRange }) => {
         </div>
       </div>
 
-      <div className="revenue-breakdown">
-        <div className="breakdown-header">
-          <h5>Revenue Breakdown</h5>
-        </div>
-        
-        <div className="breakdown-content">
-          <div className="breakdown-item candidate">
-            <div className="breakdown-info">
-              <div className="breakdown-label">
-                <i className="icon la la-user"></i>
-                Candidate Revenue
-              </div>
-              <div className="breakdown-amount">
-                {formatCurrency(dashboardData.candidateRevenue)}
-              </div>
-            </div>
-            <div className="breakdown-bar">
-              <div 
-                className="bar-fill candidate-fill"
-                style={{ width: `${dashboardData.revenueBreakdown.candidatePercentage}%` }}
-              ></div>
-            </div>
-            <div className="breakdown-percentage">
-              {dashboardData.revenueBreakdown.candidatePercentage.toFixed(1)}%
-            </div>
-          </div>
-
-          <div className="breakdown-item company">
-            <div className="breakdown-info">
-              <div className="breakdown-label">
-                <i className="icon la la-building"></i>
-                Company Revenue
-              </div>
-              <div className="breakdown-amount">
-                {formatCurrency(dashboardData.companyRevenue)}
-              </div>
-            </div>
-            <div className="breakdown-bar">
-              <div 
-                className="bar-fill company-fill"
-                style={{ width: `${dashboardData.revenueBreakdown.companyPercentage}%` }}
-              ></div>
-            </div>
-            <div className="breakdown-percentage">
-              {dashboardData.revenueBreakdown.companyPercentage.toFixed(1)}%
-            </div>
-          </div>
-        </div>
-      </div>
+      {/* Revenue Breakdown moved to RecentTransactions */}
 
       <div className="subscription-stats">
         <div className="stats-header">
@@ -223,228 +243,35 @@ const RevenueChart = ({ dateRange }) => {
       </div>
 
       <style jsx>{`
-        .revenue-chart {
-          padding: 20px;
-        }
+        .revenue-chart { padding: 20px; }
+        .chart-overview { margin-bottom: 30px; }
+        .overview-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; }
+        .overview-card { display: flex; align-items: center; gap: 14px; padding: 18px; background: #fff; border: 1px solid #eef2f7; border-radius: 12px; transition: all .25s ease; }
+        .overview-card:hover { transform: translateY(-2px); box-shadow: 0 10px 22px rgba(2,6,23,0.06); }
+        .card-icon { width: 50px; height: 50px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #fff; flex: 0 0 auto; }
+        .card-icon.today { background: linear-gradient(135deg, #22c55e, #16a34a); }
+        .card-icon.week { background: linear-gradient(135deg, #3b82f6, #2563eb); }
+        .card-icon.month { background: linear-gradient(135deg, #f59e0b, #d97706); }
+        .card-icon.year { background: linear-gradient(135deg, #ef4444, #dc2626); }
+        .card-icon i { font-size: 20px; }
+        .card-content h4 { margin: 0 0 4px; font-weight: 800; color: #0f172a; }
+        .card-content p { margin: 0; color: #334155; font-weight: 600; }
+        .card-content small { color: #64748b; }
 
-        .chart-overview {
-          margin-bottom: 30px;
-        }
-
-        .overview-cards {
-          display: grid;
-          grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-          gap: 20px;
-        }
-
-        .overview-card {
-          display: flex;
-          align-items: center;
-          padding: 20px;
-          background: #f8f9fa;
-          border-radius: 10px;
-          border-left: 4px solid #007bff;
-          transition: all 0.3s ease;
-        }
-
-        .overview-card:hover {
-          transform: translateY(-2px);
-          box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-        }
-
-        .card-icon {
-          width: 50px;
-          height: 50px;
-          border-radius: 50%;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          margin-right: 15px;
-          color: white;
-        }
-
-        .card-icon.today {
-          background: linear-gradient(135deg, #28a745, #20c997);
-        }
-
-        .card-icon.week {
-          background: linear-gradient(135deg, #007bff, #0056b3);
-        }
-
-        .card-icon.month {
-          background: linear-gradient(135deg, #ffc107, #fd7e14);
-        }
-
-        .card-icon.year {
-          background: linear-gradient(135deg, #dc3545, #c82333);
-        }
-
-        .card-icon i {
-          font-size: 20px;
-        }
-
-        .card-content h4 {
-          margin: 0 0 5px 0;
-          font-weight: 600;
-          color: #333;
-        }
-
-        .card-content p {
-          margin: 0 0 5px 0;
-          color: #666;
-          font-size: 14px;
-        }
-
-        .card-content small {
-          color: #999;
-          font-size: 12px;
-        }
-
-        .revenue-breakdown {
-          margin-bottom: 30px;
-        }
-
-        .breakdown-header h5 {
-          margin-bottom: 20px;
-          color: #333;
-          font-weight: 600;
-        }
-
-        .breakdown-content {
-          display: flex;
-          flex-direction: column;
-          gap: 20px;
-        }
-
-        .breakdown-item {
-          display: flex;
-          align-items: center;
-          gap: 15px;
-        }
-
-        .breakdown-info {
-          flex: 1;
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-        }
-
-        .breakdown-label {
-          display: flex;
-          align-items: center;
-          gap: 8px;
-          font-weight: 500;
-          color: #333;
-        }
-
-        .breakdown-amount {
-          font-weight: 600;
-          color: #28a745;
-        }
-
-        .breakdown-bar {
-          width: 150px;
-          height: 8px;
-          background: #e9ecef;
-          border-radius: 4px;
-          overflow: hidden;
-        }
-
-        .bar-fill {
-          height: 100%;
-          border-radius: 4px;
-          transition: width 0.3s ease;
-        }
-
-        .candidate-fill {
-          background: linear-gradient(90deg, #28a745, #20c997);
-        }
-
-        .company-fill {
-          background: linear-gradient(90deg, #ffc107, #fd7e14);
-        }
-
-        .breakdown-percentage {
-          min-width: 50px;
-          text-align: right;
-          font-weight: 600;
-          color: #666;
-        }
-
-        .subscription-stats {
-          margin-top: 30px;
-        }
-
-        .stats-header h5 {
-          margin-bottom: 20px;
-          color: #333;
-          font-weight: 600;
-        }
-
-        .stats-content {
-          display: grid;
-          grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-          gap: 20px;
-        }
-
-        .stat-item {
-          display: flex;
-          align-items: center;
-          padding: 15px;
-          background: #f8f9fa;
-          border-radius: 8px;
-          border-left: 4px solid #007bff;
-        }
-
-        .stat-icon {
-          width: 40px;
-          height: 40px;
-          border-radius: 50%;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          margin-right: 15px;
-          color: white;
-        }
-
-        .stat-icon.candidate {
-          background: linear-gradient(135deg, #28a745, #20c997);
-        }
-
-        .stat-icon.company {
-          background: linear-gradient(135deg, #ffc107, #fd7e14);
-        }
-
-        .stat-number {
-          font-size: 18px;
-          font-weight: 600;
-          color: #333;
-          margin-bottom: 2px;
-        }
-
-        .stat-label {
-          font-size: 12px;
-          color: #666;
-        }
+        .subscription-stats { margin-top: 30px; }
+        .stats-header h5 { margin: 40px 0 16px; color: #0f172a; font-weight: 700; }
+        .stats-content { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-bottom: 8px; }
+        .stat-item { display: flex; align-items: center; gap: 14px; padding: 16px; background: #fff; border: 1px solid #eef2f7; border-radius: 12px; transition: all .25s ease; }
+        .stat-item:hover { transform: translateY(-2px); box-shadow: 0 10px 22px rgba(2,6,23,0.06); }
+        .stat-icon { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #fff; }
+        .stat-icon.candidate { background: linear-gradient(135deg, #22c55e, #16a34a); }
+        .stat-icon.company { background: linear-gradient(135deg, #f59e0b, #d97706); }
+        .stat-number { font-size: 18px; font-weight: 800; color: #0f172a; margin-bottom: 2px; }
+        .stat-label { font-size: 12px; color: #64748b; }
 
         @media (max-width: 768px) {
-          .overview-cards {
-            grid-template-columns: 1fr;
-          }
-          
-          .stats-content {
-            grid-template-columns: 1fr;
-          }
-          
-          .breakdown-item {
-            flex-direction: column;
-            align-items: flex-start;
-            gap: 10px;
-          }
-          
-          .breakdown-bar {
-            width: 100%;
-          }
+          .overview-cards { grid-template-columns: 1fr; }
+          .stats-content { grid-template-columns: 1fr; }
         }
       `}</style>
     </div>

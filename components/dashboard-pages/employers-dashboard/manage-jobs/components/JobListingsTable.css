@@ -139,5 +139,33 @@
   font-weight: bold;
 }
 
+/* CSS cho trạng thái Draft (xám) */
+.status-draft {
+  color: #6c757d;
+  font-weight: bold;
+}
+
+/* CSS cho các trạng thái bị lock - màu đỏ */
+.status-pending--locked {
+  color: #dc3545;
+  font-weight: bold;
+}
+
+.status-active--locked {
+  color: #dc3545;
+  font-weight: bold;
+}
+
+.status-inactive--locked {
+  color: #dc3545;
+  font-weight: bold;
+}
+
+/* CSS cho trạng thái Inactive (Admin) - màu đỏ */
+.status-inactive--admin {
+  color: #dc3545;
+  font-weight: bold;
+}
+
 /* Bạn có thể cần thêm các class CSS khác tùy thuộc vào cấu trúc HTML và thiết kế tổng thể */
 /* Ví dụ, nếu text không nằm trong span, bạn có thể áp dụng màu cho thẻ td hoặc div chứa */ 

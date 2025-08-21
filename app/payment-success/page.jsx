@@ -39,7 +39,79 @@ const PaymentSuccessPageContent = () => {
     }
   }, [orderCode, type]);
 
-  if (loading) return <div>Checking payment status...</div>;
+  if (loading) {
+    return (
+      <>
+        <span className="header-span"></span>
+        <LoginPopup />
+        <MainHeader />
+        <MobileMenu />
+        <div className="loading-wrapper">
+          <div className="loading-card">
+            <div className="spinner" />
+            <h4 className="loading-title">Checking payment status...</h4>
+            <p className="loading-sub">Please wait while we verify your order details</p>
+            <div className="skeleton-group">
+              <div className="skeleton skeleton-line" />
+              <div className="skeleton skeleton-line" />
+              <div className="skeleton skeleton-line short" />
+            </div>
+          </div>
+        </div>
+        <FooterDefault footerStyle="alternate5" />
+        <style jsx>{`
+          .loading-wrapper {
+            min-height: 50vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 40px 16px;
+            background: linear-gradient(180deg, #f8fafc 0%, #ffffff 100%);
+          }
+          .loading-card {
+            width: 100%;
+            max-width: 620px;
+            background: #fff;
+            border-radius: 16px;
+            padding: 28px 24px;
+            box-shadow: 0 12px 30px rgba(2, 6, 23, 0.08);
+            text-align: center;
+          }
+          .spinner {
+            width: 48px;
+            height: 48px;
+            border: 4px solid #e2e8f0;
+            border-top-color: #2563eb;
+            border-radius: 50%;
+            margin: 0 auto 16px;
+            animation: spin 0.8s linear infinite;
+          }
+          .loading-title { margin: 0 0 6px; font-weight: 800; color: #0f172a; }
+          .loading-sub { margin: 0 0 18px; color: #64748b; }
+          .skeleton-group { display: grid; gap: 10px; margin-top: 8px; }
+          .skeleton {
+            position: relative;
+            overflow: hidden;
+            background: #f1f5f9;
+            height: 14px;
+            border-radius: 8px;
+          }
+          .skeleton::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            transform: translateX(-100%);
+            background: linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,.6) 50%, rgba(255,255,255,0) 100%);
+            animation: shimmer 1.4s infinite;
+          }
+          .skeleton-line { width: 100%; }
+          .skeleton-line.short { width: 60%; margin: 0 auto; }
+          @keyframes spin { to { transform: rotate(360deg); } }
+          @keyframes shimmer { 100% { transform: translateX(100%); } }
+        `}</style>
+      </>
+    );
+  }
   if (error) return <div style={{color: 'red'}}>{error}</div>;
   if (!status) return <div>No payment status data!</div>;
 

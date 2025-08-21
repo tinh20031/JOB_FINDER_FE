@@ -37,7 +37,7 @@ const ProfileCard = ({ profile, onEdit }) => {
       <div style={{ display: "flex", alignItems: "center", gap: 32 }}>
         <img
           src={(() => {
-            let src = profile.image || profile.avatar || "/default-avatar.png";
+            let src = profile.image || profile.avatar || "/images/resource/candidate-1.png";
             if (
               !src ||
               typeof src !== "string" ||
@@ -45,7 +45,7 @@ const ProfileCard = ({ profile, onEdit }) => {
               src.trim() === "" ||
               !(src.startsWith("/") || src.startsWith("http"))
             ) {
-              src = "/default-avatar.png";
+              src = "/images/resource/candidate-1.png";
             }
             return src;
           })()}

@@ -18,25 +18,29 @@ const PackageTypeBreakdown = ({ dateRange }) => {
     const fetchPackageBreakdown = async () => {
       try {
         setLoading(true);
-        
-        // Use the refactored service method
-        const response = await ApiService.getRevenueByPackageType();
+        const toIsoDateTime = (value, isEnd = false) => {
+          if (!value) return undefined;
+          if (typeof value === 'string' && value.includes('T')) return value;
+          return isEnd ? `${value}T23:59:59.999Z` : `${value}T00:00:00Z`;
+        };
+
+        const response = await ApiService.getRevenueByPackageType(
+          toIsoDateTime(dateRange?.startDate, false),
+          toIsoDateTime(dateRange?.endDate, true)
+        );
         
         
         
         // Directly use the data from the API response
-        const candidateRevenueData = response.candidateRevenue || {};
-        const companyRevenueData = response.companyRevenue || {};
+        const candidateRevenueData = response?.candidateRevenue || {};
+        const companyRevenueData = response?.companyRevenue || {};
         
         const candidateRevenue = candidateRevenueData.packages || [];
         const companyRevenue = companyRevenueData.packages || [];
         
         
         
-        setPackageData({
-          candidateRevenue,
-          companyRevenue
-        });
+        setPackageData({ candidateRevenue, companyRevenue });
         
         setError(null);
       } catch (err) {
@@ -51,27 +55,18 @@ const PackageTypeBreakdown = ({ dateRange }) => {
   }, [dateRange]);
 
   const formatCurrency = (amount) => {
-    return new Intl.NumberFormat('en-US', {
+    if (amount === undefined || amount === null) return '';
+    return new Intl.NumberFormat('vi-VN', {
       style: 'currency',
-      currency: 'USD',
+      currency: 'VND',
       minimumFractionDigits: 0,
       maximumFractionDigits: 0
     }).format(amount);
   };
 
-  const formatNumber = (num) => {
-    return new Intl.NumberFormat('en-US').format(num);
-  };
+  const formatNumber = (num) => new Intl.NumberFormat('vi-VN').format(num);
 
-  const formatDate = (dateString) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
-  };
+  const formatDate = (dateString) => new Date(dateString).toLocaleString('vi-VN', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' });
 
   const getPaymentTypeColor = (paymentType) => {
     switch (paymentType) {
@@ -107,10 +102,44 @@ const PackageTypeBreakdown = ({ dateRange }) => {
 
   if (loading) {
     return (
-      <div className="text-center">
-        <div className="spinner-border" role="status">
-          <span className="sr-only">Loading...</span>
+      <div className="package-breakdown">
+        <div className="row">
+          {["Candidate Packages", "Company Packages"].map((title, colIdx) => (
+            <div className="col-md-6" key={colIdx}>
+              <div className="package-section">
+                <h5 className={`section-title ${colIdx === 0 ? 'candidate-title' : 'company-title'}`}>
+                  <i className={`icon la ${colIdx === 0 ? 'la-user' : 'la-building'}`}></i>
+                  {title}
+                </h5>
+                <div className="package-list skeleton">
+                  {[...Array(5)].map((_, i) => (
+                    <div className={`package-item ${colIdx === 0 ? 'candidate' : 'company'}`} key={i}>
+                      <div className="accent-bar" />
+                      <div className="package-info" style={{ width: '100%' }}>
+                        <div className="skeleton-line lg" />
+                        <div className="skeleton-line sm" />
+                      </div>
+                      <div className="package-stats" style={{ minWidth: '140px' }}>
+                        <div className="skeleton-line md" />
+                        <div className="skeleton-line xs" />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          ))}
         </div>
+        <style jsx>{`
+          .skeleton .package-item { position: relative; overflow: hidden; background: #fff; border: 1px solid #eef2f7; border-radius: 12px; padding: 14px; }
+          .skeleton-line { height: 12px; background: #f1f5f9; border-radius: 8px; margin: 8px 0; position: relative; overflow: hidden; }
+          .skeleton-line.lg { width: 60%; height: 16px; }
+          .skeleton-line.md { width: 80%; }
+          .skeleton-line.sm { width: 40%; height: 10px; }
+          .skeleton-line.xs { width: 50%; height: 8px; }
+          .skeleton-line::after, .package-item::after { content: ''; position: absolute; inset: 0; transform: translateX(-100%); background: linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,.6) 50%, rgba(255,255,255,0) 100%); animation: shimmer 1.4s infinite; }
+          @keyframes shimmer { 100% { transform: translateX(100%); } }
+        `}</style>
       </div>
     );
   }
@@ -137,9 +166,10 @@ const PackageTypeBreakdown = ({ dateRange }) => {
                 {packageData.candidateRevenue.map((pkg, index) => (
                   <div 
                     key={index} 
-                    className="package-item clickable"
+                    className="package-item clickable candidate"
                     onClick={() => handlePackageClick(pkg)}
                   >
+                    <div className="accent-bar" />
                     <div className="package-info">
                       <div className="package-name">{pkg.packageName || pkg.PackageName}</div>
                       <div className="package-type">{pkg.packageType || pkg.PackageType}</div>
@@ -168,9 +198,10 @@ const PackageTypeBreakdown = ({ dateRange }) => {
                 {packageData.companyRevenue.map((pkg, index) => (
                   <div 
                     key={index} 
-                    className="package-item clickable"
+                    className="package-item clickable company"
                     onClick={() => handlePackageClick(pkg)}
                   >
+                    <div className="accent-bar" />
                     <div className="package-info">
                       <div className="package-name">{pkg.packageName || pkg.PackageName}</div>
                       <div className="package-type">{pkg.packageType || pkg.PackageType}</div>
@@ -283,32 +314,18 @@ const PackageTypeBreakdown = ({ dateRange }) => {
           font-size: 18px;
         }
 
-        .package-list {
-          max-height: 300px;
-          overflow-y: auto;
-        }
+        .package-list { max-height: 360px; overflow-y: auto; display: grid; gap: 10px; }
 
-        .package-item {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          padding: 12px;
-          margin-bottom: 8px;
-          background: #f8f9fa;
-          border-radius: 6px;
-          border-left: 4px solid #007bff;
-          transition: all 0.3s ease;
-        }
+        .package-item { position: relative; display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 14px; background: #fff; border: 1px solid #eef2f7; border-radius: 12px; transition: transform .2s ease, box-shadow .2s ease; }
+        .package-item .accent-bar { position: absolute; left: 0; top: 0; bottom: 0; width: 4px; border-top-left-radius: 12px; border-bottom-left-radius: 12px; }
+        .package-item.candidate .accent-bar { background: #10b981; }
+        .package-item.company .accent-bar { background: #f59e0b; }
 
         .package-item.clickable {
           cursor: pointer;
         }
 
-        .package-item.clickable:hover {
-          background: #e9ecef;
-          transform: translateX(2px);
-          box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-        }
+        .package-item.clickable:hover { transform: translateY(-2px); box-shadow: 0 10px 22px rgba(2,6,23,0.06); }
 
         .package-info {
           flex: 1;
@@ -326,20 +343,11 @@ const PackageTypeBreakdown = ({ dateRange }) => {
           text-transform: capitalize;
         }
 
-        .package-stats {
-          text-align: right;
-        }
+        .package-stats { text-align: right; min-width: 160px; }
 
-        .revenue {
-          font-weight: 600;
-          color: #28a745;
-          font-size: 14px;
-        }
+        .revenue { font-weight: 800; color: #0f172a; font-size: 14px; }
 
-        .transactions {
-          font-size: 12px;
-          color: #666;
-        }
+        .transactions { font-size: 12px; color: #64748b; }
 
         .no-data {
           text-align: center;
@@ -438,13 +446,8 @@ const PackageTypeBreakdown = ({ dateRange }) => {
           font-weight: 600;
         }
 
-        .transaction-item {
-          padding: 15px;
-          margin-bottom: 12px;
-          background: #f8f9fa;
-          border-radius: 8px;
-          border-left: 4px solid #007bff;
-        }
+        .transaction-item { position: relative; padding: 15px; margin-bottom: 12px; background: #fff; border: 1px solid #eef2f7; border-radius: 12px; }
+        .transaction-item::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; background: #3b82f6; border-top-left-radius: 12px; border-bottom-left-radius: 12px; }
 
         .transaction-header {
           display: flex;

@@ -426,6 +426,8 @@ export const jobService = {
         maxSalary: jobData.isSalaryNegotiable
           ? null
           : Number(jobData.maxSalary) || null,
+        status: jobData.status, // Thêm status vào payload
+        deactivatedByAdmin: jobData.deactivatedByAdmin, // Thêm deactivatedByAdmin vào payload
       };
 
       const response = await axios.put(
@@ -823,10 +825,10 @@ export const jobService = {
     }
   },
 
-  // Hàm lấy tất cả job active (status === 2)
+  // Hàm lấy tất cả job active (status === 2) và không bị lock
   async getActiveJobs(filters = {}) {
     const { data: jobs } = await this.getJobs(filters);
-    return jobs.filter((job) => job.status === 2);
+    return jobs.filter((job) => job.status === 2 && !job.deactivatedByAdmin && job.status !== 4);
   },
 
   // POST: Track job view

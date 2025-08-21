@@ -1,6 +1,7 @@
 "use client";
 import dynamic from "next/dynamic";
 import { useEffect, useState } from "react";
+import { useSelector } from "react-redux";
 import ApiService from "@/services/api.service";
 import LoginPopup from "@/components/common/form/login/LoginPopup";
 import FooterDefault from "@/components/footer/common-footer";
@@ -26,6 +27,7 @@ const EmployersSingleV1 = ({ params }) => {
   const [isLoadingFavorite, setIsLoadingFavorite] = useState(false);
   const [highlightJobs, setHighlightJobs] = useState([]);
   const router = useRouter();
+  const { isLoggedIn } = useSelector((state) => state.auth) || {};
 
   useEffect(() => {
     setLoading(true);
@@ -319,11 +321,27 @@ const EmployersSingleV1 = ({ params }) => {
                                 </li>
                                 <li>
                                   <span className="icon flaticon-money"></span>
-                                  {job.isSalaryNegotiable
-                                    ? "Negotiable Salary"
-                                    : job.minSalary && job.maxSalary
-                                    ? `$${job.minSalary.toLocaleString()} - $${job.maxSalary.toLocaleString()}`
-                                    : "Salary N/A"}
+                                  {isLoggedIn ? (
+                                    job.isSalaryNegotiable
+                                      ? "Negotiable Salary"
+                                      : job.minSalary && job.maxSalary
+                                      ? `$${job.minSalary.toLocaleString()} - $${job.maxSalary.toLocaleString()}`
+                                      : "Salary N/A"
+                                  ) : (
+                                    <>
+                                      <span style={{ filter: 'blur(4px)' }}>Login required</span>
+                                      <a
+                                        href="#"
+                                        className="theme-btn btn-style-three call-modal"
+                                        data-bs-toggle="modal"
+                                        data-bs-target="#loginPopupModal"
+                                        style={{ marginLeft: 10, padding: '2px 10px', fontSize: 12 }}
+                                        onClick={(e) => e.preventDefault()}
+                                      >
+                                        Login to view
+                                      </a>
+                                    </>
+                                  )}
                                 </li>
                               </ul>
                               <div
@@ -438,9 +456,25 @@ const EmployersSingleV1 = ({ params }) => {
                         <li>
                           Company size: <span>{company.teamSize}</span>
                         </li>
-                        <li>
-                          Contact: <span>{company.contact}</span>
-                        </li>
+                        {isLoggedIn ? (
+                          <li>
+                            Contact: <span>{company.contact}</span>
+                          </li>
+                        ) : (
+                          <li>
+                            Contact: <span style={{ filter: 'blur(4px)' }}>Login required</span>
+                            <a
+                              href="#"
+                              className="theme-btn btn-style-three call-modal"
+                              data-bs-toggle="modal"
+                              data-bs-target="#loginPopupModal"
+                              style={{ marginLeft: 10, padding: '4px 10px', fontSize: 13 }}
+                              onClick={(e) => e.preventDefault()}
+                            >
+                              Login to view
+                            </a>
+                          </li>
+                        )}
                         {/* <li>
                           Social media:
                           <Social />

@@ -1,12 +1,15 @@
+"use client";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { jobService } from "@/services/jobService";
 import ClickableBox from "../../common/ClickableBox";
+import { useSelector } from "react-redux";
 
 const RelatedJobs2 = ({ job }) => {
   const [relatedJobs, setRelatedJobs] = useState([]);
   const [loading, setLoading] = useState(true);
+  const { isLoggedIn } = useSelector((state) => state.auth) || {};
 
   useEffect(() => {
     if (!job) {
@@ -28,7 +31,7 @@ const RelatedJobs2 = ({ job }) => {
         const now = new Date();
         const filtered = data.filter(j =>
           j.id !== job.id &&
-          j.status === 2 &&
+          j.status === 2 && !j.deactivatedByAdmin && j.status !== 4 &&
           (!j.expiryDate || new Date(j.expiryDate) > now) &&
           ((job.level?.id || job.levelId) ? (j.level?.id || j.levelId) === (job.level?.id || job.levelId) : true) &&
           (job.skills && job.skills.length > 0
@@ -92,7 +95,24 @@ const RelatedJobs2 = ({ job }) => {
                   : 'N/A'}
               </li>
               <li>
-                <span className="icon flaticon-money"></span> {item.minSalary && item.maxSalary ? `$${item.minSalary} - $${item.maxSalary}` : 'Negotiable'}
+                <span className="icon flaticon-money"></span>{" "}
+                {isLoggedIn ? (
+                  item.minSalary && item.maxSalary ? `$${item.minSalary} - $${item.maxSalary}` : 'Negotiable'
+                ) : (
+                  <>
+                    <span style={{ filter: 'blur(4px)' }}>Login required</span>
+                    <a
+                      href="#"
+                      className="theme-btn btn-style-three call-modal"
+                      data-bs-toggle="modal"
+                      data-bs-target="#loginPopupModal"
+                      style={{ marginLeft: 10, padding: '2px 10px', fontSize: 12 }}
+                      onClick={(e) => e.preventDefault()}
+                    >
+                      Login to view
+                    </a>
+                  </>
+                )}
               </li>
             </ul>
             {/* End .job-info */}

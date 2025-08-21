@@ -1,7 +1,10 @@
+"use client";
 import React from "react";
 import Image from "next/image";
+import { useSelector } from "react-redux";
 
 const JobHeader = ({ job, company }) => {
+  const { isLoggedIn } = useSelector((state) => state.auth) || {};
   // Format ngày/tháng hoặc số ngày/tháng/năm trước
   const formatDate = (dateStr) => {
     if (!dateStr) return "";
@@ -35,6 +38,23 @@ const JobHeader = ({ job, company }) => {
 
   // Lương
   const renderSalary = () => {
+    if (!isLoggedIn) {
+      return (
+        <>
+          <span style={{ filter: 'blur(4px)' }}>Login required</span>
+          <a
+            href="#"
+            className="theme-btn btn-style-three call-modal"
+            data-bs-toggle="modal"
+            data-bs-target="#loginPopupModal"
+            style={{ marginLeft: 10, padding: '2px 10px', fontSize: 12 }}
+            onClick={(e) => e.preventDefault()}
+          >
+            Login to view
+          </a>
+        </>
+      );
+    }
     if (job.isSalaryNegotiable) return "Negotiable Salary";
     if (job.minSalary && job.maxSalary)
       return `$${job.minSalary.toLocaleString()} - $${job.maxSalary.toLocaleString()}`;

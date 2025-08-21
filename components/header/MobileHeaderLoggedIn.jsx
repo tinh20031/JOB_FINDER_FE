@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useSelector, useDispatch } from 'react-redux';
 import { clearLoginState } from '@/features/auth/authSlice';
 import { authService } from "@/services/authService";
@@ -30,6 +30,8 @@ const MobileHeaderLoggedIn = () => {
   const dispatch = useDispatch();
   const { user, role } = useSelector((state) => state.auth);
   const [navbar, setNavbar] = useState(false);
+  const [showAvatarDropdown, setShowAvatarDropdown] = useState(false);
+  const avatarDropdownRef = useRef(null);
 
   const changeBackground = () => {
     if (window.scrollY >= 10) {
@@ -45,6 +47,21 @@ const MobileHeaderLoggedIn = () => {
       window.removeEventListener("scroll", changeBackground);
     };
   }, []);
+
+  // Đóng dropdown khi click ngoài
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (avatarDropdownRef.current && !avatarDropdownRef.current.contains(event.target)) {
+        setShowAvatarDropdown(false);
+      }
+    }
+    if (showAvatarDropdown) {
+      document.addEventListener("mousedown", handleClickOutside);
+    } else {
+      document.removeEventListener("mousedown", handleClickOutside);
+    }
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [showAvatarDropdown]);
 
   const handleLogout = () => {
     authService.logout();
@@ -65,6 +82,13 @@ const MobileHeaderLoggedIn = () => {
     return "/"; // Default path if role is not recognized
   };
 
+  // Toggle avatar dropdown
+  const handleAvatarClick = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setShowAvatarDropdown((prev) => !prev);
+  };
+
   
 
   return (
@@ -81,6 +105,7 @@ const MobileHeaderLoggedIn = () => {
                     src="/images/jobfinder-logo.png"
                     alt="JobFinder logo"
                     title="JobFinder"
+                    style={{ width: 'auto', height: 'auto' }}
                     onError={(e) => { e.target.onerror = null; e.target.src = "/images/logo.svg"; }}
                   />
                 </Link>
@@ -92,34 +117,43 @@ const MobileHeaderLoggedIn = () => {
 
           <div className="outer-box">
             <div className="user-profile-box">
-              <div className="dropdown">
+              <div className="dropdown" ref={avatarDropdownRef}>
                 <button 
                   className="dropdown-toggle" 
                   type="button" 
-                  data-bs-toggle="dropdown" 
-                  aria-expanded="false"
+                  onClick={handleAvatarClick}
+                  style={{ cursor: 'pointer' }}
                 >
                   <Image
                     alt="avatar"
                     width={40}
                     height={40}
-                    src={getValidImageUrl(user?.image || user?.avatar)}
+                    src={
+                      role === 'Company' 
+                        ? getValidImageUrl(user?.imageLogoLgr || user?.image || user?.avatar, "/images/resource/company-6.png")
+                        : getValidImageUrl(user?.image || user?.avatar, "/images/resource/candidate-1.png")
+                    }
                     className="rounded-circle"
                   />
                 </button>
-                <ul className="dropdown-menu">
-                  <li>
-                    <Link href={getDashboardPath(role)}>
-                      <i className="la la-user"></i> Dashboard
-                    </Link>
-                  </li>
-                 
-                  <li>
-                    <a href="#" onClick={handleLogout}>
-                      <i className="la la-sign-out"></i> Logout
-                    </a>
-                  </li>
-                </ul>
+                {showAvatarDropdown && (
+                  <ul className="dropdown-menu" style={{ display: 'block' }}>
+                    <li>
+                      <Link href={getDashboardPath(role)} onClick={() => setShowAvatarDropdown(false)}>
+                        <i className="la la-user"></i> Dashboard
+                      </Link>
+                    </li>
+                   
+                    <li>
+                      <a href="#" onClick={() => {
+                        handleLogout();
+                        setShowAvatarDropdown(false);
+                      }}>
+                        <i className="la la-sign-out"></i> Logout
+                      </a>
+                    </li>
+                  </ul>
+                )}
               </div>
             </div>
 

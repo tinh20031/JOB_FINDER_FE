@@ -47,6 +47,22 @@ const BecomeRecruiterModal = ({ open, onCancel }) => {
     }
   }, [open]);
 
+  // Lock body scroll when modal is open to prevent background layout from scrolling/shifting
+  useEffect(() => {
+    if (!open) return;
+    const previousOverflow = document.body.style.overflow;
+    const previousPaddingRight = document.body.style.paddingRight;
+    const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
+    document.body.style.overflow = 'hidden';
+    if (scrollbarWidth > 0) {
+      document.body.style.paddingRight = `${scrollbarWidth}px`;
+    }
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      document.body.style.paddingRight = previousPaddingRight;
+    };
+  }, [open]);
+
   const fetchIndustries = async () => {
     try {
       const data = await industryService.getAll();
@@ -121,15 +137,27 @@ const BecomeRecruiterModal = ({ open, onCancel }) => {
   if (error) return <div className="alert alert-danger">{error}</div>;
 
   return (
-    <div className={`modal fade${open ? ' show d-block' : ''}`} tabIndex="-1" style={{ background: open ? 'rgba(0,0,0,0.5)' : 'none' }}>
-      <div className="modal-dialog modal-lg modal-dialog-centered login-modal modal-dialog-scrollable">
-        <div className="modal-content p-0" style={{ borderRadius: 20, overflow: 'hidden' }}>
+    <div
+      id="become-recruiter-modal-root"
+      className={`modal fade brm-overlay${open ? ' show d-block brm-open' : ''}`}
+      tabIndex="-1"
+      style={{
+        background: open ? 'rgba(0,0,0,0.5)' : 'none',
+        ...(open ? { position: 'fixed', inset: 0, overflowY: 'auto' } : {}),
+      }}
+    >
+      <div className="modal-dialog modal-lg modal-dialog-centered login-modal modal-dialog-scrollable brm-dialog"
+           onWheel={(e) => e.stopPropagation()}>
+        <div className="modal-content p-0 brm-content" style={{ borderRadius: 20, overflow: 'hidden' }} onWheel={(e) => e.stopPropagation()}>
           {/* Modal Header with Title */}
-          <div className="modal-header bg-light" style={{ borderBottom: '1px solid #eee', borderTopLeftRadius: 20, borderTopRightRadius: 20 }}>
-            <h5 className="modal-title fw-bold" style={{ letterSpacing: 1 }}>Become Recruiter</h5>
+          <div className="modal-header bg-light brm-header" style={{ borderBottom: '1px solid #eee', borderTopLeftRadius: 20, borderTopRightRadius: 20 }}>
+            <h5 className="modal-title fw-bold" style={{ letterSpacing: 1 }}>
+              Become Recruiter
+              <span className="brm-subtitle">Fill in company details to request recruiter access</span>
+            </h5>
             <button type="button" className="btn-close" aria-label="Close" onClick={onCancel}></button>
           </div>
-          <div className="modal-body" style={{ padding: '2rem' }}>
+          <div className="modal-body" style={{ padding: '2rem', maxHeight: '75vh', overflowY: 'auto' }} onWheel={(e) => e.stopPropagation()}>
             <div id="become-recruiter-modal">
               <div className="login-form default-form">
                 {requestSent ? (
@@ -193,8 +221,8 @@ const BecomeRecruiterModal = ({ open, onCancel }) => {
                       {formErrors.industryId && <div className="invalid-feedback">{formErrors.industryId}</div>}
                     </div>
                     <div className="d-flex justify-content-end gap-2">
-                      <button type="button" className="btn btn-outline-secondary rounded-pill px-4" onClick={onCancel} disabled={loading}>Cancel</button>
-                      <button type="submit" className="btn btn-primary rounded-pill px-4" disabled={loading}>
+                      <button type="button" className="btn btn-outline-secondary rounded-pill px-4 brm-btn" onClick={onCancel} disabled={loading}>Cancel</button>
+                      <button type="submit" className="btn btn-primary rounded-pill px-4 brm-btn-primary" disabled={loading}>
                         {loading ? <span className="spinner-border spinner-border-sm me-2"></span> : null}
                         Submit
                       </button>
@@ -206,6 +234,43 @@ const BecomeRecruiterModal = ({ open, onCancel }) => {
           </div>
         </div>
       </div>
+      <style jsx>{`
+        .brm-overlay { transition: background .25s ease; }
+        .brm-open { animation: brmFadeIn .25s ease; }
+        @keyframes brmFadeIn { from { background: rgba(0,0,0,0.0); } to { background: rgba(0,0,0,0.5); } }
+
+        .brm-dialog { transform: translateY(10px) scale(.98); opacity: 0; animation: brmDialogIn .28s ease forwards; }
+        @keyframes brmDialogIn { to { transform: translateY(0) scale(1); opacity: 1; } }
+
+        .brm-content { box-shadow: 0 20px 50px rgba(2,6,23,0.18); border: 1px solid #eef2f7; }
+        .brm-header { background: linear-gradient(180deg, #f8fafc 0%, #ffffff 100%); }
+        .brm-header .modal-title { display: flex; flex-direction: column; gap: 4px; }
+        .brm-subtitle { display: block; font-weight: 500; font-size: 12px; color: #6b7280; letter-spacing: 0; }
+
+        /* Inputs & selects focus style */
+        #become-recruiter-modal .form-control,
+        #become-recruiter-modal .form-select {
+          transition: border-color .2s ease, box-shadow .2s ease, transform .05s ease;
+          border-width: 2px;
+        }
+        #become-recruiter-modal .form-control:focus,
+        #become-recruiter-modal .form-select:focus {
+          border-color: #6366f1;
+          box-shadow: 0 0 0 4px rgba(99,102,241,.12);
+        }
+        #become-recruiter-modal .form-control:hover,
+        #become-recruiter-modal .form-select:hover { border-color: #cbd5e1; }
+
+        /* Buttons */
+        .brm-btn { transition: transform .15s ease, box-shadow .15s ease; }
+        .brm-btn:hover { transform: translateY(-1px); box-shadow: 0 8px 18px rgba(2,6,23,0.08); }
+        .brm-btn-primary { background: linear-gradient(135deg, #6366f1, #7c3aed); border: none; box-shadow: 0 8px 20px rgba(99,102,241,.35); }
+        .brm-btn-primary:hover { filter: brightness(1.03); transform: translateY(-1px); }
+
+        /* Success animation */
+        .success-message { animation: brmPop .28s ease; }
+        @keyframes brmPop { from { transform: scale(.96); opacity: .6; } to { transform: scale(1); opacity: 1; } }
+      `}</style>
     </div>
   );
 };

@@ -19,19 +19,36 @@ const RevenueSummaryCards = ({ dateRange }) => {
     const fetchRevenueSummary = async () => {
       try {
         setLoading(true);
-        
-        // Use the refactored service method
-        const data = await ApiService.getRevenueSummary();
-        
-        
-        // Use the exact data from the API response
+        const toIsoDateTime = (value, isEnd = false) => {
+          if (!value) return undefined;
+          if (typeof value === 'string' && value.includes('T')) return value;
+          return isEnd ? `${value}T23:59:59.999Z` : `${value}T00:00:00Z`;
+        };
+
+        // Call API with range
+        const response = await ApiService.getRevenueSummary(
+          toIsoDateTime(dateRange?.startDate, false),
+          toIsoDateTime(dateRange?.endDate, true)
+        );
+
+        // Normalize response keys
+        const d = response || {};
+        const num = (v) => (typeof v === 'number' ? v : Number(v)) || 0;
+
+        const totalRevenue = num(d.totalRevenue ?? d.TotalRevenue ?? d.summary?.totalRevenue);
+        const candidateRevenue = num(d.candidateRevenue ?? d.CandidateRevenue ?? d.revenue?.candidate);
+        const companyRevenue = num(d.companyRevenue ?? d.CompanyRevenue ?? d.revenue?.company);
+        const totalPayments = num(d.totalPayments ?? d.TotalPayments ?? d.summary?.totalPayments);
+        const candidatePayments = num(d.candidatePayments ?? d.CandidatePayments ?? d.payments?.candidate);
+        const companyPayments = num(d.companyPayments ?? d.CompanyPayments ?? d.payments?.company);
+
         setSummaryData({
-          totalRevenue: data.totalRevenue,
-          candidateRevenue: data.candidateRevenue,
-          companyRevenue: data.companyRevenue,
-          totalPayments: data.totalPayments,
-          candidatePayments: data.candidatePayments,
-          companyPayments: data.companyPayments
+          totalRevenue,
+          candidateRevenue,
+          companyRevenue,
+          totalPayments,
+          candidatePayments,
+          companyPayments,
         });
         setError(null);
       } catch (err) {
@@ -45,18 +62,8 @@ const RevenueSummaryCards = ({ dateRange }) => {
     fetchRevenueSummary();
   }, [dateRange]);
 
-  const formatCurrency = (amount) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0
-    }).format(amount);
-  };
-
-  const formatNumber = (num) => {
-    return new Intl.NumberFormat('en-US').format(num);
-  };
+  const formatCurrency = (amount) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(amount);
+  const formatNumber = (num) => new Intl.NumberFormat('vi-VN').format(num);
 
   if (loading) {
     return (
@@ -82,12 +89,10 @@ const RevenueSummaryCards = ({ dateRange }) => {
 
   return (
     <>
-      <div className="ui-block col-xl-3 col-lg-6 col-md-6 col-sm-12">
-        <div className="ui-item ui-blue">
-          <div className="left">
-            <i className="icon la la-dollar"></i>
-          </div>
-          <div className="right">
+      <div className="col-xl-3 col-lg-6 col-md-6 col-sm-12">
+        <div className="summary-card gradient-blue">
+          <div className="card-icon"><i className="icon la la-coins"></i></div>
+          <div className="card-content">
             <h4>{formatCurrency(summaryData.totalRevenue)}</h4>
             <p>Total Revenue</p>
             <small>{formatNumber(summaryData.totalPayments)} transactions</small>
@@ -95,12 +100,10 @@ const RevenueSummaryCards = ({ dateRange }) => {
         </div>
       </div>
 
-      <div className="ui-block col-xl-3 col-lg-6 col-md-6 col-sm-12">
-        <div className="ui-item ui-green">
-          <div className="left">
-            <i className="icon la la-user"></i>
-          </div>
-          <div className="right">
+      <div className="col-xl-3 col-lg-6 col-md-6 col-sm-12">
+        <div className="summary-card gradient-green">
+          <div className="card-icon"><i className="icon la la-user"></i></div>
+          <div className="card-content">
             <h4>{formatCurrency(summaryData.candidateRevenue)}</h4>
             <p>Candidate Revenue</p>
             <small>{formatNumber(summaryData.candidatePayments)} transactions</small>
@@ -108,12 +111,10 @@ const RevenueSummaryCards = ({ dateRange }) => {
         </div>
       </div>
 
-      <div className="ui-block col-xl-3 col-lg-6 col-md-6 col-sm-12">
-        <div className="ui-item ui-yellow">
-          <div className="left">
-            <i className="icon la la-building"></i>
-          </div>
-          <div className="right">
+      <div className="col-xl-3 col-lg-6 col-md-6 col-sm-12">
+        <div className="summary-card gradient-amber">
+          <div className="card-icon"><i className="icon la la-building"></i></div>
+          <div className="card-content">
             <h4>{formatCurrency(summaryData.companyRevenue)}</h4>
             <p>Company Revenue</p>
             <small>{formatNumber(summaryData.companyPayments)} transactions</small>
@@ -121,14 +122,12 @@ const RevenueSummaryCards = ({ dateRange }) => {
         </div>
       </div>
 
-      <div className="ui-block col-xl-3 col-lg-6 col-md-6 col-sm-12">
-        <div className="ui-item ui-red">
-          <div className="left">
-            <i className="icon la la-percentage"></i>
-          </div>
-          <div className="right">
+      <div className="col-xl-3 col-lg-6 col-md-6 col-sm-12">
+        <div className="summary-card gradient-rose">
+          <div className="card-icon"><i className="icon la la-percentage"></i></div>
+          <div className="card-content">
             <h4>
-              {summaryData.totalRevenue > 0 
+              {summaryData.totalRevenue > 0
                 ? Math.round((summaryData.candidateRevenue / summaryData.totalRevenue) * 100)
                 : 0}%
             </h4>
@@ -137,6 +136,31 @@ const RevenueSummaryCards = ({ dateRange }) => {
           </div>
         </div>
       </div>
+
+      <style jsx>{`
+        .summary-card {
+          display: flex;
+          align-items: center;
+          gap: 14px;
+          padding: 18px;
+          background: #f8f9fa;
+          border-radius: 12px;
+          border-left: 4px solid #007bff;
+          transition: all .25s ease;
+          margin-bottom: 20px;
+        }
+        .summary-card:hover { transform: translateY(-2px); box-shadow: 0 10px 22px rgba(2,6,23,0.06); }
+        .card-icon { width: 48px; height: 48px; border-radius: 999px; display: flex; align-items: center; justify-content: center; color: #fff; }
+        .card-icon i { font-size: 20px; }
+        .card-content h4 { margin: 0 0 4px; font-weight: 800; color: #0f172a; }
+        .card-content p { margin: 0; color: #334155; font-weight: 600; }
+        .card-content small { color: #64748b; }
+
+        .gradient-blue .card-icon { background: linear-gradient(135deg, #3b82f6, #2563eb); }
+        .gradient-green .card-icon { background: linear-gradient(135deg, #22c55e, #16a34a); }
+        .gradient-amber .card-icon { background: linear-gradient(135deg, #f59e0b, #d97706); }
+        .gradient-rose .card-icon { background: linear-gradient(135deg, #f43f5e, #e11d48); }
+      `}</style>
     </>
   );
 };

@@ -1,0 +1,58 @@
+/* Fix for dropdown menu display issues */
+.dropdown-menu {
+  position: absolute !important;
+  top: 100% !important;
+  left: 0 !important;
+  z-index: 1000 !important;
+  min-width: 200px !important;
+  background-color: #fff !important;
+  border: 1px solid rgba(0,0,0,.15) !important;
+  border-radius: 0.375rem !important;
+  box-shadow: 0 0.5rem 1rem rgba(0,0,0,.175) !important;
+  padding: 0.5rem 0 !important;
+  margin: 0 !important;
+  list-style: none !important;
+}
+
+.dropdown-menu li {
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+.dropdown-menu li a,
+.dropdown-menu li Link {
+  display: block !important;
+  padding: 0.5rem 1rem !important;
+  color: #212529 !important;
+  text-decoration: none !important;
+  transition: background-color 0.15s ease-in-out !important;
+}
+
+.dropdown-menu li a:hover,
+.dropdown-menu li Link:hover {
+  background-color: #f8f9fa !important;
+  color: #16181b !important;
+}
+
+.dropdown-menu li.active a,
+.dropdown-menu li.active Link {
+  background-color: #e9ecef !important;
+  color: #16181b !important;
+}
+
+/* Ensure dropdown is visible when showAvatarDropdown is true */
+.dropdown-menu[style*="display: block"] {
+  display: block !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+/* Fix for mobile dropdown */
+@media (max-width: 768px) {
+  .dropdown-menu {
+    position: absolute !important;
+    right: 0 !important;
+    left: auto !important;
+    min-width: 180px !important;
+  }
+} 
