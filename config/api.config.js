@@ -169,7 +169,7 @@ const API_CONFIG = {
     process.env.NEXT_PUBLIC_GOOGLE_LOGIN_URL ||
     `${API_CONFIG.BASE_URL}/${API_CONFIG.ENDPOINTS.AUTH.GOOGLE_LOGIN}`,
 
-  // Helper function để tạo URL với query params
+
   getUrlWithParams: (endpoint, params) => {
     const url = API_CONFIG.getUrl(endpoint);
     if (!params) return url;
