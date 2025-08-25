@@ -7,9 +7,9 @@ import MainHeader from "../../../header/MainHeader";
 import MobileMenu from "../../../header/MobileMenu";
 import "../user-manager/user-manager-animations.css";
 import ApiService from "../../../../services/api.service";
-import { useRouter, useSearchParams } from 'next/navigation';
-import { ToastContainer, toast } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
+import { useRouter, useSearchParams } from "next/navigation";
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 const EmployerManagement = () => {
   const [employers, setEmployers] = useState([]);
@@ -20,8 +20,7 @@ const EmployerManagement = () => {
   const [search, setSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const employersPerPage = 10;
-  const [filterStatus, setFilterStatus] = useState('all');
-  const [filterLock, setFilterLock] = useState('all');
+  const [filterStatus, setFilterStatus] = useState("all");
   const [industries, setIndustries] = useState([]);
   const [selectedCompanyImageFile, setSelectedCompanyImageFile] = useState(null);
   const [selectedCompanyLgrImageFile, setSelectedCompanyLgrImageFile] = useState(null);
@@ -34,29 +33,26 @@ const EmployerManagement = () => {
     fetchIndustries();
   }, []);
 
-  // Đọc page, search, filterStatus, filterLock từ query string khi mount
+  // Đọc page, search, filterStatus từ query string khi mount
   useEffect(() => {
-    const pageParam = searchParams.get('page');
-    const searchParam = searchParams.get('search');
-    const statusParam = searchParams.get('status');
-    const lockParam = searchParams.get('lock');
+    const pageParam = searchParams.get("page");
+    const searchParam = searchParams.get("search");
+    const statusParam = searchParams.get("status");
     if (pageParam && !isNaN(Number(pageParam)) && Number(pageParam) > 0) {
       setCurrentPage(Number(pageParam));
     } else {
       setCurrentPage(1);
     }
-    if (typeof searchParam === 'string') setSearch(searchParam);
-    if (typeof statusParam === 'string') setFilterStatus(statusParam);
-    if (typeof lockParam === 'string') setFilterLock(lockParam);
+    if (typeof searchParam === "string") setSearch(searchParam);
+    if (typeof statusParam === "string") setFilterStatus(statusParam);
   }, [searchParams]);
 
   // Khi chuyển trang, cập nhật query string
   const handleSetPage = (page) => {
     const params = new URLSearchParams(Array.from(searchParams.entries()));
-    params.set('page', page);
-    params.set('search', search);
-    params.set('status', filterStatus);
-    params.set('lock', filterLock);
+    params.set("page", page);
+    params.set("search", search);
+    params.set("status", filterStatus);
     router.replace(`?${params.toString()}`);
     setCurrentPage(page);
   };
@@ -66,37 +62,25 @@ const EmployerManagement = () => {
     const value = e.target.value;
     setSearch(value);
     const params = new URLSearchParams(Array.from(searchParams.entries()));
-    params.set('search', value);
-    params.set('page', 1);
-    params.set('status', filterStatus);
-    params.set('lock', filterLock);
+    params.set("search", value);
+    params.set("page", 1);
+    params.set("status", filterStatus);
     router.replace(`?${params.toString()}`);
     setCurrentPage(1);
   };
   const handleFilterStatus = (status) => {
     setFilterStatus(status);
     const params = new URLSearchParams(Array.from(searchParams.entries()));
-    params.set('status', status);
-    params.set('page', 1);
-    params.set('search', search);
-    params.set('lock', filterLock);
-    router.replace(`?${params.toString()}`);
-    setCurrentPage(1);
-  };
-  const handleFilterLock = (lock) => {
-    setFilterLock(lock);
-    const params = new URLSearchParams(Array.from(searchParams.entries()));
-    params.set('lock', lock);
-    params.set('page', 1);
-    params.set('search', search);
-    params.set('status', filterStatus);
+    params.set("status", status);
+    params.set("page", 1);
+    params.set("search", search);
     router.replace(`?${params.toString()}`);
     setCurrentPage(1);
   };
 
   const fetchIndustries = async () => {
     try {
-      const data = await ApiService.getMasterData('INDUSTRIES');
+      const data = await ApiService.getMasterData("INDUSTRIES");
       setIndustries(data);
     } catch (error) {
       setIndustries([]);
@@ -107,7 +91,7 @@ const EmployerManagement = () => {
     try {
       setLoading(true);
       const data = await ApiService.getCompanies();
-      // Map API fields to FE fields
+      // Map API fields to FE fields, bỏ qua IsLocked
       const mapped = data.map((item) => ({
         Id: item.userId,
         CompanyName: item.companyName,
@@ -119,10 +103,8 @@ const EmployerManagement = () => {
         IsVerified: item.isVerified,
         Website: item.website,
         Contact: item.contact,
-        IndustryId: item.industryId || '',
-        IndustryName: item.industryName || 'N/A',
-
-        IsLocked: !item.isActive
+        IndustryId: item.industryId || "",
+        IndustryName: item.industryName || "N/A",
       }));
       setEmployers(mapped);
     } catch (error) {
@@ -136,76 +118,60 @@ const EmployerManagement = () => {
     try {
       await ApiService.verifyCompany(employerId);
       toast.success("Company verified!");
-
       fetchEmployers();
     } catch (error) {
       toast.error("Verification failed.");
     }
   };
 
-  const handleToggleLock = async (employerId, isLocked) => {
-    try {
-      await ApiService.request(
-        `CompanyProfile/${employerId}/${isLocked ? "unlock" : "lock"}`,
-        'PUT'
-      );
-      toast.success(isLocked ? "Company unlocked." : "Company locked.");
-      fetchEmployers();
-    } catch (error) {
-      toast.error("Operation failed.");
-    }
-  };
-
-
-
   // Lấy danh sách industry duy nhất từ employers
-  const industryList = Array.from(new Set(employers.map(e => e.IndustryName).filter(Boolean)));
+  const industryList = Array.from(new Set(employers.map((e) => e.IndustryName).filter(Boolean)));
   // Lấy danh sách team size mẫu
   const teamSizeOptions = [
-    { label: 'All', value: 'all' },
-    { label: '1-50', value: '1-50' },
-    { label: '51-200', value: '51-200' },
-    { label: '201-500', value: '201-500' },
-    { label: '501+', value: '501+' },
+    { label: "All", value: "all" },
+    { label: "1-50", value: "1-50" },
+    { label: "51-200", value: "51-200" },
+    { label: "201-500", value: "201-500" },
+    { label: "501+", value: "501+" },
   ];
 
   // Filter nâng cao
-  const filteredEmployers = employers.filter(emp => {
+  const filteredEmployers = employers.filter((emp) => {
     // Search
-    const matchSearch = emp.CompanyName?.toLowerCase().includes(search.toLowerCase()) ||
+    const matchSearch =
+      emp.CompanyName?.toLowerCase().includes(search.toLowerCase()) ||
       emp.Location?.toLowerCase().includes(search.toLowerCase());
     // Status
-    const matchStatus = filterStatus === 'all' ||
-      (filterStatus === 'verified' && emp.IsVerified) ||
-      (filterStatus === 'pending' && !emp.IsVerified);
+    const matchStatus =
+      filterStatus === "all" ||
+      (filterStatus === "verified" && emp.IsVerified) ||
+      (filterStatus === "pending" && !emp.IsVerified);
 
-    // Lock Status Filter Logic
-    const matchLock = filterLock === 'all' || 
-                      (filterLock === 'locked' ? emp.IsLocked === true : emp.IsLocked === false);
-
-    return matchSearch && matchStatus && matchLock;
-
+    return matchSearch && matchStatus;
   });
 
   // Pagination
   const totalPages = Math.ceil(filteredEmployers.length / employersPerPage);
-  const paginatedEmployers = filteredEmployers.slice((currentPage-1)*employersPerPage, currentPage*employersPerPage);
+  const paginatedEmployers = filteredEmployers.slice(
+    (currentPage - 1) * employersPerPage,
+    currentPage * employersPerPage
+  );
 
   // Reset page về 1 khi filter/search thay đổi
-  useEffect(() => { setCurrentPage(1); }, [search, filterStatus, filterLock]);
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [search, filterStatus]);
 
   // Helper để lấy tên ngành từ id
   const getIndustryName = (id) => {
-
-    const found = industries.find(ind => ind.industryId === id);
+    const found = industries.find((ind) => ind.industryId === id);
     return found ? found.industryName : id;
-
   };
 
   return (
     <>
       <ToastContainer position="top-right" autoClose={3000} />
-      <div className="page-wrapper dashboard" style={{background:'#f7f8fa', minHeight:'100vh'}}>
+      <div className="page-wrapper dashboard" style={{ background: "#f7f8fa", minHeight: "100vh" }}>
         <style>{`
           .employer-card {
             display: flex;
@@ -337,20 +303,8 @@ const EmployerManagement = () => {
           /* .btn.btn-sm { */
           /*   border: 1px solid #ccc; */ /* Example default border */
           /* } */
-          .lock-toggle-btn {
-            border: 1px solid #ccc; /* Default border color */
-            background: #fff; /* White background */
-            color: #777; /* Grey text color */
-            /* Removed hover/focus styles */
-          }
-          .lock-toggle-btn:hover, .lock-toggle-btn:focus { /* Add hover/focus styles */
-            background: #f5f7fa; /* Light blue-grey background on hover/focus */
-            border-color: #1967d2; /* Blue border on hover/focus */
-            color: #1967d2; /* Blue text on hover/focus */
-            box-shadow: 0 2px 8px rgba(25,103,210,0.08);
-            transform: scale(1.05);
-            transition: all 0.18s;
-          }
+          /* Removed lock-toggle-btn styles as they are no longer needed */
+          
           /* Added styles for company name link */
           .employer-info div a {
             color: #333; /* Default color (dark grey/black) */
@@ -433,48 +387,6 @@ const EmployerManagement = () => {
             flex-wrap: wrap;
             gap: 12px;
             align-items: center;
-          }
-          
-          .search-group, .filter-group {
-            position: relative;
-            transition: all 0.3s ease;
-          }
-          
-          .search-input {
-            min-width: 180px;
-            border-radius: 8px;
-            border: 1px solid #e9ecef;
-            transition: all 0.3s ease;
-            padding: 8px 12px;
-            font-size: 14px;
-          }
-          
-          .search-input:focus {
-            border-color: #1967d2;
-            box-shadow: 0 0 0 3px rgba(25, 103, 210, 0.1);
-            transform: translateY(-1px);
-          }
-          
-          .filter-select {
-            min-width: 140px;
-            border-radius: 8px;
-            border: 1px solid #e9ecef;
-            transition: all 0.3s ease;
-            padding: 8px 12px;
-            font-size: 14px;
-            background-color: #fff;
-          }
-          
-          .filter-select:focus {
-            border-color: #1967d2;
-            box-shadow: 0 0 0 3px rgba(25, 103, 210, 0.1);
-            transform: translateY(-1px);
-          }
-          
-          .search-group:hover .search-input,
-          .filter-group:hover .filter-select {
-            border-color: #1967d2;
-            transform: translateY(-1px);
           }
           
           .search-group, .filter-group {
@@ -605,7 +517,7 @@ const EmployerManagement = () => {
             <BreadCrumb title="Company Management" />
             <MenuToggler />
             {alertMsg && (
-              <div className="alert alert-info" style={{marginBottom: 12}}>
+              <div className="alert alert-info" style={{ marginBottom: 12 }}>
                 {alertMsg}
               </div>
             )}
@@ -625,49 +537,63 @@ const EmployerManagement = () => {
                         />
                       </div>
                       <div className="filter-group">
-                        <select 
-                          className="form-select form-select-sm filter-select" 
-                          value={filterStatus} 
-                          onChange={e=>handleFilterStatus(e.target.value)}
+                        <select
+                          className="form-select form-select-sm filter-select"
+                          value={filterStatus}
+                          onChange={(e) => handleFilterStatus(e.target.value)}
                         >
                           <option value="all">All Status</option>
                           <option value="verified">Verified</option>
                           <option value="pending">Pending</option>
                         </select>
                       </div>
-                      <div className="filter-group">
-                        <select 
-                          className="form-select form-select-sm filter-select" 
-                          value={filterLock} 
-                          onChange={e=>handleFilterLock(e.target.value)}
-                        >
-                          <option value="all">All Lock Status</option>
-                          <option value="locked">Locked</option>
-                          <option value="unlocked">Unlocked</option>
-                        </select>
-                      </div>
                     </div>
                   </div>
-                  <div className={`widget-content ${!loading ? 'fade-in' : ''}`}> 
+                  <div className={`widget-content ${!loading ? "fade-in" : ""}`}>
                     {loading ? (
                       <div>
                         {[...Array(8)].map((_, idx) => (
                           <div className="employer-card" key={idx}>
                             <div className="employer-info">
-                              <div className="skeleton-line" style={{ width: 64, height: 64, borderRadius: '50%' }}></div>
+                              <div
+                                className="skeleton-line"
+                                style={{ width: 64, height: 64, borderRadius: "50%" }}
+                              ></div>
                               <div style={{ flex: 1 }}>
-                                <div className="skeleton-line" style={{ width: 180, height: 22, borderRadius: 8, marginBottom: 8 }}></div>
-                                <div style={{ display: 'flex', gap: 18 }}>
-                                  <div className="skeleton-line" style={{ width: 90, height: 16, borderRadius: 6 }}></div>
-                                  <div className="skeleton-line" style={{ width: 60, height: 16, borderRadius: 6 }}></div>
-                                  <div className="skeleton-line" style={{ width: 80, height: 16, borderRadius: 6 }}></div>
-                                  <div className="skeleton-line" style={{ width: 70, height: 16, borderRadius: 6 }}></div>
+                                <div
+                                  className="skeleton-line"
+                                  style={{
+                                    width: 180,
+                                    height: 22,
+                                    borderRadius: 8,
+                                    marginBottom: 8,
+                                  }}
+                                ></div>
+                                <div style={{ display: "flex", gap: 18 }}>
+                                  <div
+                                    className="skeleton-line"
+                                    style={{ width: 90, height: 16, borderRadius: 6 }}
+                                  ></div>
+                                  <div
+                                    className="skeleton-line"
+                                    style={{ width: 60, height: 16, borderRadius: 6 }}
+                                  ></div>
+                                  <div
+                                    className="skeleton-line"
+                                    style={{ width: 80, height: 16, borderRadius: 6 }}
+                                  ></div>
+                                  <div
+                                    className="skeleton-line"
+                                    style={{ width: 70, height: 16, borderRadius: 6 }}
+                                  ></div>
                                 </div>
                               </div>
                             </div>
                             <div className="employer-actions">
-                              <div className="skeleton-line" style={{ width: 120, height: 32, borderRadius: 8, marginBottom: 8 }}></div>
-                              <div className="skeleton-line" style={{ width: 120, height: 32, borderRadius: 8 }}></div>
+                              <div
+                                className="skeleton-line"
+                                style={{ width: 120, height: 32, borderRadius: 8, marginBottom: 8 }}
+                              ></div>
                             </div>
                           </div>
                         ))}
@@ -687,70 +613,87 @@ const EmployerManagement = () => {
                     ) : (
                       <div>
                         {paginatedEmployers.length === 0 ? (
-                          <div style={{padding:32, textAlign:'center'}}>No company found</div>
+                          <div style={{ padding: 32, textAlign: "center" }}>No company found</div>
                         ) : (
                           paginatedEmployers.map((emp) => (
                             <div className="employer-card" key={emp.Id}>
                               <div className="employer-info">
-                                  <img className="employer-logo" src={emp.UrlCompanyLogo || emp.ImageLogoLgr} alt="logo" />
-                                  <div>
-                                    <div style={{fontWeight:600, fontSize:20, marginBottom:4}}>
-                                      <a href={`/employers-single-v1/${emp.Id}`} style={{textDecoration: 'none', cursor: 'pointer'}}>
-                                        {emp.CompanyName}
-                                      </a>
-                                    </div>
-                                    <div className="employer-meta">
-                                      <span><i className="fa fa-map-marker-alt" style={{marginRight:4}}></i> {emp.Location}</span>
-                                      <span><i className="fa fa-users" style={{marginRight:4}}></i> {emp.TeamSize}</span>
-                                      <span><i className="fa fa-briefcase" style={{marginRight:4}}></i> {emp.IndustryName}</span>
-                                      {emp.IsVerified ? (
-                                        <span className="badge bg-success">Verified</span>
-                                      ) : (
-                                        <span className="badge bg-warning">Pending Approval</span>
-                                      )}
-                                    </div>
+                                <img
+                                  className="employer-logo"
+                                  src={emp.UrlCompanyLogo || emp.ImageLogoLgr}
+                                  alt="logo"
+                                />
+                                <div>
+                                  <div style={{ fontWeight: 600, fontSize: 20, marginBottom: 4 }}>
+                                    <a
+                                      href={`/employers-single-v1/${emp.Id}`}
+                                      style={{ textDecoration: "none", cursor: "pointer" }}
+                                    >
+                                      {emp.CompanyName}
+                                    </a>
+                                  </div>
+                                  <div className="employer-meta">
+                                    <span>
+                                      <i className="fa fa-map-marker-alt" style={{ marginRight: 4 }}></i>{" "}
+                                      {emp.Location}
+                                    </span>
+                                    <span>
+                                      <i className="fa fa-users" style={{ marginRight: 4 }}></i> {emp.TeamSize}
+                                    </span>
+                                    <span>
+                                      <i className="fa fa-briefcase" style={{ marginRight: 4 }}></i>{" "}
+                                      {emp.IndustryName}
+                                    </span>
+                                    {emp.IsVerified ? (
+                                      <span className="badge bg-success">Verified</span>
+                                    ) : (
+                                      <span className="badge bg-warning">Pending Approval</span>
+                                    )}
                                   </div>
                                 </div>
-                                <div className="employer-actions">
-                                  {!emp.IsVerified && (
-                                    <button 
-                                      className="btn btn-sm btn-success" 
-                                      onClick={() => handleVerify(emp.Id)}
-                                      style={{
-                                        minWidth: '80px',
-                                        transition: 'all 0.3s ease',
-                                        boxShadow: '0 2px 8px rgba(40, 167, 69, 0.3)'
-                                      }}
-                                    >
-                                      <i className="fas fa-check-circle me-1"></i>
-                                      Approve
-                                    </button>
-                                  )}
-                                  <button 
-                                    className={`btn btn-sm ${emp.IsLocked ? 'btn-success' : 'btn-outline-danger'}`}
-                                    onClick={() => handleToggleLock(emp.Id, emp.IsLocked)}
+                              </div>
+                              <div className="employer-actions">
+                                {!emp.IsVerified && (
+                                  <button
+                                    className="btn btn-sm btn-success"
+                                    onClick={() => handleVerify(emp.Id)}
                                     style={{
-                                      minWidth: '80px',
-                                      transition: 'all 0.3s ease',
-                                      boxShadow: emp.IsLocked ? '0 2px 8px rgba(40, 167, 69, 0.3)' : 'none'
+                                      minWidth: "80px",
+                                      transition: "all 0.3s ease",
+                                      boxShadow: "0 2px 8px rgba(40, 167, 69, 0.3)",
                                     }}
                                   >
-                                    <i className={`fas ${emp.IsLocked ? 'fa-unlock' : 'fa-lock'} me-1`}></i>
-                                    {emp.IsLocked ? "Unlock" : "Lock"}
+                                    <i className="fas fa-check-circle me-1"></i>
+                                    Approve
                                   </button>
-                                </div>
+                                )}
                               </div>
-                            ))
-                          )}
+                            </div>
+                          ))
+                        )}
                         {!loading && filteredEmployers.length > 0 && (
                           (() => {
                             const totalPagesToShow = totalPages >= 1 ? totalPages : 1;
                             return (
-                              <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 16, margin: '24px 0' }}>
+                              <div
+                                style={{
+                                  display: "flex",
+                                  justifyContent: "center",
+                                  alignItems: "center",
+                                  gap: 16,
+                                  margin: "24px 0",
+                                }}
+                              >
                                 <button
                                   disabled={currentPage === 1}
                                   onClick={() => handleSetPage(currentPage - 1)}
-                                  style={{ background: 'none', border: 'none', fontSize: 22, cursor: 'pointer', color: currentPage === 1 ? '#ccc' : '#444' }}
+                                  style={{
+                                    background: "none",
+                                    border: "none",
+                                    fontSize: 22,
+                                    cursor: "pointer",
+                                    color: currentPage === 1 ? "#ccc" : "#444",
+                                  }}
                                 >
                                   &#8592;
                                 </button>
@@ -761,16 +704,16 @@ const EmployerManagement = () => {
                                     style={{
                                       width: 40,
                                       height: 40,
-                                      borderRadius: '50%',
-                                      background: currentPage === i + 1 ? '#1967d2' : 'none',
-                                      color: currentPage === i + 1 ? '#fff' : '#444',
-                                      border: 'none',
+                                      borderRadius: "50%",
+                                      background: currentPage === i + 1 ? "#1967d2" : "none",
+                                      color: currentPage === i + 1 ? "#fff" : "#444",
+                                      border: "none",
                                       fontWeight: 600,
                                       fontSize: 18,
-                                      cursor: 'pointer',
-                                      outline: 'none',
-                                      boxShadow: 'none',
-                                      transition: 'background 0.2s, color 0.2s'
+                                      cursor: "pointer",
+                                      outline: "none",
+                                      boxShadow: "none",
+                                      transition: "background 0.2s, color 0.2s",
                                     }}
                                   >
                                     {i + 1}
@@ -779,7 +722,14 @@ const EmployerManagement = () => {
                                 <button
                                   disabled={currentPage === totalPagesToShow || totalPagesToShow === 0}
                                   onClick={() => handleSetPage(currentPage + 1)}
-                                  style={{ background: 'none', border: 'none', fontSize: 22, cursor: 'pointer', color: currentPage === totalPagesToShow || totalPagesToShow === 0 ? '#ccc' : '#444' }}
+                                  style={{
+                                    background: "none",
+                                    border: "none",
+                                    fontSize: 22,
+                                    cursor: "pointer",
+                                    color:
+                                      currentPage === totalPagesToShow || totalPagesToShow === 0 ? "#ccc" : "#444",
+                                  }}
                                 >
                                   &#8594;
                                 </button>
@@ -800,4 +750,4 @@ const EmployerManagement = () => {
   );
 };
 
-export default EmployerManagement; 
+export default EmployerManagement;
