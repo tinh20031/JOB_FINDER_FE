@@ -322,6 +322,46 @@ getApplicationById: async (applicationId) => {
       console.error('Error fetching matching job applicants:', error);
       throw error;
     }
+  },
+
+  // Check if job has pending applications
+  checkPendingApplications: async (jobId) => {
+    try {
+      const token = getToken();
+      if (!token) {
+        throw new Error('No authentication token found');
+      }
+      const response = await axios.get(
+        `${API_URL}/Application/job/${jobId}`,
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+      
+      // Filter applications to find pending ones (status = 0 hoặc 'pending')
+      const applications = response.data || [];
+      const pendingApplications = applications.filter(app => 
+        app.status === 0 || app.status === 'pending' || 
+        app.status?.toLowerCase() === 'pending'
+      );
+      
+      return {
+        hasPendingApplications: pendingApplications.length > 0,
+        pendingCount: pendingApplications.length,
+        applications: applications
+      };
+    } catch (error) {
+      console.error('Error checking pending applications:', error);
+      // If error occurs, assume no pending applications
+      return {
+        hasPendingApplications: false,
+        pendingCount: 0,
+        applications: []
+      };
+    }
   }
 };
 
