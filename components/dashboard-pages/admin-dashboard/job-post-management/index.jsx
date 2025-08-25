@@ -97,11 +97,10 @@ const JobPostManagement = () => {
   const [filterLock, setFilterLock] = useState("");
 
   const jobStatuses = [
-    { value: 0, label: "Draft" },
     { value: 1, label: "Pending" },
     { value: 2, label: "Active" },
     { value: 3, label: "Inactive" },
-    { value: 4, label: "Inactive (Admin)" }
+    { value: 4, label: "Rejected" }
   ];
 
   const lockStatuses = [
@@ -278,19 +277,17 @@ const JobPostManagement = () => {
         if (new Date(job.timeEnd) < now) baseStatus = 'Expired';
         else baseStatus = 'Inactive';
       }
-      else if (job.status === 4) {
-        if (new Date(job.timeEnd) < now) baseStatus = 'Expired';
-        else baseStatus = 'Inactive (Admin)';
-      }
+      else     if (job.status === 4) {
+      if (new Date(job.timeEnd) < now) baseStatus = 'Expired';
+      else baseStatus = 'Rejected';
+    }
       else baseStatus = 'Unknown';
       
       return { label: `${baseStatus} (Locked)`, color: 'bg-danger' };
     }
     
     // Nếu không bị lock, hiển thị trạng thái bình thường
-    if (job.status === 0) {
-      return { label: 'Draft', color: 'bg-info' };
-    }
+
     if (job.status === 1) {
       if (new Date(job.timeEnd) < now) return { label: 'Expired', color: 'bg-dark' };
       return { label: 'Pending', color: 'bg-warning' };
@@ -302,13 +299,11 @@ const JobPostManagement = () => {
     }
     if (job.status === 3) {
       if (new Date(job.timeEnd) < now) return { label: 'Expired', color: 'bg-dark' };
-      if (new Date(job.timeStart) > now) return { label: 'Cancelled', color: 'bg-secondary' };
       return { label: 'Inactive', color: 'bg-secondary' };
     }
     if (job.status === 4) {
       if (new Date(job.timeEnd) < now) return { label: 'Expired', color: 'bg-dark' };
-      if (new Date(job.timeStart) > now) return { label: 'Cancelled', color: 'bg-secondary' };
-      return { label: 'Inactive (Admin)', color: 'bg-danger' };
+      return { label: 'Rejected', color: 'bg-danger' };
     }
     return { label: 'Unknown', color: 'bg-secondary' };
   }
@@ -433,7 +428,7 @@ const JobPostManagement = () => {
             <p>
               Are you sure you want to change the status of job "<strong>{selectedJob?.title}</strong>" to{" "}
               <span style={{ fontWeight: 'bold' }}>
-                {newStatus === JobStatus.ACTIVE ? "Active" : "Inactive (Admin)"}
+                                                {newStatus === JobStatus.ACTIVE ? "Active" : "Rejected"}
               </span>?
             </p>
           </Modal>

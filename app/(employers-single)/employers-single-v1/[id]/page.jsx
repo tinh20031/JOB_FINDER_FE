@@ -456,25 +456,9 @@ const EmployersSingleV1 = ({ params }) => {
                         <li>
                           Company size: <span>{company.teamSize}</span>
                         </li>
-                        {isLoggedIn ? (
                           <li>
                             Contact: <span>{company.contact}</span>
                           </li>
-                        ) : (
-                          <li>
-                            Contact: <span style={{ filter: 'blur(4px)' }}>Login required</span>
-                            <a
-                              href="#"
-                              className="theme-btn btn-style-three call-modal"
-                              data-bs-toggle="modal"
-                              data-bs-target="#loginPopupModal"
-                              style={{ marginLeft: 10, padding: '4px 10px', fontSize: 13 }}
-                              onClick={(e) => e.preventDefault()}
-                            >
-                              Login to view
-                            </a>
-                          </li>
-                        )}
                         {/* <li>
                           Social media:
                           <Social />

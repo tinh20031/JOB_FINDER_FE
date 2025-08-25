@@ -3,7 +3,6 @@
  * Định nghĩa các trạng thái của job
  */
 export const JobStatus = {
-  DRAFT: 0,
   PENDING: 1,
   ACTIVE: 2,
   INACTIVE: 3,
@@ -14,29 +13,26 @@ export const JobStatus = {
  * Job Status Labels (Tiếng Việt)
  */
 export const JobStatusLabels = {
-  [JobStatus.DRAFT]: "Draft",
 [JobStatus.PENDING]: "Pending",
 [JobStatus.ACTIVE]: "Active",
 [JobStatus.INACTIVE]: "Paused",
-[JobStatus.INACTIVEBYADMIN]: "Paused (Admin)"
+[JobStatus.INACTIVEBYADMIN]: "Rejected"
 };
 
 /**
  * Job Status Labels (English)
  */
 export const JobStatusLabelsEN = {
-  [JobStatus.DRAFT]: "Draft",
   [JobStatus.PENDING]: "Pending",
   [JobStatus.ACTIVE]: "Active", 
   [JobStatus.INACTIVE]: "Inactive",
-  [JobStatus.INACTIVEBYADMIN]: "Inactive (Admin)"
+  [JobStatus.INACTIVEBYADMIN]: "Rejected"
 };
 
 /**
  * Job Status Colors for UI
  */
 export const JobStatusColors = {
-  [JobStatus.DRAFT]: "bg-info",
   [JobStatus.PENDING]: "bg-warning",
   [JobStatus.ACTIVE]: "bg-success",
   [JobStatus.INACTIVE]: "bg-secondary",
@@ -74,12 +70,7 @@ export const isJobPending = (status) => {
   return status === JobStatus.PENDING;
 };
 
-/**
- * Helper function to check if job is draft
- */
-export const isJobDraft = (status) => {
-  return status === JobStatus.DRAFT;
-};
+// Removed isJobDraft function
 
 /**
  * Helper function to check if job is inactive
