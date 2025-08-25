@@ -1,39 +1,51 @@
-import axios from "axios";
-
-const BASE_API_URL = "https://34tinhthanh.com/api";
+// Use local JSON data as the source of truth
+import locations from "../location.json";
 
 const locationService = {
-  // Lấy danh sách tỉnh/thành phố từ API
+  // Lấy danh sách tỉnh/thành phố từ local JSON, giữ nguyên shape consumer đang dùng
   getProvinces: async () => {
     try {
-      const response = await axios.get(`${BASE_API_URL}/provinces`);
-      return response.data;
+      if (Array.isArray(locations)) {
+        return locations.map((p) => ({
+          province_code: p.province_code,
+          name: p.name,
+          short_name: p.short_name,
+          code: p.code,
+          place_type: p.place_type,
+        }));
+      }
+      return [];
     } catch (error) {
-      console.error("Error fetching provinces:", error);
-      throw error;
+      console.error("Error reading local provinces:", error);
+      return [];
     }
   },
 
-
-  getDistricts: async (provinceCode) => {
+  // Hiện không dùng trong codebase; trả về mảng rỗng để tương thích
+  getDistricts: async (_provinceCode) => {
     try {
-     
-      const response = await axios.get(`${BASE_API_URL}/districts?province_code=${provinceCode}`);
-      return response.data; 
+      return [];
     } catch (error) {
-      console.error("Error fetching districts:", error);
-      throw error;
+      console.error("Error reading local districts:", error);
+      return [];
     }
   },
 
-  // Lấy danh sách phường/xã của một tỉnh/thành phố
+  // Lấy danh sách phường/xã theo province_code, chuẩn hoá field ward_name cho phù hợp consumer
   getWards: async (provinceCode) => {
     try {
-      const response = await axios.get(`${BASE_API_URL}/wards?province_code=${provinceCode}`);
-      return response.data;
+      const province = Array.isArray(locations)
+        ? locations.find((p) => String(p.province_code) === String(provinceCode))
+        : null;
+      const wards = province?.wards || [];
+      return wards.map((w) => ({
+        ward_code: w.ward_code,
+        ward_name: w.name, // normalize to ward_name as used in UI
+        province_code: w.province_code || provinceCode,
+      }));
     } catch (error) {
-      console.error("Error fetching wards:", error);
-      throw error;
+      console.error("Error reading local wards:", error);
+      return [];
     }
   },
 };
