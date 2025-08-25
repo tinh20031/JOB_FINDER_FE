@@ -19,7 +19,7 @@ const JobListingsTable = () => {
   const [loading, setLoading] = useState(true);
   const [currentUserId, setCurrentUserId] = useState(null);
   const [statusLoadingId, setStatusLoadingId] = useState(null);
-  const [lockLoadingId, setLockLoadingId] = useState(null);
+  // Removed lockLoadingId state
   const [showStatusModal, setShowStatusModal] = useState(false);
   const [pendingStatusJob, setPendingStatusJob] = useState(null);
   const [pendingNewStatus, setPendingNewStatus] = useState(null);
@@ -127,19 +127,7 @@ const JobListingsTable = () => {
     }
   };
 
-  // Lock/Unlock (admin)
-  const handleLockJob = async (job) => {
-    setLockLoadingId(job.id);
-    try {
-      await jobService.lockJob(job.id, !job.deactivatedByAdmin);
-      const jobsResponse = await jobService.getJobs({ role: 'company', companyId: currentUserId });
-      setJobs(jobsResponse.data);
-    } catch (err) {
-      alert('Failed to lock/unlock: ' + (err?.response?.data || err.message));
-    } finally {
-      setLockLoadingId(null);
-    }
-  };
+  // Removed handleLockJob function
 
   const handleRequestChangeStatus = (job, newStatus) => {
     setPendingStatusJob(job);
@@ -218,31 +206,14 @@ const JobListingsTable = () => {
     
     // Kiểm tra trạng thái lock trước
     if (job.deactivatedByAdmin) {
-      // Nếu job bị lock, hiển thị trạng thái gốc + "Locked"
-      let baseStatus = '';
-      if (job.status === 0) baseStatus = 'Draft';
-      else if (job.status === 1) baseStatus = 'Pending';
-      else if (job.status === 2) {
-        if (new Date(job.timeStart) > now) baseStatus = 'Not Started';
-        else if (new Date(job.timeEnd) < now) baseStatus = 'Expired';
-        else baseStatus = 'Active';
-      }
-      else if (job.status === 3) {
-        if (new Date(job.timeEnd) < now) baseStatus = 'Expired';
-        else baseStatus = 'Inactive';
-      }
-      else if (job.status === 4) {
-        if (new Date(job.timeEnd) < now) baseStatus = 'Expired';
-        else baseStatus = 'Inactive (Admin)';
-      }
-      else baseStatus = 'Unknown';
-      
-      return `${baseStatus} (Locked)`;
+      return 'Locked';
     }
     
     // Nếu không bị lock, hiển thị trạng thái bình thường
-    if (job.status === 0) return "Draft";
-    if (job.status === 1) return "Pending";
+    if (job.status === 1) {
+      // Pending luôn hiển thị Pending theo yêu cầu
+      return "Pending";
+    }
     if (job.status === 2) {
       if (new Date(job.timeStart) > now) return "Not Started";
       if (new Date(job.timeEnd) < now) return "Expired";
@@ -250,13 +221,10 @@ const JobListingsTable = () => {
     }
     if (job.status === 3) {
       if (new Date(job.timeEnd) < now) return "Expired";
-      if (new Date(job.timeStart) > now) return "Cancelled";
       return "Inactive";
     }
     if (job.status === 4) {
-      if (new Date(job.timeEnd) < now) return "Expired";
-      if (new Date(job.timeStart) > now) return "Cancelled";
-      return "Inactive (Admin)";
+      return "Rejected";
     }
     return "Unknown";
   }
@@ -267,27 +235,11 @@ const JobListingsTable = () => {
     
     // Kiểm tra trạng thái lock trước
     if (job.deactivatedByAdmin) {
-      // Nếu job bị lock, tạo class name cho trạng thái locked
-      if (job.status === 0) return 'status-draft';
-      else if (job.status === 1) return 'status-pending--locked';
-      else if (job.status === 2) {
-        if (new Date(job.timeStart) > now) return 'status-not-started';
-        else if (new Date(job.timeEnd) < now) return 'status-expired';
-        else return 'status-active--locked';
-      }
-      else if (job.status === 3) {
-        if (new Date(job.timeEnd) < now) return 'status-expired';
-        else return 'status-inactive--locked';
-      }
-      else if (job.status === 4) {
-        if (new Date(job.timeEnd) < now) return 'status-expired';
-        else return 'status-inactive--admin';
-      }
-      else return 'status-unknown';
+      // Locked
+      return 'status-locked';
     }
     
     // Nếu không bị lock, tạo class name bình thường
-    if (job.status === 0) return 'status-draft';
     if (job.status === 1) return 'status-pending';
     if (job.status === 2) {
       if (new Date(job.timeStart) > now) return 'status-not-started';
@@ -296,13 +248,10 @@ const JobListingsTable = () => {
     }
     if (job.status === 3) {
       if (new Date(job.timeEnd) < now) return 'status-expired';
-      if (new Date(job.timeStart) > now) return 'status-cancelled';
       return 'status-inactive';
     }
     if (job.status === 4) {
-      if (new Date(job.timeEnd) < now) return 'status-expired';
-      if (new Date(job.timeStart) > now) return 'status-cancelled';
-      return 'status-inactive--admin';
+      return 'status-rejected';
     }
     return 'status-unknown';
   }
@@ -375,14 +324,12 @@ const JobListingsTable = () => {
             {/* Filter theo trạng thái */}
             <select className="chosen-single form-select" value={filterStatus} onChange={e=>{setFilterStatus(e.target.value); setCurrentPage(1);}}>
               <option value="all">All Status</option>
-              {/* <option value="draft">Draft</option> */}
               <option value="pending">Pending</option>
               <option value="active">Active</option>
               <option value="inactive">Inactive</option>
-              <option value="inactive (admin)">Inactive (Admin)</option>
+               <option value="rejected">Rejected</option>
               <option value="expired">Expired</option>
               <option value="locked">Locked</option>
-              <option value="cancelled">Cancelled</option>
               <option value="not started">Not Started</option>
             </select>
             {/* Filter theo thời gian */}
@@ -412,12 +359,11 @@ const JobListingsTable = () => {
               </thead>
               <tbody>
                 {paginatedJobs.map((job) => {
-                      const isDraft = job.status === 0;
     const isPending = job.status === 1;
     const isExpired = new Date(job.timeEnd) < new Date();
+     const isInactiveByAdmin = job.status === 4; // INACTIVEBYADMIN
     const isLocked = job.deactivatedByAdmin;
-    const isInactiveByAdmin = job.status === 4; // INACTIVEBYADMIN
-    const disableStatusButton = isDraft || isPending || isExpired || isLocked || isInactiveByAdmin;
+     const disableStatusButton = isPending || isExpired || isInactiveByAdmin || isLocked;
     const isActive = job.status === 2;
                   const canViewDetail = isActive || isExpired;
                   return (
@@ -515,9 +461,8 @@ const JobListingsTable = () => {
                                 </button>
                               </li>
                             )}
-                            {/* Admin: dropdown đổi status + lock/unlock */}
+                                                         {/* Admin: dropdown đổi status */}
                             {userRole === 'admin' && (
-                              <>
                                 <li>
                                   <select
                                     value={job.status}
@@ -525,29 +470,12 @@ const JobListingsTable = () => {
                                     onChange={e => handleChangeStatus(job, e.target.value)}
                                     style={{ minWidth: 90 }}
                                   >
-                                      <option value={0}>Draft</option>
                                       <option value={1}>Pending</option>
                                       <option value={2}>Active</option>
                                       <option value={3}>Inactive</option>
-                                      <option value={4}>Inactive (Admin)</option>
+                                     <option value={4}>Rejected</option>
                                   </select>
                                 </li>
-                                <li>
-                                  <button
-                                    disabled={lockLoadingId === job.id}
-                                    onClick={() => handleLockJob(job)}
-                                    data-text={job.deactivatedByAdmin ? 'Unlock' : 'Lock'}
-                                  >
-                                    {lockLoadingId === job.id ? (
-                                      <span className="la la-spinner fa-spin"></span>
-                                    ) : job.deactivatedByAdmin ? (
-                                      <span className="la la-unlock"></span>
-                                    ) : (
-                                      <span className="la la-lock"></span>
-                                    )}
-                                  </button>
-                                </li>
-                              </>
                             )}
                             <li>
                               <button

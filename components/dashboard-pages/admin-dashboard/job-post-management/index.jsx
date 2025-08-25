@@ -100,7 +100,9 @@ const JobPostManagement = () => {
     { value: 1, label: "Pending" },
     { value: 2, label: "Active" },
     { value: 3, label: "Inactive" },
-    { value: 4, label: "Rejected" }
+    { value: 4, label: "Rejected" },
+    { value: "not_started", label: "Not Started" },
+    { value: "expired", label: "Expired" }
   ];
 
   const lockStatuses = [
@@ -176,7 +178,56 @@ const JobPostManagement = () => {
       const matchSearch = searchKeyword === "" || job.title?.toLowerCase().includes(searchKeyword.toLowerCase());
       const matchCompany = selectedCompany === "" || job.company?.companyName?.toLowerCase().includes(selectedCompany.toLowerCase());
       const matchIndustry = selectedIndustry === "" || job.industry?.industryId === parseInt(selectedIndustry);
-      const matchStatus = filterStatus === "" || job.status === parseInt(filterStatus);
+      const derivedStatusLabel = (() => {
+        const now = new Date();
+        if (job.deactivatedByAdmin) {
+          if (job.status === 1) return 'pending (locked)';
+          if (job.status === 2) {
+            if (new Date(job.timeStart) > now) return 'not started';
+            if (new Date(job.timeEnd) < now) return 'expired ';
+            return 'active';
+          }
+          if (job.status === 3) {
+            if (new Date(job.timeEnd) < now) return 'expired (locked)';
+            return 'inactive (locked)';
+          }
+          if (job.status === 4) {
+            if (new Date(job.timeEnd) < now) return 'expired (locked)';
+            return 'rejected (locked)';
+          }
+          return 'unknown (locked)';
+        }
+        if (job.status === 1) {
+          if (new Date(job.timeEnd) < now) return 'expired';
+          return 'pending';
+        }
+        if (job.status === 2) {
+          if (new Date(job.timeStart) > now) return 'not started';
+          if (new Date(job.timeEnd) < now) return 'expired';
+          return 'active';
+        }
+        if (job.status === 3) {
+          if (new Date(job.timeEnd) < now) return 'expired';
+          return 'inactive';
+        }
+        if (job.status === 4) {
+          if (new Date(job.timeEnd) < now) return 'expired';
+          return 'rejected';
+        }
+        return 'unknown';
+      })();
+
+      const matchStatus = (() => {
+        if (filterStatus === "") return true;
+        const numeric = parseInt(filterStatus);
+        if (!isNaN(numeric)) {
+          return job.status === numeric;
+        }
+        if (filterStatus === 'not_started') return derivedStatusLabel.startsWith('not started');
+        if (filterStatus === 'expired') return derivedStatusLabel.startsWith('expired');
+        return true;
+      })();
+
       const matchLock = filterLock === "" || 
         (filterLock === "locked" && job.deactivatedByAdmin) || 
         (filterLock === "unlocked" && !job.deactivatedByAdmin);
@@ -264,32 +315,12 @@ const JobPostManagement = () => {
     
     // Kiểm tra trạng thái lock trước
     if (job.deactivatedByAdmin) {
-      // Nếu job bị lock, hiển thị trạng thái gốc + "Locked"
-      let baseStatus = '';
-      if (job.status === 0) baseStatus = 'Draft';
-      else if (job.status === 1) baseStatus = 'Pending';
-      else if (job.status === 2) {
-        if (new Date(job.timeStart) > now) baseStatus = 'Not Started';
-        else if (new Date(job.timeEnd) < now) baseStatus = 'Expired';
-        else baseStatus = 'Active';
-      }
-      else if (job.status === 3) {
-        if (new Date(job.timeEnd) < now) baseStatus = 'Expired';
-        else baseStatus = 'Inactive';
-      }
-      else     if (job.status === 4) {
-      if (new Date(job.timeEnd) < now) baseStatus = 'Expired';
-      else baseStatus = 'Rejected';
-    }
-      else baseStatus = 'Unknown';
-      
-      return { label: `${baseStatus} (Locked)`, color: 'bg-danger' };
+      return { label: 'Locked', color: 'bg-danger' };
     }
     
     // Nếu không bị lock, hiển thị trạng thái bình thường
 
     if (job.status === 1) {
-      if (new Date(job.timeEnd) < now) return { label: 'Expired', color: 'bg-dark' };
       return { label: 'Pending', color: 'bg-warning' };
     }
     if (job.status === 2) {
@@ -302,7 +333,6 @@ const JobPostManagement = () => {
       return { label: 'Inactive', color: 'bg-secondary' };
     }
     if (job.status === 4) {
-      if (new Date(job.timeEnd) < now) return { label: 'Expired', color: 'bg-dark' };
       return { label: 'Rejected', color: 'bg-danger' };
     }
     return { label: 'Unknown', color: 'bg-secondary' };
