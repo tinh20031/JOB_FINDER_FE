@@ -1,12 +1,12 @@
 // API Configuration
 const API_CONFIG = {
 
-  // BASE_URL: process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5194/api",
-  // SIGNALR_CHAT_HUB_URL: process.env.NEXT_PUBLIC_SIGNALR_CHAT_HUB_URL || "http://localhost:5194/chathub",
-  // SIGNALR_NOTIFICATION_HUB_URL: process.env.NEXT_PUBLIC_SIGNALR_NOTIFICATION_HUB_URL || "http://localhost:5194/notificationHub",
-  BASE_URL: "https://job-finder-kjt2.onrender.com/api",
-  SIGNALR_CHAT_HUB_URL: "https://job-finder-kjt2.onrender.com/chathub",
-  SIGNALR_NOTIFICATION_HUB_URL: "https://job-finder-kjt2.onrender.com/notificationHub",
+  BASE_URL: process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5194/api",
+  SIGNALR_CHAT_HUB_URL: process.env.NEXT_PUBLIC_SIGNALR_CHAT_HUB_URL || "http://localhost:5194/chathub",
+  SIGNALR_NOTIFICATION_HUB_URL: process.env.NEXT_PUBLIC_SIGNALR_NOTIFICATION_HUB_URL || "http://localhost:5194/notificationHub",
+  // BASE_URL: "https://job-finder-kjt2.onrender.com/api",
+  // SIGNALR_CHAT_HUB_URL: "https://job-finder-kjt2.onrender.com/chathub",
+  // SIGNALR_NOTIFICATION_HUB_URL: "https://job-finder-kjt2.onrender.com/notificationHub",
 
   ENDPOINTS: {
     AUTH: {
@@ -148,6 +148,11 @@ const API_CONFIG = {
       DASHBOARD: "RevenueStatistics/dashboard",
       EXPORT: "RevenueStatistics/export",
       PACKAGE_UPGRADES: "RevenueStatistics/package-upgrades",
+    },
+    CANDIDATE_TO_COMPANY: {
+      BASE: "candidatetocompany",
+      REQUESTS: "candidatetocompany/requests",
+      PROCESS_UPGRADE: (userId) => `candidatetocompany/process-upgrade/${userId}`,
     },
     LEVEL: "/Level",
     JOB_TYPE: "/JobType",

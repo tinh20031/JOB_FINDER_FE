@@ -21,6 +21,13 @@ module.exports = [
       active: "",
     },
     {
+      id: 3.5,
+      name: "Upgrade Requests",
+      icon: "la-user-plus",
+      routePath: "/admin-dashboard/upgrade-requests",
+      active: "",
+    },
+    {
       id: 4,
       name: "Job Post Management",
       icon: "la-briefcase",

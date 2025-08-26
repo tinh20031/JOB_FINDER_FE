@@ -112,7 +112,7 @@ const UserDetailPage = () => {
   const handleVerify = async () => {
     setConfirmLoading(true);
     try {
-      await userService.verifyCandidate(UserIdInt);
+      await userService.processUpgrade(UserIdInt, 'approve');
       // ĐÃ XÓA: KHÔNG cập nhật localStorage hoặc Redux ở đây!
       setConfirmModalOpen(false);
       setSuccessModalOpen(true);
@@ -176,14 +176,14 @@ const UserDetailPage = () => {
                   </ul>
                 </div>
                 <div className="btn-box">
-                  {user.role === 'Candidate' && (
+                  {false && (
                     <>
                       <button
                         className="theme-btn btn-style-one"
                         style={{marginLeft: 8}}
                         onClick={() => setConfirmModalOpen(true)}
                       >
-                        Set user to recruiter
+                        Approve upgrade
                       </button>
                       <Modal
                         open={confirmModalOpen}
@@ -210,7 +210,7 @@ const UserDetailPage = () => {
                         }
                       >
                         <div style={{ fontSize: 20, fontWeight: 600, marginBottom: 24, color: '#222' }}>
-                          Are you sure to set this user become an recruiter?
+                          Approve this user's upgrade request?
                         </div>
                       </Modal>
                       <Modal
