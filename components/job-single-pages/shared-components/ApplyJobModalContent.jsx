@@ -29,6 +29,7 @@ const ApplyJobModalContent = ({ jobId, onClose }) => {
   const [coverLetterError, setCoverLetterError] = useState("");
   const [showProfileWarning, setShowProfileWarning] = useState(false);
   const [showCancelConfirmModal, setShowCancelConfirmModal] = useState(false);
+  const [showJobLimitModal, setShowJobLimitModal] = useState(false);
 
   // Lấy CV mới nhất (giả sử sort theo createdAt giảm dần)
   const latestCV = cvList && cvList.length > 0
@@ -228,11 +229,20 @@ const ApplyJobModalContent = ({ jobId, onClose }) => {
       if (
         error.response &&
         error.response.status === 400 &&
-        errorMsg.toLowerCase().includes("vui lòng cập nhật đầy đủ thông tin cá nhân")
+        errorMsg.toLowerCase().includes("Please update your personal information completely.")
       ) {
         setIsLoading(false);
         setShowProfileWarning(true);
         // Không setError, không toast!
+      } else if (
+        error.response &&
+        error.response.status === 400 &&
+        (errorMsg.includes("You are only allowed to apply for a maximum of 3 positions.") ||
+         errorMsg.includes("maximum 3 pending applications"))
+      ) {
+        // Special handling for 3-job limit error - show detailed modal
+        setIsLoading(false);
+        setShowJobLimitModal(true);
       } else {
         setError(errorMsg);
         toast.error(errorMsg);
@@ -500,6 +510,72 @@ const ApplyJobModalContent = ({ jobId, onClose }) => {
             <div style={{display: 'flex', justifyContent: 'center', gap: 16}}>
               <button className="btn-cancel" style={{minWidth: 80, padding: '8px 0', borderRadius: 6, border: '1px solid #ccc', background: '#f7f7f7', color: '#333', fontWeight: 500, fontSize: 16}} onClick={handleCancelCancel}>No</button>
               <button className="btn-confirm" style={{minWidth: 80, padding: '8px 0', borderRadius: 6, border: 'none', background: '#2563eb', color: '#fff', fontWeight: 600, fontSize: 16}} onClick={handleConfirmCancel}>Yes</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal thông báo giới hạn 3 job */}
+      {showJobLimitModal && (
+        <div style={{
+          position: 'fixed',
+          top: 0, left: 0, width: '100vw', height: '100vh',
+          background: 'rgba(0,0,0,0.18)',
+          zIndex: 2000,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+        }}>
+          <div style={{
+            background: '#fff',
+            borderRadius: 12,
+            boxShadow: '0 8px 32px rgba(0,0,0,0.18)',
+            minWidth: 420,
+            maxWidth: '90vw',
+            padding: '32px 28px 24px 28px',
+            position: 'relative',
+            textAlign: 'center',
+          }}>
+            <button
+              onClick={() => setShowJobLimitModal(false)}
+              style={{
+                position: 'absolute', top: 16, right: 18, border: 'none', background: 'transparent', fontSize: 22, color: '#888', cursor: 'pointer', fontWeight: 400
+              }}
+              aria-label="Close"
+            >
+              ×
+            </button>
+            <div style={{fontSize: 28, marginBottom: 16}}>⚠️</div>
+            <h3 style={{fontWeight: 700, fontSize: 22, marginBottom: 18, color: '#dc3545'}}>Đã đạt giới hạn ứng tuyển</h3>
+            <div style={{fontSize: 16, color: '#444', marginBottom: 8, lineHeight: 1.5}}>
+            You have 3 applications pending at this company.
+            </div>
+            <div style={{fontSize: 14, color: '#666', marginBottom: 28, lineHeight: 1.4}}>
+            Please wait for the results of your previous applications before applying for new positions with this company.
+            </div>
+            <div style={{display: 'flex', justifyContent: 'center', gap: 16}}>
+              <button 
+                style={{
+                  minWidth: 100, padding: '10px 16px', borderRadius: 6, 
+                  border: '1px solid #ccc', background: '#f7f7f7', color: '#333', 
+                  fontWeight: 500, fontSize: 14, cursor: 'pointer'
+                }} 
+                onClick={() => setShowJobLimitModal(false)}
+              >
+                Close
+              </button>
+              <button 
+                style={{
+                  minWidth: 100, padding: '10px 16px', borderRadius: 6, 
+                  border: 'none', background: '#1967d2', color: '#fff', 
+                  fontWeight: 600, fontSize: 14, cursor: 'pointer'
+                }} 
+                onClick={() => {
+                  setShowJobLimitModal(false);
+                  if (onClose) onClose();
+                  router.push('/candidates-dashboard/applied-jobs');
+                }}
+              >
+                View submitted applications
+              </button>
             </div>
           </div>
         </div>

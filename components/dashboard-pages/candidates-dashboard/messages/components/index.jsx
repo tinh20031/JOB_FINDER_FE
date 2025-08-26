@@ -258,7 +258,7 @@ const ChatBox = () => {
 
     const currentChatPartner = chatContacts.find(c => String(c.id) === String(currentChatPartnerId));
 
-    console.log("[DEBUG] chatContacts:", chatContacts);
+    
     return (
         <div className="row" style={{ height: "100%" }}>
             <div className="contacts_column col-xl-4 col-lg-5 col-md-12 col-sm-12 chat" style={{ height: "100%" }} id="chat_contacts">

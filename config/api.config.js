@@ -24,7 +24,7 @@ const API_CONFIG = {
       PROFILE: "users/profile",
       VERIFY: (id) => `users/${id}/verify`,
       LOCK: (id) => `User/${id}/lock`,
-      UNLOCK: (id) => `User/${id}/unlock`,
+      UNLOCK: (id) => `User/${id}/unlock`,  
       CHANGE_PASSWORD: "users/change-password",
       UPDATE_PROFILE: "users/update-profile",
       UPLOAD_AVATAR: "users/upload-avatar",

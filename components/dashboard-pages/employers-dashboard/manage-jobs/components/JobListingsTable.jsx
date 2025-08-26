@@ -4,11 +4,13 @@ import Link from "next/link";
 import Image from "next/image.js";
 import { useEffect, useState } from "react";
 import { jobService } from "../../../../../services/jobService";
+import { applicationService } from "../../../../../services/applicationService";
 import { useRouter, useSearchParams } from "next/navigation";
 import "./JobListingsTable.css";
 import Cookies from "js-cookie";
 import { motion, AnimatePresence } from 'framer-motion';
 import Modal from "@/components/common/Modal";
+import PendingApplicationsModal from "@/components/common/PendingApplicationsModal";
 import "@/styles/modal.css";
 
 const JobListingsTable = () => {
@@ -26,6 +28,9 @@ const JobListingsTable = () => {
   const [appliedCounts, setAppliedCounts] = useState({});
   const [showStartDateModal, setShowStartDateModal] = useState(false);
   const [pendingActivateJob, setPendingActivateJob] = useState(null);
+  const [showPendingAppsModal, setShowPendingAppsModal] = useState(false);
+  const [pendingAppsJob, setPendingAppsJob] = useState(null);
+  const [pendingAppsCount, setPendingAppsCount] = useState(0);
   const userRole = (typeof window !== 'undefined' && (localStorage.getItem('role') || Cookies?.get?.('role') || ''))?.toLowerCase();
   const [currentPage, setCurrentPage] = useState(1);
   const jobsPerPage = 10;
@@ -129,7 +134,26 @@ const JobListingsTable = () => {
 
   // Removed handleLockJob function
 
-  const handleRequestChangeStatus = (job, newStatus) => {
+  const handleRequestChangeStatus = async (job, newStatus) => {
+    // Nếu là deactivate job, kiểm tra pending applications
+    if (newStatus === 'inactive') {
+      try {
+        const pendingAppsResult = await applicationService.checkPendingApplications(job.id);
+        
+        if (pendingAppsResult.hasPendingApplications) {
+          // Có pending applications, hiển thị popup thông báo
+          setPendingAppsJob(job);
+          setPendingAppsCount(pendingAppsResult.pendingCount);
+          setShowPendingAppsModal(true);
+          return;
+        }
+      } catch (error) {
+        console.error('Error checking pending applications:', error);
+        // Nếu có lỗi khi check, vẫn tiếp tục với flow bình thường
+      }
+    }
+    
+    // Flow bình thường (không có pending apps hoặc không phải deactivate)
     setPendingStatusJob(job);
     setPendingNewStatus(newStatus);
     setShowStatusModal(true);
@@ -148,6 +172,32 @@ const JobListingsTable = () => {
     setShowStatusModal(false);
     setPendingStatusJob(null);
     setPendingNewStatus(null);
+  };
+
+  // Handle khi user chọn "Yes, see applications"
+  const handleViewPendingApplications = () => {
+    if (pendingAppsJob) {
+      // Navigate to all applications page của job đó
+      router.push(`/employers-dashboard/all-applicants?jobId=${pendingAppsJob.id}`);
+    }
+    setShowPendingAppsModal(false);
+    setPendingAppsJob(null);
+    setPendingAppsCount(0);
+  };
+
+  // Handle khi user chọn "Không" - chỉ tắt popup, không deactivate
+  const handleProceedDeactivateAnyway = () => {
+    setShowPendingAppsModal(false);
+    setPendingAppsJob(null);
+    setPendingAppsCount(0);
+    // Không làm gì thêm - chỉ tắt popup
+  };
+
+  // Handle đóng pending apps modal
+  const handleClosePendingAppsModal = () => {
+    setShowPendingAppsModal(false);
+    setPendingAppsJob(null);
+    setPendingAppsCount(0);
   };
 
   const now = new Date();
@@ -566,6 +616,16 @@ const JobListingsTable = () => {
           You can only activate this job on or after its start date.
         </p>
       </Modal>
+
+      {/* Pending Applications Modal */}
+      <PendingApplicationsModal
+        open={showPendingAppsModal}
+        onClose={handleClosePendingAppsModal}
+        onViewApplications={handleViewPendingApplications}
+        onProceedAnyway={handleProceedDeactivateAnyway}
+        jobTitle={pendingAppsJob?.jobTitle}
+        pendingCount={pendingAppsCount}
+      />
 
       <style jsx>{`
         .skeleton-applied {

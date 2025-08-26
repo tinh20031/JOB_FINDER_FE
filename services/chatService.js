@@ -1,4 +1,4 @@
-import { HubConnectionBuilder, HttpTransportType, HubConnectionState } from '@microsoft/signalr';
+import { HubConnectionBuilder, HubConnectionState, LogLevel } from '@microsoft/signalr';
 import API_CONFIG from '../config/api.config';
 import { authService } from './authService';
 
@@ -12,10 +12,9 @@ class ChatService {
     if (this.connection && this.connection.state !== HubConnectionState.Disconnected) return;
     this.connection = new HubConnectionBuilder()
       .withUrl(this.hubUrl, {
-        skipNegotiation: true,
-        transport: HttpTransportType.WebSockets,
-        accessTokenFactory: () => authService.getToken()
+        accessTokenFactory: () => authService.getToken(),
       })
+      .configureLogging(LogLevel.None)
       .withAutomaticReconnect()
       .build();
     await this.connection.start();

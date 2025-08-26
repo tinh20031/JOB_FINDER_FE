@@ -164,6 +164,39 @@ const PostBoxForm = ({ initialData, isEditing }) => {
     if (!formData.expiryDate) newErrors.expiryDate = 'Application deadline is required';
     if (!formData.timeStart) newErrors.timeStart = 'Start date is required';
     if (!formData.timeEnd) newErrors.timeEnd = 'End date is required';
+    
+    // Validate dates
+    if (formData.timeStart) {
+      const startDate = new Date(formData.timeStart);
+      const today = new Date();
+      today.setHours(0,0,0,0);
+      if (startDate < today) {
+        newErrors.timeStart = 'Start date cannot be in the past';
+      }
+    }
+    if (formData.timeStart && formData.timeEnd) {
+      const startDate = new Date(formData.timeStart);
+      const endDate = new Date(formData.timeEnd);
+      if (endDate <= startDate) {
+        newErrors.timeEnd = 'End date must be after start date';
+      }
+      
+      // Validate that the duration is not more than 30 days
+      const timeDifferenceMs = endDate.getTime() - startDate.getTime();
+      const daysDifference = Math.ceil(timeDifferenceMs / (1000 * 3600 * 24));
+      if (daysDifference > 30) {
+        newErrors.timeEnd = 'Job duration cannot exceed 30 days';
+      }
+    }
+    if (formData.timeStart && formData.timeEnd && formData.expiryDate) {
+      const startDate = new Date(formData.timeStart);
+      const endDate = new Date(formData.timeEnd);
+      const expiryDate = new Date(formData.expiryDate);
+      if (expiryDate < startDate || expiryDate > endDate) {
+        newErrors.expiryDate = 'Application deadline must be between start date and end date';
+      }
+    }
+    
     if (!formData.provinceName) newErrors.provinceName = 'Province is required';
     if (!formData.addressDetail) newErrors.addressDetail = 'Address detail is required';
     const totalWeight =

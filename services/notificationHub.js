@@ -24,10 +24,9 @@ class NotificationHubService {
     this.connection = new HubConnectionBuilder()
       .withUrl(API_CONFIG.SIGNALR_NOTIFICATION_HUB_URL, {
         accessTokenFactory: () => this.token,
-        skipNegotiation: true,
-        transport: 1, // WebSockets
+        // Allow negotiation and transport fallback (WS/SSE/LongPolling)
       })
-    .configureLogging(LogLevel.Information)
+    .configureLogging(LogLevel.None)
     .withAutomaticReconnect()
     .build();
 

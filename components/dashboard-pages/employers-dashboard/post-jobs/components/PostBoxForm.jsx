@@ -566,6 +566,13 @@ const PostBoxForm = ({ cloneData, isClone }) => {
       if (endDate <= startDate) {
         newErrors.timeEnd = 'End date must be after start date';
       }
+      
+      // Validate that the duration is not more than 30 days
+      const timeDifferenceMs = endDate.getTime() - startDate.getTime();
+      const daysDifference = Math.ceil(timeDifferenceMs / (1000 * 3600 * 24));
+      if (daysDifference > 30) {
+        newErrors.timeEnd = 'Job duration cannot exceed 30 days';
+      }
     }
     if (formData.timeStart && formData.timeEnd && formData.expiryDate) {
       const startDate = new Date(formData.timeStart);
