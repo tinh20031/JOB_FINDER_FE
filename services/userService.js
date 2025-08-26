@@ -77,6 +77,10 @@ export const userService = {
       });
       return res.data;
     } catch (error) {
+      // Handle 404 as no requests available (not an error)
+      if (error.response && error.response.status === 404) {
+        return [];
+      }
       console.error("Error fetching upgrade requests:", error);
       throw error;
     }

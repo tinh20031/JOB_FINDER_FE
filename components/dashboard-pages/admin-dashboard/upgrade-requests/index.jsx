@@ -61,7 +61,10 @@ const UpgradeRequests = () => {
       const list = Array.isArray(data) ? data : (data?.data || []);
       setRequests(list || []);
     } catch (e) {
-      if (e?.message) toast.error(e?.message || "Failed to load requests");
+      // Only show error toast for real errors (not 404 which is handled in service)
+      if (e?.message && !e.message.includes("404")) {
+        toast.error(e?.message || "Failed to load requests");
+      }
       setRequests([]);
     } finally {
       setLoading(false);
@@ -165,7 +168,7 @@ const UpgradeRequests = () => {
                         <table className="default-table manage-job-table">
                           <thead>
                             <tr>
-                              <th>Avatar</th>
+                              {/* <th>Avatar</th> */}
                               <th>Candidate</th>
                               <th>Email</th>
                               <th>Company Name</th>
@@ -195,7 +198,7 @@ const UpgradeRequests = () => {
                       <table className="default-table manage-job-table">
                         <thead>
                           <tr>
-                            <th>Avatar</th>
+                            {/* <th>Avatar</th> */}
                             <th>Candidate</th>
                             <th>Email</th>
                             <th>Company Name</th>
@@ -214,7 +217,7 @@ const UpgradeRequests = () => {
                             </tr>
                           ) : (
                             filtered.map((r, i) => {
-                              const avatar = r.image || r.user?.image || "/images/resource/candidate-1.png";
+                              // const avatar = r.image || r.user?.image || "/images/resource/candidate-1.png";
                               const fullName = r.fullName || r.user?.fullName || "";
                               const email = r.email || r.user?.email || "";
                               const industry = r.industryName || r.industry?.industryName || r.industryId;
@@ -222,13 +225,13 @@ const UpgradeRequests = () => {
                               const isPending = r.status === 0;
                               return (
                                 <tr key={`${r.candidateToCompanyRequestId || i}`}>
-                                  <td>
+                                  {/* <td>
                                     <img
                                       src={avatar}
                                       alt="avatar"
                                       style={{ width: "50px", height: "50px", borderRadius: "50%", objectFit: "cover" }}
                                     />
-                                  </td>
+                                  </td> */}
                                   <td>{fullName}</td>
                                   <td>{email}</td>
                                   <td>{r.companyName}</td>

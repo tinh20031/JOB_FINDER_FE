@@ -18,6 +18,20 @@ import Modal from "@/components/common/Modal";
 import "@/styles/modal.css";
 import locationService from "../../../../../services/locationService";
 import { companyService } from "../../../../../services/companyService";
+
+// Helper function to format remaining job posts
+const formatRemainingJobs = (value) => {
+  if (
+    value === null ||
+    value === undefined ||
+    value === Number.MAX_SAFE_INTEGER ||
+    value >= 999999 ||
+    value === -2147483647
+  ) {
+    return 'unlimited';
+  }
+  return value;
+};
 import Link from "next/link";
 import DraftService from "../../../../../services/draftService";
 import DraftModal from "../../DraftModal";
@@ -727,7 +741,7 @@ const PostBoxForm = ({ cloneData, isClone }) => {
     setSuccess(false);
 
     // Check job post limit
-    if (mySubscription && typeof mySubscription.remainingJobPosts === 'number' && mySubscription.remainingJobPosts <= 0) {
+    if (mySubscription && typeof mySubscription.remainingJobPosts === 'number' && mySubscription.remainingJobPosts <= 0 && mySubscription.remainingJobPosts !== -2147483647) {
       setShowUpgradeModal(true);
       return;
     }
@@ -1900,7 +1914,7 @@ const PostBoxForm = ({ cloneData, isClone }) => {
             )}
 
             {/* Job post limit warning */}
-            {mySubscription && typeof mySubscription.remainingJobPosts === 'number' && mySubscription.remainingJobPosts <= 2 && mySubscription.remainingJobPosts > 0 && (
+            {mySubscription && typeof mySubscription.remainingJobPosts === 'number' && mySubscription.remainingJobPosts <= 2 && mySubscription.remainingJobPosts > 0 && mySubscription.remainingJobPosts !== -2147483647 && (
               <div className="alert alert-warning mb-3" role="alert">
                 <i className="fas fa-exclamation-triangle me-1"></i>
                 <strong>Warning:</strong> You have only {mySubscription.remainingJobPosts} job post{mySubscription.remainingJobPosts === 1 ? '' : 's'} remaining. 
@@ -1911,7 +1925,7 @@ const PostBoxForm = ({ cloneData, isClone }) => {
             )}
 
             {/* No job posts remaining */}
-            {mySubscription && typeof mySubscription.remainingJobPosts === 'number' && mySubscription.remainingJobPosts <= 0 && (
+            {mySubscription && typeof mySubscription.remainingJobPosts === 'number' && mySubscription.remainingJobPosts <= 0 && mySubscription.remainingJobPosts !== -2147483647 && (
               <div className="alert alert-danger mb-3" role="alert">
                 <i className="fas fa-ban me-1"></i>
                 <strong>Job Post Limit Reached:</strong> You have used all your job posts for this package. 
@@ -1924,7 +1938,7 @@ const PostBoxForm = ({ cloneData, isClone }) => {
             <motion.button 
               type="submit" 
               className="theme-btn btn-style-one"
-              disabled={isLoading || (mySubscription && typeof mySubscription.remainingJobPosts === 'number' && mySubscription.remainingJobPosts <= 0)}
+              disabled={isLoading || (mySubscription && typeof mySubscription.remainingJobPosts === 'number' && mySubscription.remainingJobPosts <= 0 && mySubscription.remainingJobPosts !== -2147483647)}
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               title={mySubscription && mySubscription.remainingJobPosts <= 0 ? 'No remaining job posts. Please upgrade your package.' : 'Post Job'}
@@ -1934,7 +1948,7 @@ const PostBoxForm = ({ cloneData, isClone }) => {
                   Post Job
                   {mySubscription && typeof mySubscription.remainingJobPosts === 'number' && (
                     <span className="remaining-count">
-                      ({mySubscription.remainingJobPosts} left)
+                      ({formatRemainingJobs(mySubscription.remainingJobPosts)} left)
                     </span>
                   )}
                 </>
@@ -2079,7 +2093,7 @@ const PostBoxForm = ({ cloneData, isClone }) => {
             border: '1px solid #e9ecef'
           }}>
             <p style={{ margin: '0', fontWeight: '600', color: '#495057' }}>
-              Current Usage: {mySubscription?.subscription?.jobPostLimit - (mySubscription?.remainingJobPosts || 0)} / {mySubscription?.subscription?.jobPostLimit || 2} jobs
+              Current Usage: {formatRemainingJobs(mySubscription?.remainingJobPosts) === 'unlimited' ? 'Unlimited' : `${mySubscription?.subscription?.jobPostLimit - (mySubscription?.remainingJobPosts || 0)} / ${mySubscription?.subscription?.jobPostLimit || 2}`} jobs
             </p>
           </div>
           <p style={{ marginBottom: '0', lineHeight: '1.6' }}>
