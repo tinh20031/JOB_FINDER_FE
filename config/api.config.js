@@ -8,6 +8,11 @@ const API_CONFIG = {
   SIGNALR_CHAT_HUB_URL: "https://job-finder-kjt2.onrender.com/chathub",
   SIGNALR_NOTIFICATION_HUB_URL: "https://job-finder-kjt2.onrender.com/notificationHub",
 
+  BASE_URL: "https://jobfindersever.io.vn/api",
+  SIGNALR_CHAT_HUB_URL: "https://jobfindersever.io.vn/chathub",
+  SIGNALR_NOTIFICATION_HUB_URL: "https://jobfindersever.io.vn/notificationHub",
+
+
   ENDPOINTS: {
     AUTH: {
       LOGIN: "auth/login",
