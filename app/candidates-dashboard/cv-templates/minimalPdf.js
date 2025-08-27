@@ -109,6 +109,13 @@ export default async function generateMinimalPDF(resume, accentColor, removeLogo
   const wrapText = (text, maxWidth, fontSize) => {
     if (!text) return [];
 
+    // Normalize: remove newlines to avoid jsPDF auto multi-line rendering within a single draw
+    // which previously caused overlapping when we also manually iterate lines.
+    text = String(text)
+      .replace(/\r?\n+/g, " ")
+      .replace(/\s{2,}/g, " ")
+      .trim();
+
     pdf.setFontSize(fontSize);
 
     if (pdf.getTextWidth(text) <= maxWidth) {

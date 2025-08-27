@@ -462,5 +462,5 @@ export default async function generateClassicPDF(resume, accentColor, removeLogo
     pdf.addImage(logoImg, "PNG", logoX, logoY, logoWidth, logoHeight);
   }
 
-  pdf.save(`${resume.fullName || "resume"}-classic.pdf`);
+  return pdf;
 }

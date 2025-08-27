@@ -345,19 +345,16 @@ const WorkExperienceModal = ({ open, onClose, onSubmit, workExperience }) => {
                   "Please enter your company nam"}
               </div>
             </div>
-            <div className="work-checkbox-row">
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', margin: '0 0 8px 0' }}>
               <input
                 type="checkbox"
-                className="work-checkbox"
+                style={{ width: '18px', height: '18px', margin: '0', flexShrink: '0' }}
                 name="isWorking"
                 checked={form.isWorking}
                 onChange={handleChange}
                 id="isWorking"
               />
-              <label
-                htmlFor="isWorking"
-                style={{ margin: 0, fontWeight: 500, fontSize: 15 }}
-              >
+              <label htmlFor="isWorking" style={{ margin: '0', fontWeight: 500, fontSize: 15, cursor: 'pointer' }}>
                 I am currently working here
               </label>
             </div>

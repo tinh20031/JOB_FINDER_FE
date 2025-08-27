@@ -179,10 +179,11 @@ const EducationModal = ({ open, onClose, onSubmit, education }) => {
         .edu-input.error, .edu-select.error { border: 2px solid #e60023 !important; }
         .edu-input.valid, .edu-select.valid { border: 2px solid #28a745 !important; }
         .edu-error { color: #e60023; font-size: 13px; margin-top: 2px; min-height: 18px; }
-        .edu-checkbox-row { display: flex; align-items: center; gap: 8px; margin: 0 0 8px 0; }
+        .edu-checkbox-row { display: flex; align-items: center; gap: 8px; margin: 0 0 8px 0; cursor: pointer; flex-wrap: nowrap; }
         .edu-checkbox {
-          width: 18px; height: 18px; accent-color: #1967d2; margin: 0;
+          width: 18px; height: 18px; accent-color: #1967d2; margin: 0; flex-shrink: 0;
         }
+        .edu-checkbox-row span { margin: 0; white-space: nowrap; line-height: 1; }
         .edu-modal-actions {
           display: flex; justify-content: flex-end; gap: 16px;
           background: #fff; border-top: 1px solid #eee; padding: 18px 0 0 0; margin-top: 24px;
@@ -299,19 +300,16 @@ const EducationModal = ({ open, onClose, onSubmit, education }) => {
                     "Please enter your major"}
                 </div>
               </div>
-              <div className="edu-checkbox-row">
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', margin: '0 0 8px 0' }}>
                 <input
                   type="checkbox"
-                  className="edu-checkbox"
+                  style={{ width: '18px', height: '18px', margin: '0', flexShrink: '0' }}
                   name="isStudying"
                   checked={form.isStudying}
                   onChange={handleChange}
                   id="isStudying"
                 />
-                <label
-                  htmlFor="isStudying"
-                  style={{ margin: 0, fontWeight: 500, fontSize: 15 }}
-                >
+                <label htmlFor="isStudying" style={{ margin: '0', fontWeight: 500, fontSize: 15, cursor: 'pointer' }}>
                   I am currently studying here
                 </label>
               </div>

@@ -149,8 +149,7 @@ const HighlightProjectModal = ({
     if (!form.responsibilities.trim())
       newErrors.responsibilities = "Responsibilities is required.";
     if (!form.teamSize.trim()) newErrors.teamSize = "Team Size is required.";
-    if (!form.achievements.trim())
-      newErrors.achievements = "Achievement is required.";
+    // achievements is optional - no validation required
     if (!form.monthStart) newErrors.monthStart = "Month is required.";
     if (!form.yearStart) newErrors.yearStart = "Year is required.";
     if (!form.isWorking) {
@@ -177,7 +176,7 @@ const HighlightProjectModal = ({
       technologies: true,
       responsibilities: true,
       teamSize: true,
-      achievements: true,
+      // achievements is optional - no need to force validation
       monthStart: true,
       yearStart: true,
       monthEnd: true,
@@ -308,19 +307,16 @@ const HighlightProjectModal = ({
               </div>
             </div>
 
-            <div className="pro-checkbox-row">
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', margin: '0 0 8px 0' }}>
               <input
                 type="checkbox"
-                className="pro-checkbox"
+                style={{ width: '18px', height: '18px', margin: '0', flexShrink: '0' }}
                 name="isWorking"
                 checked={form.isWorking}
                 onChange={handleChange}
                 id="hp_isWorking"
               />
-              <label
-                htmlFor="hp_isWorking"
-                style={{ margin: 0, fontWeight: 500 }}
-              >
+              <label htmlFor="hp_isWorking" style={{ margin: '0', fontWeight: 500, fontSize: 15, cursor: 'pointer' }}>
                 I am working on this project
               </label>
             </div>

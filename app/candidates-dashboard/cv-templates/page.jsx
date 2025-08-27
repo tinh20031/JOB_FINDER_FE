@@ -11,7 +11,6 @@ import html2canvas from "html2canvas";
 import generateClassicPDF from "./classicPdf";
 import generateElegantPDF from "./elegantPdf";
 import generateCubicPDF from "./cubicPdf";
-import generateMinimalPDF from "./minimalPdf";
 import axios from "axios";
 import { useRouter } from 'next/navigation';
 
@@ -194,8 +193,9 @@ export default function CVTemplatesPage() {
         localStorage.setItem('cv_last_package_' + userId, 'Free');
       }
       const keyMaxValue = localStorage.getItem(keyMax);
-      const max = keyMaxValue === 'Infinity' ? Infinity : parseInt(keyMaxValue || '0', 10);
-      const count = parseInt(localStorage.getItem(keyCount) || '0', 10);
+      const max = keyMaxValue === 'Infinity' ? Infinity : (Number.isNaN(parseInt(keyMaxValue || '0', 10)) ? 0 : parseInt(keyMaxValue || '0', 10));
+      const rawCount = parseInt(localStorage.getItem(keyCount) || '0', 10);
+      const count = Number.isNaN(rawCount) ? 0 : rawCount;
       setMaxDownloads(max);
       setDownloadCount(count);
       setDownloadRemaining(max === Infinity ? 'Unlimited' : Math.max(0, max - count));
@@ -218,14 +218,53 @@ export default function CVTemplatesPage() {
     if (lastPackage !== packageType) {
       // Cộng quota mới
       const add = getQuotaByPackage(packageType);
-      const currentMax = localStorage.getItem(keyMax) === 'Infinity' ? Infinity : parseInt(localStorage.getItem(keyMax) || '0', 10);
+      const currentRaw = localStorage.getItem(keyMax);
+      const currentMax = currentRaw === 'Infinity' ? Infinity : (Number.isNaN(parseInt(currentRaw || '0', 10)) ? 0 : parseInt(currentRaw || '0', 10));
       let newMax = add === Infinity || currentMax === Infinity ? Infinity : currentMax + add;
-      localStorage.setItem(keyMax, newMax);
+      localStorage.setItem(keyMax, newMax === Infinity ? 'Infinity' : String(newMax));
       localStorage.setItem('cv_last_package_' + userId, packageType);
     }
   }, [packageType, userId]);
 
-  const handleDownload = () => {
+  // Helper: save jsPDF with cancel-detection (File System Access API when available)
+  const savePdf = async (pdfInstance, suggestedName) => {
+    try {
+      const blob = pdfInstance.output('blob');
+      if (typeof window !== 'undefined' && window.showSaveFilePicker) {
+        const handle = await window.showSaveFilePicker({
+          suggestedName,
+          types: [
+            {
+              description: 'PDF Files',
+              accept: { 'application/pdf': ['.pdf'] },
+            },
+          ],
+        });
+        const writable = await handle.createWritable();
+        await writable.write(blob);
+        await writable.close();
+        return true; // saved successfully
+      }
+      // Fallback: auto download without prompt
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = suggestedName;
+      document.body.appendChild(a);
+      a.click();
+      setTimeout(() => {
+        URL.revokeObjectURL(url);
+        a.remove();
+      }, 0);
+      return true;
+    } catch (err) {
+      // User likely cancelled the picker or a write error occurred
+      console.warn('PDF save cancelled or failed', err);
+      return false;
+    }
+  };
+
+  const handleDownload = async () => {
     setErrorMsg("");
     if (maxDownloads !== Infinity && downloadCount >= maxDownloads) {
       setShowUpgradeModal(true);
@@ -237,25 +276,27 @@ export default function CVTemplatesPage() {
     }
     // Gọi hàm export PDF, truyền removeLogo
     if (selected === "classic") {
-      generateClassicPDF(resume, accentColor, removeLogo);
+      const pdf = await generateClassicPDF(resume, accentColor, removeLogo);
+      const success = await savePdf(pdf, `${resume.fullName || "resume"}-classic.pdf`);
+      if (!success) return;
     } else if (selected === "elegant") {
-      generateElegantPDF(resume, accentColor, removeLogo);
+      const pdf = await generateElegantPDF(resume, accentColor, removeLogo);
+      const success = await savePdf(pdf, `${resume.fullName || "resume"}-elegant.pdf`);
+      if (!success) return;
     } else if (selected === "cubic") {
-      generateCubicPDF(resume, accentColor, removeLogo);
+      const pdf = await generateCubicPDF(resume, accentColor, removeLogo);
+      const success = await savePdf(pdf, `${resume.fullName || "resume"}-cubic.pdf`);
+      if (!success) return;
     } else if (selected === "minimal") {
-      generateMinimalPDF(resume, accentColor, removeLogo);
       if (cvPreviewRef.current) {
-        html2canvas(cvPreviewRef.current, {
-          scale: 2,
-          useCORS: true,
-        }).then((canvas) => {
-          const imgData = canvas.toDataURL("image/png");
-          const pdf = new jsPDF("p", "mm", "a4");
-          const pdfWidth = pdf.internal.pageSize.getWidth();
-          const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
-          pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight);
-          pdf.save(`${resume.fullName || "resume"}-cv.pdf`);
-        });
+        const canvas = await html2canvas(cvPreviewRef.current, { scale: 2, useCORS: true });
+        const imgData = canvas.toDataURL("image/png");
+        const pdf = new jsPDF("p", "mm", "a4");
+        const pdfWidth = pdf.internal.pageSize.getWidth();
+        const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+        pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight);
+        const success = await savePdf(pdf, `${resume.fullName || "resume"}-Minimal.pdf`);
+        if (!success) return; // Do not subtract quota if user cancelled
       }
     }
     // Tăng biến đếm download (chỉ khi còn lượt)

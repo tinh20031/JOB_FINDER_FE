@@ -197,14 +197,18 @@ export default async function generateCubicPDF(resume, accentColor, removeLogo =
         resume?.aboutMes?.[0]?.aboutMeDescription ||
         resume?.about
     );
-    const aboutLines = pdf.splitTextToSize(about, pageWidth - 40);
+    const aboutLines = pdf.splitTextToSize(
+      String(about).replace(/\r?\n+/g, " ").replace(/\s{2,}/g, " ").trim(),
+      pageWidth - 40
+    );
     aboutLines.forEach((line) => {
       pdf.text(line, 20, contactY);
       contactY += 4;
     });
   }
 
-  y = 110;
+  // Ensure main cursor starts after About section to avoid overlap
+  y = Math.max(110, contactY ? contactY + 6 : 110);
 
   // Section helper with diamond icon
   const section = (title) => {
@@ -233,7 +237,10 @@ export default async function generateCubicPDF(resume, accentColor, removeLogo =
   };
 
   const splitText = (text, maxWidth = pageWidth - 60) =>
-    pdf.splitTextToSize(text, maxWidth);
+    pdf.splitTextToSize(
+      String(text).replace(/\r?\n+/g, " ").replace(/\s{2,}/g, " ").trim(),
+      maxWidth
+    );
 
   // Education
   section("EDUCATION");
@@ -602,5 +609,5 @@ export default async function generateCubicPDF(resume, accentColor, removeLogo =
     }
     pdf.addImage(logoImg, "PNG", logoX, logoY, logoWidth, logoHeight);
   }
-  pdf.save(`${resume?.fullName || "resume"}-cubic.pdf`);
+  return pdf;
 }

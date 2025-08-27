@@ -618,5 +618,5 @@ export default async function generateElegantPDF(resume, accentColor, removeLogo
     }
     pdf.addImage(logoImg, "PNG", logoX, logoY, logoWidth, logoHeight);
   }
-  pdf.save(`${resume?.fullName || "resume"}-elegant.pdf`);
+  return pdf;
 }

@@ -287,14 +287,14 @@ const ForeignLanguageModal = ({ open, onClose, initialLanguages, refetch }) => {
             <button
               type="button"
               onClick={() => { setShow(false); setTimeout(onClose, 300); }}
-              className="theme-btn btn-style-three"
+              style={{ background: '#fff', border: '1.5px solid #e60023', color: '#e60023', padding: '12px 36px', borderRadius: '8px', fontWeight: '700', fontSize: '16px', cursor: 'pointer' }}
             >
               Cancel
             </button>
             <button
               type="button"
               onClick={handleSave}
-              className="theme-btn btn-style-one"
+              style={{ background: '#e60023', color: '#fff', border: 'none', padding: '12px 36px', borderRadius: '8px', fontWeight: '700', fontSize: '16px', cursor: 'pointer' }}
               disabled={saving}
             >
               {saving ? "Saving..." : "Save"}

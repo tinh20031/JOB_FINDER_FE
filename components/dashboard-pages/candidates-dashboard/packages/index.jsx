@@ -91,8 +91,11 @@ const PackagesPage = () => {
     if (lastUpdatedAt !== updatedAt) {
       console.log('Adding quota for package update:', packageName);
       const add = getQuotaByPackage(packageName);
-      const currentMax = parseInt(localStorage.getItem(keyMax) || '0', 10);
-      localStorage.setItem(keyMax, currentMax + add);
+      const currentRaw = localStorage.getItem(keyMax);
+      const currentMax = currentRaw === 'Infinity' ? Infinity : parseInt(currentRaw || '0', 10);
+      const safeCurrent = Number.isNaN(currentMax) ? 0 : currentMax;
+      const newMax = add === Infinity || safeCurrent === Infinity ? Infinity : safeCurrent + add;
+      localStorage.setItem(keyMax, newMax === Infinity ? 'Infinity' : String(newMax));
       localStorage.setItem('cv_last_package_' + userId, packageName);
       localStorage.setItem('cv_last_updated_at_' + userId, updatedAt);
     } else {
@@ -100,15 +103,25 @@ const PackagesPage = () => {
     }
   }, [mySubscription, userId]);
 
-  // Lấy số lượt download còn lại
-  const maxDownloads = localStorage.getItem(keyMax) === 'Infinity' ? Infinity : parseInt(localStorage.getItem(keyMax) || '0', 10);
-  const downloadCount = parseInt(localStorage.getItem(keyCount) || '0', 10);
+  // Lấy số lượt download còn lại (đảm bảo không NaN)
+  const readMaxDownloads = () => {
+    const raw = localStorage.getItem(keyMax);
+    if (raw === 'Infinity') return Infinity;
+    const num = parseInt(raw || '0', 10);
+    return Number.isNaN(num) ? 0 : num;
+  };
+  const readDownloadCount = () => {
+    const num = parseInt(localStorage.getItem(keyCount) || '0', 10);
+    return Number.isNaN(num) ? 0 : num;
+  };
+  const maxDownloads = readMaxDownloads();
+  const downloadCount = readDownloadCount();
   const downloadRemaining = maxDownloads === Infinity ? 'Unlimited' : Math.max(0, maxDownloads - downloadCount);
 
   // Helper function to get progress percentage
   const getProgressPercentage = (used, total) => {
     if (total === Infinity || total === 'Unlimited') return 100;
-    if (total === 0) return 0;
+    if (!Number.isFinite(total) || !Number.isFinite(used) || total <= 0) return 0;
     return Math.min(100, ((total - used) / total) * 100);
   };
 
