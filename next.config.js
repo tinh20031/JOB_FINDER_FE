@@ -23,8 +23,8 @@ const nextConfig = {
       {
         source: "/api/:path*",
         // destination: "http://localhost:5194/api/:path*", 
-        // destination: "https://job-finder-kjt2.onrender.com/api/:path*",
-        destination: "https://jobfindersever.io.vn/api/:path*",
+        destination: "https://job-finder-kjt2.onrender.com/api/:path*",
+        // destination: "https://jobfindersever.io.vn/api/:path*",
        
       },
       {
