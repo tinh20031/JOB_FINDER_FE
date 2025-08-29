@@ -94,7 +94,7 @@ const FormContent = ({ isPopup = false }) => {
         if (userRole === "Admin") {
           window.location.href = "/admin-dashboard/dashboard";
         } else if (userRole === "Employer") {
-          window.location.href = "/employers-dashboard/dashboard";
+          window.location.href = "/company-dashboard/dashboard";
         } else {
           window.location.href = "/candidates-dashboard/dashboard";
         }

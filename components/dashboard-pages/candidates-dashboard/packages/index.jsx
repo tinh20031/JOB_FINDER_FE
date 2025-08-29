@@ -90,12 +90,15 @@ const PackagesPage = () => {
     // Chỉ cộng quota khi có updatedAt mới (thực sự update gói)
     if (lastUpdatedAt !== updatedAt) {
       console.log('Adding quota for package update:', packageName);
-      const add = getQuotaByPackage(packageName);
-      const currentRaw = localStorage.getItem(keyMax);
-      const currentMax = currentRaw === 'Infinity' ? Infinity : parseInt(currentRaw || '0', 10);
-      const safeCurrent = Number.isNaN(currentMax) ? 0 : currentMax;
-      const newMax = add === Infinity || safeCurrent === Infinity ? Infinity : safeCurrent + add;
-      localStorage.setItem(keyMax, newMax === Infinity ? 'Infinity' : String(newMax));
+
+      if (packageName.toLowerCase() !== 'free') {
+        const add = getQuotaByPackage(packageName);
+        const currentRaw = localStorage.getItem(keyMax);
+        const currentMax = currentRaw === 'Infinity' ? Infinity : parseInt(currentRaw || '0', 10);
+        const safeCurrent = Number.isNaN(currentMax) ? 0 : currentMax;
+        const newMax = add === Infinity || safeCurrent === Infinity ? Infinity : safeCurrent + add;
+        localStorage.setItem(keyMax, newMax === Infinity ? 'Infinity' : String(newMax));
+      }
       localStorage.setItem('cv_last_package_' + userId, packageName);
       localStorage.setItem('cv_last_updated_at_' + userId, updatedAt);
     } else {

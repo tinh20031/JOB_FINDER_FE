@@ -216,12 +216,13 @@ export default function CVTemplatesPage() {
     if (!packageType || !userId) return;
     let lastPackage = localStorage.getItem('cv_last_package_' + userId);
     if (lastPackage !== packageType) {
-      // Cộng quota mới
-      const add = getQuotaByPackage(packageType);
-      const currentRaw = localStorage.getItem(keyMax);
-      const currentMax = currentRaw === 'Infinity' ? Infinity : (Number.isNaN(parseInt(currentRaw || '0', 10)) ? 0 : parseInt(currentRaw || '0', 10));
-      let newMax = add === Infinity || currentMax === Infinity ? Infinity : currentMax + add;
-      localStorage.setItem(keyMax, newMax === Infinity ? 'Infinity' : String(newMax));
+      if (packageType.toLowerCase() !== 'free') {
+        const add = getQuotaByPackage(packageType);
+        const currentRaw = localStorage.getItem(keyMax);
+        const currentMax = currentRaw === 'Infinity' ? Infinity : (Number.isNaN(parseInt(currentRaw || '0', 10)) ? 0 : parseInt(currentRaw || '0', 10));
+        let newMax = add === Infinity || currentMax === Infinity ? Infinity : currentMax + add;
+        localStorage.setItem(keyMax, newMax === Infinity ? 'Infinity' : String(newMax));
+      }
       localStorage.setItem('cv_last_package_' + userId, packageType);
     }
   }, [packageType, userId]);

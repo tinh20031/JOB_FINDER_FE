@@ -17,6 +17,7 @@ import apiService from '@/services/api.service';
 import Cookies from 'js-cookie';
 import { isActiveLink } from "../../utils/linkActiveChecker";
 import notificationHubService from "@/services/notificationHub";
+import { getNotificationDetailUrl } from "@/services/notification.service";
 
 // Helper function to validate image URLs
 const getValidImageUrl = (url, fallback = "/images/resource/candidate-1.png") => {
@@ -287,9 +288,8 @@ const MainHeader = () => {
                   </button>
                   {openRecruiterModal && (
                     <BecomeRecruiterModal
-                      open={openRecruiterModal}
-                      onCancel={() => setOpenRecruiterModal(false)}
-                      userId={currentUserId}
+                      isOpen={openRecruiterModal}
+                      onClose={() => setOpenRecruiterModal(false)}
                     />
                   )}
                 </>
@@ -318,7 +318,7 @@ const MainHeader = () => {
                           <div style={{ padding: 16, textAlign: 'center', color: '#888' }}>No new notifications</div>
                         ) : (
                           notifications.slice(0, 5).map((n, idx) => (
-                            <Link key={n.notificationId || idx} href={n.link || '#'} style={{ textDecoration: 'none', color: n.isRead ? '#aaa' : '#222' }}>
+                            <Link key={n.notificationId || idx} href={getNotificationDetailUrl(n)} style={{ textDecoration: 'none', color: n.isRead ? '#aaa' : '#222' }}>
                               <div
                                 style={{
                                   padding: '12px 16px',
@@ -338,7 +338,7 @@ const MainHeader = () => {
                         )}
                       </div>
                       <div style={{ textAlign: 'center', padding: 8 }}>
-                        <Link href={role === 'Company' ? "/employers-dashboard/resume-alerts" : "/candidates-dashboard/job-alerts"} style={{ fontSize: 13, color: '#1967d2' }}>View all notifications</Link>
+                        <Link href={role === 'Company' ? "/company-dashboard/resume-alerts" : "/candidates-dashboard/job-alerts"} style={{ fontSize: 13, color: '#1967d2' }}>View all notifications</Link>
                       </div>
                     </div>
                   )}
@@ -442,7 +442,7 @@ const MainHeader = () => {
                   Login / Register
                 </a>
                 <Link
-                  href="/employers-dashboard/post-jobs"
+                  href="/company-dashboard/post-jobs"
                   className="theme-btn btn-style-one"
                 >
                   Job Post

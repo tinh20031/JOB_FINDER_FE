@@ -61,7 +61,7 @@ const RelatedJobs2 = ({ job }) => {
         <ClickableBox
           className="job-block"
           key={item.id}
-          onClick={() => window.location.href = `/job-single-v3/${item.id}`}
+                          onClick={() => window.location.href = `/job-detail/${item.id}`}
         >
           <div className="content">
             <span className="company-logo">
@@ -73,7 +73,7 @@ const RelatedJobs2 = ({ job }) => {
               />
             </span>
             <h4>
-              <Link href={`/job-single-v3/${item.id}`}>{item.jobTitle}</Link>
+                              <Link href={`/job-detail/${item.id}`}>{item.jobTitle}</Link>
             </h4>
 
             <ul className="job-info">
@@ -137,7 +137,7 @@ const RelatedJobs2 = ({ job }) => {
         <div className="see-more" style={{ marginTop: 16 }}>
           <a
             href={
-              `/job-list-v1?industryId=${job.industry?.industryId || job.industryId}` +
+              `/job-list?industryId=${job.industry?.industryId || job.industryId}` +
               (job.provinceName ? `&provinceName=${encodeURIComponent(job.provinceName)}` : '') +
               ((job.level?.id || job.levelId) ? `&levelId=${job.level?.id || job.levelId}` : '') +
               ((job.jobType?.id || job.jobTypeId) ? `&jobTypeId=${job.jobType?.id || job.jobTypeId}` : '') +

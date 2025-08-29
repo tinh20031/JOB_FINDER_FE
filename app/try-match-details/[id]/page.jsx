@@ -154,7 +154,7 @@ export default function TryMatchDetailPage() {
                       <a href={data.cvFileUrl} target="_blank" rel="noopener noreferrer" className="theme-btn btn-style-three">View CV</a>
                     )}
                     {data.jobId && (
-                      <a href={`/job-single-v3/${data.jobId}`} target="_blank" rel="noopener noreferrer" className="theme-btn btn-style-three">View Job</a>
+                      <a href={`/job-detail/${data.jobId}`} target="_blank" rel="noopener noreferrer" className="theme-btn btn-style-three">View Job</a>
                     )}
                   </div>
                 </div>

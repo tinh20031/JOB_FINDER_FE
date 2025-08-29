@@ -46,7 +46,7 @@ const index = () => {
                 <div className="tabs-box">
                   <div className="widget-title">
                     {profile?.candidateProfileId ? (
-                      <Link href={`/candidates-single-v1/${profile.candidateProfileId}`} legacyBehavior>
+                      <Link href={`/candidate-profile/${profile.candidateProfileId}`} legacyBehavior>
                         <a style={{
                           display: 'inline-block',
                           padding: '6px 18px',

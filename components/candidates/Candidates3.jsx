@@ -21,7 +21,7 @@ const Candidates3 = () => {
 
           <div className="content">
             <h4>
-              <Link href={`/candidates-single-v1/${candidate.id}`}>
+              <Link href={`/candidate-profile/${candidate.id}`}>
                 {candidate.name}
               </Link>
             </h4>

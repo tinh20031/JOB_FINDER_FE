@@ -106,7 +106,7 @@ const JobListingsTable = () => {
   }, [filteredJobs]);
 
   const handleJobClick = (jobId) => {
-    router.push(`/job-single-v3/${jobId}`);
+            router.push(`/job-detail/${jobId}`);
   };
 
   // Định dạng ngày/giờ: dd/MM/yyyy theo giờ Việt Nam, cộng thêm 7 tiếng nếu backend trả về giờ không có offset

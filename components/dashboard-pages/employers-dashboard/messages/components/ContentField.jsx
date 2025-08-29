@@ -82,7 +82,7 @@ const ChatBoxContentField = ({
 
   const handleCandidateNameClick = () => {
     if (currentChatPartner && currentChatPartner.id) {
-      router.push(`/candidates-single-v1/${currentChatPartner.id}`);
+      router.push(`/candidate-profile/${currentChatPartner.id}`);
     }
   };
 

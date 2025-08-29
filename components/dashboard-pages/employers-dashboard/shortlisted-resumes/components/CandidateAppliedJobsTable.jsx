@@ -32,8 +32,8 @@ const CandidateAppliedJobsTable = ({ jobs, loading, error, onJobClick }) => {
     : [];
 
   const handleViewAllApplications = (jobId) => {
-    // Chuyển sang trang mới, ví dụ: /employers-dashboard/all-applications-by-job?jobId=...
-    router.push(`/employers-dashboard/all-applications-by-job?jobId=${jobId}`);
+            // Chuyển sang trang mới, ví dụ: /company-dashboard/all-applications-by-job?jobId=...
+    router.push(`/company-dashboard/all-applications-by-job?jobId=${jobId}`);
   };
 
   const TableSkeleton = () => (

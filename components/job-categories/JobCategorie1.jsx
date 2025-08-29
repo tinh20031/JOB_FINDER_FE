@@ -35,7 +35,7 @@ const JobCategorie1 = () => {
           className="category-block col-lg-4 col-md-6 col-sm-12"
           key={item.industryId}
           style={{ cursor: 'pointer' }}
-          onClick={() => window.location.href = "/job-list-v1"}
+                          onClick={() => window.location.href = "/job-list"}
         >
           <div className="inner-box">
             <div className="content">

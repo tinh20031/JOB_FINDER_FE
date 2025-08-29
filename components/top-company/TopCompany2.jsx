@@ -46,7 +46,7 @@ const TopCompany2 = () => {
     <Slider {...settings} arrows={false}>
       {topCompany.slice(0, 12).map((company) => (
         <Link
-          href={`/employers-single-v1/${company.id}`}
+                          href={`/company-detail/${company.id}`}
           className="company-block"
           key={company.id}
         >

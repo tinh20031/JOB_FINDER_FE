@@ -103,7 +103,7 @@ const JobListingsTable = () => {
   };
 
   const handleViewJob = (jobId) => {
-    router.push(`/job-single-v3/${jobId}`);
+            router.push(`/job-detail/${jobId}`);
   };
 
   const formatDateVN = (dateString) => {
@@ -114,7 +114,7 @@ const JobListingsTable = () => {
   };
 
   const handleEditClick = (job) => {
-    router.push(`/dashboard/employers-dashboard/edit-job/${job.id}`);
+            router.push(`/dashboard/company-dashboard/edit-job/${job.id}`);
   };
 
   // Đổi status (company hoặc admin)
@@ -178,7 +178,7 @@ const JobListingsTable = () => {
   const handleViewPendingApplications = () => {
     if (pendingAppsJob) {
       // Navigate to all applications page của job đó
-      router.push(`/employers-dashboard/all-applicants?jobId=${pendingAppsJob.id}`);
+              router.push(`/company-dashboard/all-applicants?jobId=${pendingAppsJob.id}`);
     }
     setShowPendingAppsModal(false);
     setPendingAppsJob(null);
@@ -424,7 +424,7 @@ const JobListingsTable = () => {
                           <div className="inner-box">
                             <div className="content">
                               <h4>
-                                <Link href={`/job-single-v3/${job.id}`}>
+                                <Link href={`/job-detail/${job.id}`}>
                                   {job.jobTitle}
                                 </Link>
                               </h4>
@@ -443,7 +443,7 @@ const JobListingsTable = () => {
                         </div>
                       </td>
                       <td className="applied">
-                        <Link href={`/employers-dashboard/all-applicants?jobId=${job.id}`}>
+                        <Link href={`/company-dashboard/all-applicants?jobId=${job.id}`}>
                           {appliedCounts[job.id] === undefined
                             ? <span className="skeleton skeleton-applied" style={{ width: 30, height: 16, display: 'inline-block', verticalAlign: 'middle' }} />
                             : appliedCounts[job.id] === 0
@@ -529,7 +529,7 @@ const JobListingsTable = () => {
                             )}
                             <li>
                               <button
-                                onClick={() => router.push(`/employers-dashboard/clone-job/${job.id}`)}
+                                onClick={() => router.push(`/company-dashboard/clone-job/${job.id}`)}
                                 data-text="Clone Job"
                               >
                                 <span className="la la-copy"></span>

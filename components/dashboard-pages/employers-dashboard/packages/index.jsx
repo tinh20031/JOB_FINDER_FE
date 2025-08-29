@@ -88,13 +88,13 @@ const EmployerPackagesPage = () => {
       setShowConfirmModal(true);
     } else {
       // Nếu đã sử dụng hết thì chuyển thẳng đến trang buy
-      window.location.href = "/employers-dashboard/packages/buy";
+      window.location.href = "/company-dashboard/packages/buy";
     }
   };
 
   const handleConfirmUpgrade = () => {
     setShowConfirmModal(false);
-    window.location.href = "/employers-dashboard/packages/buy";
+    window.location.href = "/company-dashboard/packages/buy";
   };
 
   const handleCancelUpgrade = () => {
@@ -356,7 +356,7 @@ const EmployerPackagesPage = () => {
                           <p>You don't have any active package. Browse our packages to get started!</p>
                         </div>
                         <div className="package-action">
-                          <Link href="/employers-dashboard/packages/buy">
+                          <Link href="/company-dashboard/packages/buy">
                             <button className="browse-button">
                               <i className="fas fa-shopping-cart"></i>
                               <span>Browse Packages</span>

@@ -25,7 +25,7 @@ const RecentJobs = () => {
             </span>
             <span className="company-name">Catalyst</span>
             <h4>
-              <Link href={`/job-single-v3/${item.id}`}>{item.jobTitle}</Link>
+                              <Link href={`/job-detail/${item.id}`}>{item.jobTitle}</Link>
             </h4>
             <div className="location">
               <span className="icon flaticon-map-locator"></span>

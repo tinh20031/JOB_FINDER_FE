@@ -31,7 +31,7 @@ const QuickMatchingCard = () => {
         </div>
 
         <div className="action-buttons">
-          <Link href="/job-list-v1" className="theme-btn btn-style-one">
+          <Link href="/job-list" className="theme-btn btn-style-one">
             <i className="flaticon-briefcase"></i>
             Tìm việc làm
           </Link>

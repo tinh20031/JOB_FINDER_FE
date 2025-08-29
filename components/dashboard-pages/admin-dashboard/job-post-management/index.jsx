@@ -529,7 +529,7 @@ const JobPostManagement = () => {
                             <span className="company-logo">
                               <Image width={50} height={49} src={item.company?.urlCompanyLogo || '/images/company-logo/default-logo.png'} alt={item.company?.companyName || 'N/A'} style={{ borderRadius: '50%' }} />
                             </span>
-                            <h4><Link href={`/job-single-v3/${item.jobId}`}>{item.title}</Link></h4>
+                            <h4><Link href={`/job-detail/${item.jobId}`}>{item.title}</Link></h4>
                             <ul className="job-info">
                               <li><span className="icon flaticon-building"></span>{item.company?.companyName || "N/A"}</li>
                               <li><span className="icon fa fa-calendar"></span>{new Date(item.timeStart).toLocaleDateString()}</li>

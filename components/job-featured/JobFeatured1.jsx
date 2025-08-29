@@ -63,7 +63,7 @@ const JobFeatured1 = () => {
     <>
       {jobs.map((item) => (
         <div className="col-lg-6 col-md-12 col-sm-12" key={item.id}>
-          <ClickableBox onClick={() => window.location.href = `/job-single-v3/${item.id}` }>
+                          <ClickableBox onClick={() => window.location.href = `/job-detail/${item.id}` }>
             <div className="content">
               <span className="company-logo">
                 {(() => {
@@ -81,7 +81,7 @@ const JobFeatured1 = () => {
                 })()}
               </span>
               <h4>
-                <Link href={`/job-single-v3/${item.id}`}>{item.jobTitle}</Link>
+                <Link href={`/job-detail/${item.id}`}>{item.jobTitle}</Link>
               </h4>
 
               <ul className="job-info">

@@ -167,7 +167,7 @@ const JobApplied = () => {
         return (
           <ClickableBox
             key={item.jobId || item.id}
-            onClick={() => window.location.href = `/job-single-v3/${item.jobId || item.id}`}
+                            onClick={() => window.location.href = `/job-detail/${item.jobId || item.id}`}
             className="job-block col-lg-6 col-md-12 col-sm-12"
           >
             <div className="content">
@@ -200,7 +200,7 @@ const JobApplied = () => {
                 />
               </span>
               <h4>
-                <Link href={`/job-single-v3/${item.jobId || item.id}`}>
+                <Link href={`/job-detail/${item.jobId || item.id}`}>
                   {item.jobTitle || item.title}
                 </Link>
               </h4>

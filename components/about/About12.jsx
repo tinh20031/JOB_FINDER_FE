@@ -37,7 +37,7 @@ const About12 = () => {
                   </div>
                 </div>
                 <Link
-                  href="/job-list-v12"
+                  href="/job-list"
                   className="theme-btn -blue-outline mt-30"
                 >
                   Get Started

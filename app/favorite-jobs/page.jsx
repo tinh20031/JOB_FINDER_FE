@@ -5,7 +5,7 @@ import Breadcrumb from "../../components/common/Breadcrumb";
 import MainHeader from "@/components/header/MainHeader";
 import MobileMenu from "../../components/header/MobileMenu";
 import FavoriteJobsBox from "../../components/job-listing-pages/favorite-jobs/FavoriteJobsBox";
-import FilterSidebar from "../../components/job-listing-pages/job-list-v1/FilterSidebar";
+import FilterSidebar from "../../components/job-listing-pages/job-list/FilterSidebar";
 
 const FavoriteJobsPage = () => {
   return (

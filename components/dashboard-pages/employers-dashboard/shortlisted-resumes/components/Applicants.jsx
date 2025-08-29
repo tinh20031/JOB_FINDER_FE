@@ -21,7 +21,7 @@ const Applicants = () => {
                 />
               </figure>
               <h4 className="name">
-                <Link href={`/candidates-single-v1/${candidate.id}`}>
+                <Link href={`/candidate-profile/${candidate.id}`}>
                   {candidate.name}
                 </Link>
               </h4>
