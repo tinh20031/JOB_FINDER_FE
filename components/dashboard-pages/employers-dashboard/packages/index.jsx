@@ -23,8 +23,8 @@ const formatLimit = (value) => {
     value === null ||
     value === undefined ||
     value === Number.MAX_SAFE_INTEGER ||
-    value >= 999999 ||
-    value === -2147483647
+    value >= 99999 ||
+    value === -2147483648
   ) {
     return 'Unlimited';
   }

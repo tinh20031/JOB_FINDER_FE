@@ -165,7 +165,6 @@ const WidgetContentBox = ({ jobId, candidateName, showMatchingInfo, useMatchingA
   const [selectedApplicationId, setSelectedApplicationId] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
-  const totalPages = Math.ceil(applicants.length / itemsPerPage);
   const [jobCounts, setJobCounts] = useState({});
 
 
@@ -178,6 +177,12 @@ const WidgetContentBox = ({ jobId, candidateName, showMatchingInfo, useMatchingA
   const [showDownloadConfirm, setShowDownloadConfirm] = useState(false);
   const [updatingId, setUpdatingId] = useState(null);
   const [confirmModal, setConfirmModal] = useState({ open: false, applicationId: null, status: null });
+  const [statusFilter, setStatusFilter] = useState("all");
+
+  // Reset page when filter changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [statusFilter, searchText]);
 
 
   // New state for 'View More Top CVs'
@@ -340,16 +345,31 @@ const WidgetContentBox = ({ jobId, candidateName, showMatchingInfo, useMatchingA
   const rejectedApplicants = applicants.filter(app => (app.status === 'Rejected' || app.status === 2) && app.candidateProfile).length;
 
 
-  // Lọc theo tên ứng viên
-  const filteredApplicants = searchText
-    ? applicants.filter(app =>
-        (app.candidateProfile?.fullName || app.user?.fullName || "")
+  // Lọc theo tên ứng viên và status
+  const filteredApplicants = applicants.filter(app => {
+    // Filter by search text
+    const nameMatch = searchText
+      ? (app.candidateProfile?.fullName || app.user?.fullName || "")
           .toLowerCase()
           .includes(searchText.toLowerCase())
-      )
-    : applicants;
+      : true;
+    
+    // Filter by status
+    const statusMatch = statusFilter === "all" 
+      ? true 
+      : statusFilter === "pending" 
+        ? app.status === 0
+        : statusFilter === "accepted"
+          ? app.status === 2
+          : statusFilter === "rejected"
+            ? app.status === 1
+            : true;
+    
+    return nameMatch && statusMatch;
+  });
 
 
+  const totalPages = Math.ceil(filteredApplicants.length / itemsPerPage);
   const applicantsToShow = filteredApplicants.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
 
@@ -504,15 +524,41 @@ const WidgetContentBox = ({ jobId, candidateName, showMatchingInfo, useMatchingA
       <div className="tabs-box">
         {/* Thanh tiêu đề (chỉ giữ 1 lần) */}
         {/* ĐÃ XOÁ tiêu đề Applicant ở dưới */}
-        {/* Thanh công cụ search, select all, export Excel */}
+        {/* Thanh công cụ search, filter status, select all, export Excel */}
         <div style={{ display: 'flex', alignItems: 'center', marginBottom: 16, gap: 12, justifyContent: 'space-between' }}>
-          <input
-            type="text"
-            placeholder="Enter Candidate name..."
-            value={searchText}
-            onChange={e => setSearchText(e.target.value)}
-            style={{ flex: 1, maxWidth: 320, background: '#f5f8fa', border: '1px solid #e5e9ec', borderRadius: 8, fontSize: 14, fontFamily: 'inherit', height: 44, boxShadow: 'none', outline: 'none', color: '#6f6f6f', fontWeight: 400, paddingLeft: 16 }}
-          />
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, flex: 1 }}>
+            <input
+              type="text"
+              placeholder="Enter Candidate name..."
+              value={searchText}
+              onChange={e => setSearchText(e.target.value)}
+              style={{ flex: 1, maxWidth: 320, background: '#f5f8fa', border: '1px solid #e5e9ec', borderRadius: 8, fontSize: 14, fontFamily: 'inherit', height: 44, boxShadow: 'none', outline: 'none', color: '#6f6f6f', fontWeight: 400, paddingLeft: 16 }}
+            />
+            <select
+              value={statusFilter}
+              onChange={e => setStatusFilter(e.target.value)}
+              style={{ 
+                background: '#f5f8fa', 
+                border: '1px solid #e5e9ec', 
+                borderRadius: 8, 
+                fontSize: 14, 
+                fontFamily: 'inherit', 
+                height: 44, 
+                boxShadow: 'none', 
+                outline: 'none', 
+                color: '#6f6f6f', 
+                fontWeight: 400, 
+                paddingLeft: 12,
+                paddingRight: 32,
+                minWidth: 140
+              }}
+            >
+              <option value="all">All Status</option>
+              <option value="pending">Pending</option>
+              <option value="accepted">Accepted</option>
+              <option value="rejected">Rejected</option>
+            </select>
+          </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             <div 
               style={{ 
@@ -564,7 +610,11 @@ const WidgetContentBox = ({ jobId, candidateName, showMatchingInfo, useMatchingA
                 fontWeight: 600,
                 padding: '2px 14px',
                 marginLeft: 4
-              }}>Total(s): {totalApplicants}</span>
+              }}>
+                {statusFilter === "all" 
+                  ? `Total(s): ${totalApplicants}` 
+                  : `Showing ${filteredApplicants.length} of ${totalApplicants}`}
+              </span>
             </div>
            
           </div>
