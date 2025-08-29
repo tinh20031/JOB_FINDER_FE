@@ -54,18 +54,38 @@ const BecomeRecruiterModal = ({ isOpen, onClose, onSuccess }) => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [provincesData, industriesData, teamSizesData] = await Promise.all([
+        // Fetch data with individual error handling for better resilience
+        const [provincesData, industriesData, teamSizesData] = await Promise.allSettled([
           locationService.getProvinces(),
           industryService.getAll(),
           teamSizeService.getAllTeamSizes()
         ]);
         
-        setProvinces(provincesData.sort((a, b) => a.name.localeCompare(b.name)));
-        setIndustries(industriesData.sort((a, b) => a.industryName.localeCompare(b.industryName)));
-        setTeamSizes(teamSizesData);
+        // Handle provinces
+        if (provincesData.status === 'fulfilled') {
+          setProvinces(provincesData.value.sort((a, b) => a.name.localeCompare(b.name)));
+        } else {
+          setProvinces([]); // Set empty array as fallback
+        }
+        
+        // Handle industries
+        if (industriesData.status === 'fulfilled') {
+          setIndustries(industriesData.value.sort((a, b) => a.industryName.localeCompare(b.industryName)));
+        } else {
+          setIndustries([]); // Set empty array as fallback
+        }
+        
+        // Handle team sizes
+        if (teamSizesData.status === 'fulfilled') {
+          setTeamSizes(teamSizesData.value);
+        } else {
+          setTeamSizes(teamSizeService.getStaticTeamSizeOptions());
+        }
       } catch (error) {
-        console.error('Error fetching data:', error);
-        // Set default team sizes if API fails
+        console.error('Error in fetchData:', error);
+        // Set fallback values for all data
+        setProvinces([]);
+        setIndustries([]);
         setTeamSizes(teamSizeService.getStaticTeamSizeOptions());
       }
     };

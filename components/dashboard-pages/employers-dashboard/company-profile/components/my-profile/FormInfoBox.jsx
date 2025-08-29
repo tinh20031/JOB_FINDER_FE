@@ -60,7 +60,6 @@ const FormInfoBox = ({ onFormChange, validationErrors, initialData, isEditing })
                 const response = await teamSizeService.getAllTeamSizes();
                 setTeamSizes(response);
             } catch (error) {
-                console.error("Error fetching team sizes:", error);
                 // Set default options if API fails
                 setTeamSizes(teamSizeService.getStaticTeamSizeOptions());
             }

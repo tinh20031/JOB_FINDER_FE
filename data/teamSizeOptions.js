@@ -4,7 +4,8 @@ export const teamSizeOptions = [
   "100 - 150",   // Medium-small companies
   "200 - 250",   // Medium companies
   "300 - 350",   // Medium-large companies
-  "500 - 1000",  // Large companies
+  "500 - 1000", 
+  "1000+" // Large companies
 ];
 
 // Team size options for forms (with value/label structure)

@@ -344,8 +344,9 @@ getApplicationById: async (applicationId) => {
       // Filter applications to find pending ones (status = 0 hoặc 'pending')
       const applications = response.data || [];
       const pendingApplications = applications.filter(app => 
-        app.status === 0 || app.status === 'pending' || 
-        app.status?.toLowerCase() === 'pending'
+        app.status === 0 || 
+        app.status === 'pending' || 
+        (typeof app.status === 'string' && app.status.toLowerCase() === 'pending')
       );
       
       return {

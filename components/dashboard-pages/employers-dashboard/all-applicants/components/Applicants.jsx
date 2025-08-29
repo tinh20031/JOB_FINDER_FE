@@ -60,7 +60,7 @@ const Applicants = () => {
               <p>Applied: {new Date(applicant.submittedAt).toLocaleDateString()}</p>
             </div>
             <div className="applicant-status">
-              <span className={`status-badge status-${applicant.status.toLowerCase()}`}>
+              <span className={`status-badge status-${typeof applicant.status === 'string' ? applicant.status.toLowerCase() : applicant.status || ''}`}>
                 {applicant.status}
               </span>
             </div>
