@@ -42,7 +42,7 @@ const FeaturedBlock3 = () => {
                   <h5>{item.city}</h5>
                   <span className="total-jobs">{item.jobNumber} Jobs</span>
                   <Link
-                    href="/job-list-v13"
+                    href="/job-list"
                     className="overlay-link"
                   ></Link>
                 </div>

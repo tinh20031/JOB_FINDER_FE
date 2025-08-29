@@ -31,11 +31,11 @@ const Index = ({ showMatchingInfo = false, useMatchingApi = false }) => {
   // Build link with jobId if present
   const jobId = searchParams.get('jobId');
   const matchingUrl = jobId
-    ? `/employers-dashboard/all-applicants-matching?jobId=${jobId}`
-    : '/employers-dashboard/all-applicants-matching';
+    ? `/company-dashboard/all-applicants-matching?jobId=${jobId}`
+    : '/company-dashboard/all-applicants-matching';
   const allUrl = jobId
-    ? `/employers-dashboard/all-applicants?jobId=${jobId}`
-    : '/employers-dashboard/all-applicants';
+    ? `/company-dashboard/all-applicants?jobId=${jobId}`
+    : '/company-dashboard/all-applicants';
 
 
   return (

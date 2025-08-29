@@ -87,7 +87,7 @@ const CompanyFavouriteTable = () => {
             className="company-block-three"
             key={company.userId}
             style={{ cursor: 'pointer' }}
-            onClick={() => router.push(`/employers-single-v1/${company.userId}`)}
+            onClick={() => router.push(`/company-detail/${company.userId}`)}
           >
             <div className="inner-box position-relative d-flex align-items-center">
               <img

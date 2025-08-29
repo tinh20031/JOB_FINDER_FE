@@ -276,7 +276,7 @@ const PostBoxForm = ({ initialData, isEditing }) => {
         setSuccess(true);
         setError("");
         setTimeout(() => {
-          router.push('/employers-dashboard/manage-jobs');
+          router.push('/company-dashboard/manage-jobs');
         }, 2000);
       } else {
         // Logic for creating a job will be implemented here

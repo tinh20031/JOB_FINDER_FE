@@ -75,7 +75,7 @@ const MobileHeaderLoggedIn = () => {
     if (userRole === 'Candidate') {
       return "/candidates-dashboard/dashboard";
     } else if (userRole === 'Company') {
-      return "/employers-dashboard/dashboard";
+              return "/company-dashboard/dashboard";
     } else if (userRole === 'Admin') {
       return "/admin-dashboard/dashboard";
     }

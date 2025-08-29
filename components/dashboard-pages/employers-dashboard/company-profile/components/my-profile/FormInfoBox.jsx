@@ -7,13 +7,14 @@ import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
 import { industryService } from "@/services/industryService";
 import locationService from "@/services/locationService";
+import teamSizeService from "@/services/teamSizeService";
 
 const FormInfoBox = ({ onFormChange, validationErrors, initialData, isEditing }) => {
     const [formData, setFormData] = useState({
         companyName: initialData?.companyName || "",
         phone: initialData?.phone || "",
         website: initialData?.website || "",
-        teamSize: initialData?.teamSize || "50 - 100", // Default value
+        teamSize: initialData?.teamSize || "50 - 100", // Updated default value
         location: initialData?.location || "", // Will store the selected province name
         industryId: initialData?.industryId || "", // Will store the selected industry ID (number)
         aboutCompany: initialData?.aboutCompany || "",
@@ -21,6 +22,7 @@ const FormInfoBox = ({ onFormChange, validationErrors, initialData, isEditing })
 
     const [provinces, setProvinces] = useState([]);
     const [industries, setIndustries] = useState([]);
+    const [teamSizes, setTeamSizes] = useState([]);
 
     // Fetch provinces on component mount
     useEffect(() => {
@@ -49,6 +51,21 @@ const FormInfoBox = ({ onFormChange, validationErrors, initialData, isEditing })
             }
         };
         fetchIndustries();
+    }, []); // Empty dependency array means this effect runs once on mount
+
+    // Fetch team sizes on component mount
+    useEffect(() => {
+        const fetchTeamSizes = async () => {
+            try {
+                const response = await teamSizeService.getAllTeamSizes();
+                setTeamSizes(response);
+            } catch (error) {
+                console.error("Error fetching team sizes:", error);
+                // Set default options if API fails
+                setTeamSizes(teamSizeService.getStaticTeamSizeOptions());
+            }
+        };
+        fetchTeamSizes();
     }, []); // Empty dependency array means this effect runs once on mount
 
 
@@ -113,7 +130,7 @@ const FormInfoBox = ({ onFormChange, validationErrors, initialData, isEditing })
                         value={formData.companyName}
                         onChange={handleInputChange}
                          className={validationErrors.companyName ? 'form-control is-invalid' : 'form-control'}
-                        disabled={!isEditing}
+                        disabled={true}
                     />
                     {validationErrors.companyName && <div className="invalid-feedback">{validationErrors.companyName}</div>}
                 </div>
@@ -175,11 +192,11 @@ const FormInfoBox = ({ onFormChange, validationErrors, initialData, isEditing })
                     <select className={validationErrors.teamSize ? 'chosen-single form-select is-invalid' : 'chosen-single form-select'} required name="teamSize" value={formData.teamSize} onChange={handleSelectChange}
                         disabled={!isEditing}
                     >
-                        <option>50 - 100</option>
-                        <option>100 - 150</option>
-                        <option>200 - 250</option>
-                        <option>300 - 350</option>
-                        <option>500 - 1000</option>
+                        {teamSizes.map(size => (
+                            <option key={size} value={size}>
+                                {size}
+                            </option>
+                        ))}
                     </select>
                     {validationErrors.teamSize && <div className="invalid-feedback">{validationErrors.teamSize}</div>}
                 </div>

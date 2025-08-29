@@ -216,7 +216,7 @@ export default function CVTemplatesPage() {
     if (!packageType || !userId) return;
     let lastPackage = localStorage.getItem('cv_last_package_' + userId);
     if (lastPackage !== packageType) {
-      // Không cộng quota cho Free package - chỉ set ban đầu ở logic trên
+
       if (packageType.toLowerCase() !== 'free') {
         const add = getQuotaByPackage(packageType);
         const currentRaw = localStorage.getItem(keyMax);

@@ -90,8 +90,6 @@ const PackagesPage = () => {
     // Chỉ cộng quota khi có updatedAt mới (thực sự update gói) và không phải Free package
     if (lastUpdatedAt !== updatedAt) {
       console.log('Adding quota for package update:', packageName);
-      
-      // Không cộng quota cho Free package - chỉ set ban đầu ở logic trên
       if (packageName.toLowerCase() !== 'free') {
         const add = getQuotaByPackage(packageName);
         const currentRaw = localStorage.getItem(keyMax);
@@ -100,7 +98,6 @@ const PackagesPage = () => {
         const newMax = add === Infinity || safeCurrent === Infinity ? Infinity : safeCurrent + add;
         localStorage.setItem(keyMax, newMax === Infinity ? 'Infinity' : String(newMax));
       }
-      
       localStorage.setItem('cv_last_package_' + userId, packageName);
       localStorage.setItem('cv_last_updated_at_' + userId, updatedAt);
     } else {

@@ -356,7 +356,7 @@ const WidgetContentBox = ({ jobId, candidateName, showMatchingInfo, useMatchingA
   // Định nghĩa hàm chuyển trang khi nhấn icon list
   const handleShowAppliedJobs = (userId) => {
     const companyId = jobDetails?.companyId;
-    let url = `/employers-dashboard/shortlisted-resumes?userId=${userId}`;
+            let url = `/company-dashboard/shortlisted-resumes?userId=${userId}`;
     if (companyId) url += `&companyId=${companyId}`;
     router.push(url);
   };
@@ -650,7 +650,7 @@ const WidgetContentBox = ({ jobId, candidateName, showMatchingInfo, useMatchingA
                             />
                           </figure>
                           <h4 className="name">
-                            <Link href={`/candidates-single-v1/${applicant.userId}`}>
+                            <Link href={`/candidate-profile/${applicant.userId}`}>
                               {applicant.user?.fullName || applicant.user?.name || applicant.candidateProfile?.fullName || `User ID: ${applicant.userId}`}
                             </Link>
                           </h4>
@@ -823,7 +823,7 @@ const WidgetContentBox = ({ jobId, candidateName, showMatchingInfo, useMatchingA
         footer={
           <>
             <button className="btn-cancel" onClick={() => setShowUpgradeModal(false)}>Close</button>
-            <button className="btn-confirm" onClick={() => { setShowUpgradeModal(false); window.location.href = '/employers-dashboard/packages/buy'; }}>Upgrade package</button>
+            <button className="btn-confirm" onClick={() => { setShowUpgradeModal(false); window.location.href = '/company-dashboard/packages/buy'; }}>Upgrade package</button>
           </>
         }
       >

@@ -23,7 +23,7 @@ const CallToAction11 = () => {
 
                 <div className="mt-20">
                   <Link
-                    href="/employers-dashboard/post-jobs"
+                    href="/company-dashboard/post-jobs"
                     className="theme-btn"
                   >
                     Post a Job

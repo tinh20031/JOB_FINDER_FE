@@ -259,7 +259,7 @@ const EmployersSingleV1 = ({ params }) => {
                                 ProvinceName: job.provinceName || '',
                                 SkillIds: job.skills?.map(s => s.skillId).join(',') || ''
                               });
-                              window.location.href = `/job-list-v1?${params.toString()}`;
+                              window.location.href = `/job-list?${params.toString()}`;
                             }}
                           >
                             <div className="content">
@@ -292,7 +292,7 @@ const EmployersSingleV1 = ({ params }) => {
                                 />
                               </span>
                               <h4>
-                                <Link href={`/job-single-v3/${job.jobId}`} style={{ color: '#1967d2', textDecoration: 'none' }}>
+                                <Link href={`/job-detail/${job.jobId}`} style={{ color: '#1967d2', textDecoration: 'none' }}>
                                   {job.title}
                                 </Link>
                               </h4>

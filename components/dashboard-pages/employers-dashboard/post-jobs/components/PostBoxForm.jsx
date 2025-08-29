@@ -1918,9 +1918,9 @@ const PostBoxForm = ({ cloneData, isClone }) => {
               <div className="alert alert-warning mb-3" role="alert">
                 <i className="fas fa-exclamation-triangle me-1"></i>
                 <strong>Warning:</strong> You have only {mySubscription.remainingJobPosts} job post{mySubscription.remainingJobPosts === 1 ? '' : 's'} remaining. 
-                <Link href="/employers-dashboard/packages" style={{ marginLeft: '8px', color: '#e60023', textDecoration: 'underline' }}>
-                  Upgrade your package
-                </Link> to post more jobs.
+                                 <Link href="/company-dashboard/packages" style={{ marginLeft: '8px', color: '#e60023', textDecoration: 'underline' }}>
+                   Upgrade your package
+                 </Link> to post more jobs.
               </div>
             )}
 
@@ -1929,9 +1929,9 @@ const PostBoxForm = ({ cloneData, isClone }) => {
               <div className="alert alert-danger mb-3" role="alert">
                 <i className="fas fa-ban me-1"></i>
                 <strong>Job Post Limit Reached:</strong> You have used all your job posts for this package. 
-                <Link href="/employers-dashboard/packages" style={{ marginLeft: '8px', color: '#e60023', textDecoration: 'underline' }}>
-                  Upgrade your package
-                </Link> to continue posting jobs.
+                                 <Link href="/company-dashboard/packages" style={{ marginLeft: '8px', color: '#e60023', textDecoration: 'underline' }}>
+                   Upgrade your package
+                 </Link> to continue posting jobs.
               </div>
             )}
 
@@ -2033,7 +2033,7 @@ const PostBoxForm = ({ cloneData, isClone }) => {
               e.preventDefault();
               setShowSuccessModal(false);
               setTimeout(() => {
-                router.push("/employers-dashboard/manage-jobs");
+                router.push("/company-dashboard/manage-jobs");
               }, 100);
             }}
           >
@@ -2056,7 +2056,7 @@ const PostBoxForm = ({ cloneData, isClone }) => {
               e.preventDefault();
               setShowTrendingSuccessModal(false);
               setTimeout(() => {
-                router.push("/employers-dashboard/manage-jobs");
+                router.push("/company-dashboard/manage-jobs");
               }, 100);
             }}
           >
@@ -2075,7 +2075,7 @@ const PostBoxForm = ({ cloneData, isClone }) => {
         footer={
           <>
             <button className="btn-cancel" onClick={() => setShowUpgradeModal(false)}>Cancel</button>
-            <button className="btn-confirm" style={{ marginLeft: 8 }} onClick={() => { router.push('/employers-dashboard/packages'); }}>Upgrade Package</button>
+            <button className="btn-confirm" style={{ marginLeft: 8 }} onClick={() => { router.push('/company-dashboard/packages'); }}>Upgrade Package</button>
           </>
         }
       >

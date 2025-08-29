@@ -34,7 +34,7 @@ const WidgetContentBox = ({ searchTitle = "", filterTime = "Newest" }) => {
   }, [UserId, CompanyProfileId]);
 
   const handleJobClick = (JobId) => {
-    router.push(`/job-single-v3/${JobId}`);
+            router.push(`/job-detail/${JobId}`);
   };
 
   const [currentPage, setCurrentPage] = useState(1);

@@ -63,7 +63,7 @@ const Candidates = () => {
                 <i className="flaticon-map-locator"></i> {candidate.location}
               </div>
               <Link
-                href={`/candidates-single-v1/${candidate.id}`}
+                href={`/candidate-profile/${candidate.id}`}
                 className="theme-btn btn-style-three"
               >
                 <span className="btn-title">View Profile</span>

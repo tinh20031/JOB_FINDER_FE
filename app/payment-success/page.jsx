@@ -180,7 +180,7 @@ const PaymentSuccessPageContent = () => {
           )}
           <div style={{ marginTop: 24, textAlign: 'center' }}>
             <a
-              href={type === "company" ? "/employers-dashboard/packages" : "/candidates-dashboard/packages"}
+                              href={type === "company" ? "/company-dashboard/packages" : "/candidates-dashboard/packages"}
               style={{ display: 'inline-block', padding: '8px 20px', background: '#1976d2', color: '#fff', borderRadius: 4, textDecoration: 'none', fontWeight: 500 }}
             >
               {type === "company" ? "Return to My Company Packages" : "Return My Package"}

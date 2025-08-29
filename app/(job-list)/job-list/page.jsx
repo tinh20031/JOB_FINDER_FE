@@ -1,15 +1,15 @@
 import dynamic from "next/dynamic";
-import EmployersList from "@/components/employers-listing-pages/employers-list-v1";
+import JobList from "@/components/job-listing-pages/job-list";
 
 export const metadata = {
-  title: "Companies",
-  description: "Job Finder - Companies",
+  title: "Job List",
+  description: "Job List",
 };
 
 const index = () => {
   return (
     <>
-      <EmployersList />
+      <JobList />
     </>
   );
 };

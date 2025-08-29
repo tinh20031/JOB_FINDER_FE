@@ -25,7 +25,7 @@ const About3 = () => {
             <li>But I must explain to you how all this</li>
           </ul>
           <Link
-            href="/employers-dashboard/post-jobs"
+                            href="/company-dashboard/post-jobs"
             className="theme-btn btn-style-seven"
           >
             Post a Job

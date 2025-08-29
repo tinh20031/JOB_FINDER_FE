@@ -1,16 +1,16 @@
 // API Configuration
 const API_CONFIG = {
 
-  BASE_URL: process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5194/api",
-  SIGNALR_CHAT_HUB_URL: process.env.NEXT_PUBLIC_SIGNALR_CHAT_HUB_URL || "http://localhost:5194/chathub",
-  SIGNALR_NOTIFICATION_HUB_URL: process.env.NEXT_PUBLIC_SIGNALR_NOTIFICATION_HUB_URL || "http://localhost:5194/notificationHub",
+  // BASE_URL: process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5194/api",
+  // SIGNALR_CHAT_HUB_URL: process.env.NEXT_PUBLIC_SIGNALR_CHAT_HUB_URL || "http://localhost:5194/chathub",
+  // SIGNALR_NOTIFICATION_HUB_URL: process.env.NEXT_PUBLIC_SIGNALR_NOTIFICATION_HUB_URL || "http://localhost:5194/notificationHub",
   // BASE_URL: "https://job-finder-kjt2.onrender.com/api",
   // SIGNALR_CHAT_HUB_URL: "https://job-finder-kjt2.onrender.com/chathub",
   // SIGNALR_NOTIFICATION_HUB_URL: "https://job-finder-kjt2.onrender.com/notificationHub",
 
-  // BASE_URL: "https://jobfindersever.io.vn/api",
-  // SIGNALR_CHAT_HUB_URL: "https://jobfindersever.io.vn/chathub",
-  // SIGNALR_NOTIFICATION_HUB_URL: "https://jobfindersever.io.vn/notificationHub",
+  BASE_URL: "https://jobfindersever.io.vn/api",
+  SIGNALR_CHAT_HUB_URL: "https://jobfindersever.io.vn/chathub",
+  SIGNALR_NOTIFICATION_HUB_URL: "https://jobfindersever.io.vn/notificationHub",
 
 
   ENDPOINTS: {

@@ -273,7 +273,7 @@ const FilterTopBox = () => {
   const content = sortedAndPaginatedCompanies?.map((company) => (
     <ClickableBox
       key={company.userId}
-      onClick={() => router.push(`/employers-single-v1/${company.userId}`)}
+      onClick={() => router.push(`/company-detail/${company.userId}`)}
       className="company-block-three"
       style={{ cursor: 'pointer' }}
     >

@@ -28,7 +28,7 @@ const Candidates2 = () => {
             </div>
             {/* End .content-box */}
             <Link
-              href={`/candidates-single-v1/${candidate.id}`}
+              href={`/candidate-profile/${candidate.id}`}
               className="theme-btn btn-style-one"
             >
               <span className="btn-title">View Profile</span>

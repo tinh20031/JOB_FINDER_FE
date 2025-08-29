@@ -28,7 +28,7 @@ const PaymentCancelledPageContent = () => {
 
   const handleReturn = () => {
     if (type === "company") {
-      router.push("/employers-dashboard/packages");
+      router.push("/company-dashboard/packages");
     } else {
       router.push("/candidates-dashboard/packages");
     }

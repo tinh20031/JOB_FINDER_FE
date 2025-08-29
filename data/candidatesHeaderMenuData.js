@@ -10,7 +10,7 @@ module.exports = [
     id: 2,
     name: "My Profile",
     icon: "la-user-tie",
-    routePath: "/candidates-dashboard/my-resume",
+    routePath: "/candidates-dashboard/my-profile",
     active: "",
   },
   {

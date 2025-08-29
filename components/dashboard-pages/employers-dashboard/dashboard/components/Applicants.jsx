@@ -152,7 +152,7 @@ const Applicants = ({ candidateName = "" }) => {
                 />
               </figure>
               <h4 className="name">
-                <Link href={`/candidates-single-v1/${app.UserId || app.userId}`}>
+                <Link href={`/candidate-profile/${app.UserId || app.userId}`}>
                   {app.fullName || "N/A"}
                 </Link>
               </h4>
@@ -206,7 +206,7 @@ const Applicants = ({ candidateName = "" }) => {
                     data-text="View all jobs this candidate applied for at your company"
                     onClick={() => {
                       if (app.userId && companyId) {
-                        router.push(`/employers-dashboard/shortlisted-resumes?userId=${app.userId}&companyId=${companyId}`);
+                        router.push(`/company-dashboard/shortlisted-resumes?userId=${app.userId}&companyId=${companyId}`);
                       }
                     }}
                   >

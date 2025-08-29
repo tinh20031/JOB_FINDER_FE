@@ -10,6 +10,7 @@ import ApiService from "../../../../services/api.service";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import teamSizeService from "@/services/teamSizeService";
 
 const EmployerManagement = () => {
   const [employers, setEmployers] = useState([]);
@@ -126,14 +127,23 @@ const EmployerManagement = () => {
 
   // Lấy danh sách industry duy nhất từ employers
   const industryList = Array.from(new Set(employers.map((e) => e.IndustryName).filter(Boolean)));
-  // Lấy danh sách team size mẫu
-  const teamSizeOptions = [
-    { label: "All", value: "all" },
-    { label: "1-50", value: "1-50" },
-    { label: "51-200", value: "51-200" },
-    { label: "201-500", value: "201-500" },
-    { label: "501+", value: "501+" },
-  ];
+  
+  // State for team size options
+  const [teamSizeOptions, setTeamSizeOptions] = useState(teamSizeService.getStaticFilterOptions());
+
+  // Fetch team size options on component mount
+  useEffect(() => {
+    const fetchTeamSizes = async () => {
+      try {
+        const options = await teamSizeService.getAdminFilterOptions();
+        setTeamSizeOptions(options);
+      } catch (error) {
+        console.error('Error fetching team size options:', error);
+        // Keep default options if API fails
+      }
+    };
+    fetchTeamSizes();
+  }, []);
 
   // Filter nâng cao
   const filteredEmployers = employers.filter((emp) => {
@@ -626,7 +636,7 @@ const EmployerManagement = () => {
                                 <div>
                                   <div style={{ fontWeight: 600, fontSize: 20, marginBottom: 4 }}>
                                     <a
-                                      href={`/employers-single-v1/${emp.Id}`}
+                                      href={`/company-detail/${emp.Id}`}
                                       style={{ textDecoration: "none", cursor: "pointer" }}
                                     >
                                       {emp.CompanyName}

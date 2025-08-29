@@ -111,7 +111,7 @@ const Index = () => {
                     companyName: initialProfileData.companyName || "",
                     phone: initialProfileData.contact || "",
                     website: initialProfileData.website || "",
-                    teamSize: initialProfileData.teamSize || "50 - 100",
+                    teamSize: initialProfileData.teamSize || "51 - 100",
                     location: initialProfileData.location || "",
                     industryId: initialProfileData.industryId || 0,
                     aboutCompany: initialProfileData.companyProfileDescription || "",
@@ -154,7 +154,7 @@ const Index = () => {
                         companyName: data.companyName || "",
                         phone: data.contact || "",
                         website: data.website || "",
-                        teamSize: data.teamSize || "50 - 100",
+                        teamSize: data.teamSize || "51 - 100",
                         location: data.location || "",
                         industryId: data.industryId || "",
                         aboutCompany: data.companyProfileDescription || "",
@@ -496,7 +496,7 @@ const Index = () => {
                 try {
                     // First try with company profile ID
                     if (companyId) {
-                        window.open(`/employers-single-v1/${companyId}`, '_blank');
+                        window.open(`/company-detail/${companyId}`, '_blank');
                         return;
                     }
                     
@@ -508,7 +508,7 @@ const Index = () => {
                             if (profileData && profileData.id) {
                                 // Store the company profile ID for future use
                                 localStorage.setItem('CompanyProfileId', profileData.id);
-                                window.open(`/employers-single-v1/${profileData.id}`, '_blank');
+                                window.open(`/company-detail/${profileData.id}`, '_blank');
                                 return;
                             }
                         } catch (error) {
@@ -516,7 +516,7 @@ const Index = () => {
                         }
                         
                         // Fallback: try with user ID directly
-                        window.open(`/employers-single-v1/${userId}`, '_blank');
+                        window.open(`/company-detail/${userId}`, '_blank');
                     }
                 } catch (error) {
                     console.error('Error previewing profile:', error);

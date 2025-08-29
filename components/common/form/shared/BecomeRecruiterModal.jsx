@@ -1,19 +1,16 @@
-import React, { useState, useEffect } from "react";
+'use client'
+
+import { useState, useEffect } from 'react';
 import { useSelector } from "react-redux";
-import { industryService } from "@/services/industryService";
-import { userService } from "@/services/userService";
-import locationService from "@/services/locationService";
+import { industryService } from '@/services/industryService';
+import locationService from '@/services/locationService';
+import teamSizeService from '@/services/teamSizeService';
+import { userService } from '@/services/userService';
 import { CheckCircleOutlined } from '@ant-design/icons';
 import './styles/_becomeRecruiterModal.scss';
 
-const BecomeRecruiterModal = ({ open, onCancel }) => {
+const BecomeRecruiterModal = ({ isOpen, onClose, onSuccess }) => {
   const { userId } = useSelector((state) => state.auth);
-  const [loading, setLoading] = useState(false);
-  const [provinces, setProvinces] = useState([]);
-  const [industries, setIndustries] = useState([]);
-  const [requestSent, setRequestSent] = useState(false);
-  const [statusMessage, setStatusMessage] = useState('');
-  const [error, setError] = useState(null);
   const [form, setForm] = useState({
     companyName: '',
     companyProfileDescription: '',
@@ -21,17 +18,21 @@ const BecomeRecruiterModal = ({ open, onCancel }) => {
     teamSize: '',
     website: '',
     contact: '',
-    industryId: '',
+    industryId: ''
   });
   const [formErrors, setFormErrors] = useState({});
+  const [loading, setLoading] = useState(false);
+  const [success, setSuccess] = useState(false);
+  const [provinces, setProvinces] = useState([]);
+  const [industries, setIndustries] = useState([]);
+  const [teamSizes, setTeamSizes] = useState([]);
+  const [requestSent, setRequestSent] = useState(false);
+  const [statusMessage, setStatusMessage] = useState('');
+  const [error, setError] = useState(null);
 
+  // Reset form when modal opens
   useEffect(() => {
-    if (open) {
-      locationService.getProvinces().then(data => {
-        setProvinces(data);
-      });
-      fetchIndustries();
-      setRequestSent(false);
+    if (isOpen) {
       setForm({
         companyName: '',
         companyProfileDescription: '',
@@ -39,17 +40,41 @@ const BecomeRecruiterModal = ({ open, onCancel }) => {
         teamSize: '',
         website: '',
         contact: '',
-        industryId: '',
+        industryId: ''
       });
       setFormErrors({});
+      setSuccess(false);
+      setRequestSent(false);
       setStatusMessage('');
       setError(null);
     }
-  }, [open]);
+  }, [isOpen]);
+
+  // Fetch provinces and industries on component mount
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [provincesData, industriesData, teamSizesData] = await Promise.all([
+          locationService.getProvinces(),
+          industryService.getAll(),
+          teamSizeService.getAllTeamSizes()
+        ]);
+        
+        setProvinces(provincesData.sort((a, b) => a.name.localeCompare(b.name)));
+        setIndustries(industriesData.sort((a, b) => a.industryName.localeCompare(b.industryName)));
+        setTeamSizes(teamSizesData);
+      } catch (error) {
+        console.error('Error fetching data:', error);
+        // Set default team sizes if API fails
+        setTeamSizes(teamSizeService.getStaticTeamSizeOptions());
+      }
+    };
+    fetchData();
+  }, []);
 
   // Lock body scroll when modal is open to prevent background layout from scrolling/shifting
   useEffect(() => {
-    if (!open) return;
+    if (!isOpen) return;
     const previousOverflow = document.body.style.overflow;
     const previousPaddingRight = document.body.style.paddingRight;
     const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
@@ -61,16 +86,7 @@ const BecomeRecruiterModal = ({ open, onCancel }) => {
       document.body.style.overflow = previousOverflow;
       document.body.style.paddingRight = previousPaddingRight;
     };
-  }, [open]);
-
-  const fetchIndustries = async () => {
-    try {
-      const data = await industryService.getAll();
-      setIndustries(data);
-    } catch (err) {
-      setError("Failed to load industries");
-    }
-  };
+  }, [isOpen]);
 
   const validate = () => {
     const errors = {};
@@ -139,11 +155,11 @@ const BecomeRecruiterModal = ({ open, onCancel }) => {
   return (
     <div
       id="become-recruiter-modal-root"
-      className={`modal fade brm-overlay${open ? ' show d-block brm-open' : ''}`}
+      className={`modal fade brm-overlay${isOpen ? ' show d-block brm-open' : ''}`}
       tabIndex="-1"
       style={{
-        background: open ? 'rgba(0,0,0,0.5)' : 'none',
-        ...(open ? { position: 'fixed', inset: 0, overflowY: 'auto' } : {}),
+        background: isOpen ? 'rgba(0,0,0,0.5)' : 'none',
+        ...(isOpen ? { position: 'fixed', inset: 0, overflowY: 'auto' } : {}),
       }}
     >
       <div className="modal-dialog modal-lg modal-dialog-centered login-modal modal-dialog-scrollable brm-dialog"
@@ -155,7 +171,7 @@ const BecomeRecruiterModal = ({ open, onCancel }) => {
               Become Recruiter
               <span className="brm-subtitle">Fill in company details to request recruiter access</span>
             </h5>
-            <button type="button" className="btn-close" aria-label="Close" onClick={onCancel}></button>
+            <button type="button" className="btn-close" aria-label="Close" onClick={onClose}></button>
           </div>
           <div className="modal-body" style={{ padding: '2rem', maxHeight: '75vh', overflowY: 'auto' }} onWheel={(e) => e.stopPropagation()}>
             <div id="become-recruiter-modal">
@@ -164,7 +180,7 @@ const BecomeRecruiterModal = ({ open, onCancel }) => {
                   <div className="success-message text-center p-4">
                     <CheckCircleOutlined style={{ fontSize: 48, marginBottom: 20, color: '#52c41a' }} />
                     <div>{statusMessage}</div>
-                    <button className="btn btn-primary mt-3" onClick={onCancel}>Close</button>
+                    <button className="btn btn-primary mt-3" onClick={onClose}>Close</button>
                   </div>
                 ) : (
                   <form onSubmit={handleOk} className="become-recruiter-form">
@@ -193,11 +209,9 @@ const BecomeRecruiterModal = ({ open, onCancel }) => {
                       <label className="form-label fw-semibold">Team Size<span className="text-danger">*</span></label>
                       <select className={`form-select rounded-pill py-2${formErrors.teamSize ? ' is-invalid' : ''}`} name="teamSize" value={form.teamSize} onChange={handleSelectChange} style={{ minHeight: 40 }}>
                         <option value="">Select team size</option>
-                        <option value="50 - 100">50 - 100</option>
-                        <option value="100 - 150">100 - 150</option>
-                        <option value="200 - 250">200 - 250</option>
-                        <option value="300 - 350">300 - 350</option>
-                        <option value="500 - 1000">500 - 1000</option>
+                        {teamSizes.map((item) => (
+                          <option key={item} value={item}>{item}</option>
+                        ))}
                       </select>
                       {formErrors.teamSize && <div className="invalid-feedback">{formErrors.teamSize}</div>}
                     </div>
@@ -221,7 +235,7 @@ const BecomeRecruiterModal = ({ open, onCancel }) => {
                       {formErrors.industryId && <div className="invalid-feedback">{formErrors.industryId}</div>}
                     </div>
                     <div className="d-flex justify-content-end gap-2">
-                      <button type="button" className="btn btn-outline-secondary rounded-pill px-4 brm-btn" onClick={onCancel} disabled={loading}>Cancel</button>
+                      <button type="button" className="btn btn-outline-secondary rounded-pill px-4 brm-btn" onClick={onClose} disabled={loading}>Cancel</button>
                       <button type="submit" className="btn btn-primary rounded-pill px-4 brm-btn-primary" disabled={loading}>
                         {loading ? <span className="spinner-border spinner-border-sm me-2"></span> : null}
                         Submit

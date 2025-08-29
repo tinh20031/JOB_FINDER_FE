@@ -3,7 +3,7 @@ module.exports = [
     id: 1,
     title: "For Candidates",
     menuList: [
-      { name: "Browse Jobs", route: "/job-list-v11" },
+      { name: "Browse Jobs", route: "/job-list" },
       { name: "Browse Categories", route: "/job-list-v3" },
       { name: "Candidate Dashboard", route: "/candidates-dashboard/dashboard" },
       { name: "Job Alerts", route: "/candidates-dashboard/job-alerts" },
@@ -21,9 +21,9 @@ module.exports = [
         name: "Browse Candidates",
         route: "/candidates-list-v1",
       },
-      { name: "Employer Dashboard", route: "/employers-dashboard/dashboard" },
-      { name: "Add Job", route: "/employers-dashboard/post-jobs" },
-      { name: "Job Packages", route: "/employers-dashboard/packages" },
+      { name: "Employer Dashboard", route: "/company-dashboard/dashboard" },
+{ name: "Add Job", route: "/company-dashboard/post-jobs" },
+{ name: "Job Packages", route: "/company-dashboard/packages" },
     ],
   },
   {

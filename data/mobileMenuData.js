@@ -7,12 +7,12 @@ module.exports = [
   {
     id: 2,
     label: "Job List",
-    routePath: "/job-list-v1",
+    routePath: "/job-list",
   },
   {
     id: 4,
     label: "Employers List",
-    routePath: "/employers-list-v1",
+    routePath: "/company-list",
   },
   
 ];
