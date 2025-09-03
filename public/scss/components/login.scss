@@ -39,29 +39,28 @@ Login Popup
 
 .login-from .form-group {
   position: relative;
-  display: -webkit-box;
-  display: -ms-flexbox;
-  display: flex;
-  -webkit-box-pack: justify;
-  -ms-flex-pack: justify;
-  justify-content: space-between;
-  -webkit-box-align: center;
-  -ms-flex-align: center;
-  align-items: center;
+  display: block !important;
+  width: 100% !important;
   margin-bottom: 18px;
+  text-align: left;
+}
+
+.login-from .form-group label {
+  display: block !important;
+  width: 100% !important;
+  margin-bottom: 8px;
+  font-size: 14px;
+  color: #5c5c5c;
+  line-height: 1em;
+  cursor: pointer;
 }
 
 .login-from .form-group .text,
-.login-from .form-group .forgot-pass,
-.login-from .form-group label {
+.login-from .form-group .forgot-pass {
   font-size: 14px;
   color: #5c5c5c;
   line-height: 1em;
   margin: 0;
-}
-
-.login-from .form-group label {
-  cursor: pointer;
 }
 
 .login-from .form-group .forgot-pass:hover {
@@ -72,23 +71,30 @@ Login Popup
 .login-from .form-group input[type="email"],
 .login-from .form-group input[type="password"],
 .login-from .form-group input[type="url"],
+.login-from .form-group input[type="tel"],
 .login-from .form-group select,
 .login-from .form-group textarea {
   position: relative;
-  display: block;
-  width: 100%;
+  display: block !important;
+  width: 100% !important;
   height: 54px;
   font-size: 14px;
   color: #5c6770;
   line-height: 30px;
   font-weight: 400;
-  background: #ffffff;
+  background: #f0f2f5 !important;
   border: 2px solid #e6e8ed;
   padding: 10px 20px;
   border-radius: 8px;
   -webkit-transition: all 300ms ease;
   -o-transition: all 300ms ease;
   transition: all 300ms ease;
+
+  &:focus, 
+  &:hover {
+    background: #ffffff !important;
+    border-color: #0d6efd !important;
+  }
 }
 
 .login-from .form-group input[type="submit"],
@@ -461,4 +467,8 @@ Login Section
   .modal-body {
     padding: 0;
   }
+}
+
+.bottom-box .text a:hover {
+  text-decoration: underline;
 }

@@ -99,20 +99,109 @@
 
 /* CSS cho trạng thái Active (xanh lá cây) */
 .status-active {
-  color: #28a745; /* Màu xanh lá cây phổ biến */
-  font-weight: 500; /* Để chữ đậm hơn một chút */
+  color: #28a745;
+  font-weight: bold;
 }
 
 /* CSS cho trạng thái Inactive (đỏ) */
 .status-inactive {
-  color: #dc3545; /* Màu đỏ phổ biến */
-  font-weight: 500;
+  color: #6c757d;
+  font-weight: bold;
 }
 
 /* CSS cho trạng thái Pending (xanh nước biển) */
 .status-pending {
-  color: #007bff; /* Màu xanh nước biển phổ biến */
-  font-weight: 500;
+  color: #ffc107;
+  font-weight: bold;
+}
+
+/* CSS cho trạng thái Cancelled (xám hoặc cam nhạt) */
+.status-cancelled {
+  color: #f0ad4e;
+  font-weight: bold;
+}
+
+/* CSS cho trạng thái Locked (đỏ đậm) */
+.status-locked {
+  color: #dc3545;
+  font-weight: bold;
+}
+
+/* CSS cho trạng thái Not Started (cam nhạt) */
+.status-not-started {
+  color: #fd7e14;
+  font-weight: bold;
+}
+
+/* CSS cho trạng thái Expired (xám nhạt) */
+.status-expired {
+  color: #343a40;
+  font-weight: bold;
+}
+
+/* CSS cho trạng thái Draft (xám) */
+.status-draft {
+  color: #6c757d;
+  font-weight: bold;
+}
+
+/* CSS cho các trạng thái bị lock - màu đỏ */
+.status-pending--locked {
+  color: #dc3545;
+  font-weight: bold;
+}
+
+.status-active--locked {
+  color: #dc3545;
+  font-weight: bold;
+}
+
+.status-inactive--locked {
+  color: #dc3545;
+  font-weight: bold;
+}
+
+/* CSS cho trạng thái Rejected - màu đỏ */
+.status-rejected {
+  color: #dc3545;
+  font-weight: bold;
+}
+
+/* CSS cho các trạng thái Locked */
+.status-pending--locked {
+  color: #ffc107;
+  font-weight: bold;
+  font-style: italic;
+}
+
+.status-active--locked {
+  color: #28a745;
+  font-weight: bold;
+  font-style: italic;
+}
+
+.status-inactive--locked {
+  color: #6c757d;
+  font-weight: bold;
+  font-style: italic;
+}
+
+.status-rejected--locked {
+  color: #dc3545;
+  font-weight: bold;
+  font-style: italic;
+}
+
+.status-not-started--locked {
+  color: #fd7e14;
+  font-weight: bold;
+  font-style: italic;
+}
+
+.status-unknown--locked {
+  color: #6c757d;
+  font-weight: bold;
+  font-style: italic;
 }
 
 /* Bạn có thể cần thêm các class CSS khác tùy thuộc vào cấu trúc HTML và thiết kế tổng thể */

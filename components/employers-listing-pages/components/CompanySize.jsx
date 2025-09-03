@@ -25,6 +25,7 @@ const CompanySize = () => {
         <option value="200 - 250">200 - 250</option>
         <option value="300 - 350">300 - 350</option>
         <option value="500 - 1000">500 - 1000</option>
+        <option value="1000+">1000+</option>
       </select>
       <span className="icon flaticon-team me-2"></span>
     </>

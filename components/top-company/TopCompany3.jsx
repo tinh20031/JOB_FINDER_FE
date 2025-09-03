@@ -27,7 +27,7 @@ const TopCompany3 = () => {
             </div>
             {/* End .content */}
             <Link
-              href="/employers-list-v1"
+                              href="/company-list"
               className="theme-btn btn-style-three"
             >
               {company.jobNumber} Open Position

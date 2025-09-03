@@ -17,7 +17,7 @@ export const findJobItems = [
     items: [
       {
         name: "Job List",
-        routePath: "/job-list-v1",
+        routePath: "/job-list",
       },
     
     ],
@@ -28,7 +28,7 @@ export const findJobItems = [
     items: [
       {
         name: "Job Single",
-        routePath: "/job-single-v1/3",
+        routePath: "/job-detail/3",
       },
     ],
   },
@@ -41,7 +41,7 @@ export const employerItems = [
     items: [
       {
         name: "Employers List",
-        routePath: "/employers-list-v1",
+        routePath: "/company-list",
       },
     ],
   },
@@ -51,7 +51,7 @@ export const employerItems = [
     items: [
       {
         name: "Employers Single",
-        routePath: "/employers-single-v1/1",
+        routePath: "/company-detail/1",
       },
     ],
   },
@@ -74,7 +74,7 @@ export const candidateItems = [
     items: [
       {
         name: "Candidates Single",
-        routePath: "/candidates-single-v1/1",
+        routePath: "/candidate-profile/1",
       },
     ],
   },

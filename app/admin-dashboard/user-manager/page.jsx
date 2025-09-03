@@ -1,13 +1,15 @@
-import dynamic from "next/dynamic";
+import { Suspense } from "react";
 import UserManager from "@/components/dashboard-pages/admin-dashboard/user-manager";
 
 export const metadata = {
   title: "User Manager | Admin Dashboard",
-  description: "Quản lý người dùng hệ thống",
+  description: "System user management",
 };
 
-const index = () => {
-  return <UserManager />;
-};
-
-export default dynamic(() => Promise.resolve(index), { ssr: false }); 
+export default function Page() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <UserManager />
+    </Suspense>
+  );
+}

@@ -7,9 +7,16 @@ import FormInfoBox from "./FormInfoBox";
 import LogoCoverUploader from "./LogoCoverUploader";
 import { useRouter } from 'next/navigation';
 import { companyProfileService } from '@/services/companyProfileService';
+import { motion, AnimatePresence } from 'framer-motion';
+import { useDispatch } from "react-redux";
+import { setProfileUpdated } from "@/features/auth/authSlice";
+import Modal from "@/components/common/Modal";
+import "@/styles/modal.css";
+import { authService } from '@/services/authService';
 
 const Index = () => {
     const router = useRouter();
+    const dispatch = useDispatch();
 
     const [companyProfileData, setCompanyProfileData] = useState({
         formData: {},
@@ -33,6 +40,51 @@ const Index = () => {
     const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
     const [showCustomConfirmationModal, setShowCustomConfirmationModal] = useState(false);
     const [intendedPath, setIntendedPath] = useState(null);
+
+    // New state for save confirmation
+    const [showSaveConfirmationModal, setShowSaveConfirmationModal] = useState(false);
+
+    const modalVariants = {
+        hidden: { 
+            opacity: 0,
+            scale: 0.8,
+            y: -20
+        },
+        visible: { 
+            opacity: 1,
+            scale: 1,
+            y: 0,
+            transition: {
+                duration: 0.3,
+                ease: "easeOut"
+            }
+        },
+        exit: {
+            opacity: 0,
+            scale: 0.8,
+            y: -20,
+            transition: {
+                duration: 0.2,
+                ease: "easeIn"
+            }
+        }
+    };
+
+    const overlayVariants = {
+        hidden: { opacity: 0 },
+        visible: { 
+            opacity: 1,
+            transition: {
+                duration: 0.3
+            }
+        },
+        exit: {
+            opacity: 0,
+            transition: {
+                duration: 0.2
+            }
+        }
+    };
 
     // Helper to compare form data (ignoring file objects for now as they are handled separately)
     const areFormDataEqual = (data1, data2) => {
@@ -59,7 +111,7 @@ const Index = () => {
                     companyName: initialProfileData.companyName || "",
                     phone: initialProfileData.contact || "",
                     website: initialProfileData.website || "",
-                    teamSize: initialProfileData.teamSize || "50 - 100",
+                    teamSize: initialProfileData.teamSize || "51 - 100",
                     location: initialProfileData.location || "",
                     industryId: initialProfileData.industryId || 0,
                     aboutCompany: initialProfileData.companyProfileDescription || "",
@@ -94,7 +146,7 @@ const Index = () => {
 
             try {
                 const data = await companyProfileService.getCompanyProfile(userId);
-                console.log("Fetched company profile data:", data);
+              
                 setInitialProfileData(data);
                 setCompanyProfileData(prevState => ({
                     ...prevState,
@@ -102,7 +154,7 @@ const Index = () => {
                         companyName: data.companyName || "",
                         phone: data.contact || "",
                         website: data.website || "",
-                        teamSize: data.teamSize || "50 - 100",
+                        teamSize: data.teamSize || "51 - 100",
                         location: data.location || "",
                         industryId: data.industryId || "",
                         aboutCompany: data.companyProfileDescription || "",
@@ -129,52 +181,56 @@ const Index = () => {
         fetchCompanyProfile();
     }, []);
 
+    // Đưa handleBeforeUnload ra ngoài useEffect để có thể remove đúng instance
+    // const handleBeforeUnload = (event) => {
+    //     if (window.hasUnsavedChangesGlobal) {
+    //         event.preventDefault();
+    //         event.returnValue = '';
+    //     }
+    // };
+
     // Effect to handle browser refresh/close (uses native browser confirmation)
+    // useEffect(() => {
+    //     window.hasUnsavedChangesGlobal = hasUnsavedChanges;
+    //     window.addEventListener('beforeunload', handleBeforeUnload);
+
+    //     return () => {
+    //         window.removeEventListener('beforeunload', handleBeforeUnload);
+    //     };
+    // }, [hasUnsavedChanges]);
+
+    // Effect to handle in-app navigation
     useEffect(() => {
-        const handleBeforeUnload = (event) => {
-            if (hasUnsavedChanges) {
-                event.preventDefault();
-                event.returnValue = ''; // Standard way to trigger browser confirmation dialog
-            }
-        };
-
-        window.addEventListener('beforeunload', handleBeforeUnload);
-
-        return () => {
-            window.removeEventListener('beforeunload', handleBeforeUnload);
-        };
-    }, [hasUnsavedChanges]);
-
-    // Effect to trap browser back/forward navigation when unsaved changes exist
-    useEffect(() => {
-        const handlePopState = (event) => {
-            if (hasUnsavedChanges) {
-                // Get the path the browser was trying to navigate to.
-                // For a popstate event, this is the window.location.pathname *after* the pop.
-                const pathAttempted = window.location.pathname;
-
-                // Push the current component's path back onto the history stack.
-                // This effectively "cancels" the browser's automatic navigation from popstate.
-                window.history.pushState(null, '', router.asPath);
-
+        const handleClick = (e) => {
+            // Find the closest anchor tag
+            const anchor = e.target.closest('a');
+            if (anchor && anchor.href && !anchor.href.startsWith('javascript:') && hasUnsavedChanges) {
+                e.preventDefault();
+                e.stopPropagation();
                 setShowCustomConfirmationModal(true);
-                setIntendedPath(pathAttempted);
+                setIntendedPath(anchor.href);
+                return false;
             }
         };
 
-        // This ensures a history entry is added *once* when unsaved changes become true.
-        // This is the "trap" entry. When the user clicks back, this entry is popped,
-        // and if they still have unsaved changes, `handlePopState` will then run.
-        if (hasUnsavedChanges) {
-            window.history.pushState(null, '', router.asPath);
-        }
+        // Handle programmatic navigation
+        const handlePopState = (e) => {
+            if (hasUnsavedChanges) {
+                e.preventDefault();
+                window.history.pushState(null, '', window.location.href);
+                setShowCustomConfirmationModal(true);
+                setIntendedPath(window.location.href);
+            }
+        };
 
+        document.addEventListener('click', handleClick, true);
         window.addEventListener('popstate', handlePopState);
 
         return () => {
+            document.removeEventListener('click', handleClick, true);
             window.removeEventListener('popstate', handlePopState);
         };
-    }, [hasUnsavedChanges, router.asPath]);
+    }, [hasUnsavedChanges]);
 
     const handleFormChange = (data) => {
         setCompanyProfileData(prevState => ({
@@ -275,57 +331,53 @@ const Index = () => {
         const userId = localStorage.getItem('userId');
 
         if (!userId) {
-            alert("Không tìm thấy User ID trong Local Storage. Vui lòng đăng nhập lại.");
+            alert("User ID not found in Local Storage. Please login again.");
             console.error("User ID not found in localStorage.");
             return false;
         }
 
-        const apiFormData = new FormData();
-
-        apiFormData.append('UserId', userId);
-        apiFormData.append('CompanyName', companyProfileData.formData.companyName || '');
-        apiFormData.append('CompanyProfileDescription', companyProfileData.formData.aboutCompany || '');
-        apiFormData.append('Location', companyProfileData.formData.location || '');
-        apiFormData.append('TeamSize', companyProfileData.formData.teamSize || '');
-        apiFormData.append('Website', companyProfileData.formData.website || '');
-        apiFormData.append('Contact', companyProfileData.formData.phone || '');
-        apiFormData.append('IndustryId', parseInt(companyProfileData.formData.industryId) || 0);
-
-        if (companyProfileData.logoFile) {
-            apiFormData.append('logoFile', companyProfileData.logoFile);
-        }
-        if (companyProfileData.coverFile) {
-            apiFormData.append('logoLgrFile', companyProfileData.coverFile);
-        }
-
         try {
-            const payload = {
-                CompanyName: formData.companyName,
-                Contact: formData.phone,
-                Website: formData.website,
-                Location: formData.location,
-                TeamSize: formData.teamSize,
-                IndustryId: parseInt(formData.industryId),
-                CompanyProfileDescription: formData.aboutCompany,
-            };
-
-            const userId = localStorage.getItem('userId');
-            if (!userId) {
-                toast.error("User ID not found.");
-                return;
+            // Sử dụng FormData để gửi cả file và dữ liệu text
+            const formData = new FormData();
+            formData.append('CompanyName', companyProfileData.formData.companyName);
+            formData.append('Contact', companyProfileData.formData.phone);
+            formData.append('Website', companyProfileData.formData.website);
+            formData.append('Location', companyProfileData.formData.location);
+            formData.append('TeamSize', companyProfileData.formData.teamSize);
+            formData.append('IndustryId', parseInt(companyProfileData.formData.industryId));
+            formData.append('CompanyProfileDescription', companyProfileData.formData.aboutCompany);
+            if (companyProfileData.logoFile) {
+                formData.append('LogoFile', companyProfileData.logoFile);
+            }
+            if (companyProfileData.coverFile) {
+                formData.append('LogoLgrFile', companyProfileData.coverFile);
             }
 
             setIsSaving(true);
             setConfirmLoading(true);
 
-            const response = await companyProfileService.updateCompanyProfile(userId, payload);
+            // Gọi API với FormData
+            const response = await companyProfileService.updateCompanyProfile(userId, formData);
 
             console.log('Profile update response:', response);
+            
+            // Store company ID if it's in the response
+            if (response && response.id) {
+                localStorage.setItem('CompanyProfileId', response.id);
+                
+            }
+            
             toast.success("Profile updated successfully!");
             setShowSuccessModal(true);
             setIsEditing(false);
             setHasUnsavedChanges(false);
             setInitialProfileData(response); // Update initial data with saved data
+            setCompanyProfileData(prev => ({
+                ...prev,
+                logoFile: null,
+                coverFile: null,
+            }));
+            dispatch(setProfileUpdated(Date.now()));
         } catch (error) {
             console.error('Error saving profile:', error);
             if (error.response && error.response.data && error.response.data.errors) {
@@ -350,43 +402,16 @@ const Index = () => {
         setShowCustomConfirmationModal(false);
         const saved = await handleSave();
         if (saved && intendedPath) {
-            router.push(intendedPath);
+            window.location.href = intendedPath;
         }
     };
 
     const handleDiscardAndLeave = () => {
         setShowCustomConfirmationModal(false);
         setHasUnsavedChanges(false);
-        if (initialProfileData) {
-            setCompanyProfileData(prevState => ({
-                ...prevState,
-                formData: {
-                    companyName: initialProfileData.companyName || "",
-                    phone: initialProfileData.contact || "",
-                    website: initialProfileData.website || "",
-                    teamSize: initialProfileData.teamSize || "50 - 100",
-                    location: initialProfileData.location || "",
-                    industryId: initialProfileData.industryId || 0,
-                    aboutCompany: initialProfileData.companyProfileDescription || "",
-                },
-                logoFile: null,
-                coverFile: null,
-            }));
-            setLogoPreviewUrl(initialProfileData.urlCompanyLogo || null);
-            setCoverPreviewUrl(initialProfileData.imageLogoLgr || null);
-        } else {
-            setCompanyProfileData({
-                formData: {
-                    companyName: "", phone: "", website: "", teamSize: "50 - 100", location: "", industryId: 0, aboutCompany: "",
-                },
-                logoFile: null,
-                coverFile: null,
-            });
-            setLogoPreviewUrl(null);
-            setCoverPreviewUrl(null);
-        }
+        // window.removeEventListener('beforeunload', handleBeforeUnload);
         if (intendedPath) {
-            router.push(intendedPath);
+            window.location.href = intendedPath;
         }
     };
 
@@ -418,6 +443,105 @@ const Index = () => {
         }
     }, [showNotification]);
 
+    const handleSaveClick = () => {
+        setShowSaveConfirmationModal(true);
+    };
+
+    const handleConfirmSave = async () => {
+        setShowSaveConfirmationModal(false);
+        const success = await handleSave();
+        if (success) {
+            setShowSuccessModal(true);
+        }
+    };
+
+    const handleCancelSave = () => {
+        setShowSaveConfirmationModal(false);
+    };
+
+    const handleCloseSuccessModal = () => {
+        setShowSuccessModal(false);
+    };
+
+    const handleEditProfile = () => {
+        setIsEditing(true);
+    };
+
+    const PreviewProfileButton = () => {
+        const [companyId, setCompanyId] = useState(null);
+        const [userId, setUserId] = useState(null);
+        
+        const refreshIds = () => {
+            const id = authService.getCompanyId();
+            const currentUserId = localStorage.getItem('userId') || localStorage.getItem('UserId');
+            
+            setCompanyId(id);
+            setUserId(currentUserId);
+        };
+        
+        useEffect(() => {
+            refreshIds();
+        }, []);
+        
+        // Listen for profile updates
+        useEffect(() => {
+            if (initialProfileData && initialProfileData.id) {
+                refreshIds();
+            }
+        }, [initialProfileData]);
+        
+        const handlePreview = async () => {
+            const idToUse = companyId || userId;
+            if (idToUse) {
+                try {
+                    // First try with company profile ID
+                    if (companyId) {
+                        window.open(`/company-detail/${companyId}`, '_blank');
+                        return;
+                    }
+                    
+                    // If no company profile ID, try to get company profile by user ID
+                    if (userId) {
+                        try {
+                            // Try to fetch company profile by user ID first
+                            const profileData = await companyProfileService.getCompanyProfile(userId);
+                            if (profileData && profileData.id) {
+                                // Store the company profile ID for future use
+                                localStorage.setItem('CompanyProfileId', profileData.id);
+                                window.open(`/company-detail/${profileData.id}`, '_blank');
+                                return;
+                            }
+                        } catch (error) {
+                            console.log('Could not fetch company profile by user ID:', error);
+                        }
+                        
+                        // Fallback: try with user ID directly
+                        window.open(`/company-detail/${userId}`, '_blank');
+                    }
+                } catch (error) {
+                    console.error('Error previewing profile:', error);
+                    toast.error('Error previewing profile. Please try again.');
+                }
+            } else {
+                console.log('Cannot preview: no ID available');
+                toast.error('Cannot preview profile. Please save your profile first.');
+            }
+        };
+        
+        const isDisabled = !companyId && !userId;
+        
+        return (
+            <button
+                className="btn-confirm"
+                onClick={handlePreview}
+                disabled={isDisabled}
+                title={isDisabled ? "No ID found. Please save your profile first." : "Preview your company profile"}
+            >
+                Preview Profile
+            </button>
+        );
+    };
+
     return (
         <>
             <ToastContainer position="top-right" autoClose={3000} />
@@ -426,6 +550,24 @@ const Index = () => {
                     <div>Loading profile...</div>
                 ) : (
                     <>
+                        <div className="profile-card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
+                            <h2 style={{ margin: 0 }}>My Profile</h2>
+                            <div style={{ display: 'flex', gap: 12 }}>
+                                {isEditing ? (
+                                    <>
+                                        <button className="btn-confirm" onClick={handleSaveClick}>Save</button>
+                                        <button className="btn-cancel" onClick={() => setIsEditing(false)}>Cancel</button>
+                                    </>
+                                ) : (
+                                    <>
+                                        <button className="btn-confirm" onClick={handleEditProfile}>
+                                            Edit Profile
+                                        </button>
+                                        <PreviewProfileButton key={initialProfileData?.id || 'no-profile'} />
+                                    </>
+                                )}
+                            </div>
+                        </div>
                         <LogoCoverUploader
                             onLogoChange={handleLogoChange}
                             onCoverChange={handleCoverChange}
@@ -444,36 +586,6 @@ const Index = () => {
                             isEditing={isEditing}
                         />
 
-                        <div className="form-group col-lg-12 col-md-12">
-                            {!isEditing && initialProfileData && (
-                               <button className="theme-btn btn-style-one" onClick={() => setIsEditing(true)}>
-                                   Edit Profile
-                               </button>
-                            )}
-                            {isEditing && (
-                               <>
-                                   <button className="theme-btn btn-style-one me-2" onClick={handleSave}>
-                                       Save Profile
-                                   </button>
-                                   <button className="theme-btn btn-style-three" onClick={() => {
-                                        if (hasUnsavedChanges) {
-                                            setShowCustomConfirmationModal(true);
-                                            setIntendedPath(null);
-                                        } else {
-                                            setIsEditing(false);
-                                        }
-                                   }}>
-                                       Cancel
-                                   </button>
-                               </>
-                            )}
-                            {!initialProfileData && !isEditing && (
-                                <button className="theme-btn btn-style-one" onClick={() => setIsEditing(true)}>
-                                    Create Profile
-                                </button>
-                            )}
-                        </div>
-
                         {/* Temporary Notification */}
                         {showNotification && (
                             <div
@@ -491,106 +603,88 @@ const Index = () => {
                             </div>
                         )}
 
+                        {/* Save Confirmation Modal */}
+                        <Modal
+                            open={showSaveConfirmationModal}
+                            onClose={handleCancelSave}
+                            title="Confirm storage"
+                            footer={
+                                <>
+                                    <button className="btn-cancel" onClick={handleCancelSave}>No</button>
+                                    <button className="btn-confirm" onClick={handleConfirmSave}>Yes</button>
+                                </>
+                            }
+                        >
+                            <p>Are you sure you want to save this profile information?</p>
+                        </Modal>
+
                         {/* Success Modal */}
-                        {showSuccessModal && (
-                            <div className="modal-overlay">
-                                <div className="modal-content" style={{ textAlign: 'center', padding: 32, width: '100%', maxWidth: '350px', minWidth: '0' }}>
-                                    <h2 style={{ color: 'green' }}>Success!</h2>
-                                    <p>Company profile updated successfully!</p>
-                                    <button
-                                        style={{
-                                            background: '#0d47a1',
-                                            color: '#fff',
-                                            border: 'none',
-                                            borderRadius: 6,
-                                            padding: '12px 32px',
-                                            fontSize: 18,
-                                            marginTop: 16,
-                                            cursor: 'pointer'
-                                        }}
-                                        onClick={() => setShowSuccessModal(false)}
-                                    >
-                                        Close
-                                    </button>
-                                </div>
+                        <Modal
+                            open={showSuccessModal}
+                            onClose={handleCloseSuccessModal}
+                            title="Success"
+                            footer={
+                                <button className="btn-confirm" onClick={handleCloseSuccessModal}>Close</button>
+                            }
+                        >
+                            <div className="text-center">
+                                <span style={{color: '#28a745', fontSize: '48px', marginBottom: '15px', display: 'inline-block'}}>
+                                    <i className="fas fa-check-circle"></i>
+                                </span>
+                                <p>Profile saved successfully!</p>
                             </div>
-                        )}
+                        </Modal>
 
                         {/* Custom Confirmation Modal */}
-                        {showCustomConfirmationModal && (
-                            <div className="modal-overlay" style={{
-                                position: 'fixed',
-                                top: 0,
-                                left: 0,
-                                width: '100%',
-                                height: '100%',
-                                backgroundColor: 'rgba(0, 0, 0, 0.5)',
-                                display: 'flex',
-                                justifyContent: 'center',
-                                alignItems: 'center',
-                                zIndex: 1000
-                            }}>
-                                <div className="modal-content" style={{
-                                    backgroundColor: 'white',
-                                    padding: '30px',
-                                    borderRadius: '8px',
-                                    boxShadow: '0 4px 10px rgba(0, 0, 0, 0.2)',
-                                    maxWidth: '450px',
-                                    width: '100%',
-                                    textAlign: 'center'
-                                }}>
-                                    <h2 style={{ color: '#ffc107', marginBottom: '15px' }}>Unsaved Changes!</h2>
-                                    <p style={{ marginBottom: '25px' }}>You have unsaved changes. Do you want to save them before leaving?</p>
-                                    <div style={{ display: 'flex', justifyContent: 'space-around', gap: '10px' }}>
-                                        <button
-                                            style={{
-                                                background: '#0d47a1',
-                                                color: '#fff',
-                                                border: 'none',
-                                                borderRadius: '6px',
-                                                padding: '10px 20px',
-                                                fontSize: '16px',
-                                                cursor: 'pointer',
-                                                flex: 1
-                                            }}
-                                            onClick={handleSaveAndLeave}
-                                        >
-                                            Save & Leave
-                                        </button>
-                                        <button
-                                            style={{
-                                                background: '#dc3545',
-                                                color: '#fff',
-                                                border: 'none',
-                                                borderRadius: '6px',
-                                                padding: '10px 20px',
-                                                fontSize: '16px',
-                                                cursor: 'pointer',
-                                                flex: 1
-                                            }}
-                                            onClick={handleDiscardAndLeave}
-                                        >
-                                            Discard & Leave
-                                        </button>
-                                        <button
-                                            style={{
-                                                background: '#6c757d',
-                                                color: '#fff',
-                                                border: 'none',
-                                                borderRadius: '6px',
-                                                padding: '10px 20px',
-                                                fontSize: '16px',
-                                                cursor: 'pointer',
-                                                flex: 1
-                                            }}
-                                            onClick={handleCancelConfirmation}
-                                        >
-                                            Cancel
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                        )}
+                        <Modal
+                            open={showCustomConfirmationModal}
+                            onClose={handleCancelConfirmation}
+                            title="Unsaved Changes"
+                            footer={
+                                <>
+                                    <button className="btn-cancel" onClick={handleDiscardAndLeave}>Discard Changes</button>
+                                    <button className="btn-confirm" onClick={handleSaveAndLeave}>Save</button>
+                                </>
+                            }
+                        >
+                            <p>You have unsaved changes. Would you like to save them before leaving?</p>
+                        </Modal>
+
+                        {/* Progress Bar */}
+                        <AnimatePresence>
+                            {isSaving && (
+                                <motion.div 
+                                    className="progress-overlay"
+                                    style={{
+                                        position: 'fixed',
+                                        top: 0,
+                                        left: 0,
+                                        right: 0,
+                                        height: '4px',
+                                        backgroundColor: '#f0f0f0',
+                                        zIndex: 9999
+                                    }}
+                                    initial={{ opacity: 0 }}
+                                    animate={{ opacity: 1 }}
+                                    exit={{ opacity: 0 }}
+                                >
+                                    <motion.div 
+                                        className="progress-bar"
+                                        style={{
+                                            height: '100%',
+                                            backgroundColor: '#0d47a1',
+                                            width: '100%'
+                                        }}
+                                        initial={{ width: '0%' }}
+                                        animate={{ width: '100%' }}
+                                        transition={{
+                                            duration: 2,
+                                            ease: "easeInOut"
+                                        }}
+                                    />
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
                     </>
                 )}
             </div>

@@ -1,9 +1,9 @@
 import Breadcrumb from "../../common/Breadcrumb";
 import LoginPopup from "../../common/form/login/LoginPopup";
 import FooterDefault from "../../footer/common-footer";
-import DefaulHeader from "../../header/DefaulHeader";
+import MainHeader from "../../header/MainHeader";
 import MobileMenu from "../../header/MobileMenu";
-import Pricing from "../../pricing/Pricing";
+
 
 const index = () => {
   return (
@@ -14,7 +14,7 @@ const index = () => {
       <LoginPopup />
       {/* End Login Popup Modal */}
 
-      <DefaulHeader />
+      <MainHeader />
       {/* <!--End Main Header --> */}
 
       <MobileMenu />
@@ -32,7 +32,7 @@ const index = () => {
             </div>
           </div>
           {/* End title */}
-          <Pricing />
+          {/* <Pricing /> */}
           {/* End .{/* <!--Pricing Tabs--> */}
         </div>
       </section>

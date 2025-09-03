@@ -1,5 +1,7 @@
+"use client";
+
 import MobileMenu from "../../../header/MobileMenu";
-import DashboardHeader from "../../../header/DashboardHeader";
+import MainHeader from "../../../header/MainHeader";
 import LoginPopup from "../../../common/form/login/LoginPopup";
 import DashboardEmployerSidebar from "../../../header/DashboardEmployerSidebar";
 import BreadCrumb from "../../BreadCrumb";
@@ -9,8 +11,27 @@ import Notification from "./components/Notification";
 import Applicants from "./components/Applicants";
 import CopyrightFooter from "../../CopyrightFooter";
 import MenuToggler from "../../MenuToggler";
+import { useState } from "react";
+import UniqueApplicantsChart from "./components/UniqueApplicantsChart";
 
 const Index = () => {
+  const [candidateName, setCandidateName] = useState("");
+  // Filter input style giống WidgetTopFilterBox
+  const filterInputStyle = {
+    minWidth: 220,
+    background: "#f5f8fa",
+    border: "1px solid #e5e9ec",
+    borderRadius: 8,
+    fontSize: 14,
+    fontFamily: "inherit",
+    height: 48,
+    boxShadow: "none",
+    outline: "none",
+    color: "#6f6f6f",
+    fontWeight: 400,
+    paddingLeft: 16,
+    width: "100%",
+  };
   return (
     <div className="page-wrapper dashboard">
       <span className="header-span"></span>
@@ -19,7 +40,7 @@ const Index = () => {
       <LoginPopup />
       {/* End Login Popup Modal */}
 
-      <DashboardHeader />
+      <MainHeader />
       {/* End Header */}
 
       <MobileMenu />
@@ -49,6 +70,10 @@ const Index = () => {
                 <ProfileChart />
               </div>
               {/* End profile chart */}
+              {/* Unique Applicants Chart */}
+              <div className="graph-widget ls-widget" style={{ marginTop: 32 }}>
+                <UniqueApplicantsChart />
+              </div>
             </div>
             {/* End .col */}
 
@@ -68,14 +93,33 @@ const Index = () => {
             <div className="col-lg-12">
               {/* <!-- applicants Widget --> */}
               <div className="applicants-widget ls-widget">
-                <div className="widget-title">
-                  <h4>Recent Applicants</h4>
+                <div
+                  className="widget-title"
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    marginBottom: 24,
+                  }}
+                >
+                  <h3 style={{ margin: 0, fontWeight: 600, fontSize: 24 }}>
+                    Recent Applicants
+                  </h3>
+                  <div className="chosen-outer" style={{ minWidth: 300 }}>
+                    <input
+                      type="text"
+                      className="chosen-single form-select chosen-container"
+                      placeholder="Enter Candidate name..."
+                      value={candidateName}
+                      onChange={(e) => setCandidateName(e.target.value)}
+                      style={filterInputStyle}
+                    />
+                  </div>
                 </div>
                 <div className="widget-content">
                   <div className="row">
                     {/* <!-- Candidate block three --> */}
-
-                    <Applicants />
+                    <Applicants candidateName={candidateName} />
                   </div>
                 </div>
               </div>

@@ -473,6 +473,10 @@ Job Section
 .job-block .job-info li a {
   color: #696969;
 }
+/* Ensure inline login button text turns white on hover */
+.job-block .job-info li a.theme-btn.btn-style-three:hover {
+  color: #ffffff !important;
+}
 .job-block .content h4 {
   margin-bottom: 10px;
 }
@@ -1098,6 +1102,7 @@ Job Section Five
 
 .job-block-five .inner-box .theme-btn:hover {
   background: var(--primary-hover-bg-color);
+  color: #ffffff; /* Ensure readable text color on dark hover bg */
 }
 
 .job-block-five .content {
@@ -1223,6 +1228,7 @@ Job Section Five
 
 .job-section-five.style-two .job-block-five .inner-box .theme-btn:hover {
   background-color: var(--primary-color);
+  color: #ffffff; /* Ensure readable text color on dark hover bg */
 }
 
 .job-section-five.style-two .featured-column {
@@ -1430,6 +1436,10 @@ Job Detail Section
 
 .job-block-seven .job-info li a {
   color: #696969;
+}
+/* Ensure inline login button in job header turns white on hover */
+.job-block-seven .job-info li a.theme-btn.btn-style-three:hover {
+  color: #ffffff !important;
 }
 
 .job-block-seven .job-other-info {
@@ -1736,30 +1746,31 @@ Job Detail Section
   margin-bottom: 50px;
 }
 
-.job-overview-two ul {
-  position: relative;
-  display: -webkit-box;
-  display: -ms-flexbox;
-  display: flex;
-  -webkit-box-align: center;
-  -ms-flex-align: center;
-  align-items: center;
-  -ms-flex-wrap: wrap;
-  flex-wrap: wrap;
-  margin-right: -20px;
+.job-overview-two .job-overview-list {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px 40px;
+  list-style: none;
+  padding: 0;
+  margin: 0;
 }
 
-.job-overview-two li {
+.job-overview-two .job-overview-list li {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  margin-bottom: 0;
   position: relative;
-  -webkit-box-flex: 0;
-  -ms-flex: 0 0 25%;
-  flex: 0 0 25%;
   padding-left: 50px;
   padding-right: 20px;
-  margin-bottom: 30px;
 }
 
-.job-overview-two .icon {
+.job-overview-two .job-overview-list .icon {
+  font-size: 30px;
+  color: #2a6ee0;
+  margin-bottom: 4px;
   position: absolute;
   left: 0;
   top: 0;
@@ -1769,16 +1780,37 @@ Job Detail Section
   background-position: center;
 }
 
-.job-overview-two h5 {
+.job-overview-two .job-overview-list h5 {
+  font-size: 15px;
   font-weight: 500;
-  font-size: 16px;
+  margin: 0 0 2px 0;
+  color: #222;
+  min-height: 22px;
   line-height: 22px;
-  color: #202124;
 }
 
-.job-overview-two span {
+.job-overview-two .job-overview-list span:not(.icon) {
   font-size: 15px;
-  line-height: 20px;
+  color: #444;
+  font-weight: 400;
+  word-break: break-word;
+}
+/* Ensure inline login button inside overview list has white text on hover */
+.job-overview-two .job-overview-list a.theme-btn.btn-style-three:hover {
+  color: #ffffff !important;
+}
+
+.job-overview-two .job-overview-list .address-item {
+  grid-column: 2 / span 2;
+}
+
+@media (max-width: 991px) {
+  .job-overview-two .job-overview-list {
+    grid-template-columns: 1fr;
+  }
+  .job-overview-two .job-overview-list .address-item {
+    grid-column: 1;
+  }
 }
 
 .sidebar-widget .map-outer {
@@ -1852,4 +1884,50 @@ Job Detail Section
   border: none;
   border-radius: 0;
   margin: 5px 0;
+}
+
+/*====================================================================
+Media Query
+====================================================================*/
+
+@media (max-width: 767px) {
+  .upper-title-box {
+    text-align: center;
+  }
+  .upper-title-box h3 {
+    text-align: center;
+    font-size: 24px;
+  }
+  .widget-title {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+  .widget-title h4 {
+    margin-bottom: 15px;
+  }
+  .widget-title .d-flex.flex-wrap.gap-2.align-items-center {
+    flex-direction: column;
+    width: 100%;
+    align-items: stretch !important;
+  }
+  .widget-title .d-flex.flex-wrap.gap-2.align-items-center .form-control,
+  .widget-title .d-flex.flex-wrap.gap-2.align-items-center .form-select,
+  .widget-title .d-flex.flex-wrap.gap-2.align-items-center .btn {
+    width: 100% !important;
+    margin-right: 0 !important;
+    margin-bottom: 10px;
+  }
+  .widget-title .d-flex.flex-wrap.gap-2.align-items-center .btn {
+    margin-top: 10px;
+  }
+  .job-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+  }
+  .job-tag {
+    white-space: nowrap;
+    margin-bottom: 5px; /* Add some vertical spacing between wrapped tags */
+  }
 }

@@ -1,26 +1,16 @@
-"use client";
-import Aos from "aos";
 import "aos/dist/aos.css";
 import "antd/dist/reset.css";
 import "../styles/index.scss";
-import { useEffect } from "react";
-import ScrollToTop from "../components/common/ScrollTop";
-import { Provider } from "react-redux";
-import { store } from "../store/store";
+import "../styles/chat.css";
+import "../styles/draft.css";
+import "../styles/dropdown-fix.css";
 import "react-toastify/dist/ReactToastify.css";
-import { ToastContainer } from "react-toastify";
+import '../components/dashboard-pages/candidates-dashboard/cv-manager/components/CvManagerTable.css';
+import RootClientProviders from "@/components/common/RootClientProviders";
+import { Suspense } from "react";
 
 
 export default function RootLayout({ children }) {
-  useEffect(() => {
-    Aos.init({
-      duration: 1400,
-      once: true,
-    });
-    // Import Bootstrap JS only on client side
-    require("bootstrap/dist/js/bootstrap");
-  }, []);
-
   return (
     <html lang="en">
       <head>
@@ -31,39 +21,19 @@ export default function RootLayout({ children }) {
         <meta httpEquiv="x-ua-compatible" content="ie=edge" />
         <meta
           name="keywords"
-          content="	candidates, career, employment, indeed, job board, job listing, job portal, job postings, job search, job seeker, jobs, recruiters, recruiting, recruitment, resume"
+          content="candidates, career, employment, indeed, job board, job listing, job portal, job postings, job search, job seeker, jobs, recruiters, recruiting, recruitment, resume"
         />
         <meta
           name="description"
-          content="Superio - Job Borad React NextJS Template"
+          content="Superio - Job Board React NextJS Template"
         />
         <meta name="ibthemes" content="ATFN" />
-
         <link rel="icon" href="/images/favicon.png" />
       </head>
-
       <body>
-        <Provider store={store}>
-          <div className="page-wrapper">
-            {children}
-
-            {/* Toastify */}
-            <ToastContainer
-              position="bottom-right"
-              autoClose={500}
-              hideProgressBar={false}
-              newestOnTop={false}
-              closeOnClick
-              rtl={false}
-              pauseOnFocusLoss
-              draggable
-              pauseOnHover
-              theme="colored"
-            />
-            {/* <!-- Scroll To Top --> */}
-            <ScrollToTop />
-          </div>
-        </Provider>
+        <Suspense fallback={null}>
+          <RootClientProviders>{children}</RootClientProviders>
+        </Suspense>
       </body>
     </html>
   );

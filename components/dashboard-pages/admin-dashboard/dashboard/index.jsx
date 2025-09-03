@@ -1,12 +1,10 @@
 import MobileMenu from "../../../header/MobileMenu";
-import DashboardHeader from "../../../header/DashboardHeaderAdmin";
+import MainHeader from "../../../header/MainHeader";
 import LoginPopup from "../../../common/form/login/LoginPopup";
 import DashboardAdminSidebar from "../../../header/DashboardAdminSidebar";
 import BreadCrumb from "../../BreadCrumb";
 import TopCardBlock from "./components/TopCardBlock";
 import ProfileChart from "./components/ProfileChart";
-import Notification from "./components/Notification";
-import Applicants from "./components/Applicants";
 import CopyrightFooter from "../../CopyrightFooter";
 import MenuToggler from "../../MenuToggler";
 
@@ -19,7 +17,7 @@ const Index = () => {
       <LoginPopup />
       {/* End Login Popup Modal */}
 
-      <DashboardHeader />
+      <MainHeader />
       {/* End Header */}
 
       <MobileMenu />
@@ -50,35 +48,8 @@ const Index = () => {
               </div>
               {/* End profile chart */}
             </div>
-            {/* End .col */}
-
-            <div className="col-xl-4 col-lg-12">
-              {/* <!-- Notification Widget --> */}
-              <div className="notification-widget ls-widget">
-                <div className="widget-title">
-                  <h4>Notifications</h4>
-                </div>
-                <div className="widget-content">
-                  <Notification />
-                </div>
-              </div>
-            </div>
-            {/* End .col */}
-
-            <div className="col-lg-12">
-              {/* <!-- applicants Widget --> */}
-              <div className="applicants-widget ls-widget">
-                <div className="widget-title">
-                  <h4>Recent Applicants</h4>
-                </div>
-                <div className="widget-content">
-                  <div className="row">
-                    <Applicants />
-                  </div>
-                </div>
-              </div>
-            </div>
-            {/* End .col */}
+            
+           
           </div>
           {/* End .row profile and notificatins */}
         </div>

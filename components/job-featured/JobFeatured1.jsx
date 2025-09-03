@@ -4,6 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useEffect, useState } from "react";
 import { jobService } from "../../services/jobService";
+import ClickableBox from "../common/ClickableBox";
 
 const JobFeatured1 = () => {
   const [jobs, setJobs] = useState([]);
@@ -22,16 +23,16 @@ const JobFeatured1 = () => {
         });
         setCompanies(companiesRes);
 
-        // Gọi API với status = 1 để chỉ lấy job đã được approve
+        // Gọi API với status = 2 để chỉ lấy job đã được approve
         const response = await jobService.getJobs({ 
-          status: 1,  // Chỉ lấy job đã được approve
+          status: 2,  // Chỉ lấy job đã được approve
           limit: 6,   // Giới hạn 6 job
           page: 1     // Lấy trang đầu tiên
         });
         
-        // Kiểm tra và lọc thêm để đảm bảo chỉ hiển thị job đã approve
-        const approvedJobs = response.data.filter(job => job.status === 1);
-        console.log('Featured jobs:', approvedJobs); // Log để debug
+        // Kiểm tra và lọc thêm để đảm bảo chỉ hiển thị job đã approve và không bị lock
+        const approvedJobs = response.data.filter(job => job.status === 2 && !job.deactivatedByAdmin && job.status !== 4);
+        // Log để debug
         setJobs(approvedJobs);
         setError(null);
       } catch (err) {
@@ -61,8 +62,8 @@ const JobFeatured1 = () => {
   return (
     <>
       {jobs.map((item) => (
-        <div className="job-block col-lg-6 col-md-12 col-sm-12" key={item.id}>
-          <div className="inner-box">
+        <div className="col-lg-6 col-md-12 col-sm-12" key={item.id}>
+                          <ClickableBox onClick={() => window.location.href = `/job-detail/${item.id}` }>
             <div className="content">
               <span className="company-logo">
                 {(() => {
@@ -80,7 +81,7 @@ const JobFeatured1 = () => {
                 })()}
               </span>
               <h4>
-                <Link href={`/job-single-v1/${item.id}`}>{item.jobTitle}</Link>
+                <Link href={`/job-detail/${item.id}`}>{item.jobTitle}</Link>
               </h4>
 
               <ul className="job-info">
@@ -110,11 +111,11 @@ const JobFeatured1 = () => {
                 )}
               </ul>
 
-              <button className="bookmark-btn">
+              <button className="bookmark-btn" onClick={e => e.stopPropagation()}>
                 <span className="flaticon-bookmark"></span>
               </button>
             </div>
-          </div>
+          </ClickableBox>
         </div>
       ))}
     </>

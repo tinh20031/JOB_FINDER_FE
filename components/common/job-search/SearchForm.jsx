@@ -30,8 +30,8 @@ const SearchForm = () => {
       location: location,
     }).toString();
 
-    // Điều hướng đến job-list-v1 khi nhấn Find Jobs
-    router.push(`/job-list-v1?${searchParams}`);
+    // Điều hướng đến job-list khi nhấn Find Jobs
+    router.push(`/job-list?${searchParams}`);
   };
 
   return (

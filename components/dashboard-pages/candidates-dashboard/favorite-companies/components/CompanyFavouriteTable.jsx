@@ -47,7 +47,7 @@ const CompanyFavouriteTable = () => {
         setError(null);
       } catch (err) {
         console.error('Error fetching favorite companies:', err);
-        setError('Bạn cần đăng nhập để xem công ty yêu thích');
+        setError('You need to login to view favorite companies');
         setCompanies([]);
       } finally {
         setLoading(false);
@@ -60,15 +60,15 @@ const CompanyFavouriteTable = () => {
     router.push('/login');
   };
 
-  const handleUnfavorite = async (companyId) => {
+  const handleUnfavorite = async (userId) => {
     try {
       setIsLoadingUnfavorite(true);
-      await companyService.unfavoriteCompany(companyId);
-      setCompanies(prev => prev.filter(c => c.userId !== companyId));
-      toast.success("Đã xóa khỏi danh sách yêu thích");
+      await companyService.unfavoriteCompany(userId);
+      setCompanies(prev => prev.filter(c => c.userId !== userId));
+      toast.success("Removed from favorites");
     } catch (err) {
       console.error("Unfavorite error:", err, err?.response);
-      toast.error("Có lỗi khi bỏ yêu thích!");
+      toast.error("Error occurred while removing from favorites!");
     } finally {
       setIsLoadingUnfavorite(false);
     }
@@ -87,7 +87,7 @@ const CompanyFavouriteTable = () => {
             className="company-block-three"
             key={company.userId}
             style={{ cursor: 'pointer' }}
-            onClick={() => router.push(`/employers-single-v1/${company.userId}`)}
+            onClick={() => router.push(`/company-detail/${company.userId}`)}
           >
             <div className="inner-box position-relative d-flex align-items-center">
               <img
@@ -95,22 +95,17 @@ const CompanyFavouriteTable = () => {
                 alt={company.companyName}
                 width={50}
                 height={50}
+                style={{ borderRadius: 8, objectFit: 'cover', background: '#fff' }}
               />
               <div className="ms-3">
-                <h4>{company.companyName}</h4>
-                <div className="d-flex align-items-center gap-3">
+                <h4 style={{ margin: 0 }}>{company.companyName}</h4>
+                <div className="d-flex align-items-center gap-3" style={{ fontSize: 14, color: '#555' }}>
                   <span className="icon flaticon-map-locator me-2"></span>
                   <span>{company.location}</span>
-                  {company.industry?.industryName && (
+                  {company.industryName && (
                     <>
                       <span className="icon flaticon-briefcase me-2"></span>
-                      <span>{company.industry.industryName}</span>
-                    </>
-                  )}
-                  {company.teamSize && (
-                    <>
-                      <span className="icon flaticon-user me-2"></span>
-                      <span>{company.teamSize}</span>
+                      <span>{company.industryName}</span>
                     </>
                   )}
                 </div>
@@ -129,7 +124,7 @@ const CompanyFavouriteTable = () => {
                   visibility: 'visible',
                   cursor: isLoadingUnfavorite ? 'not-allowed' : 'pointer'
                 }}
-                title="Bỏ yêu thích"
+                title="Remove from favorites"
                 onClick={e => {
                   e.stopPropagation();
                   handleUnfavorite(company.userId);

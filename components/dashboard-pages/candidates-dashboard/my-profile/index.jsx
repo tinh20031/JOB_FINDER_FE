@@ -1,15 +1,19 @@
+"use client";
+
 import MobileMenu from "../../../header/MobileMenu";
 import LoginPopup from "../../../common/form/login/LoginPopup";
 import DashboardCandidatesSidebar from "../../../header/DashboardCandidatesSidebar";
 import BreadCrumb from "../../BreadCrumb";
-import MyProfile from "./components/my-profile";
-import SocialNetworkBox from "./components/SocialNetworkBox";
-import ContactInfoBox from "./components/ContactInfoBox";
 import CopyrightFooter from "../../CopyrightFooter";
-import DashboardCandidatesHeader from "../../../header/DashboardCandidatesHeader";
+import Resume from "./components";
+import MainHeader from "../../../header/MainHeader";
 import MenuToggler from "../../MenuToggler";
+import Link from "next/link";
+import useResumeData from "@/services/useResumeData";
 
 const index = () => {
+  const { profile } = useResumeData();
+
   return (
     <div className="page-wrapper dashboard">
       <span className="header-span"></span>
@@ -18,7 +22,7 @@ const index = () => {
       <LoginPopup />
       {/* End Login Popup Modal */}
 
-      <DashboardCandidatesHeader />
+      <MainHeader />
       {/* End Header */}
 
       <MobileMenu />
@@ -30,7 +34,7 @@ const index = () => {
       {/* <!-- Dashboard --> */}
       <section className="user-dashboard">
         <div className="dashboard-outer">
-          <BreadCrumb title="My Profile!" />
+     
           {/* breadCrumb */}
 
           <MenuToggler />
@@ -41,39 +45,42 @@ const index = () => {
               <div className="ls-widget">
                 <div className="tabs-box">
                   <div className="widget-title">
-                    <h4>My Profile</h4>
-                  </div>
-                  <MyProfile />
-                </div>
-              </div>
-              {/* <!-- Ls widget --> */}
-
-              <div className="ls-widget">
-                <div className="tabs-box">
-                  <div className="widget-title">
-                    <h4>Social Network</h4>
+                    {profile?.candidateProfileId ? (
+                      <Link href={`/candidate-profile/${profile.candidateProfileId}`} legacyBehavior>
+                        <a style={{
+                          display: 'inline-block',
+                          padding: '6px 18px',
+                          background: '#7367F0',
+                          color: '#fff',
+                          borderRadius: 8,
+                          fontWeight: 700,
+                          fontSize: 20,
+                          textDecoration: 'none',
+                          boxShadow: '0 2px 8px rgba(115,103,240,0.08)',
+                          transition: 'background 0.2s',
+                          marginBottom: 0,
+                          marginTop: 0,
+                          cursor: 'pointer',
+                        }}
+                        onMouseOver={e => e.currentTarget.style.background = '#5e50ee'}
+                        onMouseOut={e => e.currentTarget.style.background = '#7367F0'}
+                      >
+                        My Profile
+                      </a>
+                    </Link>
+                    ) : (
+                      <h4>My Profile</h4>
+                    )}
                   </div>
                   {/* End widget-title */}
 
                   <div className="widget-content">
-                    <SocialNetworkBox />
+                    <Resume />
                   </div>
+                  {/* End widget-content */}
                 </div>
               </div>
-              {/* <!-- Ls widget --> */}
-
-              <div className="ls-widget">
-                <div className="tabs-box">
-                  <div className="widget-title">
-                    <h4>Contact Information</h4>
-                  </div>
-                  {/* End widget-title */}
-                  <div className="widget-content">
-                    <ContactInfoBox />
-                  </div>
-                </div>
-              </div>
-              {/* <!-- Ls widget --> */}
+              {/* End ls-widget */}
             </div>
           </div>
           {/* End .row */}

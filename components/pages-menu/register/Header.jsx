@@ -35,18 +35,20 @@ const Header = () => {
                   <Image
                     width={154}
                     height={50}
-                    src="/images/logo-2.svg"
-                    alt="logo"
-                    title="brand"
+                    src="/images/jobfinder-logo.png"
+                    alt="JobFinder logo"
+                    title="JobFinder"
+                    style={{ width: 'auto', height: 'auto' }}
                   />
                 </Link>
                 <Link href="/" className="isSticky">
                   <Image
                     width={154}
                     height={50}
-                    src="/images/logo.svg"
-                    alt="logo"
-                    title="brand"
+                    src="/images/jobfinder-logo.png"
+                    alt="JobFinder logo"
+                    title="JobFinder"
+                    style={{ width: 'auto', height: 'auto' }}
                   />
                 </Link>
               </div>
@@ -57,12 +59,7 @@ const Header = () => {
           <div className="outer-box">
             {/* <!-- Login/Register --> */}
             <div className="btn-box">
-              <Link
-                href="/employers-dashboard/post-jobs"
-                className="theme-btn btn-style-one"
-              >
-                <span className="btn-title">Job Post</span>
-              </Link>
+             
             </div>
           </div>
           {/* End outer-box */}

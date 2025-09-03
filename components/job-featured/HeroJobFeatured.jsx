@@ -19,7 +19,7 @@ const HeroJobFeatured = () => {
                 <Image width={48} height={48} src={item.logo} alt="brand" />
               </span>
               <h4>
-                <Link href={`/job-single-v1/${item.id}`}>{item.jobTitle}</Link>
+                <Link href={`/job-detail/${item.id}`}>{item.jobTitle}</Link>
               </h4>
               <ul className="job-info">
                 <li>

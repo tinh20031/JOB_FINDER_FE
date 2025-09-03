@@ -1,32 +1,23 @@
 "use client";
 
 import axios from "axios";
-import Cookies from 'js-cookie';
+import Cookies from "js-cookie";
+import API_CONFIG from "../config/api.config";
+import { JobStatus, getJobStatusLabel, getJobStatusColor } from "../utils/jobStatus";
 
-const API_URL = "https://job-finder-tm9i.onrender.com/api";
+
+const API_URL = API_CONFIG.BASE_URL;
 
 // Cấu hình axios
-axios.defaults.headers.common['Content-Type'] = 'application/json';
-
+axios.defaults.headers.common["Content-Type"] = "application/json";
 
 // Map job types
 const JOB_TYPES = {
   1: "Full-time",
   2: "Part-time",
   3: "Contract",
-  4: "Internship"
+  4: "Internship",
 };
-
-
-// Map experience levels
-const EXPERIENCE_LEVELS = {
-  1: "Entry Level",
-  2: "Junior",
-  3: "Mid Level",
-  4: "Senior",
-  5: "Lead"
-};
-
 
 // Map industries
 const INDUSTRIES = {
@@ -34,9 +25,8 @@ const INDUSTRIES = {
   2: "Finance",
   3: "Healthcare",
   4: "Education",
-  5: "Marketing"
+  5: "Marketing",
 };
-
 
 // Map job levels
 const JOB_LEVELS = {
@@ -45,9 +35,8 @@ const JOB_LEVELS = {
   3: "Middle",
   4: "Senior",
   5: "Lead",
-  6: "Manager"
+  6: "Manager",
 };
-
 
 // Danh sách categories mẫu
 const CATEGORIES = [
@@ -58,9 +47,8 @@ const CATEGORIES = [
   "Technology",
   "Finance",
   "Healthcare",
-  "Education"
+  "Education",
 ];
-
 
 // Danh sách job titles mẫu
 const JOB_TITLES = [
@@ -73,9 +61,8 @@ const JOB_TITLES = [
   "Data Scientist",
   "DevOps Engineer",
   "Mobile Developer",
-  "QA Engineer"
+  "QA Engineer",
 ];
-
 
 // Danh sách companies mẫu
 const COMPANIES = [
@@ -88,187 +75,471 @@ const COMPANIES = [
   "Tech Pioneers",
   "Digital Dynamics",
   "Future Technologies",
-  "Smart Solutions"
+  "Smart Solutions",
 ];
 
 function getToken() {
-  let token = localStorage.getItem('token');
+  let token = localStorage.getItem("token");
   if (!token) {
-    token = Cookies.get('token');
+    token = Cookies.get("token");
   }
   return token;
 }
 
+function getValidToken() {
+  let token = localStorage.getItem("token");
+  if (!token || token === "null" || token === "undefined")
+    token = Cookies.get("token");
+  if (!token || token === "null" || token === "undefined") return null;
+  return token;
+}
+
+// Helper function to set auth header
+function getAuthConfig() {
+  const token = getToken();
+  return {
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+  };
+}
+
 export const jobService = {
+  // ==================== CRUD OPERATIONS ====================
+
+  // GET: Lấy danh sách tất cả jobs (có hỗ trợ filter role, companyId, ...)
   async getJobs(filters = {}) {
-    try {
-      // Hoàn tác: Gọi lại endpoint /api/Job và loại bỏ truyền filters tùy chỉnh
-      console.log('Calling backend API at endpoint /api/Job'); // Log endpoint gọi đi
-      const response = await axios.get(`${API_URL}/Job`); // Gọi endpoint /api/Job
+    const config = getAuthConfig();
+    const params = new URLSearchParams(filters).toString();
+    const response = await axios.get(
+      `${API_URL}/Job${params ? `?${params}` : ""}`,
+      config
+    );
+    const apiJobs = response.data;
 
-      const apiJobs = response.data; // Phản hồi có vẻ là mảng trực tiếp
+    // Ánh xạ dữ liệu từ API sang cấu trúc frontend
+    const jobs = apiJobs.map((job) => ({
+      id: job.jobId,
+      jobTitle: job.title,
+      description: job.description,
+      education: job.education,
+      yourSkill: job.yourSkill,
+      yourExperience: job.yourExperience,
+      location: `${job.addressDetail || ""}${
+        job.addressDetail && job.provinceName ? ", " : ""
+      }${job.provinceName || ""}`.trim(),
+      provinceName: job.provinceName,
+      isSalaryNegotiable: job.isSalaryNegotiable,
+      minSalary: job.minSalary,
+      maxSalary: job.maxSalary,
+      logo:
+        job.company?.urlCompanyLogo ||
+        "/images/company-logo/default-logo.png",
 
-      console.log('Raw API response data for getJobs:', apiJobs); // Thêm log dữ liệu thô nhận được
+      // Company info
+      companyId: job.companyId,
+      company: job.company
+        ? {
+            id: job.company.id,
+            fullName: job.company.fullName,
+            email: job.company.email,
+            companyName: job.company.companyName,
+            location: job.company.location,
+            urlCompanyLogo: job.company.urlCompanyLogo,
+          }
+        : null,
 
-      // Ánh xạ dữ liệu từ API sang cấu trúc frontend mong đợi
-      const jobs = apiJobs.map(job => ({
-        id: job.jobId, // Sử dụng jobId từ API
-        jobTitle: job.title,
-        description: job.description,
-        // company: job.companyId, // Frontend có thể cần fetch tên công ty riêng nếu cần
-        location: `${job.addressDetail || ''}${job.addressDetail && job.provinceName ? ', ' : ''}${job.provinceName || ''}`.trim(), // Xử lý trường hợp thiếu addressDetail hoặc provinceName
-        provinceName: job.provinceName, // Add provinceName field
-        // time: job.createdAt, // Có thể dùng createdAt để hiển thị thời gian đăng
-        salary: `${job.salary} USD`, // Giữ định dạng chuỗi nếu frontend hiển thị như vậy
-        totalSalary: { min: job.salary, max: job.salary }, // Lấy giá trị số từ API
-        logo: job.imageJob || '/images/company-logo/default-logo.png',
+      // Other IDs
+      industryId: job.industryId,
+      industry: job.industry
+        ? {
+            industryId: job.industry.industryId,
+            industryName: job.industry.industryName,
+          }
+        : null,
+      jobTypeId: job.jobTypeId,
+      jobType: job.jobType
+        ? {
+            id: job.jobType.id,
+            jobTypeName: job.jobType.jobTypeName,
+          }
+        : null,
+      levelId: job.levelId,
+      level: job.level
+        ? {
+            id: job.level.id,
+            levelName: job.level.levelName,
+          }
+        : null,
+      quantity: job.quantity ?? 1,
+      // Time fields
+      expiryDate: job.expiryDate,
+      timeStart: job.timeStart,
+      timeEnd: job.timeEnd,
+      createdAt: job.createdAt,
+      updatedAt: job.updatedAt,
+      status: job.status,
+      addressDetail: job.addressDetail,
+      skills: job.skills || [],
+      descriptionWeight: job.descriptionWeight ?? null,
+      skillsWeight: job.skillsWeight ?? null,
+      experienceWeight: job.experienceWeight ?? null,
+      educationWeight: job.educationWeight ?? null,
+      deactivatedByAdmin: job.deactivatedByAdmin,
+    }));
 
-        // Các trường ID và dữ liệu khác từ API
-        companyId: job.companyId,
-        industryId: job.industryId,
-        jobTypeId: job.jobTypeId,
-        levelId: job.levelId,
-        experienceLevelId: job.experienceLevelId,
-        status: job.status,
-        expiryDate: job.expiryDate,
-        timeStart: job.timeStart,
-        timeEnd: job.timeEnd,
-        createdAt: job.createdAt, // Đổi tên để khớp với API
-        updatedAt: job.updatedAt,
+    // Apply frontend filters
+    let filteredJobs = [...jobs];
 
-        // Các trường có thể cần ánh xạ thêm từ ID sang tên nếu frontend cần hiển thị tên
-        // jobType: mapJobTypeIdToName(job.jobTypeId), // Cần hàm ánh xạ nếu JobType component cần tên
-        // experience: mapExpLevelIdToName(job.experienceLevelId), // Cần hàm ánh xạ
-        // industry: mapIndustryIdToName(job.industryId), // Cần hàm ánh xạ
-      }));
-
-      // Khôi phục logic lọc và phân trang frontend
-      let filteredJobs = [...jobs];
-
-      // Áp dụng filters (frontend)
-      if (filters.keyword) {
-        filteredJobs = filteredJobs.filter(job =>
-          job.jobTitle?.toLowerCase().includes(filters.keyword.toLowerCase()) ||
-          job.description?.toLowerCase().includes(filters.keyword.toLowerCase())
-        );
-      }
-
-      if (filters.location) {
-         // Lọc theo location string bao gồm addressDetail và provinceName
-        filteredJobs = filteredJobs.filter(job =>
-          job.location?.toLowerCase().includes(filters.location.toLowerCase())
-        );
-      }
-
-       if (filters.jobType?.length) {
-         // Lọc theo JobTypeId
-         filteredJobs = filteredJobs.filter(job =>
-           filters.jobType.includes(job.jobTypeId)
-         );
-       }
-
-        if (filters.category) { // filters.category hiện đang là IndustryId
-          filteredJobs = filteredJobs.filter(job =>
-             // Lọc dựa trên IndustryId
-             job.industryId === parseInt(filters.category) // So sánh IndustryId số nguyên
-          );
-        }
-
-       if (filters.salary?.min !== undefined) { // Kiểm tra rõ ràng undefined
-         filteredJobs = filteredJobs.filter(job =>
-           job.totalSalary?.min >= filters.salary.min
-         );
-       }
-
-       if (filters.salary?.max !== undefined) { // Kiểm tra rõ ràng undefined
-         filteredJobs = filteredJobs.filter(job =>
-           job.totalSalary?.max <= filters.salary.max
-         );
-       }
-
-       if (filters.experience?.length) { // filters.experience hiện đang là mảng ExperienceLevelIds
-         filteredJobs = filteredJobs.filter(job =>
-           // Lọc dựa trên ExperienceLevelId
-            filters.experience.includes(job.experienceLevelId) // So sánh ExperienceLevelId số nguyên
-         );
-       }
-
-      // Các bộ lọc frontend khác cần được thêm lại tại đây nếu cần (datePosted, tag, sort)
-
-      // Áp dụng pagination (frontend)
-      const total = filteredJobs.length; // Tổng số kết quả sau khi lọc frontend
-      const start = filters.page ? (filters.page - 1) * (filters.limit || 10) : 0;
-      const end = filters.limit ? start + filters.limit : filteredJobs.length;
-      const paginatedJobs = filteredJobs.slice(start, end);
-
-
-      return {
-        data: paginatedJobs, // Trả về dữ liệu đã được frontend lọc và phân trang
-        total: total // Trả về tổng số kết quả sau lọc frontend
-      };
-    } catch (error) {
-      console.error("Error fetching jobs from backend API:", error);
-      // Trả về mảng rỗng và tổng 0 khi có lỗi
-      return { data: [], total: 0 };
+    if (filters.keyword) {
+      filteredJobs = filteredJobs.filter(
+        (job) =>
+          job.jobTitle
+            ?.toLowerCase()
+            .includes(filters.keyword.toLowerCase()) ||
+          job.description
+            ?.toLowerCase()
+            .includes(filters.keyword.toLowerCase())
+      );
     }
+
+    if (filters.location) {
+      filteredJobs = filteredJobs.filter((job) =>
+        job.location?.toLowerCase().includes(filters.location.toLowerCase())
+      );
+    }
+
+    if (filters.jobType?.length) {
+      filteredJobs = filteredJobs.filter((job) =>
+        filters.jobType.includes(job.jobTypeId)
+      );
+    }
+
+    if (filters.category) {
+      filteredJobs = filteredJobs.filter(
+        (job) => job.industryId === parseInt(filters.category)
+      );
+    }
+
+    if (filters.salary?.min !== undefined) {
+      filteredJobs = filteredJobs.filter(
+        (job) => job.minSalary >= filters.salary.min
+      );
+    }
+
+    if (filters.salary?.max !== undefined) {
+      filteredJobs = filteredJobs.filter(
+        (job) => job.maxSalary <= filters.salary.max
+      );
+    }
+
+    if (filters.quantity) {
+      filteredJobs = filteredJobs.filter((job) => job.quantity === parseInt(filters.quantity));
+    }
+
+    // Pagination
+    const total = filteredJobs.length;
+    const start = filters.page
+      ? (filters.page - 1) * (filters.limit || 10)
+      : 0;
+    const end = filters.limit ? start + filters.limit : filteredJobs.length;
+    const paginatedJobs = filteredJobs.slice(start, end);
+
+    return {
+      data: paginatedJobs,
+      total: total,
+    };
   },
 
-
-  getJobById: async (id) => {
+  // GET: Lấy job theo ID
+  async getJobById(id) {
     try {
-      // Gọi API backend để lấy job theo ID
-      const response = await axios.get(`${API_URL}/Job/${id}`);
+      const token = getValidToken();
+      const headers = token ? { Authorization: `Bearer ${token}` } : {};
+      const response = await axios.get(`${API_URL}/Job/${id}`, { headers });
       const job = response.data;
 
-      console.log(`Raw API response data for getJobById (ID ${id}):`, job); // Thêm log dữ liệu thô
+      if (!job) return null;
 
-      if (!job) return <div>Loading...</div>;
-      const levelName = JOB_LEVELS[job.levelId] || "N/A";
-
-      // Ánh xạ dữ liệu từ API sang cấu trúc frontend
-      const mappedJob = {
+      return {
         id: job.jobId,
         title: job.title,
         jobTitle: job.title,
         description: job.description,
+        education: job.education,
+        yourSkill: job.yourSkill,
+        yourExperience: job.yourExperience,
         addressDetail: job.addressDetail,
-        // company: job.companyId, // Có thể cần fetch tên công ty
-        location: `${job.addressDetail || ''}${job.addressDetail && job.provinceName ? ', ' : ''}${job.provinceName || ''}`.trim(),
-        provinceName: job.provinceName, // Add provinceName field
-        // time: job.createdAt, // Có thể dùng createdAt
-        salary: `${job.salary} USD`, // Định dạng chuỗi
-        totalSalary: { min: job.salary, max: job.salary },
-        logo: job.imageJob || '/images/company-logo/default-logo.png',
+        location: `${job.addressDetail || ""}${
+          job.addressDetail && job.provinceName ? ", " : ""
+        }${job.provinceName || ""}`.trim(),
+        provinceName: job.provinceName,
+        isSalaryNegotiable: job.isSalaryNegotiable,
+        minSalary: job.minSalary,
+        maxSalary: job.maxSalary,
+        logo:
+          job.company?.urlCompanyLogo ||
+          "/images/company-logo/default-logo.png",
 
-        // Các trường ID và dữ liệu khác
+        // Company info
         companyId: job.companyId,
+        company: job.company
+          ? {
+              id: job.company.id,
+              fullName: job.company.fullName,
+              email: job.company.email,
+              companyName: job.company.companyName,
+              location: job.company.location,
+              urlCompanyLogo: job.company.urlCompanyLogo,
+            }
+          : null,
+
+        // Other IDs
         industryId: job.industryId,
+        industry: job.industry
+          ? {
+              industryId: job.industry.industryId,
+              industryName: job.industry.industryName,
+            }
+          : null,
         jobTypeId: job.jobTypeId,
+        jobType: job.jobType
+          ? {
+              id: job.jobType.id,
+              jobTypeName: job.jobType.jobTypeName,
+            }
+          : null,
         levelId: job.levelId,
-        experienceLevelId: job.experienceLevelId,
-        status: job.status,
+        level: job.level
+          ? {
+              id: job.level.id,
+              levelName: job.level.levelName,
+            }
+          : null,
+        quantity: job.quantity ?? 1,
+        // Time fields
         expiryDate: job.expiryDate,
         timeStart: job.timeStart,
         timeEnd: job.timeEnd,
         createdAt: job.createdAt,
         updatedAt: job.updatedAt,
-
-         // Các trường có thể cần ánh xạ
-        // jobType: mapJobTypeIdToName(job.jobTypeId),
-        // experience: mapExpLevelIdToName(job.experienceLevelId),
-        // industry: mapIndustryIdToName(job.industryId),
+        status: job.status,
+        skills: job.skills || [],
+        descriptionWeight: job.descriptionWeight ?? null,
+        skillsWeight: job.skillsWeight ?? null,
+        experienceWeight: job.experienceWeight ?? null,
+        educationWeight: job.educationWeight ?? null,
+        deactivatedByAdmin: job.deactivatedByAdmin,
       };
-
-      console.log("Job data:", job);
-
-      return mappedJob;
     } catch (error) {
-      console.error(`Error fetching job by ID ${id} from backend API:`, error);
-      return null; // Trả về null hoặc xử lý lỗi tùy theo yêu cầu
+      // Nếu là lỗi 403 hoặc 404 thì ném lại để page.jsx bắt được
+      if (error?.response?.status === 403 || error?.response?.status === 404) {
+        throw error;
+      }
+      // Các lỗi khác thì log và trả về null
+      console.error(`Error fetching job by ID ${id}:`, error);
+      return null;
     }
   },
 
-  getJobTypes: async () => {
+  // POST: Tạo job mới
+  async createJob(jobData) {
+    try {
+      const config = getAuthConfig();
+
+      const payload = {
+        title: jobData.title,
+        description: jobData.description,
+        education: jobData.education,
+        yourSkill: jobData.yourSkill,
+        yourExperience: jobData.yourExperience,
+        companyId: jobData.companyId,
+        industryId: jobData.industryId,
+        expiryDate: jobData.expiryDate,
+        levelId: jobData.levelId,
+        jobTypeId: jobData.jobTypeId,
+        quantity: jobData.quantity,
+        timeStart: jobData.timeStart,
+        timeEnd: jobData.timeEnd,
+        provinceName: jobData.provinceName,
+        addressDetail: jobData.addressDetail,
+        isSalaryNegotiable: jobData.isSalaryNegotiable,
+        minSalary: jobData.isSalaryNegotiable ? null : jobData.minSalary,
+        maxSalary: jobData.isSalaryNegotiable ? null : jobData.maxSalary,
+        skillInputs: jobData.skillInputs || [],
+        descriptionWeight:
+          typeof jobData.descriptionWeight === "number"
+            ? jobData.descriptionWeight / 100
+            : null,
+        skillsWeight:
+          typeof jobData.skillsWeight === "number"
+            ? jobData.skillsWeight / 100
+            : null,
+        experienceWeight:
+          typeof jobData.experienceWeight === "number"
+            ? jobData.experienceWeight / 100
+            : null,
+        educationWeight:
+          typeof jobData.educationWeight === "number"
+            ? jobData.educationWeight / 100
+            : null,
+      };
+
+      const response = await axios.post(
+        `${API_URL}/Job/create`,
+        payload,
+        config
+      );
+      return response.data;
+    } catch (error) {
+      console.error("Error creating job:", error);
+      throw error;
+    }
+  },
+
+  // PUT: Cập nhật job
+  async updateJob(jobId, jobData) {
+    try {
+      const config = getAuthConfig();
+
+      const payload = {
+        title: jobData.title,
+        description: jobData.description,
+        education: jobData.education,
+        yourSkill: jobData.yourSkill,
+        yourExperience: jobData.yourExperience,
+        companyId: jobData.companyId,
+        industryId: jobData.industryId,
+        expiryDate: jobData.expiryDate,
+        levelId: jobData.levelId,
+        jobTypeId: jobData.jobTypeId,
+        quantity: jobData.quantity,
+        timeStart: jobData.timeStart,
+        timeEnd: jobData.timeEnd,
+        provinceName: jobData.provinceName,
+        addressDetail: jobData.addressDetail,
+        isSalaryNegotiable: jobData.isSalaryNegotiable,
+        minSalary: jobData.isSalaryNegotiable
+          ? null
+          : Number(jobData.minSalary) || null,
+        maxSalary: jobData.isSalaryNegotiable
+          ? null
+          : Number(jobData.maxSalary) || null,
+        status: jobData.status, // Thêm status vào payload
+        deactivatedByAdmin: jobData.deactivatedByAdmin, // Thêm deactivatedByAdmin vào payload
+      };
+
+      const response = await axios.put(
+        `${API_URL}/Job/${jobId}`,
+        payload,
+        config
+      );
+      return response.data;
+    } catch (error) {
+      console.error("Error updating job:", error);
+      throw error;
+    }
+  },
+
+  // DELETE: Xóa job
+  async deleteJob(jobId) {
+    try {
+      const config = getAuthConfig();
+      const response = await axios.delete(`${API_URL}/Job/${jobId}`, config);
+      return response.data;
+    } catch (error) {
+      console.error("Error deleting job:", error);
+      throw error;
+    }
+  },
+
+  // ==================== STATUS MANAGEMENT ====================
+
+  // PUT: Cập nhật trạng thái job
+  async updateJobStatus(jobId, newStatus) {
+    try {
+      const config = getAuthConfig();
+      const response = await axios.put(
+        `${API_URL}/Job/${jobId}/status?newStatus=${newStatus}`,
+        {},
+        config
+      );
+      return response.data;
+    } catch (error) {
+      console.error("Error updating job status:", error);
+      throw error;
+    }
+  },
+
+  // PUT: Lock/Unlock job (Admin only)
+  async lockJob(jobId, isLock) {
+    try {
+      const config = getAuthConfig();
+      const response = await axios.put(
+        `${API_URL}/Job/${jobId}/lock?isLock=${isLock}`,
+        {},
+        config
+      );
+      return response.data;
+    } catch (error) {
+      console.error("Error locking/unlocking job:", error);
+      throw error;
+    }
+  },
+
+  // ==================== FILTERING ====================
+
+  // GET: Lọc jobs với backend filter
+  async filterJobs(filterParams) {
+    try {
+      const queryParams = new URLSearchParams();
+
+      if (filterParams.title) queryParams.append("Title", filterParams.title);
+      if (filterParams.industryId)
+        queryParams.append("IndustryId", filterParams.industryId);
+      if (filterParams.levelId)
+        queryParams.append("LevelId", filterParams.levelId);
+      if (filterParams.jobTypeId)
+        queryParams.append("JobTypeId", filterParams.jobTypeId);
+      if (filterParams.quantity)
+        queryParams.append("Quantity", filterParams.quantity);
+      if (filterParams.minSalary)
+        queryParams.append("MinSalary", filterParams.minSalary);
+      if (filterParams.maxSalary)
+        queryParams.append("MaxSalary", filterParams.maxSalary);
+      if (filterParams.provinceName)
+        queryParams.append("ProvinceName", filterParams.provinceName);
+      if (filterParams.status)
+        queryParams.append("Status", filterParams.status);
+      if (filterParams.companyId)
+        queryParams.append("CompanyId", filterParams.companyId);
+      if (filterParams.timeStart)
+        queryParams.append("TimeStart", filterParams.timeStart);
+      if (filterParams.timeEnd)
+        queryParams.append("TimeEnd", filterParams.timeEnd);
+      if (filterParams.skillIds) {
+        filterParams.skillIds.forEach((id) =>
+          queryParams.append("SkillIds", id)
+        );
+      }
+      if (filterParams.skillName)
+        queryParams.append("SkillName", filterParams.skillName);
+
+      const response = await axios.get(
+        `${API_URL}/Job/filter?${queryParams.toString()}`
+      );
+      return response.data;
+    } catch (error) {
+      console.error("Error filtering jobs:", error);
+      throw error;
+    }
+  },
+
+  // ==================== LOOKUP DATA ====================
+
+  // GET: Lấy job types
+  async getJobTypes() {
     try {
       const response = await axios.get(`${API_URL}/JobType`);
       return response.data;
@@ -278,7 +549,8 @@ export const jobService = {
     }
   },
 
-  getJobLevels: async () => {
+  // GET: Lấy job levels
+  async getJobLevels() {
     try {
       const response = await axios.get(`${API_URL}/Level`);
       return response.data;
@@ -288,16 +560,7 @@ export const jobService = {
     }
   },
 
-  async getExperienceLevels() {
-    try {
-      const response = await axios.get(`${API_URL}/ExperienceLevels`);
-      return response.data;
-    } catch (error) {
-      console.error("Error fetching experience levels:", error);
-      throw error;
-    }
-  },
-
+  // GET: Lấy industries
   async getIndustries() {
     try {
       const response = await axios.get(`${API_URL}/Industry`);
@@ -308,172 +571,116 @@ export const jobService = {
     }
   },
 
-
-  getJobCategories: async () => {
-     // Nếu API backend không có endpoint riêng cho categories, bạn có thể cần
-     // tạo danh sách category dựa trên Industry hoặc JobType từ lookup data.
-     // Hiện tại giữ nguyên logic trả về danh sách mẫu nếu chưa có API.
-
-    // try {
-    //   // const response = await axios.get(`${API_URL}/Categories`); // Nếu có API
-    //   // return response.data;
-    // } catch (error) {
-    //   console.error("Error fetching categories:", error);
-    //   // throw error;
-    // }
-
-     // Trả về danh sách categories mẫu
-     const CATEGORIES = [
-       "Design",
-       "Development",
-       "Marketing",
-       "Business",
-       "Technology",
-       "Finance",
-       "Healthcare",
-       "Education"
-     ];
-     return CATEGORIES.map((category, index) => ({
-       id: index + 1,
-       title: category
-     }));
+  // GET: Lấy skills
+  async getSkills() {
+    try {
+      const response = await axios.get(`${API_URL}/Skill`);
+      return response.data;
+    } catch (error) {
+      console.error("Error fetching skills:", error);
+      throw error;
+    }
   },
 
+  // ==================== UTILITY FUNCTIONS ====================
 
-  getCompanies: async () => {
+  // GET: Lấy job categories (mapping từ industries)
+  async getJobCategories() {
     try {
-      // Use the correct endpoint for CompanyProfile
+      const industries = await this.getIndustries();
+      return industries.map((industry, index) => ({
+        id: industry.industryId,
+        title: industry.industryName,
+      }));
+    } catch (error) {
+      console.error("Error fetching job categories:", error);
+      // Fallback to static categories
+      return CATEGORIES.map((category, index) => ({
+        id: index + 1,
+        title: category,
+      }));
+    }
+  },
+
+  // GET: Lấy companies
+  async getCompanies() {
+    try {
       const response = await axios.get(`${API_URL}/CompanyProfile`);
-      // Map the response data to the expected structure
-      const industryName = INDUSTRIES[response.data.industryId] || "";
-      return response.data.map(company => ({
+      return response.data.map((company) => ({
         id: company.userId,
         name: company.companyName,
         description: company.companyProfileDescription,
         location: company.location,
-        logo: company.urlCompanyLogo || '/images/company-logo/default-logo.png',
+        logo: company.urlCompanyLogo || "/images/company-logo/default-logo.png",
         logoLgr: company.imageLogoLgr,
         teamSize: company.teamSize,
         website: company.website,
         contact: company.contact,
         industryId: company.industryId,
         isActive: company.isActive,
-        industryName: industryName,
+        industryName: INDUSTRIES[company.industryId] || "",
       }));
     } catch (error) {
       console.error("Error fetching companies:", error);
-      throw error; // Throw error for calling component to handle
+      throw error;
     }
   },
 
-  // Add a function to fetch provinces
-  getProvinces: async () => {
+  // GET: Lấy provinces
+  async getProvinces() {
     try {
-      // Use the public API for provinces
-      const response = await axios.get(`https://provinces.open-api.vn/api/p/`); // Call the public API endpoint for provinces
-      // Dữ liệu trả về dạng [{ code: "01", name: "Thành phố Hà Nội", ... }, ...]
-      // Ánh xạ dữ liệu để có cấu trúc { id: ..., name: ... }
-      return response.data.map(province => ({
-        id: province.code, // Sử dụng 'code' từ API làm 'id'
-        name: province.name // Sử dụng 'name' từ API làm 'name'
+      const response = await axios.get(`https://provinces.open-api.vn/api/p/`);
+      return response.data.map((province) => ({
+        id: province.code,
+        name: province.name,
       }));
     } catch (error) {
       console.error("Error fetching provinces:", error);
-      // Trả về mảng rỗng khi có lỗi
       return [];
     }
   },
 
-  updateJob: async (jobId, jobData) => {
+  // ==================== APPLICATION RELATED ====================
+
+  // GET: Lấy jobs đã apply
+  async getAppliedJobs() {
     try {
-      const formData = new FormData();
-      
-      // Thêm các trường dữ liệu vào FormData
-      formData.append('Title', jobData.title);
-      formData.append('Description', jobData.description);
-      formData.append('CompanyId', parseInt(jobData.companyId));
-      formData.append('Salary', parseInt(jobData.salary));
-      formData.append('IndustryId', parseInt(jobData.industryId));
-      formData.append('ExpiryDate', new Date(jobData.expiryDate).toISOString());
-      formData.append('LevelId', parseInt(jobData.levelId));
-      formData.append('JobTypeId', parseInt(jobData.jobTypeId));
-      formData.append('ExperienceLevelId', parseInt(jobData.experienceLevelId));
-      formData.append('TimeStart', new Date(jobData.timeStart).toISOString());
-      formData.append('TimeEnd', new Date(jobData.timeEnd).toISOString());
-      formData.append('Status', jobData.status);
-      formData.append('ProvinceName', jobData.provinceName);
-      formData.append('AddressDetail', jobData.addressDetail);
-
-      console.log('Dữ liệu gửi lên server:', Object.fromEntries(formData));
-
-      const response = await axios.put(
-        `${API_URL}/Job/${jobId}`,
-        formData,
-        {
-          headers: {
-            'Content-Type': 'multipart/form-data'
-          }
-        }
+      const config = getAuthConfig();
+      const response = await axios.get(
+        `${API_URL}/Application/my-applied-jobs-with-cvs`,
+        config
       );
       return response.data;
     } catch (error) {
-      console.error("Lỗi khi cập nhật công việc:", error);
+      console.error("Error fetching applied jobs:", error);
       throw error;
     }
   },
 
-  async getAppliedJobs() {
+  // GET: Lấy applicants của job (cho company)
+  async getJobApplicants(jobId) {
     try {
-      // Try to get token from cookies first
-      let token = Cookies.get('token');
-      
-      // If not in cookies, try localStorage as fallback
-      if (!token) {
-        token = localStorage.getItem('token');
-      }
-
-      console.log('Token status:', token ? 'exists' : 'missing');
-      
-      if (!token) {
-        throw new Error('No authentication token found');
-      }
-
-      console.log('Making request to:', `${API_URL}/Application/my-applied-jobs-with-cvs`);
-      const response = await axios.get(`${API_URL}/Application/my-applied-jobs-with-cvs`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
-        withCredentials: true // Enable sending cookies with the request
-      });
-      
-      console.log('Response from applied jobs:', response.data);
+      const config = getAuthConfig();
+      const response = await axios.get(
+        `${API_URL}/Application/job/${jobId}`,
+        config
+      );
       return response.data;
     } catch (error) {
-      console.error("Error fetching applied jobs:", error);
-      if (error.response) {
-        console.error("Error response data:", error.response.data);
-        console.error("Error response status:", error.response.status);
-      }
+      console.error(`Error fetching applicants for job ID ${jobId}:`, error);
       throw error;
     }
   },
 
+  // ==================== FAVORITE COMPANIES ====================
 
-  getFavoriteCompanies: async () => {
+  // GET: Lấy favorite companies
+  async getFavoriteCompanies() {
     try {
-      const token = getToken();
-      if (!token) {
-        throw new Error('No authentication token found');
-      }
+      const config = getAuthConfig();
       const response = await axios.get(
         `${API_URL}/Application/my-favorite-companies`,
-        {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          }
-        }
+        config
       );
       return response.data;
     } catch (error) {
@@ -482,21 +689,14 @@ export const jobService = {
     }
   },
 
-  favoriteCompany: async (companyId) => {
+  // POST: Thêm company vào favorite
+  async favoriteCompany(companyId) {
     try {
-      const token = getToken();
-      if (!token) {
-        throw new Error('No authentication token found');
-      }
+      const config = getAuthConfig();
       const response = await axios.post(
         `${API_URL}/Application/favorite-company/${companyId}`,
         {},
-        {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          }
-        }
+        config
       );
       return response.data;
     } catch (error) {
@@ -505,20 +705,13 @@ export const jobService = {
     }
   },
 
-  unfavoriteCompany: async (companyId) => {
+  // DELETE: Xóa company khỏi favorite
+  async unfavoriteCompany(companyId) {
     try {
-      const token = getToken();
-      if (!token) {
-        throw new Error('No authentication token found');
-      }
+      const config = getAuthConfig();
       const response = await axios.delete(
         `${API_URL}/Application/favorite-company/${companyId}`,
-        {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          }
-        }
+        config
       );
       return response.data;
     } catch (error) {
@@ -527,29 +720,216 @@ export const jobService = {
     }
   },
 
-  async getJobApplicants(jobId) {
-    try {
-      console.log("getJobApplicants function called.");
-      const token = Cookies.get('token');
-      console.log("Auth Token from Cookies:", token ? "Present" : "Missing"); // Log token status
-      const config = {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      };
-      console.log(`Fetching applicants for job ID: ${jobId} with config:`, config);
-      const response = await axios.get(`${API_URL}/Application/job/${jobId}`, config);
-      console.log("API Response for job applicants:", response.data);
-      return response.data; // Trả về danh sách ứng viên
-    } catch (error) {
-      console.error(`Error fetching applicants for job ID ${jobId}:`, error);
-      throw error; // Ném lỗi để component xử lý
+  // ==================== HELPER FUNCTIONS ====================
 
+  // Helper: Map job status to display text
+  getJobStatusText(status) {
+    return getJobStatusLabel(status, 'vi');
+  },
+
+  // Admin job management methods
+  async approveJob(jobId) {
+    try {
+      const token = getToken();
+      if (!token) {
+        throw new Error("No authentication token found");
+      }
+
+      const response = await axios.put(
+        `${API_URL}/Job/${jobId}/status?newStatus=2`,
+        {},
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      return response.data;
+    } catch (error) {
+      console.error("Error approving job:", error);
+      throw error;
     }
   },
 
+  async rejectJob(jobId) {
+    try {
+      const token = getToken();
+      if (!token) {
+        throw new Error("No authentication token found");
+      }
+
+      const response = await axios.put(
+        `${API_URL}/Job/${jobId}/status?newStatus=3`,
+        {},
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      return response.data;
+    } catch (error) {
+      console.error("Error rejecting job:", error);
+      throw error;
+    }
+  },
+
+  // Helper: Check if job can be edited by company
+  canCompanyEditJob(job) {
+    if (!job) return false;
+
+    // Job must not be expired
+    if (new Date(job.timeEnd) < new Date()) return false;
+
+    // Job must not be locked by admin
+    if (job.deactivatedByAdmin) return false;
+
+    return true;
+  },
+
+  // Helper: Check if job can be deleted
+  canDeleteJob(job) {
+    if (!job) return false;
+
+    // Cannot delete active jobs
+    if (job.status === "active") return false;
+
+    return true;
+  },
+
+  // Helper: Format salary display
+  formatSalary(minSalary, maxSalary, isNegotiable) {
+    if (isNegotiable) return "Thỏa thuận";
+    if (minSalary && maxSalary) {
+      return `${minSalary.toLocaleString()} - ${maxSalary.toLocaleString()} VNĐ`;
+    }
+    if (minSalary) return `Từ ${minSalary.toLocaleString()} VNĐ`;
+    if (maxSalary) return `Đến ${maxSalary.toLocaleString()} VNĐ`;
+    return "Không công bố";
+  },
+
+
+
+  async getAppliedCount(jobId) {
+    try {
+      const response = await axios.get(`${API_URL}/Application/job/${jobId}`);
+      return Array.isArray(response.data) ? response.data.length : 0;
+    } catch (error) {
+      if (error && error.response && error.response.status === 404) {
+        // Không log nếu là 404
+        return 0;
+      }
+      // Các lỗi khác mới log
+      console.error("Error fetching applied count:", error);
+      return 0;
+    }
+  },
+
+  // Hàm lấy tất cả job active (status === 2) và không bị lock
+  async getActiveJobs(filters = {}) {
+    const { data: jobs } = await this.getJobs(filters);
+    return jobs.filter((job) => job.status === 2 && !job.deactivatedByAdmin && job.status !== 4);
+  },
+
+  // POST: Track job view
+  async trackJobView(jobId) {
+    try {
+      const token = getValidToken();
+      const headers = token ? { Authorization: `Bearer ${token}` } : {};
+      const response = await axios.post(
+        `${API_URL}/JobView/track`,
+        { jobId },
+        { headers }
+      );
+      return response.data;
+    } catch (error) {
+      console.error("Error tracking job view:", error);
+      // Optionally, you can throw or return null
+      return null;
+    }
+  },
+
+  // Lấy thống kê tổng hợp cho công ty (view, apply, phần trăm apply, từng job) theo khoảng thời gian
+  async getCompanyStatistics(companyId, fromDate, toDate) {
+    try {
+      const token = getValidToken();
+      const headers = token ? { Authorization: `Bearer ${token}` } : {};
+      const params = {};
+      if (fromDate) params.fromDate = fromDate;
+      if (toDate) params.toDate = toDate;
+      const response = await axios.get(
+        `${API_URL}/JobStatistics/company/${companyId}`,
+        { headers, params }
+      );
+      return response.data;
+    } catch (error) {
+      console.error("Error fetching company statistics:", error);
+      throw error;
+    }
+  },
+
+  // Lấy danh sách job theo companyId
+  async getJobsByCompanyId(companyId) {
+    try {
+      const config = getAuthConfig();
+      const response = await axios.get(`${API_URL}/Job`, config);
+      const apiJobs = response.data;
+      // Lọc job theo companyId
+      const jobs = apiJobs.filter((job) => job.companyId === companyId);
+      return jobs;
+    } catch (error) {
+      console.error("Error fetching jobs by companyId:", error);
+      return [];
+    }
+  },
+
+  // Lấy thống kê job theo khoảng thời gian tuỳ ý
+  async getJobStatisticsFiltered(jobId, fromDate, toDate) {
+    try {
+      const token = getValidToken();
+      const headers = token ? { Authorization: `Bearer ${token}` } : {};
+      const params = {};
+      if (fromDate) params.fromDate = fromDate;
+      if (toDate) params.toDate = toDate;
+      const response = await axios.get(
+        `${API_URL}/JobStatistics/job/${jobId}`,
+        { headers, params }
+      );
+      return response.data;
+    } catch (error) {
+      console.error("Error fetching job statistics filtered:", error);
+      throw error;
+    }
+  },
+
+
+  // Lấy job nổi bật (highlight) của company
+  async getCompanyHighlightJobs(companyId, limit = 5, timeRange = '7d') {
+    try {
+      const response = await axios.get(`${API_URL}/Job/company/${companyId}/highlight?limit=${limit}&timeRange=${timeRange}`);
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching highlight jobs:', error);
+      return { Jobs: [] };
+    }
+  },
+
+  // GET: Lấy danh sách trending jobs
+  async getTrendingJobs({ role = "candidate", companyId = null, page = 1, pageSize = 10 } = {}) {
+    try {
+      const params = new URLSearchParams();
+      if (role) params.append("role", role);
+      if (companyId) params.append("companyId", companyId);
+      if (page) params.append("page", page);
+      if (pageSize) params.append("pageSize", pageSize);
+      const response = await axios.get(`${API_URL}/job/trending?${params.toString()}`);
+      return response.data;
+    } catch (error) {
+      console.error("Error fetching trending jobs:", error);
+      throw error;
+
+    }
+  },
 };
 
 export default jobService;
-

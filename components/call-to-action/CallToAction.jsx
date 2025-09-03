@@ -1,6 +1,27 @@
+'use client';
+
 import Image from "next/image";
+import React, { useState } from "react";
+import BecomeRecruiterModal from "@/components/common/form/shared/BecomeRecruiterModal";
+import { useRouter } from 'next/navigation';
 
 const CallToAction = () => {
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const router = useRouter();
+
+  const handleOpenModal = () => {
+    const userId = localStorage.getItem('userId');
+    if (userId) {
+      setIsModalOpen(true);
+    } else {
+      router.push('/login');
+    }
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+  };
+
   return (
     <section className="call-to-action">
       <div className="auto-container">
@@ -13,16 +34,16 @@ const CallToAction = () => {
                 million
                 <br /> CVs in our database.
               </div>
-              <a href="#" className="theme-btn btn-style-one bg-blue">
+              <button className="theme-btn btn-style-one bg-blue" onClick={handleOpenModal}>
                 <span className="btn-title">Start Recruiting Now</span>
-              </a>
+              </button>
             </div>
           </div>
           {/* End .content-column */}
 
           <div
             className="image-column"
-            style={{ backgroundImage: " url(images/resource/image-1.png)" }}
+            style={{ backgroundImage: " url(/images/resource/image-1.png)" }}
           >
             <figure className="image">
               <Image
@@ -36,6 +57,10 @@ const CallToAction = () => {
           {/* End .image-column */}
         </div>
       </div>
+      <BecomeRecruiterModal
+        open={isModalOpen}
+        onCancel={handleCloseModal}
+      />
     </section>
   );
 };

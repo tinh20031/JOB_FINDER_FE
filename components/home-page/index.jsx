@@ -7,11 +7,12 @@ import LoginPopup from "../common/form/login/LoginPopup";
 // import Partner from "../common/partner/Partner";
 import FooterDefault from "../footer/common-footer";
 import Funfact from "../fun-fact-counter/Funfact";
-import DefaulHeader2 from "../header/DefaulHeader2";
+import MainHeader from "@/components/header/MainHeader";
 import MobileMenu from "../header/MobileMenu";
 import Hero1 from "../hero/hero-1";
 import JobCategorie1 from "../job-categories/JobCategorie1";
 import JobFeatured1 from "../job-featured/JobFeatured1";
+import TrendingJobsHome from "../job-featured/TrendingJobsHome";
 // import Testimonial from "../testimonial/Testimonial";
 
 const index = () => {
@@ -20,7 +21,7 @@ const index = () => {
       <LoginPopup />
       {/* End Login Popup Modal */}
 
-      <DefaulHeader2 />
+      <MainHeader />
       {/* End Header with upload cv btn */}
 
       <MobileMenu />
@@ -46,6 +47,23 @@ const index = () => {
     </section>
       {/* End Job Categorie Section */}
 
+      {/* Trending Jobs Section */}
+      <section className="job-section">
+        <div className="auto-container">
+          <div className="sec-title text-center">
+            <h2>Trending Jobs</h2>
+            <div className="text">
+              Hot jobs trending now
+            </div>
+          </div>
+
+          <div className="row " data-aos="fade-up">
+            <TrendingJobsHome />
+          </div>
+        </div>
+      </section>
+      {/* End Trending Jobs Section */}
+
       <section className="job-section">
         <div className="auto-container">
           <div className="sec-title text-center">
@@ -61,7 +79,7 @@ const index = () => {
 
           <div className="btn-box">
             <Link
-              href="/job-list-v1"
+                              href="/job-list"
               className="theme-btn btn-style-one bg-blue"
             >
               <span className="btn-title">Load More Listing</span>

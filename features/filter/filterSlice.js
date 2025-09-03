@@ -19,6 +19,7 @@ const initialState = {
             max: 20000,
         },
         tag: "",
+        levelId: null, // Thêm dòng này
     },
     jobSort: {
         sort: "",
@@ -65,22 +66,6 @@ export const filterSlice = createSlice({
         addDatePosted: (state, { payload }) => {
             state.jobList.datePosted = payload;
         },
-        addExperience: (state, { payload }) => {
-            const isExist = state.jobList.experience.includes(payload);
-            if (!isExist) {
-                state.jobList.experience.push(payload);
-            } else {
-                state.jobList.experience = state.jobList.experience.filter(
-                    (item) => item !== payload
-                );
-            }
-        },
-        addExperienceSelect: (state, { payload }) => {
-            state.jobList.experienceSelect = payload;
-        },
-        clearExperience: (state) => {
-            state.jobList.experience = [];
-        },
         addSalary: (state, { payload }) => {
             state.jobList.salary.min = payload.min;
             state.jobList.salary.max = payload.max;
@@ -95,6 +80,9 @@ export const filterSlice = createSlice({
             state.jobSort.perPage.start = payload.start;
             state.jobSort.perPage.end = payload.end;
         },
+        addLevel: (state, { payload }) => {
+            state.jobList.levelId = payload;
+        },
     },
 });
 
@@ -107,12 +95,10 @@ export const {
     clearJobType,
     addJobTypeSelect,
     addDatePosted,
-    addExperience,
-    addExperienceSelect,
-    clearExperience,
     addSalary,
     addTag,
     addSort,
     addPerPage,
+    addLevel,
 } = filterSlice.actions;
 export default filterSlice.reducer;

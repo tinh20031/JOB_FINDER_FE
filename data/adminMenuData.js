@@ -21,6 +21,13 @@ module.exports = [
       active: "",
     },
     {
+      id: 3.5,
+      name: "Upgrade Requests",
+      icon: "la-user-plus",
+      routePath: "/admin-dashboard/upgrade-requests",
+      active: "",
+    },
+    {
       id: 4,
       name: "Job Post Management",
       icon: "la-briefcase",
@@ -29,21 +36,14 @@ module.exports = [
     },
     {
       id: 5,
-      name: "Application Management",
-      icon: "la-file-invoice",
-      routePath: "/admin-dashboard/Application-Management",
-      active: "",
-    },
-    {
-      id: 6,
-      name: "Reports & Violations Management",
-      icon: "la-bookmark-o",
-      routePath: "/admin-dashboard/Reports-Violations-Management",
+      name: "Revenue Statistics",
+      icon: "la-dollar",
+      routePath: "/admin-dashboard/revenue-statistics",
       active: "",
     },
     
     {
-      id: 8,
+      id: 6,
       name: "Logout",
       icon: "la-sign-out",
       routePath: "/login",
